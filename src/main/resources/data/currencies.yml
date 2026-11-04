@@ -3488,6 +3488,7 @@ stacked_deck:
   flavor: "洗牌的人不見了，牌還在。"
 
 # ---- 2026-11-04 照站長「地圖絕境塞核心」：魂核符文（runes.yml 檔尾；只有地圖裡的絕境給，不走掉落表）----
+# 2026-11-05 照站長：說明的「軍用武器」改成遊戲內通用的「武器」（跟其他符文一樣，法杖類另外寫）；這次之前寫軍用武器
 rune_core_tacati:
   name: 魂核符文・特卡蒂
   material: ECHO_SHARD
@@ -3497,7 +3498,7 @@ rune_core_tacati:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 25% 你所施加之中毒的幅度；防具、副手 +13% 混沌抗性。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之中毒的幅度；防具、副手 +13% 混沌抗性。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_opiloti:
@@ -3509,7 +3510,7 @@ rune_core_opiloti:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 你所施加之流血的幅度；頭盔 增加 25% 釘身持續時間。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 你所施加之流血的幅度；頭盔 增加 25% 釘身持續時間。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_jiquani:
@@ -3521,7 +3522,7 @@ rune_core_jiquani:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_zalatl:
@@ -3533,7 +3534,7 @@ rune_core_zalatl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 擊殺時回復 4% 最大魔力；頭盔 增加 5% 最大魔力。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 4% 最大魔力；頭盔 增加 5% 最大魔力。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_citaqualotl:
@@ -3545,7 +3546,7 @@ rune_core_citaqualotl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 攻擊的元素傷害；防具、副手 +6% 全部元素抗性。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 攻擊的元素傷害；防具、副手 +6% 全部元素抗性。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_puhuarte:
@@ -3557,7 +3558,7 @@ rune_core_puhuarte:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 點燃幅度；手套（腿甲） +2% 火焰抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 點燃幅度；手套（腿甲） +2% 火焰抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_tzamoto:
@@ -3569,7 +3570,7 @@ rune_core_tzamoto:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 60% 凍結累積；頭盔 +2% 冰冷抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 60% 凍結累積；頭盔 +2% 冰冷抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_xopec:
@@ -3581,7 +3582,7 @@ rune_core_xopec:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 25% 你所施加之感電的幅度；鞋子 +2% 閃電抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之感電的幅度；鞋子 +2% 閃電抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_azcapa:
@@ -3593,7 +3594,7 @@ rune_core_azcapa:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 +15 精魂；手套（腿甲） 增加 10% 殺死敵人時掉落的金幣數量。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +15 精魂；手套（腿甲） 增加 10% 殺死敵人時掉落的金幣數量。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_topotante:
@@ -3605,7 +3606,7 @@ rune_core_topotante:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 這把武器的攻擊穿透 25% 元素抗性；鞋子 減少 25% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 這把武器的攻擊穿透 25% 元素抗性；鞋子 減少 25% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_quipolatl:
@@ -3617,7 +3618,7 @@ rune_core_quipolatl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 5% 攻擊速度；鞋子 減少 15% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 5% 攻擊速度；鞋子 減少 15% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_ticaba:
@@ -3629,7 +3630,7 @@ rune_core_ticaba:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 +5% 暴擊傷害加成；胸甲、盾、輕盾 擊中你的暴擊傷害加成減少 50%。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +5% 暴擊傷害加成；胸甲、盾、輕盾 擊中你的暴擊傷害加成減少 50%。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_atmohua:
@@ -3641,7 +3642,7 @@ rune_core_atmohua:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為力量。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為力量。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_cholotl:
@@ -3653,7 +3654,7 @@ rune_core_cholotl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為敏捷。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為敏捷。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_zantipi:
@@ -3665,7 +3666,7 @@ rune_core_zantipi:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 # ---- 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（runes.yml 檔尾；只有地圖裡的軍團給，不走掉落表）----
@@ -3690,7 +3691,7 @@ rune_idol_thruldana:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：軍用武器 減少 25% 中毒持續時間、目標可同時受到你的 +1 個中毒影響；權杖 夥伴增加 25% 混沌傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：武器 減少 25% 中毒持續時間、目標可同時受到你的 +1 個中毒影響；權杖 夥伴增加 25% 混沌傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_grold:
@@ -3846,7 +3847,7 @@ rune_idol_sycophant:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害；權杖 夥伴 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：武器、法杖類 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害；權杖 夥伴 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_martyr:
@@ -3858,7 +3859,7 @@ rune_idol_martyr:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 減少 25% 精魂、主要技能增加 40% 獲得的能量；權杖 減少 40% 臨在範圍、光環技能增加 25% 效果。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：武器、法杖類 減少 25% 精魂、主要技能增加 40% 獲得的能量；權杖 減少 40% 臨在範圍、光環技能增加 25% 效果。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_pharisee:
@@ -3870,7 +3871,7 @@ rune_idol_pharisee:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 減少 30% 最大魔力；權杖 號令技能減少 30% 消耗、召喚物的號令技能增加 60% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：武器、法杖類 減少 30% 最大魔力；權杖 號令技能減少 30% 消耗、召喚物的號令技能增加 60% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_panther:

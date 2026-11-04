@@ -219,11 +219,11 @@ public final class PhaseMechanic {
         return new Element(duration, heal, 0.3, 12, 3, 0.1);
     }
 
-    /** 2026-11-04：破綻的預設：30 秒、回血照 heal、這一階段三成的血、3 層、破綻 3 秒、12 格內、破綻裡 ×1.5。 */
+    /** 2026-11-04：破綻的預設：30 秒、回血照 heal、這一階段三成的血、3 層、破綻 3 秒、30 格內、破綻裡 ×1.5（2026-11-05 照站長「12 格放寬給遠程」；這次之前 12 格）。 */
     static final double OPENING_DURATION = 30;
 
     static Opening defaultOpening(final double heal) {
-        return new Opening(OPENING_DURATION, OPENING_HEAL, 0.3, 3, 3, 12, 1.5); // 2026-11-04 照站長「破綻沒解除改成回 15% 生命」；這次之前照 heal（各 Boss 30～45%）
+        return new Opening(OPENING_DURATION, OPENING_HEAL, 0.3, 3, 3, 30, 1.5); // 2026-11-04 照站長「破綻沒解除改成回 15% 生命」；這次之前照 heal（各 Boss 30～45%）
     }
 
     /** 2026-11-04 照站長：破綻沒剝完 Boss 回 15% 生命（yml 寫了 heal 照寫的）；這次之前照各 Boss 的 30～45%。 */
@@ -233,7 +233,7 @@ public final class PhaseMechanic {
         final Opening d = defaultOpening(heal);
         return new Opening(seconds(node, "duration", d.duration()), clamp(node.decimal("heal", d.heal()), 0, 100),
                 clamp(node.decimal("share", d.share()), 0.05, 0.9), (int) clamp(node.integer("layers", d.layers()), 1, 10),
-                clamp(node.decimal("window", d.window()), 1, 10), clamp(node.decimal("reach", d.reach()), 4, 40),
+                clamp(node.decimal("window", d.window()), 1, 10), clamp(node.decimal("reach", d.reach()), 4, 60),
                 clamp(node.decimal("taken", d.openTaken()), 0.5, 5));
     }
 
