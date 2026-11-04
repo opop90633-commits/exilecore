@@ -787,6 +787,18 @@ public final class MetaGems {
         if (position < 0) {
             return lines;
         }
+        if (!spec.totem()) {
+            // 2026-11-04 照站長「能量增加 8% 好像沒變多的感覺」：寫出天賦、裝備與掛在引星上的輔助加起來的能量獲得（這次之前只寫寶石等級那條，看不出天賦有沒有算）
+            final SkillLoadout.Entry metaEntry = state.skills().skill(position);
+            final SkillDefinition metaSkill = metaEntry == null ? null : service.config().skill(metaEntry.skillId());
+            final double[] own = sheetEnergy(plugin.players().sheet(player), metaSkill == null ? java.util.Set.of() : metaSkill.tags());
+            final double[] mods = metaEntry == null ? new double[3] : energyModifiers(metaEntry);
+            final double gemMore = spec.energyMore() == null ? 0 : spec.energyMore().at(usableLevel(state, metaEntry));
+            final double total = (1 + gemMore / 100.0) * (1 + mods[0] / 100.0) * own[0];
+            lines.add("<gray>天賦、裝備：能量獲得 <white>×" + number(Math.round(own[0] * 100) / 100.0) + "</white>"
+                    + (mods[0] != 0 ? "<gray>・輔助：增加 <white>" + number(mods[0]) + "%" : "")
+                    + "<gray>　合計每次獲得 <white>×" + number(Math.round(total * 100) / 100.0));
+        }
         final String problem = socketProblem(state, position);
         if (problem != null) {
             lines.add("<red>" + ItemRenderer.escape(problem));

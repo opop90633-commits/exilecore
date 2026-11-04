@@ -1740,13 +1740,36 @@ public final class MapService {
      */
     public boolean flatBossLoot(final LivingEntity entity) {
         if (plugin.life() != null && plugin.life().isWhale(entity)) {
-            return true; // 星骸之海的淵鯨（比照巔峰）
+            return config.flatBossLoot("whale"); // 星骸之海的淵鯨（比照巔峰）；2026-11-04：照 maps.yml 的 flat_boss_loot.whale
         }
         if (!entity.getPersistentDataContainer().has(bossKey)) {
             return false;
         }
         final MapInstance instance = instanceOf(entity);
-        return instance != null && instance.usesAttempts();
+        return flatLoot(instance);
+    }
+
+    /**
+     * 2026-11-04 照站長「做成 maps.yml 裡的開關」：這個實例的 Boss 掉落是不是不吃物品數量、稀有度（maps.yml 的 flat_boss_loot）。
+     * 這次之前寫死：終局以上（usesAttempts）與災厄級不吃。
+     */
+    public boolean flatLoot(final MapInstance instance) {
+        if (instance == null) {
+            return false;
+        }
+        if (instance.isPinnacle()) {
+            return config.flatBossLoot("pinnacle");
+        }
+        if (instance.isUber()) {
+            return config.flatBossLoot("uber");
+        }
+        if (instance.isHeistFinale()) {
+            return config.flatBossLoot("heist_finale");
+        }
+        if (instance.usesAttempts()) {
+            return config.flatBossLoot("final");
+        }
+        return MapBosses.isCalamity(config, instance) && config.flatBossLoot("calamity");
     }
 
     /** 掉落加成（小數）：{物品數量, 物品稀有度}。 */
@@ -2411,6 +2434,50 @@ public final class MapService {
     /**
      * 同 {@link #openSpecial}，但回傳開出來的實例（劫盜要記著它；開不了回傳 null，原因用 {@link #specialProblem()} 問）。
      */
+    /**
+     * 2026-11-04 照站長「絕境 Boss 打完後要回去原本的地圖」：同 {@link #openSpecialInstance}，但 parent 那張不收傳送門、試場開著的時候不關，
+     * 之後可以用 {@link #sendBack} 把人送回去。這次之前開試場會把原本那張的傳送門收掉、沒人 60 秒就關。
+     */
+    public MapInstance openChildInstance(final Player owner, final MapConfig.MapDef map, final MapStats stats, final int rooms,
+                                         final Special special, final MapInstance parent) {
+        keepOpen = parent;
+        try {
+            final MapInstance opened = openSpecialInstance(owner, map, stats, rooms, special);
+            if (opened != null) {
+                opened.setReturnTo(parent);
+            }
+            return opened;
+        } finally {
+            keepOpen = null;
+        }
+    }
+
+    /** 2026-11-04：把人送回原本那張地圖的某個位置（那張還開著才送；回傳有沒有送）。 */
+    public boolean sendBack(final Player player, final MapInstance parent, final Location at) {
+        if (parent == null || !instances.containsKey(parent.id()) || parent.state() != MapInstance.State.OPEN || player == null || !player.isOnline()) {
+            return false;
+        }
+        parent.visitors().add(player.getUniqueId());
+        remember(player, parent);
+        tw.exilecore.core.Teleports.go(player, at);
+        gateCooldown.put(player.getUniqueId(), (long) plugin.getServer().getCurrentTick());
+        plugin.players().markDirty(player);
+        return true;
+    }
+
+    /** 2026-11-04：有沒有從這張開出去、還沒關的子實例（審判者的試場）。 */
+    private boolean childOpen(final MapInstance parent) {
+        for (final MapInstance other : instances.values()) {
+            if (other.returnTo() == parent && other.state() != MapInstance.State.CLOSING) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-04：openChildInstance 開的時候，這張不要收傳送門。 */
+    private MapInstance keepOpen;
+
     public MapInstance openSpecialInstance(final Player owner, final MapConfig.MapDef map, final MapStats stats, final int rooms,
                                            final Special special) {
         String problem = capacityProblem();
@@ -2496,7 +2563,7 @@ public final class MapService {
     private MapInstance open(final Player owner, final MapConfig.MapDef map, final MapStats stats, final int rooms, final Special special) {
         // 同一個隊伍（或沒隊伍的一個人）只有一張目前的地圖：舊的那張收掉傳送門（裡面的人可以打完再出來）
         for (final MapInstance old : instances.values()) {
-            if (old.state() != MapInstance.State.CLOSING && old.portalsLeft() > 0 && canEnter(owner, old)) {
+            if (old != keepOpen && old.state() != MapInstance.State.CLOSING && old.portalsLeft() > 0 && canEnter(owner, old)) { // 2026-11-04：試場的原本那張不收
                 old.closePortals();
                 for (final Player member : groupOnline(old)) {
                     if (plugin.players().hidesSystem(member)) {
@@ -3320,7 +3387,7 @@ public final class MapService {
             final boolean exhausted = instance.portalsLeft() <= 0 && empty >= settings.emptyCloseSeconds() * 20L;
             final boolean idle = now - instance.lastOccupiedTick() >= settings.idleMinutes() * 1200L;
             final boolean finished = instance.bossKilled() && empty >= 5 * 1200L;
-            if (exhausted || idle || finished) {
+            if ((exhausted || idle || finished) && !childOpen(instance)) { // 2026-11-04：試場還開著，原本那張先不關（打完要回來）
                 close(instance, exhausted ? "次數用完" : finished ? "已完成" : "太久沒人");
             }
         }

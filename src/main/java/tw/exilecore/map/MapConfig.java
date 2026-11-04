@@ -265,6 +265,13 @@ public final class MapConfig {
     private double heistDpsCap;
     private List<DpsTier> heistDpsOver = List.of();
     private double whaleDpsCap;
+    /**
+     * 2026-11-04 照站長「稀有度的部分做成 maps.yml 裡的開關」：哪幾類 Boss 的掉落不吃物品數量、稀有度（maps.yml 的 flat_boss_loot）。
+     * 鍵：final（一般終局）、uber（極境）、pinnacle（萬界之巔與事件巔峰）、heist_finale（金庫之主）、whale（淵鯨）、calamity（災厄級）。
+     * 這次之前寫死在程式裡（全部不吃）。
+     */
+    public static final java.util.List<String> FLAT_LOOT_KINDS = java.util.List.of("final", "uber", "pinnacle", "heist_finale", "whale", "calamity");
+    private java.util.Map<String, Boolean> flatBossLoot = defaultFlatLoot();
     private List<DpsTier> whaleDpsOver = List.of();
     /** 一般終局每一階的生命倍率（2026-10-21，final.tier_life_table；null = 照 tier_life）。 */
     private double[] finalTierLifeTable;
@@ -619,6 +626,7 @@ public final class MapConfig {
         heistDpsCap = fresh.heistDpsCap;
         heistDpsOver = fresh.heistDpsOver;
         whaleDpsCap = fresh.whaleDpsCap;
+        flatBossLoot = fresh.flatBossLoot; // 2026-11-04
         whaleDpsOver = fresh.whaleDpsOver;
         finalTierLifeTable = fresh.finalTierLifeTable;
         uberLifeScale = fresh.uberLifeScale; // 2026-10-27
@@ -667,6 +675,7 @@ public final class MapConfig {
         heistDpsCap = 0;
         heistDpsOver = List.of();
         whaleDpsCap = 0;
+        flatBossLoot = defaultFlatLoot(); // 2026-11-04
         whaleDpsOver = List.of();
         finalTierLifeTable = null;
         uberLifeScale = 1.0;
@@ -729,6 +738,19 @@ public final class MapConfig {
         resonanceChance = clamp01(d.decimal("resonance_chance", DEFAULT_RESONANCE_CHANCE)); // 2026-10-18：共鳴石
         resonanceMobChance = clamp01(d.decimal("resonance_mob_chance", DEFAULT_RESONANCE_MOB_CHANCE));
 
+        // 2026-11-04：flat_boss_loot（沒寫的照預設：全部不吃）
+        final java.util.Map<String, Boolean> flat = new java.util.HashMap<>(defaultFlatLoot());
+        if (root.has("flat_boss_loot")) {
+            final YamlNode node = root.node("flat_boss_loot");
+            for (final String key : node.keys()) {
+                final String kind = key.trim().toLowerCase(java.util.Locale.ROOT);
+                if (!FLAT_LOOT_KINDS.contains(kind)) {
+                    throw new IllegalArgumentException("maps.yml.flat_boss_loot：不認得「" + key + "」（可以寫 " + String.join("、", FLAT_LOOT_KINDS) + "）");
+                }
+                flat.put(kind, node.bool(key, true));
+            }
+        }
+        flatBossLoot = java.util.Map.copyOf(flat);
         final YamlNode finalDps = root.node("final_dps");
         finalDpsCap = Math.max(0, finalDps.decimal("dps_cap", 0));
         finalDpsOver = List.copyOf(parseDpsOver(finalDps, finalDpsCap));
@@ -1413,6 +1435,19 @@ public final class MapConfig {
     }
 
     /** 淵鯨的每秒傷害上限（2026-10-21，whale_dps）。 */
+    private static java.util.Map<String, Boolean> defaultFlatLoot() {
+        final java.util.Map<String, Boolean> map = new java.util.HashMap<>();
+        for (final String kind : FLAT_LOOT_KINDS) {
+            map.put(kind, true);
+        }
+        return java.util.Map.copyOf(map);
+    }
+
+    /** 2026-11-04：這一類 Boss 的掉落是不是不吃物品數量、稀有度（maps.yml 的 flat_boss_loot；不認得的種類回傳 false）。 */
+    public boolean flatBossLoot(final String kind) {
+        return flatBossLoot.getOrDefault(kind, false);
+    }
+
     public double whaleDpsCap() {
         return whaleDpsCap;
     }

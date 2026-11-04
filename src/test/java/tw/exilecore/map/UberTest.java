@@ -352,17 +352,17 @@ class UberTest {
         // 2026-10：每秒傷害上限統一 15 萬（血量照終局 5 萬、極境 10 萬、巔峰 15 萬打 3 分半）；超過的部分遞減（上限～2 倍算 30%、2～3 倍算 10%、3～4 倍算 5%、4 倍以上算 1%）
         for (final MapConfig.MapDef map : config.regularFinals()) {
             final MapConfig.Uber uber = config.uber(map.id());
-            assertEquals(4000000, uber.dpsCap(), 1e-9, map.id()); // 2026-10-29 照站長：400 萬起；2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
+            assertEquals(0, uber.dpsCap(), 1e-9, map.id()); // 2026-11-04 照站長：遞減的設定刪掉（不寫 = 不限）；這次之前 400 萬起。2026-10-29 照站長：400 萬起；2026-10-27 照站長：每秒 200 萬起遞減（這次之前 100 萬）
         }
         // 2026-10-21 晚：終局、極境、巔峰、金庫之主、淵鯨一律 400 萬起遞減（開天者、南瓜王、潮汐統帥不遞減）
         // 2026-10-27 照站長：全部 200 萬起遞減（這次之前 100 萬），分段整個往上移 100 萬
         // 2026-10-29 照站長：終局、極境、巔峰 400 萬起遞減（分段整個往上移 200 萬）；金庫之主、淵鯨照舊 200 萬
-        assertEquals(4000000, config.finalDpsCap(), 1e-9, "一般終局");
-        assertEquals(4000000, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
-        assertEquals(2000000, config.heistDpsCap(), 1e-9, "金庫之主");
-        assertEquals(2000000, config.whaleDpsCap(), 1e-9, "淵鯨");
-        assertEquals(List.of(new MapConfig.DpsTier(4000000, 0.8), new MapConfig.DpsTier(4750000, 0.55), new MapConfig.DpsTier(5500000, 0.3),
-                new MapConfig.DpsTier(6250000, 0.15), new MapConfig.DpsTier(7000000, 0.05)), config.finalDpsOver());
+        // 2026-11-04 照站長：遞減的設定刪掉（不寫 = 不限）；這次之前 終局、巔峰 400 萬起，金庫之主、淵鯨 200 萬起
+        assertEquals(0, config.finalDpsCap(), 1e-9, "一般終局");
+        assertEquals(0, config.pinnacle("awakener").dpsCap(), 1e-9, "巔峰");
+        assertEquals(0, config.heistDpsCap(), 1e-9, "金庫之主");
+        assertEquals(0, config.whaleDpsCap(), 1e-9, "淵鯨");
+        assertTrue(config.finalDpsOver().isEmpty());
         assertEquals(200, MapService.OPENING_INVULNERABLE_TICKS, "開天者、南瓜王、潮汐統帥開場無敵 10 秒");
         // 2026-10-26 照 PoE2：終局 = 原作 Trialmaster／Zarokh 750%、巔峰 = Arbiter of Ash 990%（都是比傳奇怪，傳奇怪 ×29）
         for (final MapConfig.MapDef map : config.regularFinals()) {

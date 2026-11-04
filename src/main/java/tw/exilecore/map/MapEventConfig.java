@@ -320,7 +320,7 @@ public final class MapEventConfig {
                                     Map<String, Integer> typeWeights, Map<String, Integer> modifierWeights) {
         public static final Set<String> TYPES = Set.of("kill", "survive", "circle");
         // 2026-11-04 照站長：準備 1 秒、生存與守圈減半、殲滅每 0.5 秒一群；這次之前準備 5、生存 30＋10、守圈 15＋5、殲滅跟其他一樣每 2 秒
-        public static final UltimatumSettings DEFAULTS = new UltimatumSettings(0.2, 5, 1, 14, 4, 12, 6, 60, 15, 5, 7.5, 2.5, 3.5, 8,
+        public static final UltimatumSettings DEFAULTS = new UltimatumSettings(0.2, 5, 1, 14, 4, 12, 6, 60, 15, 5, 7.5, 2.5, 5, 8, /* 2026-11-04：守圈半徑 3.5 → 5 */
                 2.0, 0.5, 2, 4, 0.25, 0.2, 0.5, 0.05, 0.15, 1, 2, 2.0, 2.0,
                 Map.of(Reward.CURRENCY, 35, Reward.EMOTION, 15, Reward.ESSENCE, 15, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 10, Reward.OMEN, 5),
                 Map.of("kill", 40, "survive", 30, "circle", 30), Map.of());

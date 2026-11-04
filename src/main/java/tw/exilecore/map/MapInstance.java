@@ -97,6 +97,8 @@ public final class MapInstance {
     /** 2026-10-17：開門花掉的東西怎麼退（蓋地圖失敗、重開伺服器時終局沒打完）；退過一次就清掉。 */
     private Runnable paidRefund;
     private int attemptsUsed;
+    /** 2026-11-04 照站長「絕境 Boss 打完後要回去原本的地圖」：從哪張地圖開出來的（審判者的試場）；試場開著的時候那張不關。 */
+    private MapInstance returnTo;
     /** 2026-11-04：災厄級的門（{@link #usesDoors()}）。 */
     private boolean calamityDoors;
     /** 階段護盾：還活著的結晶、什麼時候到期、哪一個護盾（沒有護盾時是空的、null）。 */
@@ -500,6 +502,14 @@ public final class MapInstance {
      */
     public boolean usesDoors() {
         return usesAttempts() || calamityDoors;
+    }
+
+    public MapInstance returnTo() {
+        return returnTo;
+    }
+
+    void setReturnTo(final MapInstance parent) {
+        returnTo = parent;
     }
 
     public boolean calamityDoors() {

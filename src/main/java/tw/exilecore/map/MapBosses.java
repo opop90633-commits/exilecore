@@ -1308,7 +1308,7 @@ final class MapBosses {
      * 2026-10-27：腐化區的稀有度（twist.bossRarity）只加稀有度。
      */
     private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
-        if (instance.usesAttempts()) {
+        if (service.flatLoot(instance)) { // 2026-11-04 照站長：照 maps.yml 的 flat_boss_loot（這次之前寫死：終局以上不吃、災厄級吃）
             return tw.exilecore.loot.LootBonus.Bonus.NONE; // 2026-10-16：終局以上（終局、極境、巔峰、金庫之主）的掉落不吃物品數量、稀有度
         }
         return tw.exilecore.loot.LootBonus.of(plugin, player).plus(

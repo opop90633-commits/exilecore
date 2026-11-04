@@ -132,6 +132,9 @@ final class Ultimatum implements Listener {
             this.altar = altar;
         }
 
+        /** 2026-11-04：上次畫場地外圈的 tick。 */
+        long borderTick = -100;
+
         boolean inArena(final Location at) {
             return at.getWorld() == altar.getWorld() && room.contains(at.getBlockX() - instance.originX(), at.getBlockZ() - instance.originZ());
         }
@@ -250,6 +253,10 @@ final class Ultimatum implements Listener {
             return;
         }
         trial.monsters.removeIf(monster -> !monster.isValid() || monster.isDead());
+        if (now - trial.borderTick >= 20) { // 2026-11-04 照站長「絕境的範圍要畫一個外圈」：每秒畫一次場地邊界（離開超過幾秒算失敗）
+            trial.borderTick = now;
+            drawBorder(trial);
+        }
         final List<Player> arena = inArena(trial);
         switch (trial.phase) {
             case PREPARE -> {
@@ -482,17 +489,27 @@ final class Ultimatum implements Listener {
                         player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
                     }
                 }
-                tw.exilecore.skill.Fx.ring(trial.circle.getWorld(), trial.circle.clone().add(0, 0.1, 0), settings.circleRadius(), Particle.END_ROD, null, null, true);
-                tw.exilecore.skill.Fx.spawn(trial.circle.getWorld(), Particle.END_ROD, trial.circle.getX(), trial.circle.getY() + 2.5, trial.circle.getZ(), 4, 0.2, 1.5, 0.2, 0.0);
+                // 2026-11-04 照站長「守圈的光圈換成綠色」：綠色的粉塵（跟 Boss 的紅色警示圈分開）；這次之前白色的終界燭
+                tw.exilecore.skill.Fx.ring(trial.circle.getWorld(), trial.circle.clone().add(0, 0.1, 0), settings.circleRadius(), Particle.DUST, CIRCLE_DUST, null, true);
+                tw.exilecore.skill.Fx.spawn(trial.circle.getWorld(), Particle.DUST, trial.circle.getX(), trial.circle.getY() + 2.5, trial.circle.getZ(), 6, 0.2, 1.5, 0.2, 0.0, CIRCLE_DUST);
+                // 2026-11-04 照站長「守圈站裡面好像沒效果」：只看水平距離（高度差 3 格內都算；這次之前連高度一起算，站在高一點的地板、跳起來會算在圈外），
+                //   邊緣多給 0.5 格寬容；站在圈裡的人動作列寫出累積的秒數（這次之前看不出有沒有算到）
+                final double reach = settings.circleRadius() + 0.5;
                 boolean inside = false;
                 for (final Player player : arena) {
-                    if (player.getLocation().distanceSquared(trial.circle) <= settings.circleRadius() * settings.circleRadius()) {
+                    final Location at = player.getLocation();
+                    final double dx = at.getX() - trial.circle.getX();
+                    final double dz = at.getZ() - trial.circle.getZ();
+                    if (dx * dx + dz * dz <= reach * reach && Math.abs(at.getY() - trial.circle.getY()) <= 3) {
                         inside = true;
-                        break;
                     }
                 }
                 if (inside) {
                     trial.circleTicks += 10;
+                }
+                for (final Player player : arena) {
+                    tw.exilecore.gui.ActionBar.send(player, plugin.text().parse((inside ? "<green>圈裡有人：累積 " : "<yellow>站進綠色光圈：累積 ")
+                            + "<white>" + trial.circleTicks / 20 + "</white>／" + trial.needed / 20 + " 秒"));
                 }
                 if (trial.circleTicks >= trial.needed) {
                     clearRound(trial, now);
@@ -648,16 +665,22 @@ final class Ultimatum implements Listener {
             }
             trial.phase = Phase.FINAL;
             trial.phaseStart = now;
-            for (final Player player : inArena(trial)) {
-                showFinal(trial, player);
-            }
+            // 2026-11-04 照站長「絕境每波打完不要自動開介面」：改成提示到審判之壇按右鍵（右鍵照舊打開這個對話框）；這次之前打完直接跳出來
+            promptAltar(trial, "<#f5b942>全部回合過關", "到審判之壇按右鍵：收手，或挑戰審判者");
             return;
         }
         trial.phase = Phase.DECIDE;
         trial.phaseStart = now;
         offer(trial);
-        for (final Player player : inArena(trial)) {
-            showDecision(trial, player);
+        promptAltar(trial, "<green>第 " + trial.round + " 回合過關", "到審判之壇按右鍵：收手，或續押下一回合"); // 2026-11-04 照站長：不自動開介面
+    }
+
+    /** 2026-11-04：回合過關的提示（大字＋聊天室），不自動開對話框；到審判之壇按右鍵才打開。 */
+    private void promptAltar(final Trial trial, final String title, final String subtitle) {
+        for (final Player player : players(trial.instance)) {
+            player.showTitle(net.kyori.adventure.title.Title.title(plugin.text().parse(title), plugin.text().parse("<gray>" + subtitle),
+                    net.kyori.adventure.title.Title.Times.times(java.time.Duration.ofMillis(200), java.time.Duration.ofMillis(2500), java.time.Duration.ofMillis(500))));
+            player.sendMessage(plugin.text().prefixed(title + "<gray>：" + subtitle + "（累積的獎勵：<white>" + earnedText(trial) + "<gray>）"));
         }
     }
 
@@ -730,10 +753,12 @@ final class Ultimatum implements Listener {
         final MapConfig.MapDef arena = new MapConfig.MapDef(BOSS_KIND, "審判者的試場", null, 0, from.level(), from.theme(), 0, 0, List.of(), false,
                 from.monsters(), boss.boss(), "秤的兩端：你拿走的，和你還欠的。", false, MapLayout.Style.OPEN);
         final double multiplier = settings.finalMultiplier() * settings.bossMultiplier();
-        final MapService.Special special = new MapService.Special(BOSS_KIND, 0xC77DFF, (instance, players) ->
-                cashOut(trial, multiplier, players, "<#f5b942>審判者倒下", "打倒審判者"));
+        final MapService.Special special = new MapService.Special(BOSS_KIND, 0xC77DFF, (instance, players) -> {
+            cashOut(trial, multiplier, players, "<#f5b942>審判者倒下", "打倒審判者");
+            returnToMap(trial, instance); // 2026-11-04 照站長「絕境 Boss 打完後要回去原本的地圖」
+        });
         final MapStats stats = boss.fixedLevel() ? service.eventBossStats(boss, player, 0) : trial.instance.stats(); // 2026-11-04：災厄級固定等級
-        final MapInstance opened = service.openSpecialInstance(player, arena, stats, MapService.UBER_ROOMS, special);
+        final MapInstance opened = service.openChildInstance(player, arena, stats, MapService.UBER_ROOMS, special, trial.instance); // 2026-11-04：原本那張不關，打完送回來
         if (opened == null) {
             final String problem = service.specialProblem();
             player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem == null ? "現在開不了試場，等一下再試" : problem)));
@@ -755,6 +780,59 @@ final class Ultimatum implements Listener {
         broadcast(trial, "<#c77dff>" + ItemRenderer.escape(boss.boss().name()) + "在等你：試場蓋好就把你送過去，打倒牠獎勵 ×" + number(multiplier));
         plugin.getSLF4JLogger().info("地圖 #{}：{} 選了挑戰審判者（試場 #{}）", trial.instance.id(), player.getName(), opened.id());
     }
+
+    /** 2026-11-04 照站長：審判者倒下 5 秒後（撿東西的時間），試場裡的人送回原本那張地圖的審判之壇旁邊。 */
+    private void returnToMap(final Trial trial, final MapInstance arena) {
+        final MapInstance parent = trial.instance;
+        final Location back = trial.altar.clone().add(1.5, 0, 0.5);
+        for (final UUID uuid : java.util.Set.copyOf(arena.inside())) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                player.sendMessage(plugin.text().prefixed("<gray>5 秒後送你回原本的地圖（審判之壇旁邊）"));
+            }
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            for (final UUID uuid : java.util.Set.copyOf(arena.inside())) {
+                final Player player = plugin.getServer().getPlayer(uuid);
+                if (player != null && !player.isDead() && !service.sendBack(player, parent, back)) {
+                    player.sendMessage(plugin.text().prefixed("<gray>原本的地圖已經關閉了，從試場的傳送門出去就好"));
+                }
+            }
+        }, 100L);
+    }
+
+    /** 2026-11-04：場地外圈（金色；離開這圈超過 leave_seconds 秒算失敗）。 */
+    private static final Particle.DustOptions BORDER_DUST = new Particle.DustOptions(org.bukkit.Color.fromRGB(0xF5B942), 1.4f);
+
+    /** 2026-11-04 照站長：沿著場地（審判之壇那個房間）的邊緣每格一點畫一圈。 */
+    private void drawBorder(final Trial trial) {
+        final MapLayout.Room room = trial.room;
+        final org.bukkit.World world = trial.altar.getWorld();
+        final double ox = trial.instance.originX() + room.cx() + 0.5;
+        final double oz = trial.instance.originZ() + room.cz() + 0.5;
+        final double y = MapLayout.FLOOR_Y + 1.15;
+        final double rx = room.halfX() + 0.5;
+        final double rz = room.halfZ() + 0.5;
+        if (room.round()) {
+            final int points = Math.max(24, (int) Math.round(Math.PI * (rx + rz)));
+            for (int i = 0; i < points; i++) {
+                final double angle = Math.PI * 2 * i / points;
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, ox + Math.cos(angle) * rx, y, oz + Math.sin(angle) * rz, 1, 0, 0, 0, 0, BORDER_DUST);
+            }
+            return;
+        }
+        for (double d = -rx; d <= rx; d += 1) {
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, ox + d, y, oz - rz, 1, 0, 0, 0, 0, BORDER_DUST);
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, ox + d, y, oz + rz, 1, 0, 0, 0, 0, BORDER_DUST);
+        }
+        for (double d = -rz + 1; d <= rz - 1; d += 1) {
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, ox - rx, y, oz + d, 1, 0, 0, 0, 0, BORDER_DUST);
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, ox + rx, y, oz + d, 1, 0, 0, 0, 0, BORDER_DUST);
+        }
+    }
+
+    /** 2026-11-04：守圈的光圈（綠色）。 */
+    private static final Particle.DustOptions CIRCLE_DUST = new Particle.DustOptions(org.bukkit.Color.fromRGB(0x55FF55), 1.6f);
 
     /** 審判者的試場：路上不刷怪。 */
     static boolean isBossArena(final MapInstance instance) {
