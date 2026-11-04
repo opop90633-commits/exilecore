@@ -44,7 +44,7 @@ public final class MapHudFeed {
             }
         }
         final int portals = instance.singleEntry() ? -1 : instance.portalsLeft();
-        final String unit = instance.usesAttempts() ? "門" : "次";
+        final String unit = instance.usesDoors() ? "門" : "次";
         int boss = WorldHudProtocol.BOSS_NONE;
         String bossName = "";
         int bossLife = -1;

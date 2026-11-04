@@ -47,13 +47,13 @@ public final class MapSpectators implements Listener {
     /** 死在只能進一次的實例、Boss 還活著：記下來，重生時變成觀戰。 */
     void died(final Player player) {
         final MapInstance instance = service.instanceAt(player.getLocation());
-        if (instance == null || !(instance.singleEntry() || instance.usesAttempts()) || instance.bossKilled()
+        if (instance == null || !(instance.singleEntry() || instance.usesDoors()) || instance.bossKilled()
                 || instance.state() == MapInstance.State.CLOSING) {
             return;
         }
         // 2026-10-17：用「門」算的（終局、萬界…）也觀戰：隊友還在打就在旁邊看，這一門不能再進；
         // 全部倒下這一門才結束，觀戰的回營地、可以走下一門。自己一個人（沒有隊友還活著）直接回營地
-        if (instance.usesAttempts() && !otherChallengerAlive(instance, player)) {
+        if (instance.usesDoors() && !otherChallengerAlive(instance, player)) {
             return;
         }
         final GameMode previous = player.getGameMode() == GameMode.SPECTATOR ? GameMode.SURVIVAL : player.getGameMode();

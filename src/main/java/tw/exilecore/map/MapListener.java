@@ -85,7 +85,7 @@ final class MapListener implements Listener {
             if (!service.belongs(player, instance)) {
                 service.sendToCamp(player);
                 player.sendMessage(plugin.text().prefixed("<gray>你離線的時候那張地圖關閉了，回到營地"));
-            } else if (instance.usesAttempts()) {
+            } else if (instance.usesDoors()) {
                 // 2026-10-17：終局、極境、巔峰、金庫之主：下線算離開這一門（以前重登可以留在裡面、不扣門繼續打）
                 service.sendToCamp(player);
                 player.sendMessage(plugin.text().prefixed("<gray>下線算離開這一門，回到營地（門還亮著就能走進去挑戰下一門）"));

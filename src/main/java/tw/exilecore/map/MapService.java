@@ -1786,7 +1786,7 @@ public final class MapService {
         if (!belongs(player, instance) || !canEnter(player, instance)) {
             return "那張地圖已經關閉了";
         }
-        if (instance.usesAttempts()) {
+        if (instance.usesDoors()) {
             return "這一門你已經出來了：等裡面的人全部倒下（或出來），再走下一門";
         }
         if (instance.singleEntry()) {
@@ -2369,7 +2369,7 @@ public final class MapService {
     private String endgameProblem(final Player player) {
         for (final MapInstance old : instances.values()) {
             if (old.state() != MapInstance.State.CLOSING && old.portalsLeft() > 0 && !old.bossKilled()
-                    && (old.usesAttempts() || old.singleEntry()) && canEnter(player, old)) {
+                    && (old.usesDoors() || old.singleEntry()) && canEnter(player, old)) {
                 return "你" + (plugin.party() != null && plugin.party().groupMembers(player.getUniqueId()).size() > 1 ? "的隊伍" : "")
                         + "的「" + old.label() + "」還沒打完（還剩 " + old.portalsLeft() + " 門）：開新的會把它關掉、碎片或鑰匙就白花了；"
                         + "先打完或等它關閉";
@@ -2518,11 +2518,15 @@ public final class MapService {
                 : AtlasBonus.NONE.plus("atlas.uber_key", mine.get("atlas.uber_key"));
         // 2026-10：終局、極境、巔峰用「門」算（一道門 = 一次挑戰，預設 2 道；巔峰照 maps.yml 的 attempts）
         final boolean heistFinale = special != null && "heist_finale".equals(special.kind()); // 金庫之主也是 2 門
-        final int portals = map.isFinal() && special == null || heistFinale
+        // 2026-11-04 照站長「災厄級一樣用 2 門」：時沉領域、審判者的試場開門就是 2 門；迷霧回廊前 14 波照一般地圖，第 15 波 Boss 出來才換成門（FogTrial）
+        final MapConfig.EventBoss calamity = special == null || FogTrial.KIND.equals(special.kind()) ? null : config.eventBoss(map.id());
+        final boolean calamityDoors = calamity != null && calamity.recommendedDps() > 0;
+        final int portals = map.isFinal() && special == null || heistFinale || calamityDoors
                 ? pendingPinnacle.map(MapConfig.Pinnacle::attempts).orElse(BOSS_ATTEMPTS) : config.settings().portals();
         final MapInstance instance = new MapInstance(nextId++, map, stats.plus(atlas), layout, world, cell, origin[0], origin[1],
                 owner.getUniqueId(), owner.getName(), portals, plugin.getServer().getCurrentTick());
         instance.setSpecial(special);
+        instance.setCalamityDoors(calamityDoors);
         instance.setAtlas(atlas);
         pendingUber.ifPresent(uber -> instance.setUber(uber, uber.merge(map.boss())));
         pendingPinnacle.ifPresent(instance::setPinnacle);
@@ -2555,7 +2559,7 @@ public final class MapService {
             }
             for (final Player member : groupOnline(instance)) {
                 member.sendMessage(plugin.text().prefixed("<green>傳送門開好了：<white>" + ItemRenderer.escape(instance.label())
-                        + "<green>（" + ItemRenderer.escape(instance.ownerName()) + " 開的，" + (instance.usesAttempts()
+                        + "<green>（" + ItemRenderer.escape(instance.ownerName()) + " 開的，" + (instance.usesDoors()
                         ? "共 " + instance.portalsLeft() + " 門，一門一次挑戰" : instance.singleEntry()
                         ? "每個人只能進入 1 次" : "可以進入 " + instance.portalsLeft() + " 次，同一波進去的隊友只算 1 次")
                         + "）<gray>——地圖裝置後面的門亮了，只有你" + (plugin.party() != null && plugin.party().inParty(member) ? "和隊友" : "")
@@ -2709,7 +2713,7 @@ public final class MapService {
         if (instance.state() != MapInstance.State.OPEN || instance.portalsLeft() <= 0) {
             return;
         }
-        if (instance.usesAttempts()) {
+        if (instance.usesDoors()) {
             // 2026-10：門（一門一次挑戰）。這一門進行中：還沒進來過的隊友可以跟進，死了或出去的要等全部倒下再走下一門
             if (instance.attemptActive()) {
                 if (instance.enteredThisAttempt(player.getUniqueId())) {
@@ -2749,7 +2753,7 @@ public final class MapService {
         if (instance.singleEntry()) {
             instance.markUberEntry(player.getUniqueId());
         }
-        if (!instance.usesAttempts() && !instance.usesWaves()) {
+        if (!instance.usesDoors() && !instance.usesWaves()) {
             instance.usePortal(); // 用門、波次算的在結束的時候才扣
         }
         instance.visitors().add(player.getUniqueId());
@@ -2760,7 +2764,7 @@ public final class MapService {
         plugin.players().markDirty(player); // 地圖詞綴（玩家的抗性、回復）
         plugin.players().grace().grant(player); // 入場保護：移動前不會受傷
         player.showTitle(Title.title(plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label())),
-                plugin.text().parse("<gray>怪物等級 " + instance.level() + (instance.usesAttempts() ? "・<#f5b942>第 " + instance.attemptsUsed() + " 門"
+                plugin.text().parse("<gray>怪物等級 " + instance.level() + (instance.usesDoors() ? "・<#f5b942>第 " + instance.attemptsUsed() + " 門"
                         : instance.singleEntry() ? "・<red>只能進來這一次"
                         : "・" + waveText(instance)) + "<dark_gray>・移動前不會受傷"),
                 Title.Times.times(Duration.ofMillis(300), Duration.ofMillis(2200), Duration.ofMillis(600))));
@@ -3170,7 +3174,7 @@ public final class MapService {
                     }
                     if (gate >= Math.min(CampaignStructures.GATE_COUNT, instance.portalsLeft())) {
                         tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>這道門沒有亮：" + ItemRenderer.escape(instance.label())
-                                + (instance.usesAttempts() ? " " + attemptText(instance) : instance.singleEntry() ? " 每個人只能進入 1 次"
+                                + (instance.usesDoors() ? " " + attemptText(instance) : instance.singleEntry() ? " 每個人只能進入 1 次"
                                 : " " + waveText(instance)) + "，走進亮著的門"));
                         continue;
                     }
@@ -3181,7 +3185,7 @@ public final class MapService {
                 if (instance != null && inExitPortal(instance, location)) {
                     // 2026-10：極境、金庫之主走進出口門就直接離開（不再要求蹲下確認）
                     sendToCamp(player);
-                    player.sendMessage(plugin.text().prefixed(instance.usesAttempts()
+                    player.sendMessage(plugin.text().prefixed(instance.usesDoors()
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（這一門不能再回去；裡面的人全部倒下或出來之後可以走下一門）"
                             : instance.singleEntry()
                             ? "<gray>離開了 " + ItemRenderer.escape(instance.label()) + "<dark_gray>（" + singleEntryName(instance) + "每個人只能進一次，不能再回去了）"
@@ -3466,7 +3470,7 @@ public final class MapService {
 
     private Component label(final MapInstance instance) {
         final String state = instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
-                : instance.usesAttempts() ? "<#f5b942>" + attemptText(instance)
+                : instance.usesDoors() ? "<#f5b942>" + attemptText(instance)
                 : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>（死了或離開就不能再進）"
                 : "<green>" + waveText(instance) + "<gray>（亮著的門）";
         return plugin.text().parse("<#9fd3ff>" + ItemRenderer.escape(instance.label()) + "<newline>" + state

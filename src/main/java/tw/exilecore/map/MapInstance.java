@@ -97,6 +97,8 @@ public final class MapInstance {
     /** 2026-10-17：開門花掉的東西怎麼退（蓋地圖失敗、重開伺服器時終局沒打完）；退過一次就清掉。 */
     private Runnable paidRefund;
     private int attemptsUsed;
+    /** 2026-11-04：災厄級的門（{@link #usesDoors()}）。 */
+    private boolean calamityDoors;
     /** 階段護盾：還活著的結晶、什麼時候到期、哪一個護盾（沒有護盾時是空的、null）。 */
     private final Set<UUID> shieldCrystals = new LinkedHashSet<>();
     private long shieldUntilTick;
@@ -488,7 +490,37 @@ public final class MapInstance {
      * 這一波的人全部倒下或出來才扣 1 次。同一波裡死了、回營地再進去，照舊扣 1 次。（欄位跟終局的「門」共用）
      */
     public boolean usesWaves() {
-        return !usesAttempts() && !singleEntry();
+        return !usesDoors() && !singleEntry();
+    }
+
+    /**
+     * 2026-11-04 照站長「災厄級一樣用 2 門」：用「門」算的實例——{@link #usesAttempts()}（終局、極境、巔峰、金庫之主），
+     * 再加上災厄級（時沉領域、審判者的試場開門就算；迷霧回廊從第 15 波 Boss 出來才開始算）。
+     * 只管進出（一門一次挑戰、全部倒下 Boss 回滿、門用完就失敗）；掉落不吃稀有度、每秒傷害上限那些照舊只看 usesAttempts。
+     */
+    public boolean usesDoors() {
+        return usesAttempts() || calamityDoors;
+    }
+
+    public boolean calamityDoors() {
+        return calamityDoors;
+    }
+
+    /** 2026-11-04：災厄級開門時就用門算（時沉領域、審判者的試場）。 */
+    void setCalamityDoors(final boolean value) {
+        calamityDoors = value;
+    }
+
+    /**
+     * 2026-11-04（迷霧回廊）：第 15 波 Boss 出來，改成用門算——剩 doors 道門，現在場地裡的人算第一門已經進來的人。
+     * 之前打小怪的那幾波照一般地圖的次數算。
+     */
+    void startDoors(final int doors, final java.util.Collection<UUID> inside) {
+        calamityDoors = true;
+        portalsLeft = Math.max(1, doors);
+        attemptsUsed = 0;
+        startAttempt();
+        attemptEntered.addAll(inside);
     }
 
     // ---- 終局、極境、巔峰的「門」（2026-10）：一張有 2 道門（巔峰照 maps.yml 的 attempts），一道門 = 一次挑戰 ----

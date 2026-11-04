@@ -240,10 +240,13 @@ final class FogTrial {
         run.target = settings.count(run.wave, playerCount);
         if (settings.bossWave(run.wave)) {
             run.phase = Phase.BOSS; // MapBosses 看到 holdsBoss 變 false 就把 Boss 叫出來（有人在場地附近時）
+            // 2026-11-04 照站長「災厄級一樣用 2 門」：迷霧之主出來之後改成 2 門（現在在裡面的人算第一門；全部倒下 Boss 回滿、走下一門）
+            run.instance.startDoors(MapService.BOSS_ATTEMPTS, run.instance.inside());
             for (final Player player : players(run.instance)) {
                 player.playSound(player.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.6f, 0.7f);
             }
-            broadcast(run.instance, "<#ff5c6a>最後一波：" + ItemRenderer.escape(run.instance.bossDef().name()) + "從霧裡走出來了");
+            broadcast(run.instance, "<#ff5c6a>最後一波：" + ItemRenderer.escape(run.instance.bossDef().name()) + "從霧裡走出來了<gray>（從現在起 "
+                    + MapService.BOSS_ATTEMPTS + " 門：全部倒下 Boss 回滿，走下一門再挑戰）");
             return;
         }
         run.phase = Phase.FIGHT;

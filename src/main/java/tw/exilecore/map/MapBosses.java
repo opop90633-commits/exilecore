@@ -1356,7 +1356,7 @@ final class MapBosses {
             tw.exilecore.clientmod.AlertFeed.clear(plugin, plugin.getServer().getPlayer(uuid), "phase:" + instance.id());
         }
         service.recordFight(instance); // 2026-10-21：/ec bossdps 的統計
-        if (instance.usesAttempts()) {
+        if (instance.usesDoors()) {
             instance.closePortals(); // 2026-10：通關了，門全部關起來（裡面的人照樣可以撿完再出來）
         }
         clearShield(instance, boss);

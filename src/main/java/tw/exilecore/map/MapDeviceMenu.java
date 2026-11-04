@@ -598,7 +598,7 @@ public final class MapDeviceMenu extends Menu {
         final List<String> lore = new ArrayList<>();
         lore.add("<gray>" + ItemRenderer.escape(instance.ownerName()) + " 開的・怪物等級 " + instance.level());
         lore.add(instance.state() == MapInstance.State.BUILDING ? "<yellow>成形中……"
-                : (instance.usesAttempts() ? "<#f5b942>" + MapService.attemptText(instance) + "<gray>"
+                : (instance.usesDoors() ? "<#f5b942>" + MapService.attemptText(instance) + "<gray>"
                 : instance.singleEntry() ? "<red>每個人只能進入 1 次<gray>" : "<gray>" + MapService.waveText(instance))
                         + "・裡面 " + instance.inside().size() + " 人");
         if (instance.bossKilled()) {
@@ -608,12 +608,12 @@ public final class MapDeviceMenu extends Menu {
             lore.add("<#9fd3ff>星圖天賦<gray>（" + ItemRenderer.escape(instance.ownerName()) + " 點的）："
                     + ItemRenderer.escape(MapService.atlasSummary(instance.atlas(), 3)));
         }
-        if (instance.usesAttempts()) {
+        if (instance.usesDoors()) {
             lore.add(instance.attemptActive() && instance.enteredThisAttempt(player.getUniqueId())
                     ? "<red>這一門你已經出來了：等裡面的人全部倒下（或出來）再走下一門"
                     : "<gray>一門一次挑戰：裡面的人全部倒下，下一門 Boss 回滿重來；打倒 Boss 門全部關掉");
         }
-        if (instance.singleEntry() && !instance.usesAttempts()) {
+        if (instance.singleEntry() && !instance.usesDoors()) {
             lore.add(instance.uberEntered(player.getUniqueId()) ? "<red>每個人只能進一次：你已經進去過了"
                     : "<red>每個人只能進一次<dark_gray>（死了或離開就不能再進）");
         }
