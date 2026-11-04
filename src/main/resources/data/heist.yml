@@ -189,7 +189,7 @@ finale:
         message: "「全員，就位。」"
         speed: 0.05            # 2026-10：0.15 → 0.05（不要那麼衝）
         summon: { type: PILLAGER, count: 5 }
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5
         name: 金庫封鎖
         message: "「這裡的門，只進不出。」"

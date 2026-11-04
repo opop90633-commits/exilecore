@@ -132,13 +132,14 @@ flat_boss_loot:
   calamity: true       # 災厄級（迷霧之主、審判者、不朽統帥）
 
 # 2026-10-27 照站長（終局 Boss 難度：單人 3 分半打完要技能面板每秒多少，已算 Boss 元素抗性）：極境、金庫之主、巔峰的生命再乘幾倍
+#   2026-11-04 現況：極境、金庫之主對準每秒 100 萬，巔峰（含事件巔峰）對準每秒 200 萬（10-29 都 ×2 之後）
 #   （照怪物等級表、boss.life、uber.life 算出來的生命之外；0.1–20，沒寫 = 1）。一般終局的各階見 final.tier_life_table。
 #   這次之前沒有這個區塊（只照 final.tier_life 的最高階，×1）：極境 52.7 萬、萬界之巔 106 萬、事件巔峰 108.5～119 萬、
 #   金庫之主（開的人 90 級）62.9 萬。
 boss_life:
   uber: 1.8984   # 2026-10-29 照站長：血量 ×2（這次之前 0.9492）
   heist_finale: 1.8984   # 2026-10-29 照站長：血量 ×2（這次之前 0.9492）；金庫之主比照極境（boss.life 本來就照極境寫）：乘一樣的倍率（90 級 62.9 萬 → 59.7 萬）
-  pinnacle:              # 每隻巔峰各自對準 100 萬（等級加成、boss.life 不一樣）
+  pinnacle:              # 每隻巔峰各自對準每秒 200 萬、單人 3 分半（等級加成、boss.life 不一樣；10-27 對準 100 萬，10-29 照站長血量 ×2）
     awakener: 1.8838   # 2026-10-29 照站長：血量 ×2（這次之前 0.9419）
     shrine_warden: 1.7726   # 2026-10-29 照站長：血量 ×2（這次之前 0.8863）
     strongbox_mimic: 1.6758   # 2026-10-29 照站長：血量 ×2（這次之前 0.8379）
@@ -236,7 +237,7 @@ event_bosses:
         name: 霧更濃了
         message: "「看不見了吧？我看得很清楚。」"
         speed: 0.1
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.4
         name: 無面
         message: "「你在霧裡拿走的每一樣東西，都是從我這裡拿的。」"
@@ -297,7 +298,7 @@ event_bosses:
         name: 第一道秤
         message: "「先秤你的命。」"
         speed: 0.1
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.4
         name: 第二道秤
         message: "「再秤你的貪。」"
@@ -357,7 +358,7 @@ event_bosses:
         name: 第一陣
         message: "「第一陣，上。」"
         speed: 0.1
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.4
         name: 第二陣
         message: "「第二陣——不許退。」"
@@ -820,7 +821,7 @@ final:
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 4 }
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5   # 2026-11-02（這次之前 0.33）
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
@@ -863,7 +864,7 @@ final:
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 5 }
-        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
@@ -948,7 +949,7 @@ finals:
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 4 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5   # 2026-11-02（這次之前 0.33）
           name: 絕對零度
           message: "「全部，停下來。」"
@@ -977,7 +978,7 @@ finals:
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 5 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 絕對零度
           message: "「全部，停下來。」"
@@ -1062,7 +1063,7 @@ finals:
           stats:
             - { stat: damage, type: MORE, value: 45 }
           summon: { type: WITHER_SKELETON, count: 2 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
           name: 萬魂渡河
           message: "「三百年份的魂，全都還給你。」"
@@ -1084,7 +1085,7 @@ finals:
           name: 亡者起身
           message: "「起來，再死一次。」"
           summon: { type: ZOMBIE, count: 6 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 冥河倒灌
           message: "「河水，淹過來！」"
@@ -1170,7 +1171,7 @@ finals:
           stats:
             - { stat: damage, type: MORE, value: 50 }
           summon: { type: BLAZE, count: 3 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
           name: 焚城
           message: "「陛下的命令：曜京，再燒一次。」"
@@ -1192,7 +1193,7 @@ finals:
           name: 餘燼復燃
           message: "「燒起來！」"
           summon: { type: MAGMA_CUBE, count: 5 }
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 焚天
           message: "「天也燒給你看。」"
@@ -1289,7 +1290,7 @@ finals:
           name: 星隕
           message: "「這才剛開始。死亡……在等你。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 萬界崩解
           message: "「看好了——你的世界，是怎麼碎掉的。」"
@@ -1390,7 +1391,7 @@ finals:
           name: 奪取祝福
           message: "「這一座，歸我。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 聖光灼身
           message: "「光太亮了？那就閉上眼。」"
@@ -1465,7 +1466,7 @@ finals:
           name: 千鎖開啟
           message: "「第一把鎖，開了。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 貪婪之心
           message: "「再給我一點。再一點。」"
@@ -1540,7 +1541,7 @@ finals:
           name: 裂隙擴大
           message: "「裂縫，再開大一點。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 穿界
           message: "「這一邊的空氣……真難聞。」"
@@ -1616,7 +1617,7 @@ finals:
           name: 流寇圍觀
           message: "「別插手，這是我的決鬥。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 認真了
           message: "「不錯。那我也認真一點。」"
@@ -1691,7 +1692,7 @@ finals:
           name: 第一座祭壇
           message: "「第一座祭壇，點燃。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 第二座祭壇
           message: "「血還不夠。再多一點。」"
@@ -1766,7 +1767,7 @@ finals:
           name: 霧更濃了
           message: "「看不見了吧？我看得很清楚。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 妄念
           message: "「你以為那是真的？」"
@@ -1841,7 +1842,7 @@ finals:
           name: 骨潮漲起
           message: "「潮，漲了。」"
           speed: 0.1
-          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+          mechanic: { type: opening, heal: 15 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 淵底
           message: "「再下去一點。這裡還不是底。」"

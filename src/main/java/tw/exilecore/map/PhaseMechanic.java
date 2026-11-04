@@ -132,7 +132,7 @@ public final class PhaseMechanic {
      * 破綻（2026-11-04）。
      *
      * @param duration  幾秒內要剝完
-     * @param heal      沒剝完時 Boss 回幾 % 最大生命（照站長：30～45%）
+     * @param heal      沒剝完時 Boss 回幾 % 最大生命（2026-11-04 照站長：15%；這次之前 30～45%）
      * @param share     整個鎖要打掉這個階段血量（這個門檻到下一個門檻）的幾成
      * @param layers    幾層（一個破綻最多剝一層；2E 一下的人也要躲滿 layers 招）
      * @param window    破綻幾秒
@@ -223,8 +223,11 @@ public final class PhaseMechanic {
     static final double OPENING_DURATION = 30;
 
     static Opening defaultOpening(final double heal) {
-        return new Opening(OPENING_DURATION, heal, 0.3, 3, 3, 12, 1.5);
+        return new Opening(OPENING_DURATION, OPENING_HEAL, 0.3, 3, 3, 12, 1.5); // 2026-11-04 照站長「破綻沒解除改成回 15% 生命」；這次之前照 heal（各 Boss 30～45%）
     }
+
+    /** 2026-11-04 照站長：破綻沒剝完 Boss 回 15% 生命（yml 寫了 heal 照寫的）；這次之前照各 Boss 的 30～45%。 */
+    static final double OPENING_HEAL = 15;
 
     static Opening parseOpening(final YamlNode node, final double heal) {
         final Opening d = defaultOpening(heal);

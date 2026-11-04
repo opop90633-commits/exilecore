@@ -110,7 +110,7 @@ class PhaseMechanicDataTest {
                     entry.label() + "：站位圈、倒數大招、元素弱點拿掉");
             for (final PhaseMechanic.Spec spec : specs) {
                 if (spec != null && spec.kind() == PhaseMechanic.Kind.OPENING) {
-                    assertTrue(spec.heal() >= 30 && spec.heal() <= 45, entry.label() + "：懲罰回血 30～45%，實際 " + spec.heal());
+                    assertEquals(15, spec.heal(), 1e-9, entry.label() + "：破綻沒剝完回 15%（2026-11-04 照站長；這次之前 30～45%），實際 " + spec.heal());
                 }
             }
         }

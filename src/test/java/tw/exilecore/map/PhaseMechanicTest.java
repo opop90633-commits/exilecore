@@ -60,14 +60,14 @@ class PhaseMechanicTest {
         final List<PhaseMechanic.Spec> plain = PhaseMechanic.resolve("k", List.of(phase(0.6, null, null), phase(0.3, SHIELD, null)), false, false);
         assertNull(plain.get(0));
         assertEquals(PhaseMechanic.Kind.CRYSTAL, plain.get(1).kind());
-        // 終局以上什麼都沒寫：只有第一個階段配破綻（回血照預設 30%、30 秒、3 層），其他不鎖
+        // 終局以上什麼都沒寫：只有第一個階段配破綻（回血 15%、30 秒、3 層），其他不鎖
         final List<MapConfig.Phase> only = List.of(phase(0.5, null, null), phase(0.25, null, null), phase(0.1, null, null));
         final List<PhaseMechanic.Spec> auto = PhaseMechanic.resolve("k", only, true, true);
         assertEquals(PhaseMechanic.Kind.OPENING, auto.get(0).kind());
         assertNull(auto.get(1));
         assertNull(auto.get(2));
         assertEquals(PhaseMechanic.OPENING_DURATION, auto.get(0).seconds(), 1e-9);
-        assertEquals(PhaseMechanic.DEFAULT_HEAL, auto.get(0).heal(), 1e-9);
+        assertEquals(PhaseMechanic.OPENING_HEAL, auto.get(0).heal(), 1e-9); // 2026-11-04 照站長：破綻沒剝完回 15%；這次之前照 DEFAULT_HEAL（30%）
         assertEquals(3, auto.get(0).opening().layers());
         assertFalse(auto.get(0).invulnerable(), "破綻：Boss 不無敵、照常出招");
         // 寫了 shield 的階段還是結晶（寫死的照寫），沒寫的就不再配

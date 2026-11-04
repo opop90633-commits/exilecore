@@ -651,7 +651,7 @@ whale:
   # 2026-11-02 照站長：每 25% 鎖一次血：潮核（shield）、沒寫的照預設輪流、mechanic 寫死的（寫法同 maps.yml 的 phases.mechanic）。
   #   這次之前 0.66、0.33 兩個階段都是潮核
   phases:
-    - { at: 0.75, name: 深潛, message: "（淵鯨潛了下去，海面浮出幾顆發光的潮核）", damage: 30, mechanic: { type: opening, heal: 30 } }   # 2026-11-04 照站長「一起換」：鎖血改成破綻；這次之前 shield: { count: 3, name: 潮核, life: 5, duration: 30, heal: 25 }
+    - { at: 0.75, name: 深潛, message: "（淵鯨潛了下去，海面浮出幾顆發光的潮核）", damage: 30, mechanic: { type: opening, heal: 15 } }   # 2026-11-04 照站長「一起換」：鎖血改成破綻；這次之前 shield: { count: 3, name: 潮核, life: 5, duration: 30, heal: 25 }
     - { at: 0.5, name: 暗流, message: "（海面下的暗流湧了上來）", damage: 30 }
     - { at: 0.25, name: 怒濤, message: "（淵鯨發狂了，整片海翻了過來）", damage: 40, mechanic: none }   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 mechanic: { type: countdown, name: 怒濤, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02：換成倒數大招；這次之前 shield: { count: 3, name: 潮核, life: 6, duration: 25, heal: 35 }
   drops:
