@@ -329,6 +329,9 @@ public final class TreeMechanics implements Listener {
                 && !tw.exilecore.ascendancy.AscendancyEffects.archonHeld(player)) { // 2026-10-26：昇華・沸騰軀體（高煉獄之炎）例外
             loseArchon(player, state, sheet, now); // 使用攻擊：元素統治者消失
         }
+        if (manaCost > 0 && plugin.flasks() != null) {
+            plugin.flasks().manaSpent(player, manaCost); // 2026-11-04（融解漩渦）：效果期間照消耗的魔力打周圍
+        }
         if (manaCost > 0) {
             if (StatKeys.flag(sheet, TreeNewMechanicKeys.ARCHON_ELEMENTAL_ON_MANA) && ps.maxMana() > 0) {
                 state.manaSpent += manaCost;

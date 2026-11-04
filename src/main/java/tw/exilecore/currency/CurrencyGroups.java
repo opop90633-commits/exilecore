@@ -26,6 +26,9 @@ public final class CurrencyGroups {
         // 2026-10-26 照 PoE2：符文 13 個家族 × 4 階，一頁放不下，分兩組（次級與普通、高階與完美）
         RUNES("符文", "嵌進武器、防具的符文孔：次級與普通"),
         RUNES_HIGH("高階符文", "嵌進武器、防具的符文孔：高階與完美"),
+        // 2026-11-04 照站長：魂核符文 15 顆（地圖絕境給）、魔偶符文 31 顆（地圖軍團給）各一組（一頁 36 格，跟一般符文放不下）
+        CORES("魂核符文", "嵌進符文孔：只有軍用武器與某些防具部位有效果，有的僅限 1 顆（地圖絕境給）"),
+        IDOLS("魔偶符文", "嵌進符文孔：每顆只在某個部位與權杖有效果，一個角色僅限 1 顆（地圖軍團給）"),
         // 2026-10-18；2026-10-21 加先驅石板；2026-10-26 加劫盜、活動的素材（一般通貨那組加了高階／完美通貨放不下）
         KEYS("門票・劫盜・活動", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券、插在星圖塔上的先驅石板，還有劫盜與活動的素材"),
         CARDS("星諭卡", "集滿一套換獎勵；右鍵兌換一套、Shift＋右鍵全部兌換、Q 花金幣賭卡"); // 2026-10-19
@@ -164,7 +167,9 @@ public final class CurrencyGroups {
             case ESSENCE -> essenceGroup(type);
             case OMEN -> Group.OMEN;
             case CATALYST, INSTIL -> Group.MECHANIC;
-            case RUNE -> type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))
+            case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
+                    : type.affix() != null && type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX) ? Group.CORES
+                    : type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))
                     ? Group.RUNES_HIGH : Group.RUNES; // 2026-10-26：符文自己兩組（照階級）
             default -> Group.BASIC;
         };

@@ -52,9 +52,13 @@ class UniqueDataTest {
             Tags.BOW, Tags.CROSSBOW, Tags.QUARTERSTAFF, Tags.SPEAR, Tags.ONE_HAND, Tags.TWO_HAND);
 
     /** 原作就不到三條詞綴的傳奇（2026-10-26 天樞墜、巨像之心；2026-10-27 映鏡指環、孀雨粗弓、濁源指環）：最少幾條。 */
-    static final Map<String, Integer> FEW_LINES = Map.of("celestial_pivot", 2, "colossus_heart", 2, "mirror_touch_ring", 1,
-            "widowsong_bow", 1, "tainted_origin_ring", 2,
-            "lavian_spring", 2); // 2026-10-30：拉維安加之泉原作兩條
+    static final Map<String, Integer> FEW_LINES = Map.ofEntries(Map.entry("celestial_pivot", 2), Map.entry("colossus_heart", 2),
+            Map.entry("mirror_touch_ring", 1), Map.entry("widowsong_bow", 1), Map.entry("tainted_origin_ring", 2),
+            Map.entry("lavian_spring", 2), // 2026-10-30：拉維安加之泉原作兩條
+            // 2026-11-04：事件 Boss 的——瑪哈薩多的陰謀、不敗亡者原作的其他條我們做不出來（賦予技能、永恆奉獻、隨機插槽詞綴）；
+            //   朝氣之靈、妄想症、嗓音、信仰稜鏡、掙扎吶喊原作就只有一兩條
+            Map.entry("mahuxotl_machination", 2), Map.entry("vitality_spirit", 1), Map.entry("morior_invictus", 1),
+            Map.entry("megalomaniac_jewel", 1), Map.entry("voices_jewel", 1), Map.entry("prism_of_belief", 1), Map.entry("strugglescream_amulet", 2));
 
     /** 2026-10-28 照 PoE2：禁止掉落（poe2db「禁止掉落」：Infernoclasp、Thunderstep、Forbidden Gaze）。 */
     static final Set<String> DISABLED = Set.of("flameclasp_belt", "thunderdash_boots", "veiled_tiara");
@@ -106,6 +110,7 @@ class UniqueDataTest {
         // 2026-10-27 照 PoE2：藥劑生命／魔力回復速率（Flask Life/Mana Recovery rate；FlaskService.flaskRate 讀）
         stats.add(tw.exilecore.stats.KeystoneKeys.FLASK_LIFE_RATE);
         stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
+        stats.add(tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT); // 2026-11-04（唯我論）：裝備與寶石的屬性需求（PlayerStateService 第一輪的表就有裝備）
         for (final String skill : List.of("rotting_corpse_blast", "wilting_breath", "thunder_drop", "roaming_thunder", "blink",
                 "rebirth_ceremony")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
@@ -123,6 +128,7 @@ class UniqueDataTest {
         maps = new HashSet<>(mapsYml.node("maps").keys());
         maps.addAll(mapsYml.node("finals").keys()); // 其他終局 Boss 各自的傳奇寫終局的代號
         maps.add(mapsYml.node("final").string("id", "sky_crucible")); // 極境的傳奇寫 uber_終局代號（含主要的終局）
+        maps.addAll(mapsYml.node("event_bosses").keys()); // 2026-11-04：事件 Boss（迷霧之主、審判者、不朽統帥）的專屬傳奇
     }
 
     private static Set<String> constants(final Class<?> type) throws IllegalAccessException {
@@ -140,7 +146,7 @@ class UniqueDataTest {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
         // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
-        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1, repository.uniques().size(), // 2026-11-03：＋明誓聖幕
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 8 + 5, repository.uniques().size(), // 2026-11-04：＋8 件事件 Boss 的傳奇（試煉大師 4、科西斯 1、灰燼仲裁者 3），再＋融解漩渦、妄想症、掙扎吶喊、嗓音、信仰稜鏡；2026-11-03：＋明誓聖幕
                 // 2026-11-03：＋攫命之環（Evergrasping Ring）；2026-11-01：＋獻祭之心（Rathpith Globe）；2026-10-31：＋忠誠之錘（Chober Chaber）；2026-10-30：＋烏勒爾之骨（Bones of Ullr）；2026-10-30：＋拉維安加之泉（Lavianga's Spirits）；2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
                 // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
                 "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");
@@ -205,8 +211,15 @@ class UniqueDataTest {
         // 2026-10-26：英雄悲劇改成固定 1%（drop_chance），不在 final 的權重池裡，改由 fixedChanceUniques 擲
         // 2026-10-28 照 PoE2：＋原作限定 Boss 掉、我們沒有那個內容的（試煉大師的憎鑄腿鎧、阿茲里寶庫的穿雲箭袋與阿茲里的輕視、
         //   灰燼仲裁者的神聖烈焰）；天樞墜、隕砧、蛛巢壁壘原作沒有限定，另外也是全域掉落
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "spiteforge_greaves", "tailwind_quiver",
-                "hallowed_fire", "empress_sneer"), finals);
+        // 2026-11-04 照站長：憎鑄腿鎧（試煉大師）→ 絕境的審判者 ultimatum、聖火（灰燼仲裁者）→ 不朽統帥 legion，不在 final 了
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "tailwind_quiver", "empress_sneer"), finals);
+        assertEquals(Set.of("glimpse_of_chaos", "zerphi_genesis", "mahuxotl_machination", "spiteforge_greaves", "vitality_spirit"),
+                ids(repository.uniquesFor("ultimatum", 94)), "審判者：試煉大師的五件");
+        assertEquals(Set.of("hallowed_fire", "peerless", "solus_ipse_helm", "ab_aeterno_boots", "morior_invictus", "prism_of_belief"),
+                ids(repository.uniquesFor("legion", 94)), "不朽統帥：燃燒豐碑（灰燼仲裁者）的");
+        assertEquals(Set.of("voidgaze_helm", "fallen_horizon", "perfidy_armour", "melting_maelstrom", "megalomaniac_jewel", "strugglescream_amulet",
+                "voices_jewel"), ids(repository.uniquesFor("fog_trial", 94)), "迷霧之主：科西斯、譫妄異域的");
+        assertEquals(Set.of("fog_trial"), Set.copyOf(repository.unique("voidgaze_helm").sources()), "照站長：只在迷霧之主掉");
         assertEquals(Set.of("frost_elegy_jewel"), ids(repository.fixedChanceUniques("final", 84)));
         assertEquals(Set.of("abyss_grudge_jewel", "binder_grasp"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）
         assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("abyss_grudge_jewel"));
@@ -251,7 +264,8 @@ class UniqueDataTest {
         }
         // 每種地圖事件各五件（2026-10 擴充兩次，各多兩件；2026-10-18 深淵裂縫也五件）；每個極境各一件，而且物品等級 80 起
         for (final String event : EVENT_SOURCES) {
-            assertEquals(5, repository.uniquesFor(event, 84).size(), event + " 的專屬傳奇");
+            // 2026-11-04 照站長：虛望之盔（原作科西斯掉）從裂隙移到迷霧之主，裂隙剩四件
+            assertEquals("breach".equals(event) ? 4 : 5, repository.uniquesFor(event, 84).size(), event + " 的專屬傳奇");
             assertTrue(repository.uniquesFor(event, 59).isEmpty(), event + "：物品等級 60 起");
         }
         for (final String finalId : List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel")) {
@@ -260,7 +274,7 @@ class UniqueDataTest {
         }
         // 2026-10：巔峰 Boss（覺醒之主・虛星）自己的十件，物品等級 85 起；做不出來、賭不到、一般地圖 Boss 不掉
         final List<UniqueItem> awakener = repository.uniquesFor("awakener", 92);
-        assertEquals(12, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛；2026-10-28：＋舉世無雙，原作灰燼仲裁者掉）");
+        assertEquals(11, awakener.size(), "虛星的專屬傳奇（2026-10-15：＋神諭之矛；2026-10-28：＋舉世無雙，原作灰燼仲裁者掉；2026-11-04：舉世無雙移到不朽統帥）");
         assertTrue(repository.uniquesFor("awakener", 84).isEmpty(), "虛星的傳奇物品等級 85 起");
         for (final UniqueItem unique : awakener) {
             // 2026-10-28 照 PoE2：瞬閃之影（Hyrri's Ire）、神諭之矛（The Ordained）原作沒有掉落限制，另外也是全域掉落

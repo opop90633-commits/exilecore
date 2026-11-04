@@ -1591,6 +1591,126 @@ supports:
       - { stat: freeze.buildup, type: MORE, value: 30 }
     notes: ["淵底之王・骨潮（骨潮深坑）掉落"]
 
+  # ---- 2026-11-04 照站長「絕境、迷霧、軍團的 Boss 新增一些獨特的技能與輔助」（自己設計的主題寶石）：三隻事件 Boss 各三顆（只有那隻 Boss 會掉；跟終局專屬輔助一樣第 3 階）----
+  balanced_verdict:
+    name: 衡平
+    description: 天秤兩端一樣重：被輔助的技能對傳奇與稀有的敵人更痛。
+    icon: GOLD_INGOT
+    tier: 3
+    source: ultimatum
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage.vs_unique, type: MORE, value: 25 }
+      - { stat: damage.vs_rare, type: MORE, value: 25 }
+    notes: ["審判者・衡（審判者的試場）掉落"]
+
+  sentence_stun:
+    name: 宣判
+    description: 一錘定案：被輔助的技能暈眩累積更多，打暈眩中的敵人更痛。
+    icon: IRON_NUGGET
+    tier: 3
+    source: ultimatum
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: stun.buildup, type: MORE, value: 40 }
+      - { stat: damage.vs_stunned, type: MORE, value: 30 }
+    notes: ["審判者・衡（審判者的試場）掉落"]
+
+  heavier_sentence:
+    name: 罪加一等
+    description: 有罪的人罰得更重：被輔助的技能對被詛咒的敵人更痛很多。
+    icon: BLAZE_POWDER
+    tier: 3
+    source: ultimatum
+    requires: [attack, spell]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: damage.vs_cursed, type: MORE, value: 35 }
+    notes: ["審判者・衡（審判者的試場）掉落"]
+
+  faceless_blind:
+    name: 無面
+    description: 霧裡看不見臉：被輔助的技能擊中時有 40% 機率致盲，暴擊率增加。
+    icon: FLINT
+    tier: 3
+    source: fog_trial
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: blind.chance, type: FLAT, value: 40 }
+      - { stat: crit.chance, type: INCREASED, value: 40 }
+    notes: ["迷霧之主・無面（迷霧回廊第 15 波）掉落"]
+
+  oblivion_chaos:
+    name: 遺忘
+    description: 霧把一切都抹成混沌：被輔助的技能獲得 25% 傷害為額外混沌傷害；火焰、冰冷、閃電傷害更少 40%。
+    icon: ECHO_SHARD
+    tier: 3
+    source: fog_trial
+    requires: [attack, spell]
+    excludes: [aura, warcry, herald]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: damage.gain.chaos, type: FLAT, value: 25 }
+      - { stat: damage, type: MORE, value: -40, tags: [fire] }
+      - { stat: damage, type: MORE, value: -40, tags: [cold] }
+      - { stat: damage, type: MORE, value: -40, tags: [lightning] }
+    notes: ["迷霧之主・無面（迷霧回廊第 15 波）掉落"]
+
+  mist_spread:
+    name: 霧散
+    description: 霧往四面八方散開：被輔助的技能範圍增加很多，傷害少一點。
+    icon: SUGAR
+    tier: 3
+    source: fog_trial
+    requires: [area]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: skill.area, type: INCREASED, value: 45 }
+      - { stat: damage, type: MORE, value: -10 }
+    notes: ["迷霧之主・無面（迷霧回廊第 15 波）掉落"]
+
+  time_stilled:
+    name: 時沉
+    description: 把時間凍住：被輔助的技能凍結累積更多，打凍結的敵人更痛。
+    icon: DIAMOND
+    tier: 3
+    source: legion
+    requires: [attack, spell]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: freeze.buildup, type: MORE, value: 40 }
+      - { stat: damage.vs_frozen, type: MORE, value: 20 }
+    notes: ["不朽統帥・磐（時沉領域）掉落"]
+
+  phalanx_maim:
+    name: 方陣
+    description: 盾牆壓上去：被輔助的攻擊擊中時有 30% 機率癱瘓，並破甲。
+    icon: IRON_INGOT
+    tier: 3
+    source: legion
+    requires: [attack]
+    mana_multiplier: 1.25
+    modifiers:
+      - { stat: maim.chance, type: FLAT, value: 30 }
+      - { stat: armour.break, type: FLAT, value: 25 }
+    notes: ["不朽統帥・磐（時沉領域）掉落"]
+
+  war_horn:
+    name: 號角
+    description: 號角吹響、全軍壓上：被輔助的攻擊攻擊速度增加，暴擊率增加。
+    icon: RABBIT_FOOT
+    tier: 3
+    source: legion
+    requires: [attack]
+    mana_multiplier: 1.3
+    modifiers:
+      - { stat: attack.speed, type: INCREASED, value: 15 }
+      - { stat: crit.chance, type: INCREASED, value: 30 }
+    notes: ["不朽統帥・磐（時沉領域）掉落"]
+
   # ---- 2026-10：PoE2 輔助補齊・第 1 批（30 個；機制照 PoE2，名稱是自己的。我們做不到的條件用近似值）----
   ember_marrow:            # Fire Mastery
     name: 燼髓
@@ -2126,17 +2246,35 @@ supports:
     modifiers:
       - { stat: damage.back_to_wall, type: FLAT, value: 40 }
 
-  element_blade:      # Elemental Armament
-    name: 元刃
-    description: 被輔助的攻擊造成的元素傷害更多。
+  element_blade:      # Elemental Armament II（代號照舊，舊存檔不用換）
+    name: 元刃 II
+    description: 被輔助的攻擊造成的元素傷害更多 25%。
     icon: PRISMARINE_CRYSTALS
-    tier: 1
+    tier: 2
     requires: [attack]
     # 2026-10-29 照 PoE2 的 Minion Types：召喚技能的召喚物技能符合時也能掛，效果給召喚物（MinionTypes）；這次之前 excludes 有 minion
     mana_multiplier: 1.2
+    # 2026-11-04 照站長「要根據原作去處理」＋「I II III 只留最高的」：升成 Elemental Armament II（PoB2：第 2 階、元素攻擊傷害更多 25%）；
+    #   這次之前是 I（tier 1、更多 20%）。III 是另一種機制（每種異常更多 12%、不能造成元素異常），另外一顆 element_blade_iii
     # 2026-10-26 照 PoE2 Elemental Armament I（poe2db）；這次之前 tier 2、魔耗 1.15、效果不動
     modifiers:
-      - { stat: damage, type: MORE, value: 20, tags: [elemental] }
+      - { stat: damage, type: MORE, value: 25, tags: [elemental] }
+
+  element_blade_iii:  # Elemental Armament III
+    name: 元刃 III
+    description: 被輔助的攻擊擊中的敵人身上每有一種元素異常（點燃、冰緩、凍結、感電、電擊），這一下傷害更多 12%；但被輔助的技能自己不能造成元素異常。
+    icon: PRISMARINE_CRYSTALS
+    tier: 3
+    requires: [attack]
+    mana_multiplier: 1.2
+    # 2026-11-04 照站長「要根據原作去處理」：PoB2 Elemental Armament III（第 5 階；support_elemental_armament_attack_damage_+%_final_per_elemental_ailment_on_target 12）
+    modifiers:
+      - { stat: damage.vs_ignited, type: MORE, value: 12 }
+      - { stat: damage.vs_chilled, type: MORE, value: 12 }
+      - { stat: damage.vs_frozen, type: MORE, value: 12 }
+      - { stat: damage.vs_shocked, type: MORE, value: 12 }
+      - { stat: damage.vs_electrocuted, type: MORE, value: 12 }
+      - { stat: flag.no_elemental_ailments, type: FLAT, value: 1 }
 
   element_surge:          # Rising Tempest（每種近期用過的元素技能 12%，用一種算）
     name: 元湧
@@ -3026,14 +3164,14 @@ supports:
   # ---- 2026-10：冰晶（霜壁、凍壁矢、寒晶雷留下的冰晶；照 PoE2）----
   thick_crystal:                 # Glacier
     name: 厚晶
-    description: 被輔助的技能留下的冰晶更硬，要多打幾下才碎。
+    description: 被輔助的技能留下的冰晶最大生命增加 100%（照打幾下算的冰晶：要打的下數增加 100%）。
     icon: PRISMARINE_CRYSTALS   # 2026-10：原本 BLUE_ICE（原版右鍵有動作：放方塊、穿戴、吃、使用…會干擾施放）
     tier: 2
     requires: [crystal]
     mana_multiplier: 1.0
     # 2026-10-27 照 PoE2 Glacier（第 2 階；poe2db／RePoE）；這次之前 tier 1、魔耗 1.05
     modifiers:
-      - { stat: crystal.hits, type: FLAT, value: 3 }
+      - { stat: crystal.hits, type: INCREASED, value: 100 }   # 2026-11-04 照 PoE2 Glacier（被輔助技能生成的冰晶，生命增加 100%；跟霜壁品質的增加相加）；這次之前 FLAT +3（3 下 → 6 下，一樣是 ×2，但跟品質相乘）
 
   brittle_crystal:                  # Icicle
     name: 脆晶
@@ -3837,6 +3975,19 @@ supports:
     # 2026-10-27 照 PoE2 Jagged Ground I（第 2 階；poe2db／RePoE）核對過：階級、魔耗、效果跟原作一樣或已是平衡等效，不用改
     modifiers:
       - { stat: charge.sup.shattered_earth, type: FLAT, value: 4 }
+
+  shattered_earth_ii:        # Jagged Ground II
+    name: 碎地 II
+    description: 被輔助的猛擊造成的餘震一定在落點留下 4 秒的碎石地（裡面的敵人減速 20%）。
+    icon: FLINT
+    tier: 3
+    requires: [slam]
+    excludes: [minion]
+    mana_multiplier: 1.2
+    # 2026-11-04 照站長「要根據原作去處理」：PoB2 Jagged Ground II（第 5 階；support_jagged_ground_base_duration_ms 4000：餘震一定留碎石地；
+    #   不吃耐力球）。碎地 I 是另一種機制（放的時候用掉一顆耐力球留碎石地），兩顆都留
+    modifiers:
+      - { stat: jagged.aftershock_seconds, type: FLAT, value: 4 }
 
   spread_cold:          # Creeping Chill
     name: 蔓寒

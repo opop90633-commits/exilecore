@@ -406,8 +406,13 @@ public final class CodexMenu extends Menu {
                     final ItemBase chosen = plugin.items().repository().base(base);
                     set(SLOT_BACK, backButton("基底列表"));
                     if (chosen != null) {
-                        set(SLOT_INFO, glowing(codexBaseIcon(chosen, "<white>" + ItemRenderer.escape(chosen.name()),
-                                "<gray>" + slotName(chosen.slot()) + "・" + tagText(chosen))));
+                        final List<String> info = new ArrayList<>();
+                        info.add("<gray>" + slotName(chosen.slot()) + "・" + tagText(chosen));
+                        info.addAll(weaponLines(chosen)); // 2026-11-04 照站長：武器數值、賦予的技能
+                        if (chosen.implicit() != null && chosen.implicit().text() != null) {
+                            info.add("<#a0a0ff>" + chosen.implicit().rangeText() + " <dark_gray>(固定)");
+                        }
+                        set(SLOT_INFO, glowing(codexBaseIcon(chosen, "<white>" + ItemRenderer.escape(chosen.name()), info.toArray(String[]::new))));
                     }
                 }
             }
@@ -712,6 +717,12 @@ public final class CodexMenu extends Menu {
                 return "淵鯨";
             case "world_boss":
                 return "世界 Boss";
+            case "fog_trial": // 2026-11-04：事件 Boss（這次之前寫成「fog_trial的 Boss」）
+                return "迷霧回廊的迷霧之主・無面";
+            case "ultimatum":
+                return "審判者的試場的審判者・衡";
+            case "legion":
+                return "時沉領域的不朽統帥・磐";
             case "lineage": // 2026-10-27 照 PoE2：血脈輔助寶石（supports_lineage.yml 的 drops）
                 return "血脈：地圖怪物（約 50 萬隻一顆）、地圖 Boss";
             case "lineage_rare":
@@ -970,6 +981,7 @@ public final class CodexMenu extends Menu {
             }
             final List<String> baseLore = new ArrayList<>();
             baseLore.add("<gray>" + slotName(each.slot()) + "・" + tagText(each));
+            baseLore.addAll(weaponLines(each)); // 2026-11-04 照站長：武器的傷害、暴擊、攻速；法杖、長杖、權杖賦予的技能
             if (each.implicit() != null && each.implicit().text() != null) { // 2026-10-31：白裝就有的固定詞綴
                 baseLore.add("<#a0a0ff>" + each.implicit().rangeText() + " <dark_gray>(固定)");
             }
@@ -998,6 +1010,40 @@ public final class CodexMenu extends Menu {
                             .customColor(org.bukkit.Color.fromRGB(each.hasTag("mana_flask") ? 0x2F6BFF : 0xD7263D)).build());
         }
         return stack;
+    }
+
+    /**
+     * 2026-11-04 照站長「圖鑑詞綴的法杖、長杖、權杖沒有顯示她有的技能；其他武器基底要顯示物理傷害、暴擊率、攻速、固定詞綴」：
+     * 武器基底的白裝數值（基礎傷害、暴擊率、每秒攻擊）與賦予的技能（法杖、長杖、權杖、矛…）。這次之前只列種類與固定詞綴。
+     */
+    private List<String> weaponLines(final ItemBase each) {
+        final List<String> lines = new ArrayList<>();
+        if (!each.isWeapon() && !each.isShield()) {
+            return lines;
+        }
+        for (final java.util.Map.Entry<tw.exilecore.stats.DamageType, int[]> entry : each.damage().entrySet()) {
+            final int[] range = entry.getValue();
+            if (range != null && range.length >= 2 && range[1] > 0) {
+                lines.add("<white>" + entry.getKey().displayName() + "傷害 " + range[0] + "–" + range[1]);
+            }
+        }
+        if (each.isWeapon() && !each.damage().isEmpty()) {
+            lines.add("<white>暴擊率 " + trim(each.crit()) + "%<gray>・<white>每秒攻擊 " + trim(each.aps()) + " 次");
+        }
+        final String granted = plugin.items().repository().grantedSkill(each.id());
+        if (granted != null && plugin.skills() != null) {
+            for (final String id : granted.split("[,，\\s]+")) {
+                final tw.exilecore.skill.SkillDefinition skill = id.isBlank() ? null : plugin.skills().config().skill(id.trim());
+                if (skill != null) {
+                    lines.add("<#c9a7ff>賦予技能：" + ItemRenderer.escape(skill.name()));
+                }
+            }
+        }
+        return lines;
+    }
+
+    private static String trim(final double value) {
+        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(Math.round(value * 100) / 100.0);
     }
 
     /** 基底的種類（看得懂的標籤）。 */

@@ -109,8 +109,8 @@ class UniqueRecipeTest {
         final UniqueRecipe.Settings greedy = new UniqueRecipe.Settings(true, 3,
                 List.of("chase", "uber_sky_crucible", "uber_bone_throne", "final"), true);
         final Set<String> got = ids(UniqueRecipe.outcomes(items.uniques(), greedy, List.of(), 100));
-        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "spiteforge_greaves", "tailwind_quiver", "hallowed_fire",
-                "empress_sneer"), got, "寫了 chase、uber_… 也不會換到；final 寫了就會（2026-10-15：＋蛛巢壁壘；2026-10-26：恆時珠寶英雄末路是 Boss 固定 1% 掉，換不到；2026-10-28 照 PoE2：＋原作 Boss 限定、我們放終局 Boss 的四件）");
+        assertEquals(Set.of("celestial_pivot", "meteor_anvil", "spider_bulwark", "tailwind_quiver",
+                "empress_sneer"), got, "2026-11-04：憎鑄腿鎧、聖火移到事件 Boss；寫了 chase、uber_… 也不會換到；final 寫了就會（2026-10-15：＋蛛巢壁壘；2026-10-26：恆時珠寶英雄末路是 Boss 固定 1% 掉，換不到；2026-10-28 照 PoE2：＋原作 Boss 限定、我們放終局 Boss 的四件）");
     }
 
     @Test

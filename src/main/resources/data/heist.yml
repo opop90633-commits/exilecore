@@ -189,7 +189,7 @@ finale:
         message: "「全員，就位。」"
         speed: 0.05            # 2026-10：0.15 → 0.05（不要那麼衝）
         summon: { type: PILLAGER, count: 5 }
-        shield: { count: 4, type: VINDICATOR, name: 金庫守衛, life: 5, duration: 30, heal: 30 }
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5
         name: 金庫封鎖
         message: "「這裡的門，只進不出。」"
@@ -202,7 +202,7 @@ finale:
         speed: 0.05            # 2026-10：0.2 → 0.05（不要那麼衝）
         stats:
           - { stat: damage, type: MORE, value: 30 }   # 2026-10：30 → 20 → 30
-        shield: { count: 3, type: PILLAGER, name: 鎖匠, life: 6, duration: 25, heal: 30 }   # 2026-10：heal 40 → 30
+        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前結晶
     hazards:
       - { skill: hazard_vault_coins, every: 12, phase: 1 }   # 2026-10：9 → 12 → 15 → 12
     enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。你們永遠是這座金庫的一部分。」" }

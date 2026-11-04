@@ -168,9 +168,15 @@ public final class Crafting {
                 if (data.runes().size() >= slots) {
                     return "符文孔都滿了（" + slots + " 個）";
                 }
-                if (tw.exilecore.item.Runes.uselessOn(base, generator.repository().rune(type.affix()))) {
+                final tw.exilecore.item.Runes.Rune rune = generator.repository().rune(type.affix());
+                if (tw.exilecore.item.Runes.uselessOn(base, rune)) {
                     // 2026-11-04 照站長：攫握指環、日冕墜飾沒有護甲、閃避、能量護盾，只加這些的符文嵌了沒效果
-                    return "這個符文只加那件裝備的護甲、閃避、能量護盾，戒指、項鍊沒有這些，嵌了沒效果";
+                    // 2026-11-04 照 PoE2 的魂核：只限軍用武器的嵌在法杖類上、只有某個部位才有加成的嵌在別的部位上，一樣沒效果
+                    return rune.soulCore() ? "這顆魂核符文嵌在這種裝備上沒有加成（看說明：軍用武器、哪個部位）"
+                            : "這個符文只加那件裝備的護甲、閃避、能量護盾，戒指、項鍊沒有這些，嵌了沒效果";
+                }
+                if (rune.limit() > 0 && data.runes().stream().filter(type.affix()::equals).count() >= rune.limit()) {
+                    return rune.name() + "一個角色僅限 " + rune.limit() + " 顆，這件已經嵌著了（嵌在別件上的第二顆也沒有效果）"; // 2026-11-04 照 PoE2 的魂核
                 }
                 return null;
             }
@@ -1035,6 +1041,24 @@ public final class Crafting {
     /** 把核心注入項鍊（原本注入的換掉）。呼叫端已經檢查過通貨與數量。 */
     public static void instil(final ItemData data, final String nodeId) {
         data.setInstilled(nodeId);
+    }
+
+    /**
+     * 2026-11-04（掙扎吶喊，PoE2 Strugglescream：可擁有額外 3 個滴注詞綴）：可以注入 capacity 個核心的項鍊——還沒滿就加一個，
+     * 滿了把最早注入的那個換掉。capacity 1 跟 {@link #instil(ItemData, String)} 一樣（直接換掉）。
+     */
+    public static void instil(final ItemData data, final String nodeId, final int capacity) {
+        if (capacity <= 1) {
+            instil(data, nodeId);
+            return;
+        }
+        final List<String> all = new java.util.ArrayList<>(data.instilledAll());
+        all.remove(nodeId);
+        while (all.size() >= capacity) {
+            all.removeFirst();
+        }
+        all.add(nodeId);
+        data.setInstilledAll(all);
     }
 
     /** 2026-10-26：給測試用——這些操作會照高階／完美通貨的最低詞綴等級。 */

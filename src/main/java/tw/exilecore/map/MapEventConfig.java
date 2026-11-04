@@ -25,7 +25,13 @@ public final class MapEventConfig {
     /** 祭壇與幻霧的獎勵種類（reward_weights 的鍵）。 */
     public enum Reward {
         OMEN("星籤"), CURRENCY("通貨"), RARE("稀有裝備"), ESSENCE("星魄"), JEWEL("珠寶"), MAP("地圖"), CATALYST("催化劑"), UNIQUE("傳奇"),
-        EMOTION("蒸餾情緒");
+        EMOTION("蒸餾情緒"),
+        /** 2026-11-04 照站長「地圖絕境塞核心」：魂核符文（runes.yml 的 core_＊；PoE2 混沌試煉的 Soul Core）。 */
+        CORE("魂核符文"),
+        /** 2026-11-04 照站長「也塞一些通貨（Wager）」：照 PoE2 混沌試煉的賭注，一次一疊高階通貨（{@link MapRewards#WAGERS}）。 */
+        WAGER("賭注通貨"),
+        /** 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（runes.yml 的 idol_＊；PoE2 的 Idol）。 */
+        IDOL("魔偶符文");
 
         private final String displayName;
 
@@ -256,6 +262,198 @@ public final class MapEventConfig {
     /** 2026-10-27：剩下的貢品存進帳號，滿這麼多換一張祭壇的入場券（0 = 不存）。 */
     private int ritualBankThreshold = DEFAULT_RITUAL_BANK_THRESHOLD;
     private Delirium delirium;
+    /** 2026-11-04 照站長：迷霧回廊（照 PoE 的 Simulacrum：15 波的幻霧場地；map_events.yml 的 fog_trial）。 */
+    private FogTrialSettings fogTrial = FogTrialSettings.DEFAULTS;
+    /** 2026-11-04 照站長「先做絕境」：絕境（照 PoE 的 Ultimatum；map_events.yml 的 ultimatum）。 */
+    private UltimatumSettings ultimatum = UltimatumSettings.DEFAULTS;
+    /** 2026-11-04 照站長「軍團」：軍團（照 PoE 的 Legion；map_events.yml 的 legion）。 */
+    private LegionSettings legion = LegionSettings.DEFAULTS;
+
+    /**
+     * 2026-11-04 照站長「軍團」：軍團的設定（map_events.yml 的 legion）。
+     *
+     * @param chance         每張圖出現的機率
+     * @param freezeSeconds  凍住幾秒（這段時間打到的才會醒）
+     * @param soldiers       兩軍合計幾隻（每多一個人 × (1 + perPlayer)）
+     * @param rewardCarriers 其中幾隻帶著獎勵（1 份）；sergeants 軍曹（稀有、sergeantShares 份）；generals 將領（傳奇、generalShares 份、生命 ×generalLife；最多 2，一邊一隻）
+     * @param rewardWeights  獎勵種類的權重
+     * @param domainName     時沉領域（地圖裝置用 domainCost 個 emblem 開；將領掉徽記的機率 generalEmblem、軍曹 sergeantEmblem；怪物等級 +domainLevelBonus）
+     */
+    public record LegionSettings(double chance, double freezeSeconds, int soldiers, double perPlayer, int rewardCarriers, int sergeants, int generals,
+                                 int sergeantShares, int generalShares, double generalLife, Map<Reward, Integer> rewardWeights,
+                                 String domainName, String emblem, int domainCost, double generalEmblem, double sergeantEmblem, int domainLevelBonus) {
+        public static final LegionSettings DEFAULTS = new LegionSettings(0.2, 25, 24, 0.5, 6, 2, 2, 2, 3, 3.0,
+                Map.of(Reward.CURRENCY, 35, Reward.RARE, 15, Reward.ESSENCE, 15, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 10, Reward.OMEN, 5),
+                "時沉領域", "legion_emblem", 5, 1.0, 0.3, 2);
+
+        public LegionSettings {
+            rewardWeights = Map.copyOf(rewardWeights);
+        }
+    }
+
+    /**
+     * 2026-11-04 照站長「先做絕境」：絕境的設定（map_events.yml 的 ultimatum）。地圖裡一座審判之壇，右鍵開始：一回合一回合打，
+     * 每一回合先從三個懲罰挑一個（之後的回合全部疊著），打完可以收手拿累積的獎勵，或續押下一回合（失敗全部沒收）。
+     *
+     * @param chance          每張圖出現的機率
+     * @param rounds          最多幾回合
+     * @param prepareSeconds  挑完懲罰到開打的倒數（秒）
+     * @param arenaRadius     場地半徑（格；離開場地超過 leaveSeconds 秒算失敗）
+     * @param leaveSeconds    可以離開場地幾秒
+     * @param killBase        殲滅：第一回合要殺幾隻；每回合多 killPerRound；時限 killSeconds 秒
+     * @param surviveBase     生存：第一回合撐幾秒；每回合多 survivePerRound
+     * @param circleBase      守圈：第一回合要在圈裡累積幾秒；每回合多 circlePerRound；圈半徑 circleRadius 格、每 circleMoveSeconds 秒換位置；時限是需要秒數的兩倍
+     * @param spawnSeconds    每幾秒在每個人附近刷一群（groupMin–groupMax 隻）；每回合多 spawnPerRound（倍率）
+     * @param killSpawnSeconds 殲滅回合每幾秒刷一群（2026-11-04 照站長「殲滅 0.5 秒一群」；生存、守圈照 spawnSeconds）
+     * @param magicStart      魔法怪的機率（第一回合 → 最後一回合）；稀有怪 rareStart → rareEnd
+     * @param rewardsMin      每回合累積的獎勵份數（第一回合 → 最後一回合）；打完全部回合乘 finalMultiplier，再打倒審判者再乘 bossMultiplier
+     * @param rewardWeights   獎勵種類的權重
+     * @param typeWeights     回合種類的權重（kill、survive、circle）
+     * @param modifierWeights 懲罰的權重（代號見 Ultimatum.Modifier；0 = 不出）
+     */
+    public record UltimatumSettings(double chance, int rounds, double prepareSeconds, double arenaRadius, double leaveSeconds,
+                                    int killBase, int killPerRound, double killSeconds, double surviveBase, double survivePerRound,
+                                    double circleBase, double circlePerRound, double circleRadius, double circleMoveSeconds,
+                                    double spawnSeconds, double killSpawnSeconds, int groupMin, int groupMax, double spawnPerRound,
+                                    double magicStart, double magicEnd, double rareStart, double rareEnd,
+                                    int rewardsMin, int rewardsMax, double finalMultiplier, double bossMultiplier, Map<Reward, Integer> rewardWeights,
+                                    Map<String, Integer> typeWeights, Map<String, Integer> modifierWeights) {
+        public static final Set<String> TYPES = Set.of("kill", "survive", "circle");
+        // 2026-11-04 照站長：準備 1 秒、生存與守圈減半、殲滅每 0.5 秒一群；這次之前準備 5、生存 30＋10、守圈 15＋5、殲滅跟其他一樣每 2 秒
+        public static final UltimatumSettings DEFAULTS = new UltimatumSettings(0.2, 5, 1, 14, 4, 12, 6, 60, 15, 5, 7.5, 2.5, 3.5, 8,
+                2.0, 0.5, 2, 4, 0.25, 0.2, 0.5, 0.05, 0.15, 1, 2, 2.0, 2.0,
+                Map.of(Reward.CURRENCY, 35, Reward.EMOTION, 15, Reward.ESSENCE, 15, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 10, Reward.OMEN, 5),
+                Map.of("kill", 40, "survive", 30, "circle", 30), Map.of());
+
+        public UltimatumSettings {
+            rewardWeights = Map.copyOf(rewardWeights);
+            typeWeights = Map.copyOf(typeWeights);
+            modifierWeights = Map.copyOf(modifierWeights);
+        }
+
+        /** 第 round 回合（1 起算）在 0～1 之間的進度。 */
+        public double progress(final int round) {
+            return rounds <= 1 ? 1 : Math.max(0, Math.min(1, (round - 1) / (double) (rounds - 1)));
+        }
+
+        public int killCount(final int round, final int players) {
+            return Math.max(1, (int) Math.round((killBase + killPerRound * (round - 1)) * (1 + 0.5 * Math.max(0, players - 1))));
+        }
+
+        public double surviveSeconds(final int round) {
+            return surviveBase + survivePerRound * (round - 1);
+        }
+
+        public double circleSeconds(final int round) {
+            return circleBase + circlePerRound * (round - 1);
+        }
+
+        /** 第 round 回合刷怪的倍率（1 起算）。 */
+        public double spawnScale(final int round) {
+            return 1 + spawnPerRound * (round - 1);
+        }
+
+        public double magicChance(final int round) {
+            return magicStart + (magicEnd - magicStart) * progress(round);
+        }
+
+        public double rareChance(final int round) {
+            return rareStart + (rareEnd - rareStart) * progress(round);
+        }
+
+        /** 第 round 回合過關累積幾份獎勵。 */
+        public int rewards(final int round) {
+            return (int) Math.round(rewardsMin + (rewardsMax - rewardsMin) * progress(round));
+        }
+
+        /** 懲罰的權重（沒寫的照 def）。 */
+        public int modifierWeight(final String id, final int def) {
+            return modifierWeights.getOrDefault(id, def);
+        }
+    }
+
+    /**
+     * 2026-11-04 照站長「波次引擎＋15 層迷霧」：迷霧回廊的設定（map_events.yml 的 fog_trial）。
+     *
+     * @param name          玩家看到的名字
+     * @param splinter      入場用的碎片（currencies.yml 的代號）
+     * @param cost          開一次用幾個碎片
+     * @param splinterDrop  幻霧結束時拿到獎勵的人各拿幾個碎片（吃物品數量）
+     * @param levelBonus    怪物等級＝開的人打過的最高階的地圖等級＋這麼多
+     * @param waves         總共幾波（最後一波是 Boss）
+     * @param breakSeconds  每波之間休息幾秒
+     * @param waveSeconds   一波最多幾秒（到了剩下的怪消失、照樣算過這一波；卡住不會打不完）
+     * @param monsters      第一波幾隻
+     * @param perWave       每過一波多幾隻
+     * @param perPlayer     每多一個人多幾成（0.5 = 兩個人 1.5 倍）
+     * @param spawnSeconds  每隔幾秒在每個人附近刷一群
+     * @param groupMin      一群最少幾隻
+     * @param groupMax      一群最多幾隻
+     * @param difficultyEnd 最後一波怪的生命、傷害增加多少（2.0 = +200%；第一波 0，照波數平均往上）
+     * @param magicStart    第一波魔法怪的機率
+     * @param magicEnd      最後一波魔法怪的機率
+     * @param rareFrom      第幾波起有稀有怪
+     * @param rareStart     稀有怪的機率（rareFrom 那一波）
+     * @param rareEnd       稀有怪的機率（最後一波）
+     * @param eliteWaves    這幾波另外出一隻傳奇怪（菁英）
+     * @param eliteLife     菁英的生命倍率
+     * @param rewardsMin    第一波過關每人幾份獎勵
+     * @param rewardsMax    最後一波過關每人幾份獎勵
+     * @param rewardWeights 獎勵種類的權重（跟幻霧一樣的種類）
+     */
+    public record FogTrialSettings(String name, String splinter, int cost, int[] splinterDrop, int levelBonus, int waves, double breakSeconds,
+                                   double waveSeconds, int monsters, int perWave, double perPlayer, double spawnSeconds, int groupMin,
+                                   int groupMax, double difficultyEnd, double magicStart, double magicEnd, int rareFrom, double rareStart,
+                                   double rareEnd, Set<Integer> eliteWaves, double eliteLife, int rewardsMin, int rewardsMax,
+                                   Map<Reward, Integer> rewardWeights) {
+        // 2026-11-04 照站長「殺完怪物馬上進下一階段、怪物每 0.5 秒刷一輪」；這次之前休息 8 秒、每 1.5 秒
+        public static final FogTrialSettings DEFAULTS = new FogTrialSettings("迷霧回廊", "fog_splinter", 50, new int[] {4, 8}, 2, 15, 0, 90,
+                18, 4, 0.5, 0.5, 3, 5, 2.0, 0.15, 0.6, 4, 0.03, 0.15, Set.of(5, 10), 4.0, 1, 3,
+                Map.of(Reward.EMOTION, 40, Reward.CURRENCY, 25, Reward.ESSENCE, 10, Reward.JEWEL, 10, Reward.MAP, 10, Reward.CATALYST, 5));
+
+        public FogTrialSettings {
+            splinterDrop = splinterDrop.clone();
+            eliteWaves = Set.copyOf(eliteWaves);
+            rewardWeights = Map.copyOf(rewardWeights);
+        }
+
+        /** 第 wave 波（1 起算）在 0～1 之間的進度（第一波 0、最後一波 1）。 */
+        public double progress(final int wave) {
+            return waves <= 1 ? 1 : Math.max(0, Math.min(1, (wave - 1) / (double) (waves - 1)));
+        }
+
+        /** 第 wave 波的怪物生命、傷害增加（給 MapInstance.setDelirium）。 */
+        public double difficulty(final int wave) {
+            return difficultyEnd * progress(wave);
+        }
+
+        /** 第 wave 波總共幾隻（players 個人）。 */
+        public int count(final int wave, final int players) {
+            final double scale = 1 + perPlayer * Math.max(0, players - 1);
+            return Math.max(1, (int) Math.round((monsters + perWave * (wave - 1)) * scale));
+        }
+
+        public double magicChance(final int wave) {
+            return magicStart + (magicEnd - magicStart) * progress(wave);
+        }
+
+        public double rareChance(final int wave) {
+            if (wave < rareFrom) {
+                return 0;
+            }
+            final double t = waves <= rareFrom ? 1 : (wave - rareFrom) / (double) (waves - rareFrom);
+            return rareStart + (rareEnd - rareStart) * Math.max(0, Math.min(1, t));
+        }
+
+        /** 第 wave 波過關每人幾份獎勵。 */
+        public int rewards(final int wave) {
+            return (int) Math.round(rewardsMin + (rewardsMax - rewardsMin) * progress(wave));
+        }
+
+        public boolean bossWave(final int wave) {
+            return wave == waves;
+        }
+    }
     /** 地圖變化（2026-10，{@link MapTwists}）。 */
     private Twists twists;
 
@@ -466,6 +664,9 @@ public final class MapEventConfig {
         ritualExclusivePrice = other.ritualExclusivePrice.clone();
         ritualBankThreshold = other.ritualBankThreshold;
         delirium = other.delirium;
+        fogTrial = other.fogTrial;
+        ultimatum = other.ultimatum;
+        legion = other.legion;
         twists = other.twists;
     }
 
@@ -693,6 +894,107 @@ public final class MapEventConfig {
         if (root.has("twists")) {
             twists = parseTwists(root.node("twists"), twists);
         }
+        if (root.has("fog_trial")) {
+            fogTrial = parseFogTrial(root.node("fog_trial"), fogTrial); // 2026-11-04：迷霧回廊
+        }
+        if (root.has("ultimatum")) {
+            ultimatum = parseUltimatum(root.node("ultimatum"), ultimatum); // 2026-11-04：絕境
+        }
+        if (root.has("legion")) {
+            legion = parseLegion(root.node("legion"), legion); // 2026-11-04：軍團
+        }
+    }
+
+    /** 2026-11-04：map_events.yml 的 fog_trial（迷霧回廊；沒寫的照預設）。 */
+    static FogTrialSettings parseFogTrial(final YamlNode node, final FogTrialSettings base) {
+        final int[] drop = node.has("splinter_drop") ? node.range("splinter_drop") : base.splinterDrop();
+        final YamlNode monsters = node.node("monsters");
+        final YamlNode spawn = node.node("spawn");
+        final int[] group = spawn.has("group") ? spawn.range("group") : new int[] {base.groupMin(), base.groupMax()};
+        final YamlNode magic = node.node("magic");
+        final YamlNode rare = node.node("rare");
+        final YamlNode elite = node.node("elite");
+        final YamlNode rewards = node.node("rewards");
+        final int[] perWave = rewards.has("per_wave") ? rewards.range("per_wave") : new int[] {base.rewardsMin(), base.rewardsMax()};
+        final Set<Integer> eliteWaves = new java.util.TreeSet<>();
+        if (elite.has("waves")) {
+            for (final String text : elite.strings("waves")) {
+                eliteWaves.add(Integer.parseInt(text.trim()));
+            }
+        } else {
+            eliteWaves.addAll(base.eliteWaves());
+        }
+        final int waves = (int) clamp(node.integer("waves", base.waves()), 1, 50);
+        return new FogTrialSettings(node.string("name", base.name()), node.string("splinter", base.splinter()),
+                (int) clamp(node.integer("cost", base.cost()), 1, 10000),
+                new int[] {Math.max(0, Math.min(drop[0], drop[1])), Math.max(0, Math.max(drop[0], drop[1]))},
+                (int) clamp(node.integer("level_bonus", base.levelBonus()), 0, 30), waves,
+                clamp(node.decimal("break_seconds", base.breakSeconds()), 0, 60) /* 2026-11-04 照站長「殺完馬上進下一波」可以寫 0；這次之前最少 2 */, clamp(node.decimal("wave_seconds", base.waveSeconds()), 20, 600),
+                (int) clamp(monsters.integer("base", base.monsters()), 1, 200), (int) clamp(monsters.integer("per_wave", base.perWave()), 0, 50),
+                clamp(monsters.decimal("per_player", base.perPlayer()), 0, 2),
+                clamp(spawn.decimal("every", base.spawnSeconds()), 0.5, 10),
+                Math.max(1, Math.min(group[0], group[1])), Math.min(12, Math.max(group[0], group[1])),
+                clamp(node.decimal("difficulty", base.difficultyEnd() * 100), 0, 1000) / 100.0,
+                clamp(magic.decimal("start", base.magicStart()), 0, 1), clamp(magic.decimal("end", base.magicEnd()), 0, 1),
+                (int) clamp(rare.integer("from_wave", base.rareFrom()), 1, waves),
+                clamp(rare.decimal("start", base.rareStart()), 0, 1), clamp(rare.decimal("end", base.rareEnd()), 0, 1),
+                eliteWaves, clamp(elite.decimal("life", base.eliteLife()), 1, 50),
+                (int) clamp(Math.min(perWave[0], perWave[1]), 0, 10), (int) clamp(Math.max(perWave[0], perWave[1]), 0, 10),
+                rewards.has("weights") ? rewardInts(rewards.node("weights")) : base.rewardWeights());
+    }
+
+    /** 2026-11-04：map_events.yml 的 ultimatum（絕境；沒寫的照預設）。 */
+    static UltimatumSettings parseUltimatum(final YamlNode node, final UltimatumSettings base) {
+        final YamlNode kill = node.node("kill");
+        final YamlNode survive = node.node("survive");
+        final YamlNode circle = node.node("circle");
+        final YamlNode spawn = node.node("spawn");
+        final YamlNode magic = node.node("magic");
+        final YamlNode rare = node.node("rare");
+        final YamlNode rewards = node.node("rewards");
+        final int[] group = spawn.has("group") ? spawn.range("group") : new int[] {base.groupMin(), base.groupMax()};
+        final int[] perRound = rewards.has("per_round") ? rewards.range("per_round") : new int[] {base.rewardsMin(), base.rewardsMax()};
+        final Map<String, Integer> modifiers = new LinkedHashMap<>(base.modifierWeights());
+        if (node.has("modifiers")) {
+            final YamlNode list = node.node("modifiers");
+            for (final String key : list.keys()) {
+                modifiers.put(key.trim().toLowerCase(Locale.ROOT), Math.max(0, list.integer(key, 0)));
+            }
+        }
+        return new UltimatumSettings(clamp(node.decimal("chance", base.chance()), 0, 1), (int) clamp(node.integer("rounds", base.rounds()), 1, 20),
+                clamp(node.decimal("prepare_seconds", base.prepareSeconds()), 1, 60), clamp(node.decimal("arena_radius", base.arenaRadius()), 6, 40),
+                clamp(node.decimal("leave_seconds", base.leaveSeconds()), 1, 60),
+                (int) clamp(kill.integer("base", base.killBase()), 1, 500), (int) clamp(kill.integer("per_round", base.killPerRound()), 0, 200),
+                clamp(kill.decimal("seconds", base.killSeconds()), 10, 600),
+                clamp(survive.decimal("base", base.surviveBase()), 5, 600), clamp(survive.decimal("per_round", base.survivePerRound()), 0, 300),
+                clamp(circle.decimal("base", base.circleBase()), 3, 600), clamp(circle.decimal("per_round", base.circlePerRound()), 0, 300),
+                clamp(circle.decimal("radius", base.circleRadius()), 1.5, 10), clamp(circle.decimal("move_seconds", base.circleMoveSeconds()), 2, 60),
+                clamp(spawn.decimal("every", base.spawnSeconds()), 0.5, 10), clamp(spawn.decimal("kill_every", base.killSpawnSeconds()), 0.5, 10),
+                Math.max(1, Math.min(group[0], group[1])), Math.min(12, Math.max(group[0], group[1])),
+                clamp(spawn.decimal("per_round", base.spawnPerRound()), 0, 3),
+                clamp(magic.decimal("start", base.magicStart()), 0, 1), clamp(magic.decimal("end", base.magicEnd()), 0, 1),
+                clamp(rare.decimal("start", base.rareStart()), 0, 1), clamp(rare.decimal("end", base.rareEnd()), 0, 1),
+                (int) clamp(Math.min(perRound[0], perRound[1]), 0, 10), (int) clamp(Math.max(perRound[0], perRound[1]), 0, 10),
+                clamp(rewards.decimal("final_multiplier", base.finalMultiplier()), 1, 10),
+                clamp(rewards.decimal("boss_multiplier", base.bossMultiplier()), 1, 10),
+                rewards.has("weights") ? rewardInts(rewards.node("weights")) : base.rewardWeights(),
+                node.has("types") ? weights(node.node("types"), UltimatumSettings.TYPES) : base.typeWeights(), modifiers);
+    }
+
+    /** 2026-11-04：map_events.yml 的 legion（軍團；沒寫的照預設）。 */
+    static LegionSettings parseLegion(final YamlNode node, final LegionSettings base) {
+        final YamlNode rewards = node.node("rewards");
+        final YamlNode domain = node.node("domain"); // 2026-11-04：時沉領域
+        return new LegionSettings(clamp(node.decimal("chance", base.chance()), 0, 1), clamp(node.decimal("freeze_seconds", base.freezeSeconds()), 5, 120),
+                (int) clamp(node.integer("soldiers", base.soldiers()), 4, 120), clamp(node.decimal("per_player", base.perPlayer()), 0, 2),
+                (int) clamp(node.integer("reward_carriers", base.rewardCarriers()), 0, 40), (int) clamp(node.integer("sergeants", base.sergeants()), 0, 10),
+                (int) clamp(node.integer("generals", base.generals()), 0, 2),
+                (int) clamp(rewards.integer("sergeant_shares", base.sergeantShares()), 1, 10), (int) clamp(rewards.integer("general_shares", base.generalShares()), 1, 10),
+                clamp(node.decimal("general_life", base.generalLife()), 1, 20),
+                rewards.has("weights") ? rewardInts(rewards.node("weights")) : base.rewardWeights(),
+                domain.string("name", base.domainName()), domain.string("emblem", base.emblem()), (int) clamp(domain.integer("cost", base.domainCost()), 1, 1000),
+                clamp(domain.decimal("general_drop", base.generalEmblem()), 0, 1), clamp(domain.decimal("sergeant_drop", base.sergeantEmblem()), 0, 1),
+                (int) clamp(domain.integer("level_bonus", base.domainLevelBonus()), 0, 30));
     }
 
     /** map_events.yml 的 twists（沒寫的照預設）。 */
@@ -1032,6 +1334,19 @@ public final class MapEventConfig {
 
     public Delirium delirium() {
         return delirium;
+    }
+
+    /** 2026-11-04：迷霧回廊的設定。 */
+    public FogTrialSettings fogTrial() {
+        return fogTrial;
+    }
+
+    public UltimatumSettings ultimatum() {
+        return ultimatum;
+    }
+
+    public LegionSettings legion() {
+        return legion;
     }
 
     public Twists twists() {

@@ -863,6 +863,20 @@ public final class MinionService implements Listener, MinionHooks {
         return oldest;
     }
 
+    /**
+     * 2026-11-04 照站長「插兩顆範圍，冰封的半徑沒跟著變大」「召喚物等級 +1 也是」：常駐召喚（巨靈、夥伴）叫出來之後才換的輔助、升的等級，
+     * 這次之前要等牠死掉重叫才生效（活著的那隻一直用叫出來時的組合）。AuraService 每次同步把現在的組合交給活著的那幾隻，下一次重算就照新的。
+     */
+    void syncBuild(final UUID owner, final String skillId, final SkillBuild build) {
+        for (final Minion minion : minions) {
+            if (minion.owner.equals(owner) && !minion.decoy && minion.skillId().equals(skillId) && minion.build != build
+                    && minion.build.definition().id().equals(build.definition().id())) {
+                minion.build = build;
+                minion.nextRebuild = 0;
+            }
+        }
+    }
+
     /** 這個人這個技能最後叫出來的那隻（還活著的）。 */
     private Minion newestSpirit(final UUID owner, final String skillId) {
         for (int i = minions.size() - 1; i >= 0; i--) {

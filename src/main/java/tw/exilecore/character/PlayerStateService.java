@@ -513,6 +513,7 @@ public final class PlayerStateService {
         final EquippedItem mainItem = equipped.stream().filter(item -> !item.offHandWeapon() && item.base().slot() == ItemSlot.MAIN_HAND)
                 .findFirst().orElse(null);
         final ItemBase mainBase = mainItem == null || ownProblem.apply(mainItem) != null ? null : mainItem.base();
+        final Map<String, Integer> limitedRunes = new java.util.HashMap<>(); // 2026-11-04 照 PoE2 的魂核「僅限 1」：同一顆僅限的符文嵌在好幾件上只算第一件
         for (final EquippedItem item : equipped) {
             String reason = ownProblem.apply(item);
             if (reason == null && (item.offHandWeapon() || item.base().slot() == ItemSlot.OFF_HAND)) {
@@ -525,7 +526,11 @@ public final class PlayerStateService {
             active.add(item);
             final boolean sceptre = item.base().tags().contains("sceptre");
             double localSpirit = 0;
+            final Set<String> limitedSources = tw.exilecore.item.Runes.limitedDuplicates(plugin.items().repository(), item.data(), limitedRunes);
             for (final Modifier raw : item.modifiers()) {
+                if (!limitedSources.isEmpty() && limitedSources.contains(raw.source())) {
+                    continue; // 2026-11-04：僅限 1 的魂核符文，第二件起沒有效果（照 PoE2 的 Limited to: 1）
+                }
                 // 2026-10：有條件的詞綴（evasion@nohit、damage@projhit 這種）：條件成立才算，代號拿掉條件
                 final Modifier modifier = live ? resolveCondition(player, state, raw, now, conditions) : withoutCondition(raw);
                 if (modifier == null) {
@@ -1248,11 +1253,7 @@ public final class PlayerStateService {
         if (!instilAllocated(state, item.data())) {
             return item;
         }
-        final List<Modifier> modifiers = new ArrayList<>(item.modifiers());
-        for (final Modifier mod : ItemStats.instilOf(item.data()).modifiers()) {
-            modifiers.remove(mod);
-        }
-        return new EquippedItem(item.base(), item.data(), modifiers, item.requirements(), item.offHandWeapon());
+        return new EquippedItem(item.base(), item.data(), withoutAllocatedInstils(state, item.data(), item.modifiers()), item.requirements(), item.offHandWeapon());
     }
 
     /** 虛擬角色的裝備（物品資料，照 {@link PlayerState#GEAR_SLOTS} 的順序；第 11 個是第三個戒指，有「+1 戒指欄位」才算）。 */
@@ -1294,12 +1295,8 @@ public final class PlayerStateService {
         }
         List<Modifier> modifiers = ItemStats.modifiers(plugin.items().repository(), data.get());
         if (instil && instilAllocated(state, data.get())) {
-            // 2026-10（PoE2）：蒸餾是「配置這個核心」，天賦樹上已經點了就不再多給一份
-            final ItemStats.Instil instilled = ItemStats.instilOf(data.get());
-            modifiers = new ArrayList<>(modifiers);
-            for (final Modifier mod : instilled.modifiers()) {
-                modifiers.remove(mod);
-            }
+            // 2026-10（PoE2）：蒸餾是「配置這個核心」，天賦樹上已經點了就不再多給一份；2026-11-04：掙扎吶喊的每一個各自看
+            modifiers = withoutAllocatedInstils(state, data.get(), modifiers);
         }
         if (offHandSceptre) {
             // 副手的權杖只給精魂、詞綴與賦予的技能；武器本身的傷害、攻速、暴擊（本地）不算（攻擊用主手的獸魂符）
@@ -1312,7 +1309,25 @@ public final class PlayerStateService {
 
     /** 這件裝備注入的天賦核心，這個角色在天賦樹上已經配置了（注入的效果不重複算）。 */
     public static boolean instilAllocated(final PlayerState state, final ItemData data) {
-        return data.instilled() != null && state.passives().contains(data.instilled()) && ItemStats.instilOf(data) != null;
+        for (final String id : ItemStats.instilsOf(data).keySet()) {
+            if (state.passives().contains(id)) {
+                return true; // 2026-11-04：掙扎吶喊注入好幾個，任一個在天賦樹上點了就算
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-04：拿掉天賦樹上已經點了的那幾個注入核心的修飾器。 */
+    private static List<Modifier> withoutAllocatedInstils(final PlayerState state, final ItemData data, final List<Modifier> modifiers) {
+        final List<Modifier> out = new ArrayList<>(modifiers);
+        for (final java.util.Map.Entry<String, ItemStats.Instil> entry : ItemStats.instilsOf(data).entrySet()) {
+            if (state.passives().contains(entry.getKey())) {
+                for (final Modifier mod : entry.getValue().modifiers()) {
+                    out.remove(mod);
+                }
+            }
+        }
+        return out;
     }
 
     /** offHandWeapon：2026-10-27 照 PoE2 荒野領主，裝在副手的權杖；巨人之血，裝在副手的雙手斧、錘、劍（主手武器的基底，放在副手）。 */
@@ -1837,6 +1852,13 @@ public final class PlayerStateService {
                 && !tw.exilecore.skill.TreeLeftovers.esRechargeBlocked(plugin, player, currentTick)) { // 2026-10-27 照 PoE2 天賦樹：被詛咒的不能回充（PvP）
             // 延遲 4 秒過後每秒回充 12.5%（回充速度、延遲都吃詞綴）
             state.setEnergyShield(state.energyShield() + Formulas.esRechargePerSecond(state.maxEnergyShield(), esRechargeSpeed(sheet)) * seconds);
+        }
+        // 2026-11-04（瑪哈薩多的陰謀，PoE2 Everlasting Sacrifice 永恆奉獻）：能量護盾全滿時犧牲全部，獲得 +x% 全部抗性上限 4 秒
+        final double sacrifice = sheet.flat(tw.exilecore.item.unique.UniqueStats.EVERLASTING_SACRIFICE, Set.of());
+        if (sacrifice > 0 && state.maxEnergyShield() > 0 && state.energyShield() >= state.maxEnergyShield() - 1e-6 && plugin.skills() != null) {
+            state.setEnergyShield(0);
+            plugin.skills().buff(player, "everlasting_sacrifice", "永恆奉獻", 80,
+                    List.of(Modifier.flat(StatKeys.RESIST_MAX, sacrifice, "永恆奉獻")));
         }
         grace.tick(player, state); // 入場保護：走離落點就解除
         display(player, state);

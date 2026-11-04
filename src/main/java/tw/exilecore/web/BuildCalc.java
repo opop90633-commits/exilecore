@@ -758,11 +758,9 @@ public final class BuildCalc {
                     }
                 }
             }
-            if (config.oncePerCharacter(support.id())) {
-                final int used = result.state().skills().supportUsedBy(support.id());
-                if (used >= 0 && used != position) {
-                    problem = "已經掛在別的技能上（這種一個角色只能一顆）";
-                }
+            final int copies = config.supportCopies(support.id(), result.sheet()); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
+            if (copies != Integer.MAX_VALUE && result.state().skills().supportCount(support.id(), position) >= copies) {
+                problem = "已經掛在別的技能上（這種一個角色只能 " + copies + " 顆）";
             }
             SkillLoadout.Entry trial = entry.freeSocket() >= 0 ? entry : entry.withSockets(entry.sockets() + 1);
             if (lineageAt >= 0) {

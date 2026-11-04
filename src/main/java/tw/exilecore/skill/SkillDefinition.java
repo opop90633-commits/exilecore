@@ -90,6 +90,10 @@ public record SkillDefinition(String id, String name, String description, String
             case "ritual_priest" -> "血契祭場的祭司・血契";
             case "delirium_mirror" -> "妄念霧原的幻霧之鏡・妄念";
             case "abyss_lich" -> "骨潮深坑的淵底之王・骨潮";
+            // 2026-11-04 照站長「絕境、迷霧、軍團的 Boss 新增獨特的技能與輔助」：事件 Boss
+            case "ultimatum" -> "審判者的試場的審判者・衡";
+            case "fog_trial" -> "迷霧回廊的迷霧之主・無面";
+            case "legion" -> "時沉領域的不朽統帥・磐";
             // 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2 的 Grants Skill；沒有寶石）
             case "weapon" -> "武器、盾牌賦予"; // 2026-10-30：矛（擲矛）、盾（架盾、招架）也是；這次之前寫「法杖、長杖、權杖賦予」
             case "ascendancy" -> "昇華天賦賦予"; // 2026-10-26

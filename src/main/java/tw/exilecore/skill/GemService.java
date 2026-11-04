@@ -650,7 +650,8 @@ public final class GemService {
         lines.add("");
         lines.add("<gray>可以輔助：<white>" + support.supportsText(config().all()));
         lines.add("<gray>第 " + support.tier() + " 階・" + (config().oncePerCharacter(support.id())
-                ? "同一種輔助一個角色只能用一次" : "不同技能可以各掛一顆（一顆只能掛一個技能）"));
+                ? (support.lineage() ? "同一種血脈輔助一個角色只能用一顆（唯我論可以多 2 顆）" : "同一種輔助一個角色只能用一次")
+                : "不同技能可以各掛一顆（一顆只能掛一個技能）"));
         lines.add("<yellow>打開 /skills，拿在游標上點技能掛上去");
     }
 
@@ -1152,7 +1153,8 @@ public final class GemService {
         //   這次之前（2026-10-23）宿主裡放著的技能面板上不能再有一顆
         {
             for (final String supportId : entry.supportIds()) {
-                final int used = config().oncePerCharacter(supportId) ? loadout.supportUsedBy(supportId) : -1;
+                final int allowed = config().supportCopies(supportId, plugin.players().sheet(player)); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
+                final int used = allowed != Integer.MAX_VALUE && loadout.supportCount(supportId, target) >= allowed ? loadout.supportUsedBy(supportId) : -1;
                 if (used >= 0 && used != target) {
                     return Change.fail(supportName(supportId) + "已經掛在" + skillName(loadout.skill(used)) + "上（這種輔助一個角色只能掛一顆），先拿下來");
                 }
@@ -1432,11 +1434,10 @@ public final class GemService {
         if (exclusive != null) {
             return Change.fail(exclusive);
         }
-        if (config().oncePerCharacter(supportId)) {
+        final int copies = config().supportCopies(supportId, plugin.players().sheet(player)); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
+        if (copies != Integer.MAX_VALUE && loadout.supportCount(supportId, position) >= copies) {
             final int used = loadout.supportUsedBy(supportId);
-            if (used >= 0 && used != position) {
-                return Change.fail(support.name() + "已經掛在" + skillName(loadout.skill(used)) + "上（這種輔助一個角色只能掛一顆）");
-            }
+            return Change.fail(support.name() + "已經掛在" + skillName(loadout.skill(used)) + "上（這種輔助一個角色只能掛" + copies + "顆）");
         }
         final String old = entry.support(socket);
         final boolean oldResonant = entry.resonant(socket);

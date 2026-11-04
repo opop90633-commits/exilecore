@@ -200,6 +200,14 @@ public final class DamageCalculator {
             outgoing.add(DamageType.PHYSICAL, impale);
         }
 
+        // 2026-11-04（背信忘義，PoE2 Perfidy）：防禦方各類型 x% 機率避免這一下的那種傷害（每一種各擲一次）
+        for (final DamageType type : DamageType.values()) {
+            final double avoid = defender.flat(tw.exilecore.item.unique.UniqueStats.AVOID_HIT + type.tag(), Set.of()) / 100.0;
+            if (avoid > 0 && outgoing.get(type) > 0 && random.nextDouble() < avoid) {
+                outgoing.set(type, 0);
+            }
+        }
+
         // 5. 減免（感電之類的「受到的傷害增加」在減免之後乘）
         // 粉碎我的敵人（祈願者）：暴擊無視敵人非負的元素抗性
         StatSheet mitigator = defender;
@@ -470,6 +478,9 @@ public final class DamageCalculator {
             double rawResist = type == DamageType.PHYSICAL ? 0 : defender.get(type.mitigationStat());
             if (type == DamageType.CHAOS && StatKeys.flag(defender, StatKeys.FLAG_CHAOS_RES_DOUBLE)) {
                 rawResist *= 2; // 夏烏拉的禮物：混沌抗性加倍
+            }
+            if (type == DamageType.CHAOS && StatKeys.flag(defender, tw.exilecore.item.unique.UniqueStats.FLAG_CHAOS_RES_ZERO)) {
+                rawResist = 0; // 2026-11-04（混沌一瞥，PoE2 Glimpse of Chaos）：混沌抗性為 0
             }
             double resist = type == DamageType.PHYSICAL ? 0 : Math.min(rawResist, typeMax);
             if (attacker != null && type.isElemental() && StatKeys.flag(attacker, tw.exilecore.item.unique.UniqueStats.LOWEST_RESIST)) {

@@ -18,6 +18,7 @@ import tw.exilecore.item.UniqueItem;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -120,8 +121,14 @@ public final class CurrencyService {
         bondedGroup(lines, "武器", rune.bondedWeapon());
         bondedGroup(lines, "法杖類", rune.bondedCaster());
         bondedGroup(lines, "防具、副手", rune.bondedArmour());
+        // 2026-11-04：魔偶符文的羈絆分部位（runes.yml 的 bonded.slots）
+        final Map<String, String> where = Map.of("head", "頭盔", "chest", "胸甲", "legs", "手套（腿甲）", "feet", "鞋子", "shield", "盾",
+                "buckler", "輕盾", "focus", "法器", "sceptre", "權杖");
+        for (final Map.Entry<String, List<tw.exilecore.item.Runes.Line>> entry : rune.bondedSlots().entrySet()) {
+            bondedGroup(lines, where.getOrDefault(entry.getKey(), entry.getKey()), entry.getValue());
+        }
         if (!lines.isEmpty()) {
-            lines.addFirst(ItemRenderer.line("<dark_gray>羈絆（要昇華・聖賢智慧才有效果）："));
+            lines.addFirst(ItemRenderer.line("<dark_gray>羈絆（要昇華・聖賢智慧，或嵌在有狐狸魔偶的胸甲上才有效果）："));
         }
         return lines;
     }
@@ -348,7 +355,7 @@ public final class CurrencyService {
 
     /** 這顆通貨現在能不能用在這件上（規則面；星籤的限制在 {@link #run} 裡）。 */
     private boolean usable(final CurrencyType type, final ItemData data) {
-        if ((data.corrupted() || data.sanctified()) && !type.operation().allowedOnCorrupted()) {
+        if ((!type.operation().allowedOn(data, items.repository()) || data.sanctified()) && !type.operation().allowedOnCorrupted()) { // 2026-11-04：混沌一瞥腐化了還能改
             return false; // 已腐化（2026-10）、已聖化（2026-10-26）：不能再改造（鑑定、嵌符文到空孔除外）
         }
         if (type.operation() == CurrencyOperation.MIRROR) {
@@ -637,7 +644,7 @@ public final class CurrencyService {
         if (type.isEmpty() || data.isEmpty()) {
             return null;
         }
-        if (data.get().corrupted() && !type.get().operation().allowedOnCorrupted()) {
+        if (!type.get().operation().allowedOn(data.get(), items.repository())) { // 2026-11-04：混沌一瞥腐化了還能改
             return type.get().operation() == CurrencyOperation.MIRROR ? "已腐化的物品不能複製" : "已腐化的物品不能再改造";
         }
         if (data.get().sanctified() && !type.get().operation().allowedOnCorrupted()) {

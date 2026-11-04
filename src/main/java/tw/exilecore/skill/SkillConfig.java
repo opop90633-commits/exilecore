@@ -741,6 +741,14 @@ public final class SkillConfig {
         parsed.forEach((id, definition) -> names.put(id, definition.name()));
         skillNames = Map.copyOf(names);
         current = this;
+        // 2026-11-04（信仰稜鏡，PoE2 Prism of Belief）：「隨機一個技能 +等級」的候選——玩家看得到、雕得出來的主動技能
+        final List<String> gemSkills = new ArrayList<>();
+        for (final SkillDefinition definition : parsed.values()) {
+            if (!definition.hidden() && definition.engravable() && !definition.grantedOnly()) {
+                gemSkills.add(definition.id());
+            }
+        }
+        tw.exilecore.item.UniquePicks.setSkills(new tw.exilecore.item.UniquePicks.Pool(gemSkills, skillNames::get));
     }
 
     /** 最近一次載入的設定（2026-10：寶石說明列觸發技能的詳細效果用，見 {@link ProcText}）。 */
@@ -775,7 +783,26 @@ public final class SkillConfig {
             return true;
         }
         final SupportDefinition support = support(supportId);
-        return support != null && support.spiritSupport();
+        // 2026-11-04 照站長「照原作改成一個角色一顆」：血脈輔助一個角色一顆（唯我論可以多，見 supportCopies）
+        return support != null && (support.spiritSupport() || support.lineage());
+    }
+
+    /** 2026-11-04（唯我論，PoE2 Solus Ipse）：FLAT：同一種血脈輔助可以在不同技能上多掛幾顆。 */
+    public static final String LINEAGE_EXTRA_COPIES = tw.exilecore.item.unique.UniqueStats.LINEAGE_EXTRA_COPIES;
+
+    /**
+     * 2026-11-04：同一種輔助一個角色最多掛幾顆（不同技能各一顆）：不限的回傳 {@link Integer#MAX_VALUE}；一個角色一顆的回傳 1，
+     * 血脈輔助再加上 sheet 的 {@link #LINEAGE_EXTRA_COPIES}（唯我論 +2；sheet 是 null 照 1）。
+     */
+    public int supportCopies(final String supportId, final tw.exilecore.stats.StatSheet sheet) {
+        if (!oncePerCharacter(supportId)) {
+            return Integer.MAX_VALUE;
+        }
+        final SupportDefinition support = support(supportId);
+        if (support == null || !support.lineage() || sheet == null) {
+            return 1;
+        }
+        return 1 + (int) Math.max(0, Math.floor(sheet.flat(LINEAGE_EXTRA_COPIES, java.util.Set.of()) + 1e-9));
     }
 
     public boolean supportOncePerCharacter() {

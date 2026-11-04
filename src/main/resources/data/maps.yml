@@ -220,6 +220,192 @@ first_kill:                      # 首殺獎勵（存在角色資料裡）：天
 #     hazards: [ { skill: hazard_star_meteor, every: 10, phase: 1 } ]
 #             → 場地危害：每 every 秒在某個玩家附近落一次（boss_skills.yml 的 slam、zone、orbs），phase 幾起；
 #               Boss 正在放招時等那一招放完才落，落下之前 Boss 也不出新的招（一次只做一件事）
+# 2026-11-04 照站長「審判者 Boss＋迷霧也要有 Boss」：事件的 Boss（不在星圖上、沒有巔峰的門與傷害上限；寫法同地圖 Boss，
+#   另外可以寫 drops.extra 同極境）。代號 = 那個特別實例的地圖代號：fog_trial 迷霧回廊第 15 波、ultimatum 絕境打完全部回合的審判者。
+#   生命、傷害照具名 Boss 的尺（具名 3.3～4.2、終局 7.5）；2026-11-04 照站長：寫 level（固定等級）與 recommended_dps（建議每秒；生命自動對準 3 分半）
+#   就是「災厄級」：不普攻、節奏 boss_skills.yml 的 tempo.calamity、機制在畫面中間說清楚。傳奇用 uniques.yml 的 source 寫這個代號就會掉（named）。
+event_bosses:
+  fog_trial:
+    name: 迷霧之主・無面
+    level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
+    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    type: STRAY
+    named: true
+    life: 6.0
+    damage: 2.8
+    scale: 1.4
+    mods: [evasive, swift]
+    intro: "「十四波了。你以為霧裡只有怪？霧本身就是我。」"
+    defeat: "霧散了，地上只剩一張沒有臉的面具。"
+    # 2026-11-04 照站長「新增的 Boss 要有不同的獨特的招式」：自己的招式（boss_skills.yml 的 fog_*）；這次之前借幻霧之鏡的
+    #   霧帳、面具齊射、無面步、忘卻之環；第一階段耳語標記、霧影；第二階段霧圍（場地收縮）、攝面；第三階段無名之光、散形
+    skills:
+      - fog_veil
+      - fog_mask_volley
+      - fog_faceless_step
+      - fog_memory_rings
+      - { id: fog_whisper_mark, phase: 1 }
+      - { id: fog_shadow_echoes, phase: 1 }
+      - { id: fog_closing_mist, phase: 2 }
+      - { id: fog_mask_pull, phase: 2 }
+      - { id: fog_nameless_beam, phase: 3 }
+      - { id: fog_dissolve, phase: 3 }
+      - fog_lost_souls                    # 2026-11-04 照站長「新增獨特的技能」
+      - { id: fog_drift, phase: 2 }
+    phases:
+      - at: 0.7
+        name: 霧更濃了
+        message: "「看不見了吧？我看得很清楚。」"
+        speed: 0.1
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+      - at: 0.4
+        name: 無面
+        message: "「你在霧裡拿走的每一樣東西，都是從我這裡拿的。」"
+        speed: 0.15
+        stats:
+          - { stat: damage, type: MORE, value: 35 }
+        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 35 }
+      - at: 0.15
+        name: 霧要散了
+        message: "「在那之前，你得留下來。」"
+        speed: 0.2
+        stats:
+          - { stat: damage, type: MORE, value: 50 }
+        mechanic: none
+    hazards:
+      - { skill: hazard_fog_pools, every: 8, phase: 1 }
+    enrage: { after: 240, damage: 120, speed: 0.4, message: "「霧要散了。」" }
+    drops:
+      unique_chance: 0.05   # 2026-11-04 照站長「絕境跟迷霧的傳奇 5%」；這次之前 0.01。照站長「迷霧之主放科西斯、譫妄異域的傳奇」：uniques.yml 的 sources 寫 fog_trial 的每一件各自 1%
+      extra:
+        - { currency: fog_splinter, amount: 10, chance: 1 }   # 打倒牠補 10 個碎片（開一場要 50）
+        - { skill: faceless_mist, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { skill: mask_scatter, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: faceless_blind, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: oblivion_chaos, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: mist_spread, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+
+  ultimatum:
+    name: 審判者・衡
+    level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
+    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    type: VINDICATOR
+    named: true
+    life: 6.5
+    damage: 3.0
+    scale: 1.3
+    mods: [armoured, sturdy]
+    intro: "「五回合，你都站住了。那最後一回合——跟我。」"
+    defeat: "秤停在正中央。牠點了點頭，碎成一地砝碼。"
+    # 2026-11-04：自己的招式（boss_skills.yml 的 judge_*）：法槌、天秤橫掃、判詞齊射、砝碼落下；第一階段宣判、衡之光、鐵鏈環；
+    #   第二階段法庭之牆、傳喚執法者；第三階段斷頭之刃、終審
+    skills:
+      - judge_gavel
+      - judge_scale_sweep
+      - judge_verdict_volley
+      - judge_weights
+      - { id: judge_sentence_mark, phase: 1 }
+      - { id: judge_balance_beam, phase: 1 }
+      - { id: judge_chains, phase: 1 }
+      - { id: judge_court_walls, phase: 2 }
+      - { id: judge_summon_bailiffs, phase: 2 }
+      - { id: judge_guillotine, phase: 3 }
+      - { id: judge_final_verdict, phase: 3 }
+      - judge_wandering_weights           # 2026-11-04 照站長「新增獨特的技能」
+      - { id: judge_guilt, phase: 2 }
+    phases:
+      - at: 0.7
+        name: 第一道秤
+        message: "「先秤你的命。」"
+        speed: 0.1
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+      - at: 0.4
+        name: 第二道秤
+        message: "「再秤你的貪。」"
+        speed: 0.15
+        stats:
+          - { stat: damage, type: MORE, value: 35 }
+        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 終審, delay: 8, safe: 2, safe_radius: 3, damage: 0.6 }
+      - at: 0.15
+        name: 裁決
+        message: "「秤歪了。那就砍掉多的那一邊。」"
+        speed: 0.2
+        stats:
+          - { stat: damage, type: MORE, value: 50 }
+        mechanic: none
+    hazards:
+      - { skill: hazard_judge_weights, every: 8, phase: 1 }
+    enrage: { after: 240, damage: 120, speed: 0.4, message: "「時間到了。」" }
+    drops:
+      unique_chance: 0.05   # 2026-11-04 照站長「絕境跟迷霧的傳奇 5%」；這次之前 0.01。照站長「絕境 Boss 塞試煉大師的傳奇，機率 1%」：uniques.yml 的 sources 寫 ultimatum 的每一件各自 1%
+      extra:
+        - { skill: scale_weight_drop, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { skill: verdict_cleave, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: balanced_verdict, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: sentence_stun, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: heavier_sentence, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+
+  legion:
+    name: 不朽統帥・磐
+    level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
+    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    type: WITHER_SKELETON
+    named: true
+    life: 6.5
+    damage: 3.0
+    scale: 1.4
+    mods: [armoured, sturdy]
+    intro: "「你把我的兵從時間裡挖出來，一個一個殺了。那現在——換我。」"
+    defeat: "軍旗倒了。時間重新開始走，石碑裡只剩一層灰。"
+    # 2026-11-04 照站長「軍團也要有 Boss」：時沉領域的統帥（地圖裝置用時沉徽記開；徽記從軍團的將領、軍曹掉）。自己的招式（legion_*）：
+    #   方陣突進、戰鼓、萬矢落、槍陣；第一階段時沉烙印、召集軍旗、盾牆環；第二階段攻城落石、合圍；第三階段斬首之光、最後一陣
+    skills:
+      - legion_phalanx
+      - legion_war_drums
+      - legion_arrow_storm
+      - legion_spear_wall
+      - { id: legion_time_brand, phase: 1 }
+      - { id: legion_banner_call, phase: 1 }
+      - { id: legion_shield_ring, phase: 1 }
+      - { id: legion_siege, phase: 2 }
+      - { id: legion_encirclement, phase: 2 }
+      - { id: legion_executioner_beam, phase: 3 }
+      - { id: legion_last_stand, phase: 3 }
+      - legion_javelins                   # 2026-11-04 照站長「新增獨特的技能」
+      - { id: legion_execution_order, phase: 2 }
+    phases:
+      - at: 0.7
+        name: 第一陣
+        message: "「第一陣，上。」"
+        speed: 0.1
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
+      - at: 0.4
+        name: 第二陣
+        message: "「第二陣——不許退。」"
+        speed: 0.15
+        stats:
+          - { stat: damage, type: MORE, value: 35 }
+        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: element, duration: 25, heal: 30, share: 0.3, rotate: 12, warn: 3, other: 0.1 }
+      - at: 0.15
+        name: 最後一陣
+        message: "「那就一起沉回時間裡。」"
+        speed: 0.2
+        stats:
+          - { stat: damage, type: MORE, value: 50 }
+        mechanic: none
+    hazards:
+      - { skill: hazard_legion_arrows, every: 8, phase: 1 }
+    enrage: { after: 240, damage: 120, speed: 0.4, message: "「號角——吹到底。」" }
+    drops:
+      unique_chance: 0.01   # 2026-11-04 照站長「不朽統帥放燃燒豐碑的傳奇」：uniques.yml 的 sources 寫 legion 的每一件各自 1%
+      extra:
+        - { currency: legion_emblem, amount: 2, chance: 1 }   # 打倒牠補 2 個徽記（開一場要 5）
+        - { skill: phalanx_breach, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { skill: volley_of_ages, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: time_stilled, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: phalanx_maim, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { support: war_horn, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+
 maps:
   wreck_bay:
     base: map_wreck_bay
@@ -655,7 +841,7 @@ final:
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 4 }
-        shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 4, duration: 25, heal: 25 }
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5   # 2026-11-02（這次之前 0.33）
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
@@ -705,7 +891,7 @@ final:
         name: 星骸甦醒
         message: "「朕的碎片，回到朕身邊！」"
         summon: { type: BLAZE, count: 5 }
-        shield: { count: 3, type: BLAZE, name: 星骸結晶, life: 5, duration: 30, heal: 30 }
+        mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
       - at: 0.5
         name: 天穹墜落
         message: "「那就再墜落一次吧！」"
@@ -719,7 +905,7 @@ final:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 30 }
-        mechanic: { type: countdown, name: 熔爐爆燃, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: BLAZE, name: 熔爐之心, life: 6, duration: 25, heal: 40 }
+        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 熔爐爆燃, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
     hazards:
       - { skill: hazard_star_orbs, every: 14, phase: 1 }
     enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
@@ -790,7 +976,7 @@ finals:
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 4 }
-          shield: { count: 3, type: STRAY, name: 霜心冰像, life: 4, duration: 25, heal: 25 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5   # 2026-11-02（這次之前 0.33）
           name: 絕對零度
           message: "「全部，停下來。」"
@@ -826,7 +1012,7 @@ finals:
           message: "「風雪，起。」"
           speed: 0.15
           summon: { type: STRAY, count: 5 }
-          shield: { count: 3, type: STRAY, name: 霜心冰像, life: 5, duration: 30, heal: 30 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 絕對零度
           message: "「全部，停下來。」"
@@ -839,7 +1025,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 40, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: STRAY, name: 永凍冰像, life: 6, duration: 25, heal: 40 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 40, vuln: 6, vuln_max: 60, vuln_decay: 4 }
       hazards:
         - { skill: hazard_ice_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
@@ -911,7 +1097,7 @@ finals:
           stats:
             - { stat: damage, type: MORE, value: 45 }
           summon: { type: WITHER_SKELETON, count: 2 }
-          shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 4, duration: 25, heal: 30 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
           name: 萬魂渡河
           message: "「三百年份的魂，全都還給你。」"
@@ -940,7 +1126,7 @@ finals:
           name: 亡者起身
           message: "「起來，再死一次。」"
           summon: { type: ZOMBIE, count: 6 }
-          shield: { count: 3, type: SKELETON, name: 渡魂骨燈, life: 5, duration: 30, heal: 30 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 冥河倒灌
           message: "「河水，淹過來！」"
@@ -954,7 +1140,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: { type: zones, duration: 25, heal: 40 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: SKELETON, name: 冥河骨燈, life: 6, duration: 25, heal: 40 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 25, heal: 40 }
       hazards:
         - { skill: hazard_grave_hands, every: 6, phase: 0 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
@@ -1026,7 +1212,7 @@ finals:
           stats:
             - { stat: damage, type: MORE, value: 50 }
           summon: { type: BLAZE, count: 3 }
-          shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 4, duration: 25, heal: 30 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.25   # 2026-11-02 照站長：多一個階段，只鎖血（機制沒寫，照預設輪流；名字、台詞照極境的第三階段）
           name: 焚城
           message: "「陛下的命令：曜京，再燒一次。」"
@@ -1055,7 +1241,7 @@ finals:
           name: 餘燼復燃
           message: "「燒起來！」"
           summon: { type: MAGMA_CUBE, count: 5 }
-          shield: { count: 3, type: BLAZE, name: 餘燼核心, life: 5, duration: 30, heal: 30 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 焚天
           message: "「天也燒給你看。」"
@@ -1069,7 +1255,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: { type: countdown, name: 焚城烈焰, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: BLAZE, name: 焚城核心, life: 6, duration: 25, heal: 40 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 焚城烈焰, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
       hazards:
         - { skill: hazard_ember_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
@@ -1153,7 +1339,7 @@ finals:
           name: 星隕
           message: "「這才剛開始。死亡……在等你。」"
           speed: 0.1
-          shield: { count: 3, type: ENDERMAN, name: 虛星結晶, life: 5, duration: 30, heal: 25 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 萬界崩解
           message: "「看好了——你的世界，是怎麼碎掉的。」"
@@ -1166,7 +1352,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 40 }
-          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 35, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: ENDERMAN, name: 終末之核, life: 6, duration: 25, heal: 35 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 35, vuln: 6, vuln_max: 60, vuln_decay: 4 }
       hazards:
         - { skill: hazard_awakener_storm, every: 9, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
@@ -1261,7 +1447,7 @@ finals:
           name: 奪取祝福
           message: "「這一座，歸我。」"
           speed: 0.1
-          shield: { count: 3, type: VINDICATOR, name: 神龕守衛, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 聖光灼身
           message: "「光太亮了？那就閉上眼。」"
@@ -1274,7 +1460,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: VINDICATOR, name: 晨曦結晶, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }
       hazards:
         - { skill: hazard_shrine_ray, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
@@ -1343,7 +1529,7 @@ finals:
           name: 千鎖開啟
           message: "「第一把鎖，開了。」"
           speed: 0.1
-          shield: { count: 3, type: SILVERFISH, name: 鎖匣, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 貪婪之心
           message: "「再給我一點。再一點。」"
@@ -1356,7 +1542,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: countdown, name: 寶庫崩落, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: SILVERFISH, name: 千鎖之核, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 寶庫崩落, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
       hazards:
         - { skill: hazard_box_coins, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
@@ -1425,7 +1611,7 @@ finals:
           name: 裂隙擴大
           message: "「裂縫，再開大一點。」"
           speed: 0.1
-          shield: { count: 3, type: ENDERMITE, name: 裂隙結晶, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 穿界
           message: "「這一邊的空氣……真難聞。」"
@@ -1438,7 +1624,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: ENDERMITE, name: 界縫之核, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_breach_rift, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
@@ -1508,7 +1694,7 @@ finals:
           name: 流寇圍觀
           message: "「別插手，這是我的決鬥。」"
           speed: 0.1
-          shield: { count: 3, type: PILLAGER, name: 流寇護衛, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 認真了
           message: "「不錯。那我也認真一點。」"
@@ -1521,7 +1707,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: countdown, name: 無名一擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }   # 2026-11-02 照站長：換成倒數大招；這次之前 shield: { count: 3, type: PILLAGER, name: 無名之誓, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 無名一擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
       hazards:
         - { skill: hazard_exile_knives, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
@@ -1590,7 +1776,7 @@ finals:
           name: 第一座祭壇
           message: "「第一座祭壇，點燃。」"
           speed: 0.1
-          shield: { count: 3, type: HUSK, name: 祭壇燭台, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 第二座祭壇
           message: "「血還不夠。再多一點。」"
@@ -1603,7 +1789,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }   # 2026-11-02 照站長：換成站位圈；這次之前 shield: { count: 3, type: HUSK, name: 血契之核, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }
       hazards:
         - { skill: hazard_ritual_blood, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
@@ -1672,7 +1858,7 @@ finals:
           name: 霧更濃了
           message: "「看不見了吧？我看得很清楚。」"
           speed: 0.1
-          shield: { count: 3, type: VEX, name: 鏡像碎片, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 妄念
           message: "「你以為那是真的？」"
@@ -1685,7 +1871,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: VEX, name: 妄念之核, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_mist_orb, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
@@ -1754,7 +1940,7 @@ finals:
           name: 骨潮漲起
           message: "「潮，漲了。」"
           speed: 0.1
-          shield: { count: 3, type: SKELETON, name: 骨柱, life: 5, duration: 25, heal: 35 }
+          mechanic: { type: opening, heal: 35 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
         - at: 0.5
           name: 淵底
           message: "「再下去一點。這裡還不是底。」"
@@ -1767,7 +1953,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: { type: zones, duration: 20, heal: 45 }   # 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）→ 站位圈；先前換成元素弱點；這次之前 shield: { count: 3, type: SKELETON, name: 淵底之核, life: 6, duration: 20, heal: 45 }
+          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
       hazards:
         - { skill: hazard_abyssal_spike, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }

@@ -258,7 +258,8 @@ class UberTest {
             final MapConfig.Boss boss = map.boss();
             assertNotNull(boss.enrage(), map.id() + "：狂暴");
             assertFalse(boss.hazards().isEmpty(), map.id() + "：場地危害");
-            assertTrue(boss.phases().stream().anyMatch(phase -> phase.shield() != null), map.id() + "：有一個階段會張護盾");
+            assertTrue(boss.phases().stream().anyMatch(phase -> phase.mechanic() != null && phase.mechanic().kind() == PhaseMechanic.Kind.OPENING),
+                    map.id() + "：有一個階段鎖血（破綻；2026-11-04 照站長：結晶退役）");
             final Set<BossSkill.Kind> kinds = new HashSet<>();
             for (final BossSkillUse use : boss.skills()) {
                 kinds.add(skills.bossSkills().skill(use.id()).kind());
@@ -285,10 +286,12 @@ class UberTest {
                 assertTrue(use.fromPhase() <= merged.phases().size(), map.id() + "：極境的 " + use.id() + " 要等第 " + use.fromPhase()
                         + " 階段，但只有 " + merged.phases().size() + " 個階段（永遠用不到）");
             }
-            // 2026-11-02 照站長：極境的第三個護盾換成別的鎖血機制（站位圈、倒數大招、元素弱點）；這次之前要張兩次結晶護盾
-            assertTrue(merged.phases().stream().anyMatch(phase -> phase.shield() != null), map.id() + "：極境還有結晶護盾");
+            // 2026-11-04 照站長：鎖血只剩一個破綻（結晶退役）；極境的階段裡也要有一個
+            assertEquals(1, merged.phases().stream().filter(phase -> phase.mechanic() != null && phase.mechanic().kind() == PhaseMechanic.Kind.OPENING).count(),
+                    map.id() + "：極境剛好一個破綻鎖血");
+            assertTrue(merged.phases().stream().noneMatch(phase -> phase.shield() != null), map.id() + "：極境沒有結晶");
             final List<PhaseMechanic.Spec> locks = PhaseMechanic.resolve(PhaseMechanic.key(map.id(), true), merged.phases(), true, true);
-            assertTrue(locks.stream().filter(java.util.Objects::nonNull).count() >= 2, map.id() + "：極境至少鎖兩次血");
+            assertEquals(1, locks.stream().filter(java.util.Objects::nonNull).count(), map.id() + "：極境只鎖一次血（2026-11-04 照站長）");
             assertTrue(merged.enrage().after() <= boss.enrage().after(), map.id() + "：極境的狂暴不會比較晚（2026-10-21：都是 5 分鐘）");
             final CurrencyType key = currencies.get(uber.key());
             assertNotNull(key, map.id() + "：開門的通貨要存在");
@@ -325,10 +328,10 @@ class UberTest {
                 special |= skill.kind().channelled() || skill.kind() == BossSkill.Kind.ORBS;
             }
             assertTrue(special, trial.id() + "：每場試煉至少一種特殊招式");
-            shields += (int) boss.phases().stream().filter(phase -> phase.shield() != null).count();
+            shields += (int) boss.phases().stream().filter(phase -> phase.mechanic() != null && phase.mechanic().kind() == PhaseMechanic.Kind.OPENING).count();
             hazards += boss.hazards().size();
         }
-        assertEquals(1, shields, "第三試煉教護盾");
+        assertEquals(1, shields, "第三試煉教鎖血（破綻）");
         assertEquals(1, hazards, "第四試煉有場地危害");
     }
 

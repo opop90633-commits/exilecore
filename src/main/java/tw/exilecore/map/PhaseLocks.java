@@ -140,6 +140,7 @@ public final class PhaseLocks {
             case ZONES -> startZones(arena, state, spec);
             case COUNTDOWN -> startCountdown(arena, state, spec);
             case ELEMENT -> startElement(arena, state, spec, required);
+            case OPENING -> startOpening(arena, state, spec, required);
             default -> {
                 return false;
             }
@@ -215,6 +216,128 @@ public final class PhaseLocks {
         elementBurst(boss, lock.element, 40);
     }
 
+    /** 2026-11-04 照站長：破綻（Boss 照常出招、免疫控場；只有破綻裡打的算）。 */
+    private void startOpening(final Arena arena, final State state, final PhaseMechanic.Spec spec, final double required) {
+        final PhaseMechanic.Opening opening = spec.opening();
+        final LivingEntity boss = arena.boss();
+        final PhaseMechanic.Active lock = new PhaseMechanic.Active(spec, now());
+        lock.requiredHealth = Math.max(1, required * lifeUnits(boss));
+        lock.lockedHealth = boss.getHealth();
+        lock.required = required;
+        state.lock = lock;
+        broadcast(arena, String.format(Locale.ROOT,
+                "<#ffb347>✦ %s 鎖血了（%d 層）：牠照常出招——每躲開一招，你身上就開 %s 秒的破綻（這段時間打牠的傷害 ×%s），"
+                        + "只有破綻裡打的才算，一個破綻最多剝一層；%d 秒內剝完 %d 層才破盾，沒剝完牠回復 %d%% 生命。鎖血時牠免疫控場",
+                ItemRenderer.escape(arena.bossName()), opening.layers(), trim(opening.window()), trim(opening.openTaken()),
+                Math.round(opening.duration()), opening.layers(), Math.round(opening.heal())));
+        boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.2f, 0.6f);
+        Fx.important(() -> Fx.spawn(boss.getWorld(), Particle.ENCHANTED_HIT, boss.getLocation().add(0, boss.getHeight() / 2, 0), 40, 0.8, 1, 0.8, 0.2));
+    }
+
+    /** Boss 的生命（我們的單位；傷害也是這個單位）。 */
+    private double lifeUnits(final LivingEntity boss) {
+        if (plugin.monsters() == null) {
+            return 0;
+        }
+        final tw.exilecore.monster.MonsterData data = plugin.monsters().data(boss).orElse(null);
+        return data == null ? 0 : plugin.monsters().sheet(boss, data).get(tw.exilecore.stats.StatKeys.LIFE_MAX);
+    }
+
+    /**
+     * 2026-11-04 破綻：Boss 放完一招（{@link tw.exilecore.skill.BossSkills.Host#skillDone}）：沒被那招打到、離牠 reach 格內的人開破綻；
+     * 被打到的沒有。
+     */
+    public void skillDone(final Arena arena, final State state, final String skillName, final java.util.Set<UUID> victims) {
+        final PhaseMechanic.Active lock = state.lock;
+        if (lock == null || lock.spec.kind() != PhaseMechanic.Kind.OPENING) {
+            return;
+        }
+        final PhaseMechanic.Opening opening = lock.spec.opening();
+        final LivingEntity boss = arena.boss();
+        final long now = now();
+        final double layer = lock.requiredHealth / opening.layers();
+        for (final Player player : arena.fighters()) {
+            final UUID uuid = player.getUniqueId();
+            if (victims.contains(uuid)) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>被「" + ItemRenderer.escape(skillName) + "」打到了：沒有破綻"));
+                continue;
+            }
+            if (boss == null || player.getLocation().distanceSquared(boss.getLocation()) > opening.reach() * opening.reach()) {
+                continue; // 站太遠沒有躲招
+            }
+            lock.openUntil.put(uuid, new long[] {now + Math.round(opening.window() * 20)});
+            lock.openUsed.put(uuid, 0.0);
+            player.showTitle(Title.title(plugin.text().parse("<#ffb347>破綻！"),
+                    plugin.text().parse("<gray>躲開了「" + ItemRenderer.escape(skillName) + "」：" + trim(opening.window()) + " 秒內打牠（第 "
+                            + Math.min(opening.layers(), lock.layersDone + 1) + "／" + opening.layers() + " 層）"),
+                    Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(Math.round(opening.window() * 1000) - 300), Duration.ofMillis(200))));
+            player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.2f, 1.4f);
+        }
+        if (boss != null) {
+            Fx.important(() -> Fx.spawn(boss.getWorld(), Particle.ENCHANTED_HIT, boss.getLocation().add(0, boss.getHeight() / 2, 0), 25, 0.6, 0.8, 0.6, 0.2));
+        }
+        if (layer <= 0) {
+            lock.peeled = lock.requiredHealth;
+        }
+    }
+
+    /**
+     * 2026-11-04 破綻：這一下打進 Boss 真正要扣的量（我們的單位）。破綻外：0（不算也不扣血，血不會掉到鎖住時以下）；
+     * 破綻裡：× taken，但一個破綻最多剝一層、整個鎖最多剝要剝的量。不是破綻回傳原數。
+     */
+    public double adjust(final State state, final UUID source, final double amount) {
+        final PhaseMechanic.Active lock = state == null ? null : state.lock;
+        if (lock == null || lock.spec.kind() != PhaseMechanic.Kind.OPENING || amount <= 0) {
+            return amount;
+        }
+        final PhaseMechanic.Opening opening = lock.spec.opening();
+        final long[] until = source == null ? null : lock.openUntil.get(source);
+        if (until == null || until[0] < now()) {
+            return 0;
+        }
+        final double layer = lock.requiredHealth / opening.layers();
+        final double used = lock.openUsed.getOrDefault(source, 0.0);
+        final double allowed = Math.min(layer - used, lock.requiredHealth - lock.peeled);
+        if (allowed <= 0) {
+            return 0;
+        }
+        final double applied = Math.min(amount * opening.openTaken(), allowed);
+        lock.openUsed.put(source, used + applied);
+        lock.peeled += applied;
+        final int before = lock.layersDone;
+        lock.layersDone = (int) Math.floor((lock.peeled + 1e-6) / Math.max(1e-9, layer));
+        if (lock.layersDone > before && lock.layersDone < opening.layers()) {
+            final Player player = plugin.getServer().getPlayer(source);
+            if (player != null) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>剝掉第 " + lock.layersDone + " 層（剩 " + (opening.layers() - lock.layersDone) + " 層）"));
+                player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 1.3f);
+            }
+        }
+        return applied;
+    }
+
+    /** 2026-11-04：Boss 正在破綻鎖血（免疫控場）。 */
+    public static boolean openingActive(final State state) {
+        return state != null && state.lock != null && state.lock.spec.kind() == PhaseMechanic.Kind.OPENING;
+    }
+
+    private Outcome updateOpening(final Arena arena, final State state, final PhaseMechanic.Active lock, final long now) {
+        final PhaseMechanic.Opening opening = lock.spec.opening();
+        lock.openUntil.entrySet().removeIf(entry -> entry.getValue()[0] < now);
+        if (lock.peeled >= lock.requiredHealth - 1e-6) {
+            return pass(arena, state, lock);
+        }
+        if (now >= lock.untilTick) {
+            return fail(arena, state, lock, "沒在 " + Math.round(opening.duration()) + " 秒內剝完 " + opening.layers() + " 層破綻");
+        }
+        final LivingEntity boss = arena.boss();
+        if (boss != null && !lock.openUntil.isEmpty() && now - lock.lastPulse >= 5) {
+            lock.lastPulse = now;
+            Fx.spawn(boss.getWorld(), Particle.ENCHANTED_HIT, boss.getLocation().add(0, boss.getHeight() / 2, 0), 6, 0.5, 0.6, 0.5, 0.05);
+        }
+        return Outcome.NONE;
+    }
+
     // ---- 每次更新（地圖 Boss、淵鯨每 10 tick，鯊王每 2 tick；照實際過了多久算） ----
 
     public Outcome update(final Arena arena, final State state) {
@@ -229,6 +352,7 @@ public final class PhaseLocks {
                 case ZONES -> updateZones(arena, state, lock, now, seconds);
                 case COUNTDOWN -> updateCountdown(arena, state, lock, now);
                 case ELEMENT -> updateElement(arena, state, lock, now);
+                case OPENING -> updateOpening(arena, state, lock, now);
                 default -> {
                     end(state, boss);
                     yield Outcome.NONE;
@@ -691,6 +815,10 @@ public final class PhaseLocks {
      */
     public String barPrefix(final State state, final LivingEntity boss) {
         final PhaseMechanic.Active lock = state.lock;
+        if (lock != null && lock.spec.kind() == PhaseMechanic.Kind.OPENING) {
+            return "<white>🔒 鎖血：<#ffb347>躲招開破綻、破綻裡打牠 " + lock.layersDone + "/" + lock.spec.opening().layers() + " 層<white>（剩 "
+                    + secondsLeft(lock) + " 秒）<dark_gray>｜ ";
+        }
         if (lock != null && lock.spec.kind() == PhaseMechanic.Kind.ZONES) {
             return "<white>🔒 無敵：站滿光圈 " + charged(lock) + "/" + lock.charges.length + "（剩 " + secondsLeft(lock) + " 秒）<dark_gray>｜ ";
         }

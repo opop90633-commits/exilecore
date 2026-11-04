@@ -263,9 +263,7 @@ public final class AscendancyEffects implements Listener {
         if (mana > 0 && has(sheet, AscKeys.NO_ES_COST) && state.energyShield() <= 0) {
             mana *= 1 + flat(sheet, AscKeys.NO_ES_COST) / 100.0; // 晶化護符：沒有能量護盾時更多 50% 魔力消耗
         }
-        if (mana > 0) {
-            mana *= AscBuild.costScale(effects, player); // 鑲嵌的寶石（藍）：技能消耗更少 30%
-        }
+        // 2026-11-04：鑲嵌的寶石（藍）的「更少 30%」改成面板的 SKILL_COST（AscBuild），這裡不再乘
         double flame = 0;
         if (has(sheet, AscKeys.INFERNAL) && mana > 0) {
             flame = mana; // 火祭協議：消耗改成獲得煉獄之炎

@@ -87,6 +87,9 @@ class AscOriginalSystemsTest {
         assertTrue(wisdom.stats().stream().noneMatch(m -> m.stat().equals(AscKeys.RUNE_EFFECT)), "不再是符文效果增加 50%");
         // 每一顆符文都有羈絆詞綴（PoE2 0.5：防具 +20 最大生命、+20 最大魔力）
         for (final Runes.Rune rune : repository.runes()) {
+            if (rune.soulCore()) {
+                continue; // 2026-11-04：魂核符文原作沒有羈絆；魔偶的羈絆分部位（bondedSlots）
+            }
             assertFalse(rune.bondedArmour().isEmpty(), rune.id());
             assertFalse(rune.bondedWeapon().isEmpty(), rune.id());
         }

@@ -84,6 +84,7 @@ settings:
     world: 0.55        # 世界 Boss（不定時活動；2026-10-17 起不普攻；以前 0.7）
     invasion: 0.7      # 入侵怪潮的統帥（照常普攻；以前跟世界 Boss 共用 0.7）
     festival: 0.55     # 南瓜王（萬燈夜；2026-10-17 起不普攻；以前跟世界 Boss 共用 0.7）
+    calamity: 0.45     # 2026-11-04 照站長：災厄級（迷霧之主、審判者、不朽統帥：maps.yml event_bosses 寫了 recommended_dps 的）：不普攻、比極境再快一點
   warn_range: 24       # 幾格內的玩家會聽到 Boss 的喊話
   # 換階段（maps.yml 的 phases）：先停 phase_pause 秒不出新招（喊話、召喚、護盾先出來），
   # 這個階段才會用的招（寫 phase: 的）換階段後 phase_unlock 秒才開始用，不會一換階段就接大招。2026-10：2 → 1.5、4 → 3
@@ -608,7 +609,7 @@ skills:
   emperor_judgement:
     name: 天穹審判
     kind: sanctuary
-    damage: 3.5
+    damage: 5.25   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.5
     type: fire
     cooldown: 38
     range: 30
@@ -637,7 +638,7 @@ skills:
   uber_emperor_collapse:
     name: 天穹崩塌
     kind: sanctuary
-    damage: 5.0
+    damage: 7.5   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 5.0
     type: fire
     cooldown: 45
     range: 30
@@ -863,7 +864,7 @@ skills:
   awakener_apocalypse:
     name: 末日
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: physical
     convert: { chaos: 0.25, fire: 0.25, lightning: 0.25 }
     cooldown: 40
@@ -1125,7 +1126,7 @@ skills:
   queen_whiteout:
     name: 白霧
     kind: sanctuary
-    damage: 3.5
+    damage: 5.25   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.5
     type: cold
     cooldown: 38
     range: 30
@@ -1156,7 +1157,7 @@ skills:
   uber_queen_permafrost:
     name: 永凍
     kind: sanctuary
-    damage: 5.0
+    damage: 7.5   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 5.0
     type: cold
     cooldown: 45
     range: 30
@@ -1327,7 +1328,7 @@ skills:
   king_last_ferry:
     name: 最後的渡船
     kind: sanctuary
-    damage: 3.5
+    damage: 5.25   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.5
     type: chaos
     cooldown: 38
     range: 30
@@ -1542,7 +1543,7 @@ skills:
   general_burning_sky:
     name: 燎原
     kind: sanctuary
-    damage: 3.5
+    damage: 5.25   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.5
     type: fire
     cooldown: 38
     range: 30
@@ -1571,7 +1572,7 @@ skills:
   uber_general_firestorm:
     name: 焚城
     kind: sanctuary
-    damage: 5.0
+    damage: 7.5   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 5.0
     type: fire
     cooldown: 45
     range: 30
@@ -1924,7 +1925,7 @@ skills:
   warden_star_judgement:
     name: 星痕審判
     kind: sanctuary
-    damage: 3.0
+    damage: 4.5   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.0
     type: chaos
     cooldown: 35
     range: 24
@@ -2329,7 +2330,7 @@ skills:
     name: 全面封鎖
     hint: "整個金庫封鎖：躲進綠色的安全區"
     kind: sanctuary
-    damage: 4.0          # 2026-10：4.0 → 2.6 → 4.0（改回：沒躲進安全區就很痛）
+    damage: 6          # 2026-10：4.0 → 2.6 → 4.0（改回：沒躲進安全區就很痛）；2026-11-04 照站長全場大招 ×1.5（這次之前 4.0）
     type: lightning
     cooldown: 36
     range: 30
@@ -2480,7 +2481,7 @@ skills:
   world_doomsday:
     name: 開天之日
     kind: sanctuary
-    damage: 3.6
+    damage: 5.4   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.6
     type: chaos
     cooldown: 40
     range: 30
@@ -2576,7 +2577,7 @@ skills:
     name: 燈滅
     hint: "所有的燈都要熄了：躲進還亮著的光圈"
     kind: sanctuary
-    damage: 3.2
+    damage: 4.8   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 3.2
     type: chaos
     cooldown: 40
     range: 30
@@ -2746,7 +2747,7 @@ skills:
     name: 海嘯
     hint: "全場海嘯、翻滾躲不掉：躲進綠色的安全區"
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: cold
     cooldown: 45
     range: 30
@@ -3367,7 +3368,7 @@ skills:
   shrine_dawn:
     name: 晨曦降臨
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: fire
     cooldown: 34   # 2026-10-18：難度提高（原 40）
     range: 30
@@ -3653,7 +3654,7 @@ skills:
   box_vault_seal:
     name: 封庫
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: physical
     convert: { fire: 0.5 }
     cooldown: 34
@@ -4173,7 +4174,7 @@ skills:
   ritual_final_offering:
     name: 終末獻祭
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: fire
     cooldown: 34   # 2026-10-18：難度提高（原 40）
     range: 30
@@ -4440,7 +4441,7 @@ skills:
   mist_awakening:
     name: 夢覺
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: cold
     cooldown: 34
     range: 30
@@ -4644,7 +4645,7 @@ skills:
   abyssal_drown:
     name: 滅頂
     kind: sanctuary
-    damage: 4.5
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
     type: cold
     cooldown: 34
     range: 30
@@ -4834,6 +4835,611 @@ skills:
     count: 3
     scatter: 4
     at: target
+
+  # ---- 2026-11-04 照站長「新增的 Boss 要有不同的獨特的招式」：迷霧之主・無面（迷霧回廊第 15 波）：霧、面具、忘卻 ----
+  #   霧帳（三塊霧罩）、面具齊射、無面步、忘卻之環；第一階段耳語標記、霧影；第二階段霧圍（場地收縮）、攝面（漩渦）；第三階段無名之光（追人光束）、散形（全場大招）
+  fog_veil:
+    name: 霧帳
+    hint: "三塊霧罩下來：裡面走得慢、一直掉血，往外走"
+    kind: zone
+    damage: 0.45
+    type: cold
+    cooldown: 13
+    range: 24
+    telegraph: 1.0
+    radius: 4.5
+    duration: 9
+    interval: 0.8
+    count: 3
+    scatter: 6
+    at: target
+    slow: 1.5
+    shout: "「別急著看清楚。」"
+  fog_mask_volley:
+    name: 面具齊射
+    kind: volley
+    damage: 1.3
+    type: cold
+    cooldown: 7
+    range: 22
+    telegraph: 1.0
+    count: 7
+    spread: 70
+    speed: 1.1
+    reach: 24
+    size: 0.7
+    explode: 1.8
+    shout: "「哪一張是你的臉？」"
+  fog_faceless_step:
+    name: 無面步
+    hint: "祂沒有臉，所以你看不到祂往哪走：落地前走出紅圈"
+    kind: blink
+    damage: 2.2
+    type: cold
+    cooldown: 9
+    range: 36
+    telegraph: 1.0
+    radius: 3.5
+    slow: 1.5
+    shout: "「我在這裡。也在那裡。」"
+  fog_memory_rings:
+    name: 忘卻之環
+    hint: "三圈霧環往外推、各留兩個缺口：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: cold
+    cooldown: 16
+    range: 20
+    telegraph: 1.2
+    radius: 1.5
+    reach: 20
+    speed: 0.34
+    width: 0.9
+    count: 3
+    stagger: 1.1
+    gaps: 2
+    gap_angle: 45
+    shout: "「忘了吧。忘了你是怎麼進來的。」"
+  fog_whisper_mark:
+    name: 耳語標記
+    hint: "被耳語纏上的人 3.5 秒後霧爆：離開隊友"
+    kind: mark
+    damage: 2.3
+    type: cold
+    cooldown: 11
+    range: 30
+    telegraph: 1.0
+    count: 1
+    duration: 3.5
+    explode: 4
+    shout: "「聽見了嗎？牠們在叫你的名字。」"
+  fog_shadow_echoes:
+    name: 霧影
+    hint: "四道霧影各畫一條紅線、一道接一道：往旁邊走"
+    kind: echoes
+    damage: 1.5
+    type: cold
+    cooldown: 12
+    range: 22
+    telegraph: 1.2
+    count: 4
+    scatter: 6
+    stagger: 0.7
+    delay: 1.0
+    reach: 24
+    width: 1.1
+    shout: "「你看到的，是誰的影子？」"
+  fog_closing_mist:
+    name: 霧圍
+    kind: arena
+    damage: 0.35
+    type: cold
+    cooldown: 300        # 放一次就維持到這場打完（第二階段一開始就放）
+    range: 30
+    telegraph: 1.5
+    reach: 18
+    radius: 9
+    duration: 14
+    interval: 0.5
+    shout: "「霧往裡收了。到我身邊來。」"
+  fog_mask_pull:
+    name: 攝面
+    hint: "霧把你往祂吸：往外跑，被吸進去會炸"
+    kind: pull
+    damage: 2.8
+    type: cold
+    cooldown: 14
+    range: 15
+    telegraph: 1.2
+    radius: 14
+    speed: 0.12
+    duration: 3.0
+    explode: 4.5
+    shout: "「把臉借我。」"
+  fog_nameless_beam:
+    name: 無名之光
+    hint: "兩道會追人的光束：往光束轉的方向跑、繞著祂"
+    kind: beam
+    damage: 1.4
+    type: cold
+    cooldown: 12
+    range: 18
+    telegraph: 1.6
+    count: 2
+    angle: 160
+    length: 30
+    width: 0.8
+    duration: 4.5
+    interval: 0.3
+    track: 25
+    shout: "「沒有名字的光，照不出影子。」"
+  fog_dissolve:
+    name: 散形
+    kind: sanctuary
+    damage: 6.3   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.2
+    type: cold
+    cooldown: 32
+    range: 30
+    telegraph: 2.5
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8
+    count_per_player: 1
+    shout: "「霧散了——散不掉的，就跟我一起散。」"
+  hazard_fog_pools:
+    name: 霧沼
+    kind: zone
+    damage: 0.4
+    type: cold
+    telegraph: 1.0
+    radius: 2.2
+    duration: 6
+    interval: 0.6
+    count: 2
+    scatter: 4
+    at: target
+    slow: 1
+
+  # ---- 審判者・衡（絕境打完全部回合的挑戰）：天秤、砝碼、判詞 ----
+  #   法槌（三連落）、天秤橫掃（兩波扇形）、判詞齊射、砝碼落下（八顆亂落）；第一階段宣判（點名）、衡之光（兩道光束）、鐵鏈環；
+  #   第二階段法庭之牆（兩圈牆）、傳喚執法者；第三階段斷頭之刃（螺旋）、終審（全場大招）
+  judge_gavel:
+    name: 法槌
+    hint: "法槌連敲三下、一下比一下近：往側面跑出紅圈"
+    kind: slam
+    damage: 1.7
+    type: physical
+    cooldown: 8
+    range: 9
+    telegraph: 0.9
+    delay: 0.6
+    radius: 3
+    count: 3
+    stagger: 0.5
+    at: target
+    shout: "「肅靜。」"
+  judge_scale_sweep:
+    name: 天秤橫掃
+    kind: cone
+    damage: 1.6
+    type: physical
+    cooldown: 9
+    range: 8
+    telegraph: 1.0
+    angle: 120
+    length: 9
+    count: 2
+    stagger: 0.7
+    shout: "「秤——」"
+  judge_verdict_volley:
+    name: 判詞齊射
+    kind: volley
+    damage: 1.3
+    type: lightning
+    cooldown: 7
+    range: 22
+    telegraph: 1.0
+    count: 6
+    spread: 50
+    speed: 1.2
+    reach: 24
+    size: 0.7
+    explode: 1.5
+    shout: "「有罪。有罪。有罪。」"
+  judge_weights:
+    name: 砝碼落下
+    kind: slam
+    damage: 1.5
+    type: physical
+    cooldown: 11
+    range: 24
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2.5
+    count: 8
+    stagger: 0.25
+    scatter: 10
+    at: random
+    shout: "「把你的分量秤清楚。」"
+  judge_sentence_mark:
+    name: 宣判
+    hint: "被宣判的人 4 秒後執行：離開隊友"
+    kind: mark
+    damage: 2.5
+    type: physical
+    convert: { lightning: 0.5 }
+    cooldown: 10
+    range: 30
+    telegraph: 1.5
+    count: 1
+    duration: 4
+    explode: 4
+    shout: "「判決如下——」"
+  judge_balance_beam:
+    name: 衡之光
+    hint: "秤桿兩端的光束一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.4
+    type: lightning
+    cooldown: 11
+    range: 18
+    telegraph: 1.6
+    count: 2
+    angle: 190
+    length: 32
+    width: 0.8
+    duration: 5
+    interval: 0.3
+    shout: "「兩端一樣重，才叫公平。」"
+  judge_chains:
+    name: 鐵鏈環
+    hint: "鐵鏈一圈圈甩出來、各有兩個缺口：站進綠色的缺口"
+    kind: ring
+    damage: 1.8
+    type: physical
+    cooldown: 15
+    range: 20
+    telegraph: 1.2
+    radius: 1.5
+    reach: 20
+    speed: 0.36
+    width: 0.8
+    count: 2
+    stagger: 1.3
+    gaps: 2
+    gap_angle: 50
+    shout: "「鎖起來。」"
+  judge_court_walls:
+    name: 法庭之牆
+    hint: "兩圈法庭之牆、穿不過：一圈一圈找缺口繞出去"
+    kind: zone
+    damage: 0.7
+    type: lightning
+    cooldown: 20
+    range: 36
+    telegraph: 1.5
+    radius: 0.8
+    duration: 8
+    interval: 0.6
+    count: 2
+    reach: 14
+    gaps: 3
+    gap_angle: 45
+    at: maze
+    solid: true
+    slow: 1
+    shout: "「法庭，閉門。」"
+  judge_summon_bailiffs:
+    name: 傳喚執法者
+    kind: summon
+    summon: VINDICATOR
+    count: 3
+    summon_max: 6
+    duration: 25
+    cooldown: 16
+    telegraph: 1.0
+    shout: "「執法者，上前。」"
+  judge_guillotine:
+    name: 斷頭之刃
+    hint: "刀刃從牠身邊螺旋轉出去：往旋轉的反方向跑"
+    kind: slam
+    damage: 2.1
+    type: physical
+    cooldown: 13
+    range: 20
+    telegraph: 0.8
+    delay: 0.8
+    radius: 2.5
+    count: 18
+    stagger: 0.09
+    reach: 16
+    at: spiral
+    shout: "「多的那一邊——砍掉。」"
+  judge_final_verdict:
+    name: 終審
+    kind: sanctuary
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
+    type: lightning
+    cooldown: 34
+    range: 30
+    telegraph: 2.5
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8
+    count_per_player: 1
+    shout: "「終審——沒有上訴。」"
+  hazard_judge_weights:
+    name: 砝碼
+    kind: slam
+    damage: 1.2
+    type: physical
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2
+    count: 2
+    scatter: 4
+    at: target
+
+  # ---- 不朽統帥・磐（時沉領域，軍團的 Boss）：方陣、戰鼓、箭雨、時沉 ----
+  #   方陣突進（衝鋒）、戰鼓（兩波新星）、箭雨（十支亂落）、槍陣（六道殘影）；第一階段時沉烙印（詛咒）、召集軍旗（召喚）、盾牆環；
+  #   第二階段攻城落石、合圍（場地收縮）；第三階段斬首之光（四道光束）、最後一陣（全場大招）
+  legion_phalanx:
+    name: 方陣突進
+    kind: charge
+    damage: 2.2
+    type: physical
+    cooldown: 11
+    range: 26
+    telegraph: 1.1
+    speed: 1.3
+    reach: 26
+    width: 2.6
+    slow: 1.5
+    shout: "「方陣——前進！」"
+  legion_war_drums:
+    name: 戰鼓
+    hint: "鼓聲兩波往外震：跑出 7 格外"
+    kind: nova
+    damage: 1.5
+    type: lightning
+    cooldown: 12
+    range: 8
+    telegraph: 1.4
+    radius: 7
+    count: 2
+    stagger: 0.8
+    slow: 1.5
+    shout: "「擊鼓！」"
+  legion_arrow_storm:
+    name: 萬矢落
+    kind: slam
+    damage: 1.3
+    type: physical
+    cooldown: 10
+    range: 26
+    telegraph: 1.0
+    delay: 0.9
+    radius: 2.2
+    count: 10
+    stagger: 0.2
+    scatter: 9
+    at: random
+    shout: "「放箭！」"
+  legion_spear_wall:
+    name: 槍陣
+    hint: "六桿長槍各畫一條紅線、一桿接一桿：往旁邊走"
+    kind: echoes
+    damage: 1.6
+    type: physical
+    cooldown: 13
+    range: 22
+    telegraph: 1.2
+    count: 6
+    scatter: 7
+    stagger: 0.5
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "「槍陣，刺！」"
+  legion_time_brand:
+    name: 時沉烙印
+    kind: curse
+    type: physical
+    cooldown: 20
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 10
+    taken: 30
+    shout: "「你的時間，歸我。」"
+  legion_banner_call:
+    name: 召集軍旗
+    kind: summon
+    summon: SKELETON
+    count: 4
+    summon_max: 8
+    duration: 25
+    cooldown: 15
+    telegraph: 1.0
+    shout: "「舉旗！老兵們，起來。」"
+  legion_shield_ring:
+    name: 盾牆環
+    hint: "盾牆一圈圈推出來、各留三個缺口：站進綠色的缺口"
+    kind: ring
+    damage: 1.8
+    type: physical
+    cooldown: 15
+    range: 20
+    telegraph: 1.2
+    radius: 1.5
+    reach: 20
+    speed: 0.36
+    width: 0.9
+    count: 2
+    stagger: 1.3
+    gaps: 3
+    gap_angle: 40
+    shout: "「盾牆——推！」"
+  legion_siege:
+    name: 攻城落石
+    kind: slam
+    damage: 2.0
+    type: physical
+    cooldown: 12
+    range: 26
+    telegraph: 1.2
+    delay: 1.0
+    radius: 3.2
+    count: 6
+    stagger: 0.35
+    scatter: 8
+    at: random
+    shout: "「投石車，放。」"
+  legion_encirclement:
+    name: 合圍
+    kind: arena
+    damage: 0.35
+    type: physical
+    cooldown: 300        # 放一次就維持到這場打完（第二階段一開始就放）
+    range: 30
+    telegraph: 1.5
+    reach: 18
+    radius: 9
+    duration: 14
+    interval: 0.5
+    shout: "「合圍。一個都別放走。」"
+  legion_executioner_beam:
+    name: 斬首之光
+    hint: "四道光束一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.3
+    type: physical
+    convert: { lightning: 0.6 }
+    cooldown: 12
+    range: 16
+    telegraph: 1.5
+    count: 4
+    angle: 130
+    length: 32
+    width: 0.7
+    duration: 4.5
+    interval: 0.3
+    shout: "「斬。」"
+  legion_last_stand:
+    name: 最後一陣
+    kind: sanctuary
+    damage: 6.75   # 2026-11-04 照站長「全場大招（要站綠圈的）傷害再高一些」：×1.5；這次之前 4.5
+    type: physical
+    cooldown: 34
+    range: 30
+    telegraph: 2.5
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8
+    count_per_player: 1
+    shout: "「全軍——最後一陣！」"
+  hazard_legion_arrows:
+    name: 流矢
+    kind: slam
+    damage: 1.1
+    type: physical
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2
+    count: 3
+    scatter: 5
+    at: target
+
+  # ---- 2026-11-04 照站長「絕境、迷霧、軍團的 Boss 新增一些獨特的技能」：三隻事件 Boss 各多兩招（用牠們原本沒有的招式種類） ----
+  fog_lost_souls:
+    name: 失名之魂
+    hint: "沒有名字的魂追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.6
+    type: physical
+    convert: { cold: 0.5, chaos: 0.5 }
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 3
+    speed: 0.15
+    duration: 7
+    size: 0.8
+    explode: 2.5
+    shout: "「它們也忘了自己是誰。跟你一樣。」"
+  fog_drift:
+    name: 霧行
+    hint: "霧化成一道直線衝過來：看路線往旁邊閃"
+    kind: charge
+    damage: 2.0
+    type: cold
+    cooldown: 12
+    range: 24
+    telegraph: 1.1
+    speed: 1.2
+    reach: 24
+    width: 2.4
+    slow: 1.5
+    shout: "「霧沒有腳，可是走得比你快。」"
+  judge_wandering_weights:
+    name: 游移砝碼
+    hint: "砝碼在地上滾著追你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.8
+    type: physical
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 3
+    speed: 0.14
+    duration: 7
+    size: 0.9
+    explode: 2.5
+    shout: "「每一分重量，都要有人扛。」"
+  judge_guilt:
+    name: 罪證
+    hint: "被定罪的人受到的傷害增加：先躲、等它消失"
+    kind: curse
+    type: physical
+    cooldown: 20
+    range: 20
+    telegraph: 1.0
+    radius: 14
+    duration: 10
+    taken: 25
+    shout: "「證據確鑿。」"
+  legion_javelins:
+    name: 標槍齊投
+    kind: volley
+    damage: 1.4
+    type: physical
+    convert: { cold: 0.3 }
+    cooldown: 7
+    range: 22
+    telegraph: 1.0
+    count: 7
+    spread: 60
+    speed: 1.1
+    reach: 24
+    size: 0.7
+    explode: 1.5
+    shout: "「投！」"
+  legion_execution_order:
+    name: 斬首令
+    hint: "被點名的人 3.5 秒後斬首：離開隊友"
+    kind: mark
+    damage: 2.4
+    type: physical
+    cooldown: 12
+    range: 30
+    telegraph: 1.0
+    count: 1
+    duration: 3.5
+    explode: 4
+    shout: "「這一個。帶走。」"
 
 defaults:
   default: [slam, charge]

@@ -735,6 +735,7 @@ final class AuraService implements Listener {
                         continue;
                     }
                     keep.add(aura.skillId);
+                    minions.syncBuild(player.getUniqueId(), aura.skillId, aura.build); // 2026-11-04：換了輔助、升了等級，活著的那隻也照新的
                     // 2026-10：精魂召喚物可以好幾隻（骸骨兵…）：少了一隻就等一下補回滿
                     final int max = companionMax(minions, player.getUniqueId(), aura);
                     if (minions.count(player.getUniqueId(), aura.skillId) > max) {

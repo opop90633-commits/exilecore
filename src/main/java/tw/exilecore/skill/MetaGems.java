@@ -258,9 +258,11 @@ public final class MetaGems {
 
     /** 2026-10-26：算不出異常門檻時（不是怪物…）暴擊當作打掉幾 %（＝這次之前固定的每點強度 10 能量）。 */
     public static final double CRIT_PERCENT_FALLBACK = 10;
+    /** 2026-11-04：面板估計觸發次數時當作打傳奇（怪物強度 20；照原作修能量之後，這次之前估計當普通怪、乘 0～100 的百分比數字）。 */
+    public static final double ESTIMATE_POWER = 20;
 
     /**
-     * 2026-10-26 照 PoE2 Cast on Critical：暴擊打掉牠元素異常門檻的百分比（每點強度每 1% 給 1 能量；最多算 100%，
+     * 2026-10-26 照 PoE2 Cast on Critical：暴擊打掉牠元素異常門檻的百分比（2026-11-04 照原作：呼叫的地方再除以 100——打掉 100% 才給每點強度 1 能量；這次之前每 1% 給 1 能量。最多算 100%，
      * 打超過的不再多給）。怪物的門檻跟元素異常一樣：等級表 × 稀有度倍率（傳奇 0.5）。
      */
     double critPercent(final LivingEntity target, final double damage) {

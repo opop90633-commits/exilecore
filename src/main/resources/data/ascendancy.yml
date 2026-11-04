@@ -205,7 +205,7 @@ trials:
           stats:
             - { stat: damage, type: INCREASED, value: 30 }
           # 護盾：殷燼無敵，打掉兩座冰像才打得動（25 秒內沒打完，他回 20% 生命）
-          shield: { count: 2, type: STRAY, name: 霜誓冰像, life: 3, duration: 25, heal: 20 }
+          mechanic: { type: opening, heal: 30 }   # 2026-11-04 照站長：鎖血改成破綻（一隻 Boss 只留一個）；這次之前結晶
 
   star:
     name: 第四試煉・星痕

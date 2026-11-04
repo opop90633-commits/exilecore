@@ -389,6 +389,12 @@ final class DeliriumEvents implements Listener {
             MapRewards.deliver(plugin, player, player.getLocation(), new MonsterData(fog.instance.level(), MonsterRarity.RARE, List.of(), "幻霧"), none, 0);
             if (service.events() != null) {
                 service.events().rollTicket(MapEventConfig.DELIRIUM_SOURCE, player, player.getLocation()); // 2026-10-18：入場券（拿到獎勵的人）
+                // 2026-11-04 照站長「波次引擎＋15 層迷霧」：拿到獎勵的人另外拿迷霧碎片（湊滿開迷霧回廊）
+                final int splinters = service.events().fogTrial().giveSplinters(player, fog.instance);
+                if (splinters > 0) {
+                    player.sendMessage(plugin.text().prefixed("<#d0d0e8>+" + splinters + " " + service.events().fogTrial().splinter().name()
+                            + "<gray>（" + service.events().fogTrial().settings().cost() + " 個開一次" + service.events().fogTrial().settings().name() + "）"));
+                }
             }
         }
         plugin.getSLF4JLogger().info("地圖 #{}：幻霧結束", fog.instance.id());

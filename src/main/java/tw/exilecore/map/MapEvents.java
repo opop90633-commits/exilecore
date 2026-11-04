@@ -169,6 +169,12 @@ final class MapEvents implements Listener {
     private final NamespacedKey twistQuantityKey;
     /** 地圖變化（2026-10）：房間主題、Boss 變體、岔路……。 */
     private final MapTwists twists;
+    /** 2026-11-04 照站長「波次引擎＋15 層迷霧」：迷霧回廊。 */
+    private final FogTrial fogTrial;
+    /** 2026-11-04 照站長「先做絕境」：絕境。 */
+    private final Ultimatum ultimatum;
+    /** 2026-11-04 照站長「軍團」：軍團。 */
+    private final Legion legion;
 
     MapEvents(final ExileCore plugin, final MapService service, final MapEventConfig config) {
         this.plugin = plugin;
@@ -180,6 +186,21 @@ final class MapEvents implements Listener {
         this.delirium = new DeliriumEvents(plugin, service, config);
         this.twistQuantityKey = new NamespacedKey(plugin, "map_twist_quantity");
         this.twists = new MapTwists(plugin, service, config, this);
+        this.fogTrial = new FogTrial(plugin, service, config);
+        this.ultimatum = new Ultimatum(plugin, service, config);
+        this.legion = new Legion(plugin, service, config);
+    }
+
+    FogTrial fogTrial() {
+        return fogTrial;
+    }
+
+    Ultimatum ultimatum() {
+        return ultimatum;
+    }
+
+    Legion legion() {
+        return legion;
     }
 
     MapTwists twists() {
@@ -241,6 +262,16 @@ final class MapEvents implements Listener {
             delirium.place(instance, rooms);
         } catch (final RuntimeException e) {
             plugin.getSLF4JLogger().error("地圖 #{} 放幻霧出錯", instance.id(), e);
+        }
+        try {
+            ultimatum.place(instance, rooms); // 2026-11-04：絕境
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("地圖 #{} 放絕境出錯", instance.id(), e);
+        }
+        try {
+            legion.place(instance, rooms); // 2026-11-04：軍團
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().error("地圖 #{} 放軍團出錯", instance.id(), e);
         }
         if (config.totalWeight() <= 0 || config.maxPerMap() <= 0) {
             plugin.getSLF4JLogger().warn("地圖 #{}：map_events.yml 的 settings.weights 全是 0 或 per_map 是 0，不放事件", instance.id());
@@ -577,6 +608,9 @@ final class MapEvents implements Listener {
         rituals.tick(now);
         delirium.tick(now);
         twists.tick(now);
+        fogTrial.tick(now);
+        ultimatum.tick(now);
+        legion.tick(now);
         if (byInstance.isEmpty()) {
             return;
         }
@@ -634,6 +668,14 @@ final class MapEvents implements Listener {
         final tw.exilecore.clientmod.WorldHudProtocol.EventLine fog = delirium.hudLine(instance, viewer, now);
         if (fog != null) {
             lines.add(fog);
+        }
+        final tw.exilecore.clientmod.WorldHudProtocol.EventLine trial = ultimatum.hudLine(instance, now);
+        if (trial != null) {
+            lines.add(trial);
+        }
+        final tw.exilecore.clientmod.WorldHudProtocol.EventLine monolith = legion.hudLine(instance, now);
+        if (monolith != null) {
+            lines.add(monolith);
         }
         return lines;
     }
@@ -2083,6 +2125,9 @@ final class MapEvents implements Listener {
         rituals.clear(instance);
         delirium.clear(instance);
         twists.clear(instance);
+        fogTrial.clear(instance);
+        ultimatum.clear(instance);
+        legion.clear(instance);
         final List<Event> events = byInstance.remove(instance.id());
         if (events != null) {
             for (final Event event : events) {
@@ -2096,6 +2141,9 @@ final class MapEvents implements Listener {
         rituals.clearAll();
         delirium.clearAll();
         twists.clearAll();
+        fogTrial.clearAll();
+        ultimatum.clearAll();
+        legion.clearAll();
         for (final List<Event> events : byInstance.values()) {
             for (final Event event : events) {
                 dispose(event);
@@ -2157,6 +2205,14 @@ final class MapEvents implements Listener {
         if (fog != null) {
             parts.add(fog);
         }
+        final String trial = ultimatum.summary(instance);
+        if (trial != null) {
+            parts.add(trial);
+        }
+        final String monolith = legion.summary(instance);
+        if (monolith != null) {
+            parts.add(monolith);
+        }
         final String twist = twists.summary(instance);
         final String base = parts.isEmpty() ? "沒有事件" : String.format(Locale.ROOT, "事件 %d 個：%s", parts.size(), String.join("、", parts));
         return twist == null ? base : base + "；" + twist;
@@ -2165,6 +2221,6 @@ final class MapEvents implements Listener {
     /** 這個實體是不是某個事件刷出來的（守衛、裂隙怪、流寇、儀式的怪、幻霧怪）。 */
     boolean isEventMonster(final Entity entity) {
         return entity.getPersistentDataContainer().has(quantityKey) || entity.getPersistentDataContainer().has(abyssQuantityKey) // 2026-10-18
-                || exiles.containsKey(entity.getUniqueId()) || rituals.isRitualMonster(entity) || delirium.isDeliriumMonster(entity);
+                || exiles.containsKey(entity.getUniqueId()) || rituals.isRitualMonster(entity) || delirium.isDeliriumMonster(entity) || ultimatum.isUltimatumMonster(entity) || legion.isLegionMonster(entity);
     }
 }

@@ -56,7 +56,7 @@ public final class PartyConfig {
         lifePerExtraPlayer.put(MonsterRarity.NORMAL, 50.0);
         lifePerExtraPlayer.put(MonsterRarity.MAGIC, 60.0);
         lifePerExtraPlayer.put(MonsterRarity.RARE, 80.0);
-        lifePerExtraPlayer.put(MonsterRarity.UNIQUE, 135.0);
+        lifePerExtraPlayer.put(MonsterRarity.UNIQUE, 200.0); // 2026-11-04 照站長：組隊的 Boss 每人 +200%；這次之前 135
     }
 
     /** 讀 party.yml；先讀進一份新的，全部檢查過才換上去（寫錯時保留原本的設定）。 */

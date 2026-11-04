@@ -145,6 +145,11 @@ public final class DodgeRoll implements Listener {
         player.setSprinting(false);
         rolledAt.put(player.getUniqueId(), now);
         plugin.players().get(player).markRecent(tw.exilecore.stats.Recently.DODGE, now); // 「最近翻滾過」
+        // 2026-11-04（源於永恆，PoE2）：翻滾時獲得超重（減緩 10%，可疊加，再翻一次全部重新計時）
+        final double heavy = rollSheet.flat(tw.exilecore.item.unique.UniqueStats.OVERENCUMBER_ON_DODGE, java.util.Set.of());
+        if (heavy > 0 && plugin.ailments() != null) {
+            plugin.ailments().overencumber(player, heavy);
+        }
         if (plugin.guide() != null) {
             plugin.guide().milestone(player, tw.exilecore.guide.GuideService.DODGE); // 2026-10-30 新手教學
         }

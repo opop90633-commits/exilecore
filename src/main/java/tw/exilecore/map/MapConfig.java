@@ -302,6 +302,32 @@ public final class MapConfig {
     private final Map<String, MapDef> extraFinals = new LinkedHashMap<>();
     /** 每個終局（含主要的那個）的額外設定。 */
     private final Map<String, FinalInfo> finalInfos = new LinkedHashMap<>();
+    /**
+     * 2026-11-04 照站長「審判者 Boss＋迷霧也要有 Boss」：事件的 Boss（maps.yml 的 event_bosses）：迷霧回廊第 15 波的迷霧之主、
+     * 絕境的審判者。寫法同地圖 Boss，另外可以寫 drops.extra（同極境的 extra）。代號 = 那個特別實例的地圖代號（fog_trial、ultimatum）。
+     */
+    private final Map<String, EventBoss> eventBosses = new LinkedHashMap<>();
+    /** 2026-11-04：事件 Boss 的專屬傳奇每一件的掉落機率（沒寫 drops.unique_chance 時）。 */
+    public static final double DEFAULT_EVENT_UNIQUE_CHANCE = 0.01;
+
+    /**
+     * 事件的 Boss：本體與額外掉落。2026-11-04 照站長「三隻新 Boss 設一個全新的難度：DPS 1000 萬、3 分半」：
+     * level 固定的怪物等級（0 = 照開的人的階級）、recommendedDps 建議每秒傷害（> 0 時生命自動對準：單人 3 分半打完，見 MapService.eventBossLifeMultiplier）。
+     */
+    public record EventBoss(String id, Boss boss, List<ExtraDrop> extra, int level, double recommendedDps, double uniqueChance) {
+        public EventBoss {
+            extra = List.copyOf(extra);
+        }
+
+        public EventBoss(final String id, final Boss boss, final List<ExtraDrop> extra, final int level, final double recommendedDps) {
+            this(id, boss, extra, level, recommendedDps, DEFAULT_EVENT_UNIQUE_CHANCE);
+        }
+
+        /** 等級固定。 */
+        public boolean fixedLevel() {
+            return level > 0;
+        }
+    }
 
     /**
      * 一個終局的額外設定。
@@ -618,6 +644,8 @@ public final class MapConfig {
         extraFinals.putAll(fresh.extraFinals);
         finalInfos.clear();
         finalInfos.putAll(fresh.finalInfos);
+        eventBosses.clear();
+        eventBosses.putAll(fresh.eventBosses);
     }
 
     private void parse(final Path dataFolder) throws IOException {
@@ -629,6 +657,7 @@ public final class MapConfig {
         shieldTierShare = DEFAULT_SHIELD_TIER_SHARE;
         extraFinals.clear();
         finalInfos.clear();
+        eventBosses.clear();
         notes.clear();
         settings = defaultSettings();
         drops = defaultDrops();
@@ -748,6 +777,20 @@ public final class MapConfig {
             finalInfos.put(finalMap.id(), new FinalInfo(finalMap.id(), List.of(), firstKill.finalPoints(), finalLevelBonus,
                     node.has("uber") ? parseUber(node.node("uber")) : null));
             noteUberChase(node);
+        }
+        if (root.has("event_bosses")) { // 2026-11-04：事件的 Boss
+            final YamlNode bosses = root.node("event_bosses");
+            for (final String id : bosses.keys()) {
+                final YamlNode node = bosses.node(id);
+                final List<ExtraDrop> extra = new ArrayList<>();
+                for (final YamlNode item : node.node("drops").list("extra")) {
+                    final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency";
+                    extra.add(new ExtraDrop(kind, item.requireString(kind).trim(), Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
+                }
+                // 2026-11-04 照站長「絕境 Boss 塞試煉大師的傳奇，機率 1%」：drops.unique_chance——uniques.yml 的 sources 寫這個代號的傳奇每一件各自擲
+                eventBosses.put(id, new EventBoss(id, parseBoss(node), extra, (int) Math.max(0, Math.min(200, node.integer("level", 0))),
+                        Math.max(0, node.decimal("recommended_dps", 0)), clamp01(node.node("drops").decimal("unique_chance", DEFAULT_EVENT_UNIQUE_CHANCE))));
+            }
         }
         if (root.has("finals")) {
             final YamlNode finals = root.node("finals");
@@ -1177,6 +1220,15 @@ public final class MapConfig {
     }
 
     /** 所有終局（主要的那個在前面，再來是 finals 的）；沒設定是空的。 */
+    /** 2026-11-04：事件的 Boss（maps.yml 的 event_bosses；沒有回傳 null）。 */
+    public EventBoss eventBoss(final String id) {
+        return eventBosses.get(id);
+    }
+
+    public Map<String, EventBoss> eventBosses() {
+        return java.util.Collections.unmodifiableMap(eventBosses);
+    }
+
     public List<MapDef> finals() {
         final List<MapDef> list = new ArrayList<>();
         if (finalMap != null) {

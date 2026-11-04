@@ -757,6 +757,28 @@ public enum CurrencyOperation {
         return this == IDENTIFY || this == RUNE;
     }
 
+    /**
+     * 2026-11-04：這種通貨能不能用在這件（已腐化的）上：鑑定、嵌符文照舊可以；「已汙染時仍可調整」的傳奇（混沌一瞥）除了再腐化都可以
+     * （再腐化各自的 canApply 會擋）。沒腐化的一律 true。已聖化的照舊不行（呼叫端另外看）。
+     */
+    public boolean allowedOn(final ItemData data, final tw.exilecore.item.ItemRepository repository) {
+        return !data.corrupted() || allowedOnCorrupted() || this != CORRUPT && modifiableWhileCorrupted(repository, data);
+    }
+
+    /** 2026-11-04（混沌一瞥）：這件有沒有「已汙染時仍可調整」（傳奇詞綴的 local.modifiable_corrupted）。 */
+    public static boolean modifiableWhileCorrupted(final tw.exilecore.item.ItemRepository repository, final ItemData data) {
+        if (repository == null || data == null || data.unique() == null) {
+            return false;
+        }
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            final tw.exilecore.item.Affix affix = repository.affix(rolled.id());
+            if (affix != null && affix.mods().stream().anyMatch(mod -> tw.exilecore.item.unique.UniqueStats.LOCAL_MODIFIABLE_CORRUPTED.equals(mod.stat()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** 傳奇的掉落來源：可以用僥倖石做出來（uniques.yml 的 sources 寫 chance）。 */
     public static final String CHANCE_SOURCE = "chance";
 

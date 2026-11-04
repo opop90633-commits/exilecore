@@ -390,6 +390,15 @@ public final class SkillMenu extends Menu {
     }
 
     /** 2026-10-26：武器賦予的技能的說明（不是賦予的回傳空的）。 */
+    /** 2026-11-04 照站長：面板上的等級寫實際生效的：寶石 Lv.17、輔助／裝備 +1 → 「17+1」。 */
+    private String levelTag(final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final int effective = service.effectiveLevel(player, definition, entry);
+        if (effective == entry.level()) {
+            return String.valueOf(entry.level());
+        }
+        return entry.level() + (effective > entry.level() ? "<green>+" + (effective - entry.level()) + "</green>" : "<red>−" + (entry.level() - effective) + "</red>");
+    }
+
     private static List<String> grantedLines(final SkillLoadout loadout, final SkillLoadout.Entry entry) {
         if (!entry.granted()) {
             return List.of();
@@ -559,7 +568,8 @@ public final class SkillMenu extends Menu {
         final boolean dormant = loadout.dormant(entry);
         final ItemStack stack = SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 (chosen || target ? "<green>▶ " : "") + (auraOn ? "<#8fd3ff>✦ " : "") + (dormant ? "<dark_gray>" : "<#e0c080>") + name
-                        + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry, SkillService.extraQuality(plugin.players().sheet(player)))
+                        + " <gray>Lv." + levelTag(definition, entry) + SkillService.qualityTag(entry, SkillService.extraQuality(plugin.players().sheet(player))
+                                + service.lineageQuality(definition, entry)) // 2026-11-04：願晶的品質、輔助加的等級也寫出來
                         + (entry.granted() ? " <#b4a0ff>⚔賦予" : "") + (auraOn ? " <#8fd3ff>開啟中" : ""), lore), definition);
         final boolean framed = (chosen || target) && frames(stack);
         // 開著的光環一直發光，一眼看得出來
@@ -696,10 +706,10 @@ public final class SkillMenu extends Menu {
         }
         {
             for (final String supportId : entry.supportIds()) {
-                final int used = service.config().oncePerCharacter(supportId) ? loadout.supportUsedBy(supportId) : -1;
-                if (used >= 0 && used != target) {
+                final int allowed = service.config().supportCopies(supportId, plugin.players().sheet(player)); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
+                if (allowed != Integer.MAX_VALUE && loadout.supportCount(supportId, target) >= allowed) {
                     final SupportDefinition support = service.config().support(supportId);
-                    return (support == null ? supportId : support.name()) + "已經掛在別的技能上（這種輔助一個角色只能掛一顆）";
+                    return (support == null ? supportId : support.name()) + "已經掛在別的技能上（這種輔助一個角色只能掛" + allowed + "顆）";
                 }
             }
         }
@@ -723,11 +733,9 @@ public final class SkillMenu extends Menu {
                 return support.name() + "不能輔助這個技能（" + refusal + "）";
             }
         }
-        if (service.config().oncePerCharacter(support.id())) {
-            final int used = loadout.supportUsedBy(support.id());
-            if (used >= 0 && used != position) {
-                return support.name() + "已經掛在別的技能上（這種輔助一個角色只能掛一顆）";
-            }
+        final int copies = service.config().supportCopies(support.id(), plugin.players().sheet(player)); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
+        if (copies != Integer.MAX_VALUE && loadout.supportCount(support.id(), position) >= copies) {
+            return support.name() + "已經掛在別的技能上（這種輔助一個角色只能掛" + copies + "顆）";
         }
         if (entry.hasSupport(support.id())) {
             return "已經掛著" + support.name() + "（同一個技能不能掛兩顆一樣的）";

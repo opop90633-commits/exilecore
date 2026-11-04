@@ -81,7 +81,8 @@ final class MapBosses {
                     instance.setBoss(null);
                     detachSkills(boss);
                 }
-                if (instance.boss() == null && !nearbyPlayers(instance, center, service.config().settings().bossRadius()).isEmpty()) {
+                if (instance.boss() == null && (service.events() == null || !service.events().fogTrial().holdsBoss(instance)) // 2026-11-04 照站長：迷霧回廊的 Boss 等最後一波
+                        && !nearbyPlayers(instance, center, service.config().settings().bossRadius()).isEmpty()) {
                     // 區塊重新載入時舊的 Boss 會跟著回來：先找找看，找不到才生新的
                     final LivingEntity existing = findExisting(instance, center);
                     if (existing != null) {
@@ -597,6 +598,12 @@ final class MapBosses {
         if (heistFinale) {
             return service.config().heistFinaleLifeMultiplier(instance.stats().tier());
         }
+        if (instance.special() != null) { // 2026-11-04 照站長：事件 Boss（迷霧之主、審判者、統帥）寫了 recommended_dps 的照那個對準
+            final MapConfig.EventBoss eventBoss = service.config().eventBoss(instance.map().id());
+            if (eventBoss != null && eventBoss.recommendedDps() > 0) {
+                return service.eventBossLifeMultiplier(eventBoss);
+            }
+        }
         return instance.map().isFinal() && instance.special() == null
                 ? service.config().finalLifeMultiplier(instance.stats().tier())
                 : instance.special() == null && !instance.isUber() ? service.config().bossLifeMultiplier(instance.stats().tier()) : 1.0;
@@ -776,7 +783,7 @@ final class MapBosses {
             return;
         }
         service.locks().start(arena(instance, boss), instance.lockState(), spec,
-                PhaseMechanic.requiredFraction(instance.bossDef().phases(), index, spec.element() == null ? 0 : spec.element().share()));
+                PhaseMechanic.requiredFraction(instance.bossDef().phases(), index, PhaseMechanic.shareOf(spec))); // 2026-11-04：破綻也有 share
     }
 
     /** 每 10 tick：站位圈、倒數大招、元素弱點、易傷的消退。 */
@@ -860,6 +867,20 @@ final class MapBosses {
             return 1;
         }
         return service.locks().damageFactor(instance.lockState(), dealt);
+    }
+
+    /** 2026-11-04（破綻）：這一下真正要扣的量（破綻外 0、破綻裡照層數上限）；不是這個實例的 Boss 回傳原數。 */
+    double lockAdjust(final MapInstance instance, final LivingEntity entity, final UUID source, final double amount) {
+        if (instance == null || instance.boss() == null || !entity.getUniqueId().equals(instance.boss().getUniqueId())) {
+            return amount;
+        }
+        return service.locks().adjust(instance.lockState(), source, amount);
+    }
+
+    /** 2026-11-04（破綻）：這隻 Boss 正在破綻鎖血（免疫控場）。 */
+    boolean lockCcImmune(final MapInstance instance, final LivingEntity entity) {
+        return instance != null && instance.boss() != null && entity.getUniqueId().equals(instance.boss().getUniqueId())
+                && PhaseLocks.openingActive(instance.lockState());
     }
 
     // ---- 狂暴 ----
@@ -1013,7 +1034,8 @@ final class MapBosses {
             // 終局：寫著這個終局代號的傳奇（其他終局 Boss 各自的），沒有就用 final（天穹熔爐的）——2026-10-16：每一件各自擲
             eachUnique(drops, ownFinalPool(instance.map().id(), itemLevel), config.drops().finalUniqueChance(), itemLevel, random, bonus);
             rollFixed(drops, ownSource(instance.map().id(), itemLevel), itemLevel, random); // 2026-10-26：固定機率的（永恆珠寶）
-        } else if (definition.named() && random.nextDouble() < Math.min(1, config.drops().namedUniqueChance() * (1 + uniqueIncreased) * uniqueLess)) { // 2026-10-27：加法
+        } else if (definition.named() && (instance.special() == null || config.eventBoss(instance.map().id()) == null) // 2026-11-04：事件 Boss 的專屬傳奇在下面各自擲
+                && random.nextDouble() < Math.min(1, config.drops().namedUniqueChance() * (1 + uniqueIncreased) * uniqueLess)) { // 2026-10-27：加法
             addUnique(drops, MapDrops.unique(generator, instance.map().id(), itemLevel, random));
         }
         // 共通傳奇（map_boss 池，賭博也賭得到）：擲一次、中了抽一件。一般地圖 Boss（含具名）照 boss_unique_chance（5%，星圖天賦可以增加；
@@ -1024,6 +1046,13 @@ final class MapBosses {
             addUnique(drops, MapDrops.unique(generator, "map_boss", itemLevel, random));
         }
         rollChase(drops, itemLevel, random, 1 + atlas.increased("atlas.chase_unique")); // 追逐級傳奇：所有地圖 Boss 一樣的固定機率（核心「尋星者」×2）
+        // 2026-11-04：事件的 Boss（迷霧之主、審判者）的額外掉落（maps.yml 的 event_bosses.<代號>.drops.extra）
+        final MapConfig.EventBoss eventBoss = instance.special() == null ? null : config.eventBoss(instance.map().id());
+        if (eventBoss != null) {
+            extraDrops(drops, eventBoss.extra(), itemLevel, random, bonus);
+            // 2026-11-04 照站長「絕境 Boss 塞試煉大師的傳奇 1%」（迷霧之主、不朽統帥同）：sources 寫這個代號的傳奇每一件各自擲 unique_chance（吃稀有度，同巔峰）
+            eachUnique(drops, plugin.items().repository().uniquesFor(eventBoss.id(), itemLevel), eventBoss.uniqueChance(), itemLevel, random, bonus);
+        }
         if (instance.map().isFinal() && plugin.skills() != null) {
             // 終局 Boss 的專屬輔助寶石（supports.yml 的 source 寫這個終局的代號）：每一顆各自擲 final_support_chance（2026-10-16）
             for (final tw.exilecore.skill.SupportDefinition support : plugin.skills().config().supportsFrom(instance.map().id())) {
@@ -1435,8 +1464,15 @@ final class MapBosses {
             }
 
             @Override
+            public void skillDone(final tw.exilecore.skill.BossSkill skill, final java.util.Set<UUID> victims) {
+                if (instance.boss() == boss && !instance.bossKilled()) {
+                    service.locks().skillDone(arena(instance, boss), instance.lockState(), skill.name(), victims); // 2026-11-04（破綻）
+                }
+            }
+
+            @Override
             public String tempoKind() {
-                return MapBosses.tempoKind(instance);
+                return MapBosses.tempoKind(service.config(), instance);
             }
 
             @Override
@@ -1476,7 +1512,7 @@ final class MapBosses {
     }
 
     /** 出招節奏的種類（boss_skills.yml 的 settings.tempo）：極境、金庫之主、昇華試煉、終局；一般地圖 Boss 回傳 null。 */
-    static String tempoKind(final MapInstance instance) {
+    static String tempoKind(final MapConfig config, final MapInstance instance) {
         if (instance.isUber()) {
             return "uber";
         }
@@ -1489,12 +1525,25 @@ final class MapBosses {
         if (instance.map().id().startsWith("trial_")) {
             return "trial";
         }
+        if (instance.special() != null && isCalamity(config, instance)) {
+            return "calamity"; // 2026-11-04 照站長：災厄級（迷霧之主、審判者、統帥）：自己的節奏
+        }
         return instance.map().isFinal() ? "final" : null;
+    }
+
+    /** 2026-11-04 照站長：災厄級——事件 Boss 寫了 recommended_dps 的（迷霧之主、審判者、統帥）：不普攻、自己的節奏、機制說清楚。 */
+    static boolean isCalamity(final MapConfig config, final MapInstance instance) {
+        if (instance == null || instance.map() == null || instance.special() == null || config == null) {
+            return false;
+        }
+        final MapConfig.EventBoss eventBoss = config.eventBoss(instance.map().id());
+        return eventBoss != null && eventBoss.recommendedDps() > 0;
     }
 
     /** 終局 Boss（含極境）與昇華試煉的 Boss：特殊招式、機制在畫面中間與聊天室說清楚。 */
     static boolean alerts(final MapInstance instance) {
-        return instance.map().isFinal() || instance.map().id().startsWith("trial_");
+        return instance.map().isFinal() || instance.map().id().startsWith("trial_") || instance.special() != null && instance.map() != null
+                && (FogTrial.KIND.equals(instance.map().id()) || Ultimatum.BOSS_KIND.equals(instance.map().id()) || Legion.DOMAIN_KIND.equals(instance.map().id())); // 2026-11-04：災厄級也說清楚
     }
 
     /** 這個階段才開始用的招式名稱（招式組裡 phase 寫這個階段的）。 */

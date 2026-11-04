@@ -232,11 +232,35 @@ public final class ItemStats {
         final int addStr = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_STR, ModType.FLAT));
         final int addDex = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_DEX, ModType.FLAT));
         final int addInt = (int) Math.round(localSum(repository, itemBase, data, tw.exilecore.item.unique.UniqueStats.LOCAL_REQUIREMENT_INT, ModType.FLAT));
-        if (Math.abs(scale - 1) < 1e-9 && addStr == 0 && addDex == 0 && addInt == 0) {
+        // 2026-11-04 照 PoE2 的魂核（艾特瑪哈／斯拉托／善堤比）：「x% 需求轉換為力量／敏捷／智慧」——其他兩種需求的 x% 搬到那一種
+        final double[] convert = Runes.requirementConvert(repository, itemBase, data);
+        if (Math.abs(scale - 1) < 1e-9 && addStr == 0 && addDex == 0 && addInt == 0 && convert == null) {
             return plain;
         }
-        return new ItemBase.Requirements(plain.level(), scaleRequirement(plain.str() + addStr, scale), scaleRequirement(plain.dex() + addDex, scale),
-                scaleRequirement(plain.intelligence() + addInt, scale));
+        double str = plain.str() + addStr;
+        double dex = plain.dex() + addDex;
+        double intelligence = plain.intelligence() + addInt;
+        if (convert != null) {
+            final double[] from = {str, dex, intelligence};
+            final double[] to = from.clone();
+            for (int target = 0; target < 3; target++) {
+                if (convert[target] <= 0) {
+                    continue;
+                }
+                for (int other = 0; other < 3; other++) {
+                    if (other != target) {
+                        final double moved = from[other] * convert[target];
+                        to[other] -= moved;
+                        to[target] += moved;
+                    }
+                }
+            }
+            str = Math.max(0, to[0]);
+            dex = Math.max(0, to[1]);
+            intelligence = Math.max(0, to[2]);
+        }
+        return new ItemBase.Requirements(plain.level(), scaleRequirement((int) Math.round(str), scale), scaleRequirement((int) Math.round(dex), scale),
+                scaleRequirement((int) Math.round(intelligence), scale));
     }
 
     static int scaleRequirement(final int value, final double scale) {
@@ -325,10 +349,31 @@ public final class ItemStats {
         }
         // 符文（2026-10）
         list.addAll(Runes.modifiers(repository, base, data));
-        // 注入的天賦核心（項鍊；催化劑不影響，跟天賦一樣直接加）
-        final Instil instil = instilOf(data);
-        if (instil != null) {
+        if (Runes.bondedUnlocked(repository, base, data)) {
+            list.addAll(Runes.bondedModifiers(repository, base, data)); // 2026-11-04（魔偶符文・狐狸）：這件上的羈絆直接生效（聖賢智慧那邊會跳過這件，免得兩份）
+        }
+        // 注入的天賦核心（項鍊；催化劑不影響，跟天賦一樣直接加）；2026-11-04：掙扎吶喊可以好幾個
+        for (final Instil instil : instilsOf(data).values()) {
             list.addAll(instil.modifiers());
+        }
+        // 2026-11-04（不敗亡者）：隨機插槽詞綴，每個嵌著東西的孔各給一份
+        final int socketMods = (int) Math.round(localSum(repository, base, data, tw.exilecore.item.unique.UniqueStats.LOCAL_SOCKET_MODS, ModType.FLAT));
+        if (socketMods > 0 && !data.runes().isEmpty()) {
+            for (final UniquePicks.RolledSocketMod mod : UniquePicks.socketMods(data, socketMods)) {
+                list.addAll(mod.modifiers(data.runes().size(), base.name() + " 插槽詞綴"));
+            }
+        }
+        // 2026-11-04（信仰稜鏡）：「隨機一個技能 +x 等級」換成那個技能的等級（skill.level［skill:代號］）
+        if (data.unique() != null) {
+            for (int i = 0; i < list.size(); i++) {
+                final Modifier mod = list.get(i);
+                if (tw.exilecore.item.unique.UniqueStats.PICKED_SKILL_LEVEL.equals(mod.stat())) {
+                    final List<String> picked = UniquePicks.picks(data, UniquePicks.SKILL, 1);
+                    list.set(i, picked.isEmpty() ? new Modifier(mod.stat(), mod.type(), 0, mod.tags(), mod.source())
+                            : new Modifier(StatKeys.SKILL_LEVEL, ModType.FLAT, mod.value(),
+                            java.util.Set.of(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + picked.getFirst()), mod.source()));
+                }
+            }
         }
         return list;
     }
@@ -383,6 +428,35 @@ public final class ItemStats {
 
     public static void setInstils(final java.util.function.Function<String, Instil> resolver) {
         instils = resolver;
+    }
+
+    /** 2026-11-04：這件物品注入的全部核心（掙扎吶喊可以好幾個；節點代號 → 核心，照注入順序；找不到的略過）。 */
+    public static java.util.Map<String, Instil> instilsOf(final ItemData data) {
+        final java.util.function.Function<String, Instil> resolver = instils;
+        if (data.instilled() == null || resolver == null) {
+            return java.util.Map.of();
+        }
+        final java.util.Map<String, Instil> out = new java.util.LinkedHashMap<>();
+        for (final String id : data.instilledAll()) {
+            final Instil instil = resolver.apply(id);
+            if (instil != null) {
+                out.put(id, instil);
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-04（妄想症）：查一個天賦核心的名稱與修飾器（跟注入同一個查法；沒接上或找不到回傳 null）。 */
+    public static Instil notable(final String id) {
+        final java.util.function.Function<String, Instil> resolver = instils;
+        return resolver == null || id == null ? null : resolver.apply(id);
+    }
+
+    /** 2026-11-04（掙扎吶喊）：這件可以注入幾個核心（1 ＋ local.instil_extra）。 */
+    public static int instilCapacity(final ItemRepository repository, final ItemData data) {
+        final ItemBase base = repository == null || data == null ? null : repository.base(data.base());
+        return base == null ? 1 : 1 + (int) Math.max(0, Math.round(localSum(repository, base, data,
+                tw.exilecore.item.unique.UniqueStats.LOCAL_INSTIL_EXTRA, ModType.FLAT)));
     }
 
     /** 這件物品注入的核心；沒注入、找不到那個核心（樹改版）為 null。 */

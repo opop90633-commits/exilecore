@@ -193,6 +193,46 @@ public final class UniqueStats {
     // ---- 這件物品自己 ----
     /** 嵌在這件物品上的符文效果增加 x%（INCREASED；淵座束帶）。 */
     public static final String LOCAL_RUNE_EFFECT = "local.rune_effect";
+    /** 2026-11-04（瑪哈薩多的陰謀，PoE2 Mahuxotl's Machination）：INCREASED：嵌在這件上的魂核符文（core_＊）效果增加 x%（Runes.effect 讀）。 */
+    public static final String LOCAL_CORE_EFFECT = "local.core_effect";
+    /** 2026-11-04（混沌一瞥，PoE2 Glimpse of Chaos）：FLAG：你的混沌抗性是 0（DamageCalculator、角色面板）。 */
+    public static final String FLAG_CHAOS_RES_ZERO = "flag.chaos_res_zero";
+    /** 2026-11-04（背信忘義，PoE2 Perfidy）：FLAT：x% 機率避免擊中的某一種傷害（後面接 physical／fire／cold／lightning／chaos；DamageCalculator 擲）。 */
+    public static final String AVOID_HIT = "avoid.hit.";
+    /** 2026-11-04（源於永恆，PoE2 Ab Aeterno）：FLAG：翻滾的躲避時間內躲開全部擊中（不只近戰、投射物；Boss 的全場大招照樣躲不開）。 */
+    public static final String FLAG_DODGE_ALL_HITS = "flag.dodge_all_hits";
+    /** 2026-11-04（源於永恆）：FLAT x：翻滾時獲得超重 x 秒（減緩 10%，可疊加；AilmentService.overencumber）。 */
+    public static final String OVERENCUMBER_ON_DODGE = "dodge.overencumber_seconds";
+    /** 2026-11-04（源於永恆）：FLAG：衝刺（原版的疾跑）時不受緩速影響（AilmentService.update）。 */
+    public static final String FLAG_SPRINT_UNSLOWED = "flag.sprint_unslowed";
+    /** 2026-11-04（朝氣之靈，PoE2 Spirit of …）：INCREASED：嵌著已腐化魔法珠寶的珠寶孔，那顆珠寶的效果增加 x%（JewelSockets 讀）。 */
+    public static final String JEWEL_CORRUPTED_MAGIC_EFFECT = "jewel.corrupted_magic_effect";
+    /** 2026-11-04（唯我論，PoE2 Solus Ipse）：FLAT：同一種血脈輔助可以在不同技能上多掛幾顆（SkillConfig.supportCopies）。 */
+    public static final String LINEAGE_EXTRA_COPIES = "lineage.extra_copies";
+    /** 2026-11-04（混沌一瞥，PoE2「已汙染時仍可調整」）：FLAT 1 = 這件腐化了還能用通貨改（重骰數值、嵌／換符文；不能再腐化）。本地的。 */
+    public static final String LOCAL_MODIFIABLE_CORRUPTED = "local.modifiable_corrupted";
+    /** 2026-11-04（澤佛伊的創世紀）：FLAT x：使用護符消耗的充能 x% 會充能你的生命藥劑（CharmService）。 */
+    public static final String CHARM_TO_LIFE_FLASK = "charm.to_life_flask";
+    /** 2026-11-04（澤佛伊的創世紀）：FLAT x：使用生命藥劑消耗的充能 x% 會充能你的護符（FlaskService）。 */
+    public static final String LIFE_FLASK_TO_CHARM = "flask.life_to_charm";
+    /** 2026-11-04（妄想症，PoE2 Megalomaniac）：FLAT n：這顆珠寶配置 n 個隨機核心天賦（UniquePicks；JewelSockets 給效果）。 */
+    public static final String ALLOCATE_NOTABLES = "jewel.allocate_notables";
+    /** 2026-11-04（嗓音，PoE2 Voices）：FLAT n：嵌著這顆的珠寶孔多 n 個珠寶孔（JewelSockets 的 voices:孔:第幾個）。 */
+    public static final String JEWEL_VOICES_SOCKETS = "jewel.voices_sockets";
+    /** 2026-11-04（信仰稜鏡，PoE2 Prism of Belief）：FLAT x：隨機一個技能（UniquePicks）+x 等級；ItemStats 換成 skill.level［skill:代號］。 */
+    public static final String PICKED_SKILL_LEVEL = "skill.level.picked";
+    /** 2026-11-04（掙扎吶喊，PoE2 Strugglescream）：FLAT n：這件可以多注入 n 個天賦核心。本地的。 */
+    public static final String LOCAL_INSTIL_EXTRA = "local.instil_extra";
+    /** 2026-11-04（融解漩渦，PoE2 Melting Maelstrom）：FLAT 1：魔力滿了不移除效果；效果期間每 3 秒照消耗的魔力打周圍、結束時傷到自己（FlaskService）。 */
+    public static final String FLASK_MAELSTROM = "flask.local.maelstrom";
+    /** 2026-11-04（融解漩渦）：INCREASED：這瓶的效果持續時間（回復量不變，攤得更久）。 */
+    public static final String FLASK_LOCAL_DURATION = "flask.local.duration";
+    /** 2026-11-04（不敗亡者，PoE2 Morior Invictus）：FLAT n：這件有 n 種隨機插槽詞綴（UniquePicks.socketMods），每個嵌著東西的孔各給一份。本地的。 */
+    public static final String LOCAL_SOCKET_MODS = "local.socket_mods";
+    /** 2026-11-04（澤佛伊的創世紀）：INCREASED：已腐化的技能寶石的消耗效率（SkillService 建技能時加；寫 @anyflask＝任何藥劑效果期間）。 */
+    public static final String CORRUPTED_GEM_COST_EFFICIENCY = "gem.corrupted_cost_efficiency";
+    /** 2026-11-04（瑪哈薩多的陰謀，PoE2 Everlasting Sacrifice 永恆奉獻）：FLAT x：能量護盾全滿時犧牲全部，獲得 +x% 全部抗性上限 4 秒（EnergyShield 那邊）。 */
+    public static final String EVERLASTING_SACRIFICE = "es.everlasting_sacrifice";
     /** 嵌在這件物品上的符文照盾牌（防具）的效果算（淵座束帶；非武器的符文本來就照防具那一欄）。 */
     public static final String LOCAL_RUNE_AS_SHIELD = "local.rune_as_shield";
     /** 這件物品的力量需求 +x（守墓巨鎚）。 */
@@ -413,7 +453,7 @@ public final class UniqueStats {
 
     /** 這件物品自己的（local.）屬性：不進角色屬性表，由 Runes、ItemStats 讀物品的詞綴。 */
     public static final Set<String> LOCAL_ITEM = Set.of(LOCAL_RUNE_EFFECT, LOCAL_RUNE_AS_SHIELD, LOCAL_REQUIREMENT_STR,
-            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT);
+            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT, LOCAL_CORE_EFFECT, LOCAL_MODIFIABLE_CORRUPTED, LOCAL_INSTIL_EXTRA, LOCAL_SOCKET_MODS);
 
     /** 某種傷害轉換為另一種的屬性鍵（{@link #CONVERT_FROM}）。 */
     public static String convertFrom(final tw.exilecore.stats.DamageType from, final tw.exilecore.stats.DamageType to) {
@@ -424,6 +464,7 @@ public final class UniqueStats {
     public static Set<String> all() {
         final Set<String> keys = new HashSet<>(SHARED);
         for (final tw.exilecore.stats.DamageType from : tw.exilecore.stats.DamageType.values()) {
+            keys.add(AVOID_HIT + from.tag()); // 2026-11-04（背信忘義）
             // 2026-10-27（舞影外套）：受到的某種傷害增加／減少（減益用的 debuff.taken.類型，傷害計算照類型讀）
             keys.add(tw.exilecore.stats.StatKeys.DEBUFF_TAKEN + from.tag());
             for (final tw.exilecore.stats.DamageType to : tw.exilecore.stats.DamageType.values()) {
@@ -440,7 +481,7 @@ public final class UniqueStats {
                     && !field.getName().equals("GRANT_SKILL") && !field.getName().equals("SKILL_TAG_PREFIX")
                     && !field.getName().equals("RECENT_RELOAD") && !field.getName().equals("CONVERT_FROM")
                     && !field.getName().equals("GAIN_FROM") && !field.getName().equals("IMMUNE_AFTER")
-                    && !field.getName().equals("ALLY_CHARGE_ON_HIT")) {
+                    && !field.getName().equals("ALLY_CHARGE_ON_HIT") && !field.getName().equals("AVOID_HIT")) {
                 try {
                     keys.add((String) field.get(null));
                 } catch (final IllegalAccessException e) {

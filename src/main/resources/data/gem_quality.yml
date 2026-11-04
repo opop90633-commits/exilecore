@@ -697,6 +697,8 @@ blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2)
   - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
+  frost_rampart:   # Frost Wall：冰晶最大生命增加 (0—400)%（2026-11-04 照站長「冰牆照原作」：poe2db 寶石頁第二條；這次之前沒寫）
+    - { stat: crystal.hits, type: INCREASED, per: 20.0 }   # 冰晶的生命照「要打的下數」的比例算（IceCrystals.place），跟厚晶的增加 100% 相加
   earth_spike_eruption:   # Earthshatter：(0—20)% 機率多一次餘震（2026-11-02 照 PoB2 altQualityStats slam_aftershock_chance_% 1；整道裂縫 0.5 秒後再打一次）
     - { stat: slam.aftershock_chance, type: FLAT, per: 1.0 }
   gathered_scales:   # Scavenged Plating：每層甲片另外更多 (0—1)% 護甲（2026-11-01 照 PoB2 altQualityStats scavenged_plating_armour_+%_final_per_stack 0.05；加在光環的每層 4% 上，PersistentBuffs）

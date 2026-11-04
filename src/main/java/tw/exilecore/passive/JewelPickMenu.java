@@ -64,12 +64,19 @@ public final class JewelPickMenu extends Menu {
      * 箱子選單與原生天賦樹共用；這次之前寫在選單的點擊裡。
      */
     static String socketFrom(final ExileCore plugin, final Player player, final PassiveNode node, final Candidate candidate) {
+        return socketFrom(plugin, player, node, null, null, candidate);
+    }
+
+    /** 2026-11-04（嗓音）：voiceKey 不是 null 時放進那個嗓音孔（tree 用來確認孔開著）。 */
+    static String socketFrom(final ExileCore plugin, final Player player, final PassiveNode node, final PassiveTree tree, final String voiceKey,
+                             final Candidate candidate) {
         final ItemStack current = candidate.page() < 0 ? player.getInventory().getItem(candidate.slot())
                 : plugin.players().get(player).bag().page(candidate.page())[candidate.slot()];
         if (current == null || !current.equals(candidate.stack())) {
             return "那顆珠寶已經不在原來的位置了，重新選一次";
         }
-        final PassiveState.Result result = JewelSockets.socket(plugin, player, node, current);
+        final PassiveState.Result result = voiceKey != null ? JewelSockets.socketVoice(plugin, player, tree, voiceKey, current)
+                : JewelSockets.socket(plugin, player, node, current);
         if (!result.ok()) {
             return result.message();
         }
@@ -88,12 +95,20 @@ public final class JewelPickMenu extends Menu {
     private final PassiveNode node;
     private final Set<String> highlights;
     private final List<Candidate> candidates = new ArrayList<>();
+    /** 2026-11-04（嗓音）：放進這個嗓音孔（null = 放進 node）。 */
+    private final String voiceKey;
 
     public JewelPickMenu(final ExileCore plugin, final Player player, final PassiveTree tree, final PassiveNode node, final Set<String> highlights) {
-        super(plugin, player, ROWS, "<dark_gray>選一顆珠寶放進珠寶孔");
+        this(plugin, player, tree, node, highlights, null);
+    }
+
+    public JewelPickMenu(final ExileCore plugin, final Player player, final PassiveTree tree, final PassiveNode node, final Set<String> highlights,
+                         final String voiceKey) {
+        super(plugin, player, ROWS, voiceKey == null ? "<dark_gray>選一顆珠寶放進珠寶孔" : "<dark_gray>選一顆珠寶放進嗓音的孔");
         this.tree = tree;
         this.node = node;
         this.highlights = highlights;
+        this.voiceKey = voiceKey;
     }
 
     @Override
@@ -136,7 +151,7 @@ public final class JewelPickMenu extends Menu {
             return;
         }
         // 畫面畫好之後東西可能動過了（別的視窗、掉落）：來源格子要還是同一顆
-        final String problem = socketFrom(plugin, player, node, candidates.get(slot));
+        final String problem = socketFrom(plugin, player, node, tree, voiceKey, candidates.get(slot));
         if (problem != null) {
             fail(problem);
             redraw();
@@ -152,6 +167,10 @@ public final class JewelPickMenu extends Menu {
     }
 
     private void back() {
+        if (voiceKey != null) {
+            new VoicesMenu(plugin, player, tree, node, highlights).open(); // 2026-11-04（嗓音）：回嗓音的孔
+            return;
+        }
         if (TreeFeed.openNative(plugin, player, null)) {
             return; // 2026-11-02 照站長（D 組）：從原生畫面來的回原生畫面；這次之前一律回箱子選單
         }

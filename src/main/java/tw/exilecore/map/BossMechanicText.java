@@ -82,6 +82,8 @@ final class BossMechanicText {
                     mechanic.countdown().name());
             case ELEMENT -> String.format(Locale.ROOT, "✦ 元素弱點：只吃一種元素傷害（看血條），%d 秒內打掉一段血",
                     Math.round(mechanic.element().duration()));
+            case OPENING -> String.format(Locale.ROOT, "✦ 破綻：牠照常出招，躲開一招就開 %s 秒破綻、破綻裡打牠；%d 秒內剝完 %d 層（牠免疫控場）",
+                    String.valueOf(mechanic.opening().window() == Math.rint(mechanic.opening().window()) ? (long) mechanic.opening().window() : mechanic.opening().window()), Math.round(mechanic.opening().duration()), mechanic.opening().layers());
             case NONE -> null;
         };
     }
@@ -98,6 +100,7 @@ final class BossMechanicText {
             case ZONES -> mechanic.zones() == null ? 0 : mechanic.zones().duration();
             case COUNTDOWN -> mechanic.countdown() == null ? 0 : mechanic.countdown().delay();
             case ELEMENT -> mechanic.element() == null ? 0 : mechanic.element().duration();
+            case OPENING -> mechanic.opening() == null ? 0 : mechanic.opening().duration();
             case NONE -> 0;
         };
     }
@@ -112,6 +115,7 @@ final class BossMechanicText {
             case ZONES -> "（◎ 站位圈）";
             case COUNTDOWN -> "（⚠ 倒數大招）";
             case ELEMENT -> "（✦ 元素弱點）";
+            case OPENING -> "（✦ 破綻）";
             case NONE -> "";
         };
     }
@@ -181,6 +185,7 @@ final class BossMechanicText {
         final String why = switch (mechanic.kind()) {
             case ZONES -> "光圈沒有全部充滿";
             case ELEMENT -> "沒有及時打掉弱點那一段血";
+            case OPENING -> "沒有及時剝完破綻";
             default -> "沒有及時完成";
         };
         return new String[] {"<red><bold>Boss 回血了", "<white>" + why + "：回復 " + Math.round(mechanic.heal()) + "% 生命"};

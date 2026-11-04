@@ -187,6 +187,9 @@ public final class JewelSockets {
         if (jewel == null) {
             return PassiveState.Result.fail("這個孔是空的");
         }
+        if (voicesOccupied(state, node.id())) {
+            return PassiveState.Result.fail("嗓音多開的孔裡還有珠寶，先把它們拿出來"); // 2026-11-04（嗓音）
+        }
         if (plugin.loot() != null && !plugin.loot().fits(player, state, jewel)) {
             return PassiveState.Result.fail("背包與隨身背包都滿了，先清出一格");
         }
@@ -210,6 +213,13 @@ public final class JewelSockets {
         for (final String nodeId : state.jewels().keySet()) {
             if (PHYLACTERY.equals(nodeId)) {
                 continue; // 2026-10-27：命匣不是天賦樹的孔（昇華天賦上的，拿回來在 /ascend tree）
+            }
+            if (nodeId.startsWith(VOICES_PREFIX)) {
+                // 2026-11-04（嗓音）：嗓音拿掉了、那個珠寶孔退了點、數量變少的那幾個孔還給玩家
+                if (!voiceOpen(plugin.items().repository(), jewelData(plugin, state), state.passives(), tree, nodeId)) {
+                    orphaned.add(nodeId);
+                }
+                continue;
             }
             final PassiveNode node = tree.node(nodeId);
             if (node == null || !node.isSocket() || !state.passives().contains(nodeId)) {
@@ -346,13 +356,19 @@ public final class JewelSockets {
         // 2026-11-01 照站長：每一種傳奇珠寶各算一顆（不同的傳奇珠寶都生效；同一種的第二顆不算）；
         //   這次之前 uniqueSeen 一個布林：天賦樹上只有第一顆傳奇珠寶生效，其他種類的傳奇珠寶也被當成第二顆
         final java.util.Set<String> uniquesSeen = new java.util.HashSet<>();
+        final double corruptedMagic = corruptedMagicEffect(repository, jewels, passives, tree); // 2026-11-04（朝氣之靈）
         // 2026-10-26：永恆珠寶征服的節點（半徑珠寶的「範圍內天賦效果增加」放大的是征服後的效果）
         final Map<String, PassiveNode> conquered = TimelessJewels.conquered(tree, TimelessJewels.active(repository, jewels, passives, tree), passives);
         for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
-            final PassiveNode node = tree.node(entry.getKey());
+            final boolean voice = entry.getKey().startsWith(VOICES_PREFIX); // 2026-11-04（嗓音）：嗓音多開的孔
+            final PassiveNode node = voice ? null : tree.node(entry.getKey());
             final tw.exilecore.item.ItemData data = entry.getValue();
-            if (data == null || node == null || !node.isSocket() || !passives.contains(entry.getKey())) {
+            if (data == null || (voice ? !voiceOpen(repository, jewels, passives, tree, entry.getKey())
+                    : node == null || !node.isSocket() || !passives.contains(entry.getKey()))) {
                 continue;
+            }
+            if (voice && (repository.base(data.base()) == null || repository.base(data.base()).isRadiusJewel())) {
+                continue; // 嗓音的孔不在天賦樹上：半徑珠寶沒有範圍可以影響（放不進去，以前放的也不算）
             }
             if (TimelessJewels.isTimeless(repository.base(data.base()))) {
                 continue; // 2026-10-26：永恆珠寶沒有自己的屬性，效果是征服節點（TimelessJewels.treeModifiers），也不佔傳奇珠寶的名額
@@ -361,6 +377,16 @@ public final class JewelSockets {
                 continue; // 以前放進去的同一種第二顆傳奇珠寶不算
             }
             List<Modifier> mods = tw.exilecore.item.ItemStats.modifiers(repository, data);
+            if (corruptedMagic != 0 && data.rarity() == tw.exilecore.item.Rarity.MAGIC && data.corrupted()) {
+                // 2026-11-04（朝氣之靈，PoE2）：嵌著已腐化魔法珠寶的珠寶孔效果增加 x%（那顆珠寶的修飾器整條乘）
+                final double scale = Math.max(0, 1 + corruptedMagic);
+                final List<Modifier> scaled = new ArrayList<>(mods.size());
+                for (final Modifier mod : mods) {
+                    scaled.add(mod.stat().startsWith("flag.") ? mod : new Modifier(mod.stat(), mod.type(), mod.value() * scale, mod.tags(), mod.source()));
+                }
+                mods = scaled;
+            }
+            mods = withAllocatedNotables(data, mods, passives); // 2026-11-04（妄想症）
             final ItemBase base = repository.base(data.base());
             if (base != null && base.isRadiusJewel()) {
                 if (nonUniqueRadiusScale != 1.0 && data.rarity() != tw.exilecore.item.Rarity.UNIQUE) {
@@ -376,11 +402,179 @@ public final class JewelSockets {
     }
 
     /**
+     * 2026-11-04（朝氣之靈，PoE2「增加 x% 含有已汙染魔法珠寶的珠寶插槽天賦效果」）：天賦樹上已配置的孔裡的珠寶給的
+     * {@link tw.exilecore.item.unique.UniqueStats#JEWEL_CORRUPTED_MAGIC_EFFECT} 加總（INCREASED，0.5 = 50%）。純函式。
+     */
+    static double corruptedMagicEffect(final tw.exilecore.item.ItemRepository repository, final Map<String, tw.exilecore.item.ItemData> jewels,
+                                       final java.util.Set<String> passives, final PassiveTree tree) {
+        double total = 0;
+        final java.util.Set<String> seen = new java.util.HashSet<>();
+        for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
+            final PassiveNode node = tree.node(entry.getKey());
+            final tw.exilecore.item.ItemData data = entry.getValue();
+            if (data == null || node == null || !node.isSocket() || !passives.contains(entry.getKey())
+                    || data.rarity() != tw.exilecore.item.Rarity.UNIQUE || !seen.add(String.valueOf(data.unique()))) {
+                continue;
+            }
+            for (final Modifier mod : tw.exilecore.item.ItemStats.modifiers(repository, data)) {
+                if (tw.exilecore.item.unique.UniqueStats.JEWEL_CORRUPTED_MAGIC_EFFECT.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                    total += mod.value();
+                }
+            }
+        }
+        return total;
+    }
+
+    /**
      * 2026-11-01：這顆傳奇珠寶算不算（每一種各一顆）：還沒算過這一種回傳 true 並記下。沒有傳奇代號的當成同一種（"?"，跟放進去時的檢查一樣）。
      * 純函式（測試用）。
      */
     static boolean countsUnique(final java.util.Set<String> seen, final String unique) {
         return seen.add(unique == null || unique.isBlank() ? "?" : unique);
+    }
+
+    /**
+     * 2026-11-04（妄想症，PoE2 Megalomaniac「配置 Passive Skill」）：這顆珠寶有 {@link tw.exilecore.item.unique.UniqueStats#ALLOCATE_NOTABLES}
+     * 的話，抽到的核心天賦（{@link tw.exilecore.item.UniquePicks}）當作配置了：給它們的修飾器（天賦樹上已經配了的不重複給）。
+     */
+    static List<Modifier> withAllocatedNotables(final tw.exilecore.item.ItemData data, final List<Modifier> mods, final java.util.Set<String> passives) {
+        double count = 0;
+        for (final Modifier mod : mods) {
+            if (tw.exilecore.item.unique.UniqueStats.ALLOCATE_NOTABLES.equals(mod.stat())) {
+                count += mod.value();
+            }
+        }
+        if (count < 1) {
+            return mods;
+        }
+        final List<Modifier> out = new ArrayList<>(mods);
+        for (final String id : tw.exilecore.item.UniquePicks.picks(data, tw.exilecore.item.UniquePicks.NOTABLE, (int) Math.round(count))) {
+            final tw.exilecore.item.ItemStats.Instil notable = tw.exilecore.item.ItemStats.notable(id);
+            if (notable == null || passives.contains(id)) {
+                continue;
+            }
+            for (final Modifier mod : notable.modifiers()) {
+                out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "妄想症：" + notable.name()));
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-04（嗓音，PoE2 Voices）：嗓音多開的珠寶孔的鍵（voices:珠寶孔節點:第幾個，1 起）。 */
+    public static final String VOICES_PREFIX = "voices:";
+
+    public static String voiceKey(final String host, final int index) {
+        return VOICES_PREFIX + host + ":" + index;
+    }
+
+    /** 2026-11-04：嗓音孔的鍵拆成 [珠寶孔節點, 第幾個]；不是回傳 null。 */
+    static String[] voiceParts(final String key) {
+        if (key == null || !key.startsWith(VOICES_PREFIX)) {
+            return null;
+        }
+        final String rest = key.substring(VOICES_PREFIX.length());
+        final int colon = rest.lastIndexOf(':');
+        return colon <= 0 ? null : new String[] {rest.substring(0, colon), rest.substring(colon + 1)};
+    }
+
+    /** 2026-11-04：這顆珠寶給幾個嗓音孔（{@link tw.exilecore.item.unique.UniqueStats#JEWEL_VOICES_SOCKETS}）。 */
+    public static int voiceCount(final tw.exilecore.item.ItemRepository repository, final tw.exilecore.item.ItemData data) {
+        if (repository == null || data == null || data.rarity() != tw.exilecore.item.Rarity.UNIQUE) {
+            return 0;
+        }
+        double count = 0;
+        for (final Modifier mod : tw.exilecore.item.ItemStats.modifiers(repository, data)) {
+            if (tw.exilecore.item.unique.UniqueStats.JEWEL_VOICES_SOCKETS.equals(mod.stat())) {
+                count += mod.value();
+            }
+        }
+        return (int) Math.max(0, Math.round(count));
+    }
+
+    /** 2026-11-04：這個嗓音孔現在開著嗎（那個珠寶孔有配、嵌著嗓音、數量夠）。 */
+    static boolean voiceOpen(final tw.exilecore.item.ItemRepository repository, final Map<String, tw.exilecore.item.ItemData> jewels,
+                             final java.util.Set<String> passives, final PassiveTree tree, final String key) {
+        final String[] parts = voiceParts(key);
+        if (parts == null) {
+            return false;
+        }
+        final PassiveNode host = tree.node(parts[0]);
+        if (host == null || !host.isSocket() || !passives.contains(parts[0])) {
+            return false;
+        }
+        final int index;
+        try {
+            index = Integer.parseInt(parts[1]);
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+        return index >= 1 && index <= voiceCount(repository, jewels.get(parts[0]));
+    }
+
+    /** 2026-11-04：這個珠寶孔裡的嗓音多開的孔有沒有放著珠寶。 */
+    public static boolean voicesOccupied(final PlayerState state, final String host) {
+        final String prefix = VOICES_PREFIX + host + ":";
+        for (final String key : state.jewels().keySet()) {
+            if (key.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-04：把一顆珠寶放進嗓音孔（呼叫端負責把珠寶從背包拿掉，成功才拿）。 */
+    public static PassiveState.Result socketVoice(final ExileCore plugin, final Player player, final PassiveTree tree, final String key, final ItemStack stack) {
+        final PlayerState state = plugin.players().get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return PassiveState.Result.fail("先建立角色（/char）");
+        }
+        if (tree == null || !voiceOpen(plugin.items().repository(), jewelData(plugin, state), state.passives(), tree, key)) {
+            return PassiveState.Result.fail("這個孔沒有開（嗓音要嵌在配了的珠寶孔裡）");
+        }
+        if (state.jewel(key) != null) {
+            return PassiveState.Result.fail("這個孔已經有珠寶了，先點它拿出來");
+        }
+        final String problem = problem(plugin, stack);
+        if (problem != null) {
+            return PassiveState.Result.fail(problem);
+        }
+        final ItemData data = plugin.items().read(stack).orElseThrow();
+        final ItemBase base = plugin.items().repository().base(data.base());
+        if (base.isRadiusJewel() || TimelessJewels.isTimeless(base)) {
+            return PassiveState.Result.fail("嗓音的孔不在天賦樹上，只能放基礎珠寶（不能放半徑、恆時珠寶）");
+        }
+        if (voiceCount(plugin.items().repository(), data) > 0) {
+            return PassiveState.Result.fail("嗓音不能放進嗓音的孔");
+        }
+        final String unique = uniqueOf(plugin, stack);
+        if (unique != null) {
+            for (final ItemStack placed : state.jewels().values()) {
+                if (unique.equals(uniqueOf(plugin, placed))) {
+                    return PassiveState.Result.fail("同一種傳奇珠寶只能配一顆（天賦樹上已經有一顆了）");
+                }
+            }
+        }
+        final ItemStack one = stack.clone();
+        one.setAmount(1);
+        state.setJewel(key, one);
+        plugin.players().sheet(player);
+        return PassiveState.Result.success();
+    }
+
+    /** 2026-11-04：把嗓音孔裡的珠寶拿回背包。 */
+    public static PassiveState.Result unsocketVoice(final ExileCore plugin, final Player player, final String key) {
+        final PlayerState state = plugin.players().get(player);
+        final ItemStack jewel = state.jewel(key);
+        if (jewel == null) {
+            return PassiveState.Result.fail("這個孔是空的");
+        }
+        if (plugin.loot() != null && !plugin.loot().fits(player, state, jewel)) {
+            return PassiveState.Result.fail("背包與隨身背包都滿了，先清出一格");
+        }
+        state.setJewel(key, null);
+        giveBack(plugin, player, state, jewel);
+        plugin.players().sheet(player);
+        return PassiveState.Result.success();
     }
 
     /** 2026-10-27：命匣裡的珠寶效果倍率（增加 100%）。 */

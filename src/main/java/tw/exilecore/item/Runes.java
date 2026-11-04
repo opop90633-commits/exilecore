@@ -48,7 +48,8 @@ public final class Runes {
      * 才有效果（{@link #bondedModifiers}）；法杖類沒寫就沒有（不照武器的）。
      */
     public record Rune(String id, String name, List<Line> weapon, List<Line> caster, List<Line> armour, int level,
-                       List<Line> bondedWeapon, List<Line> bondedCaster, List<Line> bondedArmour) {
+                       List<Line> bondedWeapon, List<Line> bondedCaster, List<Line> bondedArmour,
+                       Map<String, List<Line>> slots, boolean martialOnly, int limit, Map<String, List<Line>> bondedSlots) {
         public Rune {
             weapon = List.copyOf(weapon);
             caster = caster == null || caster.isEmpty() ? weapon : List.copyOf(caster);
@@ -56,35 +57,93 @@ public final class Runes {
             bondedWeapon = bondedWeapon == null ? List.of() : List.copyOf(bondedWeapon);
             bondedCaster = bondedCaster == null ? List.of() : List.copyOf(bondedCaster);
             bondedArmour = bondedArmour == null ? List.of() : List.copyOf(bondedArmour);
+            slots = slots == null ? Map.of() : Map.copyOf(slots);
+            limit = Math.max(0, limit);
+            bondedSlots = bondedSlots == null ? Map.of() : Map.copyOf(bondedSlots);
+        }
+
+        public Rune(final String id, final String name, final List<Line> weapon, final List<Line> caster, final List<Line> armour, final int level,
+                    final List<Line> bondedWeapon, final List<Line> bondedCaster, final List<Line> bondedArmour) {
+            this(id, name, weapon, caster, armour, level, bondedWeapon, bondedCaster, bondedArmour, Map.of(), false, 0, Map.of());
         }
 
         public Rune(final String id, final String name, final List<Line> weapon, final List<Line> caster, final List<Line> armour, final int level) {
             this(id, name, weapon, caster, armour, level, List.of(), List.of(), List.of());
         }
 
+        /** 2026-11-04：魂核符文（soul core）、魔偶符文（idol）：有部位專屬的加成、只能嵌軍用武器、或一個角色僅限幾顆。 */
+        public boolean soulCore() {
+            return martialOnly || limit > 0 || !slots.isEmpty();
+        }
+
         public Rune(final String id, final String name, final List<Line> weapon, final List<Line> armour) {
             this(id, name, weapon, List.of(), armour, 0);
         }
 
-        /** 嵌在這種基底上的加成。 */
+        /**
+         * 嵌在這種基底上的加成。
+         * 2026-11-04 照 PoE2 的魂核（Soul Core）：防具先看部位專屬的（slots 的 head／chest／legs／feet／shield），沒有才照 armour；
+         * 只限軍用武器的（martial_only）嵌在法杖類上沒有加成（{@link Runes#uselessOn} 會擋）。
+         */
         public List<Line> on(final ItemBase base) {
+            final List<Line> own = slots.get(slotKey(base));
+            if (own != null) {
+                return own; // 2026-11-04：部位專屬的（魂核的頭盔、魔偶的權杖…）
+            }
             if (!base.isWeapon()) {
                 return armour;
             }
-            return base.tags().contains(CASTER_TAG) ? caster : weapon;
+            if (base.tags().contains(CASTER_TAG)) {
+                return martialOnly ? List.of() : caster;
+            }
+            return weapon;
         }
 
         /** 2026-10-27：嵌在這種基底上的羈絆詞綴（只有聖賢智慧才有效果）。 */
         public List<Line> bondedOn(final ItemBase base) {
+            final List<Line> own = bondedSlots.get(slotKey(base));
+            if (own != null) {
+                return own; // 2026-11-04：魔偶的羈絆也分部位（bonded.slots）
+            }
             if (!base.isWeapon()) {
                 return bondedArmour;
             }
-            return base.tags().contains(CASTER_TAG) ? bondedCaster : bondedWeapon;
+            if (base.tags().contains(CASTER_TAG)) {
+                return martialOnly ? List.of() : bondedCaster;
+            }
+            return bondedWeapon;
         }
     }
 
     /** 法杖類武器的標籤（法杖、長杖、權杖；PoE2 符文的 Wand or Staff 那一類）。 */
     public static final String CASTER_TAG = "caster";
+
+    /** 2026-11-04：runes.yml 的 slots 可以寫的部位（PoE2 魂核的 Helmet／Body Armour／Gloves／Boots／Shield and Buckler；手套照慣例是腿甲）。 */
+    public static final List<String> SLOT_KEYS = List.of("head", "chest", "legs", "feet", "shield", "buckler", "focus", "sceptre");
+
+    /** 2026-11-04（魔偶符文・狐狸）：FLAT 1 = 嵌在這件上的符文、魔偶的羈絆詞綴都生效（不用聖賢智慧；本地的，ItemStats 讀）。 */
+    public static final String LOCAL_BONDED = "local.rune_bonded";
+
+    /** 2026-11-04：魂核符文「x% 需求轉換為力量／敏捷／智慧」（本地的，ItemStats.requirements 讀；後面接 str／dex／int）。 */
+    public static final String REQ_CONVERT = "local.req_convert.";
+
+    /** 2026-11-04：這種防具基底在 runes.yml 的 slots 裡的代號（副手的盾、輕盾是 shield；法器之類不是盾的副手沒有）。 */
+    static String slotKey(final ItemBase base) {
+        if (base.isWeapon()) {
+            return base.tags().contains("sceptre") ? "sceptre" : "";
+        }
+        if (base.isShield()) {
+            // 盾（力量、力敏、力智）、輕盾（敏捷的）、法器（智慧的）：照基底的標籤分
+            return base.tags().contains("focus") ? "focus" : base.tags().contains("dex_only") ? "buckler" : "shield";
+        }
+        return switch (base.slot()) {
+            case HEAD -> "head";
+            case CHEST -> "chest";
+            case LEGS -> "legs";
+            case FEET -> "feet";
+            default -> "";
+        };
+    }
 
     private Runes() {
     }
@@ -133,11 +192,51 @@ public final class Runes {
         for (final String id : root.keys()) {
             final YamlNode node = root.node(id);
             final YamlNode bonded = node.node("bonded"); // 2026-10-27 照 PoE2：羈絆詞綴（可以不寫）
-            map.put(id, new Rune(id, node.requireString("name"), lines(node, "weapon"),
-                    node.has("caster") ? lines(node, "caster") : List.of(), lines(node, "armour"), Math.max(0, node.integer("level", 0)),
-                    optionalLines(bonded, "weapon"), optionalLines(bonded, "caster"), optionalLines(bonded, "armour")));
+            // 2026-11-04 照 PoE2 的魂核：slots（部位專屬的加成）、martial_only（只能嵌軍用武器）、limit（一個角色僅限幾顆，0 = 不限）；有 slots 的 armour 可以不寫
+            final Map<String, List<Line>> slots = slotLines(node);
+            map.put(id, new Rune(id, node.requireString("name"), slots.isEmpty() || node.has("weapon") ? lines(node, "weapon") : List.of(),
+                    node.has("caster") ? lines(node, "caster") : List.of(), slots.isEmpty() || node.has("armour") ? lines(node, "armour") : List.of(),
+                    Math.max(0, node.integer("level", 0)),
+                    optionalLines(bonded, "weapon"), optionalLines(bonded, "caster"), optionalLines(bonded, "armour"),
+                    slots, node.bool("martial_only", false), Math.max(0, node.integer("limit", 0)), bonded == null ? Map.of() : slotLines(bonded)));
         }
         return map;
+    }
+
+    /** 2026-11-04：slots 底下各部位的加成（可以沒有）。 */
+    private static Map<String, List<Line>> slotLines(final YamlNode node) {
+        final Map<String, List<Line>> slots = new LinkedHashMap<>();
+        if (node != null && node.has("slots")) {
+            final YamlNode slotNode = node.node("slots");
+            for (final String key : slotNode.keys()) {
+                if (!SLOT_KEYS.contains(key)) {
+                    throw new IllegalArgumentException(slotNode.path() + "." + key + "：不認得的部位（只有 " + String.join("、", SLOT_KEYS) + "）");
+                }
+                slots.put(key, lines(slotNode, key));
+            }
+        }
+        return slots;
+    }
+
+    /** 2026-11-04（魔偶符文・狐狸）：這件物品上有沒有嵌著「嵌在這件上的符文獲得羈絆加成」的符文。 */
+    public static boolean bondedUnlocked(final ItemRepository repository, final ItemBase base, final ItemData data) {
+        if (data == null || data.runes().isEmpty() || base == null || repository == null) {
+            return false;
+        }
+        for (final String id : data.runes()) {
+            final Rune rune = repository.rune(id);
+            if (rune == null) {
+                continue;
+            }
+            for (final Line line : rune.on(base)) {
+                for (final AffixMod mod : line.mods()) {
+                    if (LOCAL_BONDED.equals(mod.stat())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /** 2026-10-27：可以沒有的一組加成（羈絆詞綴）。 */
@@ -168,8 +267,17 @@ public final class Runes {
      * 符文效果的倍率：傳奇寫的 rune_effect，加上這件物品自己的「嵌在這件物品上的符文效果增加 x%」詞綴
      * （2026-10-26，淵座束帶 local.rune_effect；擲出來的數值）。
      */
-    static double effect(final ItemRepository repository, final ItemData data) {
+    public static double effect(final ItemRepository repository, final ItemData data) {
+        return effect(repository, data, null);
+    }
+
+    /**
+     * 2026-11-04：同上，這一顆符文的倍率：魂核符文（core_＊）再加上這件的「嵌在這件上的魂核效果增加 x%」（瑪哈薩多的陰謀 local.core_effect）。
+     * rune 是 null 時只算一般的。
+     */
+    public static double effect(final ItemRepository repository, final ItemData data, final Rune rune) {
         double effect = 1 + (data.unique() == null || repository == null ? 0 : repository.uniqueRuneEffect(data.unique()));
+        final boolean core = rune != null && rune.id().startsWith(CORE_PREFIX);
         if (repository != null && data.identified()) {
             for (final RolledAffix rolled : data.affixes()) {
                 final Affix affix = repository.affix(rolled.id());
@@ -177,7 +285,8 @@ public final class Runes {
                     continue;
                 }
                 for (final AffixMod mod : affix.mods()) {
-                    if (tw.exilecore.item.unique.UniqueStats.LOCAL_RUNE_EFFECT.equals(mod.stat())) {
+                    if (tw.exilecore.item.unique.UniqueStats.LOCAL_RUNE_EFFECT.equals(mod.stat())
+                            || core && tw.exilecore.item.unique.UniqueStats.LOCAL_CORE_EFFECT.equals(mod.stat())) {
                         effect += mod.toModifier(rolled.vars(), "").value();
                     }
                 }
@@ -185,6 +294,9 @@ public final class Runes {
         }
         return Math.max(0, effect);
     }
+
+    /** 2026-11-04：魂核符文的代號開頭（runes.yml 的 core_＊）。 */
+    public static final String CORE_PREFIX = "core_";
 
     /**
      * 2026-11-04：符文說明裡的數字乘上符文效果（effect 是 {@link #effect} 的倍率）：整數照四捨五入，有小數的留一位。
@@ -213,15 +325,15 @@ public final class Runes {
             return List.of();
         }
         final List<Modifier> list = new ArrayList<>();
-        final double effect = effect(repository, data);
         for (final String id : data.runes()) {
             final Rune rune = repository.rune(id);
             if (rune == null) {
                 continue;
             }
+            final double effect = effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
             for (final Line line : rune.on(base)) {
                 for (final AffixMod mod : line.mods()) {
-                    if (LocalMods.isWeaponLocal(mod)) {
+                    if (LocalMods.isWeaponLocal(mod) && !mod.stat().startsWith(REQ_CONVERT) && !LOCAL_BONDED.equals(mod.stat())) { // 2026-11-04：魂核的需求轉換不是武器面板的
                         final Modifier modifier = mod.toModifier(Map.of(), "符文 " + rune.name());
                         list.add(effect == 1 ? modifier
                                 : new Modifier(modifier.stat(), modifier.type(), modifier.value() * effect, modifier.tags(), modifier.source()));
@@ -238,12 +350,12 @@ public final class Runes {
             return List.of();
         }
         final List<Modifier> list = new ArrayList<>();
-        final double effect = effect(repository, data); // 傳奇的符文效果增加
         for (final String id : data.runes()) {
             final Rune rune = repository.rune(id);
             if (rune == null) {
                 continue;
             }
+            final double effect = effect(repository, data, rune); // 傳奇的符文效果增加；2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
             for (final Line line : rune.on(base)) {
                 for (final AffixMod mod : line.mods()) {
                     if (base.isWeapon() && LocalMods.isWeaponLocal(mod)) {
@@ -251,6 +363,9 @@ public final class Runes {
                     }
                     if (!base.isWeapon() && (ItemStats.isArmourLocal(base, mod) || isDefenceIncrease(mod))) {
                         continue; // 2026-10-26：防具本地的（增加 x% 護甲、閃避、能量護盾）算進那件防具的數值（ItemStats）；那件沒有的那種防禦就沒效果
+                    }
+                    if (mod.stat().startsWith(REQ_CONVERT) || LOCAL_BONDED.equals(mod.stat())) {
+                        continue; // 2026-11-04：魂核的需求轉換、狐狸的羈絆解鎖是那件物品自己的（ItemStats 讀）
                     }
                     final Modifier modifier = mod.toModifier(Map.of(), "符文 " + rune.name());
                     list.add(effect == 1 ? modifier
@@ -270,12 +385,12 @@ public final class Runes {
             return List.of();
         }
         final List<Modifier> list = new ArrayList<>();
-        final double effect = effect(repository, data);
         for (final String id : data.runes()) {
             final Rune rune = repository.rune(id);
             if (rune == null) {
                 continue;
             }
+            final double effect = effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
             for (final Line line : rune.bondedOn(base)) {
                 for (final AffixMod mod : line.mods()) {
                     final Modifier modifier = mod.toModifier(Map.of(), "羈絆：" + rune.name());
@@ -293,13 +408,13 @@ public final class Runes {
         if (data.runes().isEmpty() || base == null || base.isWeapon()) {
             return 0;
         }
-        final double effect = effect(repository, data); // 2026-10-27：跟其他符文加成一樣算上 local.rune_effect 詞綴；這次之前只算傳奇的 rune_effect
         double total = 0;
         for (final String id : data.runes()) {
             final Rune rune = repository.rune(id);
             if (rune == null) {
                 continue;
             }
+            final double effect = effect(repository, data, rune); // 2026-10-27：跟其他符文加成一樣算上 local.rune_effect 詞綴；2026-11-04：每一顆各自算
             for (final Line line : rune.armour()) {
                 for (final AffixMod mod : line.mods()) {
                     if (stat.equals(mod.stat()) && mod.type() == type && ItemStats.isArmourLocal(base, mod)) {
@@ -316,7 +431,13 @@ public final class Runes {
      * 完全沒有效果的符文（防具那一套只有「增加 x% 護甲／閃避／能量護盾」這類本地的）回傳 true。原作嵌了也沒效果，我們直接擋下來。
      */
     public static boolean uselessOn(final ItemBase base, final Rune rune) {
-        if (base == null || rune == null || !base.isJewellery()) {
+        if (base == null || rune == null) {
+            return false;
+        }
+        if (rune.soulCore() && (rune.on(base).isEmpty() || base.isJewellery())) { // 2026-11-04：魂核、魔偶原作也不能嵌飾品（攫握指環、日冕墜飾）
+            return true; // 2026-11-04 照 PoE2 的魂核：只能嵌軍用武器的嵌在法杖類上、只有頭盔那條的嵌在鞋子上——沒有加成就不給嵌
+        }
+        if (!base.isJewellery()) {
             return false;
         }
         for (final Line line : rune.on(base)) {
@@ -327,6 +448,70 @@ public final class Runes {
             }
         }
         return true;
+    }
+
+    /**
+     * 2026-11-04 照 PoE2 的魂核（艾特瑪哈／斯拉托／善堤比：x% 需求轉換為力量／敏捷／智慧）：嵌著的符文的需求轉換，
+     * 回傳 [力量, 敏捷, 智慧] 各吃掉其他兩種需求的比例（0～1；已乘符文效果）。沒有回傳 null。
+     */
+    static double[] requirementConvert(final ItemRepository repository, final ItemBase base, final ItemData data) {
+        if (data == null || data.runes().isEmpty() || base == null || repository == null) {
+            return null;
+        }
+        double[] convert = null;
+        for (final String id : data.runes()) {
+            final Rune rune = repository.rune(id);
+            if (rune == null) {
+                continue;
+            }
+            final double effect = effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
+            for (final Line line : rune.on(base)) {
+                for (final AffixMod mod : line.mods()) {
+                    if (!mod.stat().startsWith(REQ_CONVERT)) {
+                        continue;
+                    }
+                    final int index = switch (mod.stat().substring(REQ_CONVERT.length())) {
+                        case "str" -> 0;
+                        case "dex" -> 1;
+                        case "int" -> 2;
+                        default -> -1;
+                    };
+                    if (index < 0) {
+                        continue;
+                    }
+                    if (convert == null) {
+                        convert = new double[3];
+                    }
+                    convert[index] = Math.min(1, convert[index] + mod.toModifier(Map.of(), "").value() * effect / 100);
+                }
+            }
+        }
+        return convert;
+    }
+
+    /**
+     * 2026-11-04 照 PoE2 的魂核「僅限 1」：這件物品上嵌著、一個角色僅限幾顆的符文——已經在別件上算過的（seen 裡有）回傳它們的
+     * 修飾器來源（「符文 名字」），讓屬性表跳過；沒算過的記進 seen。沒有僅限的回傳空集合。
+     */
+    public static java.util.Set<String> limitedDuplicates(final ItemRepository repository, final ItemData data, final Map<String, Integer> seen) {
+        if (data == null || data.runes().isEmpty() || repository == null) {
+            return java.util.Set.of();
+        }
+        java.util.Set<String> blocked = null;
+        for (final String id : data.runes()) {
+            final Rune rune = repository.rune(id);
+            if (rune == null || rune.limit() <= 0) {
+                continue;
+            }
+            final int count = seen.merge(id, 1, Integer::sum);
+            if (count > rune.limit()) {
+                if (blocked == null) {
+                    blocked = new java.util.HashSet<>();
+                }
+                blocked.add("符文 " + rune.name());
+            }
+        }
+        return blocked == null ? java.util.Set.of() : blocked;
     }
 
     /** 「增加 x% 護甲／閃避／能量護盾」（沒有標籤的 INCREASED）：嵌在防具上是本地的。 */

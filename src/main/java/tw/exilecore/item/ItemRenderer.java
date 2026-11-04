@@ -390,14 +390,22 @@ public final class ItemRenderer {
                     + AffixChips.miniMessage(AffixChips.of(implicit.mods())))); // 2026-10：固定詞綴也有標籤
         }
         if (data.instilled() != null) {
-            final ItemStats.Instil instil = ItemStats.instilOf(data);
-            if (instil == null) {
-                lore.add(line("<#c77dff>注入：<dark_gray>已失效（天賦樹改版，這個核心不在了）"));
-            } else {
-                lore.add(line("<#c77dff>注入：" + escape(instil.name()) + " <dark_gray>(蒸餾情緒)"));
-                for (final String text : instil.lines()) {
-                    lore.add(line("<#c77dff>　" + escape(text)));
+            // 2026-11-04（掙扎吶喊）：注入好幾個的每一個都列出來
+            final java.util.Map<String, ItemStats.Instil> instils = ItemStats.instilsOf(data);
+            for (final String id : data.instilledAll()) {
+                final ItemStats.Instil instil = instils.get(id);
+                if (instil == null) {
+                    lore.add(line("<#c77dff>注入：<dark_gray>已失效（天賦樹改版，這個核心不在了）"));
+                } else {
+                    lore.add(line("<#c77dff>注入：" + escape(instil.name()) + " <dark_gray>(蒸餾情緒)"));
+                    for (final String text : instil.lines()) {
+                        lore.add(line("<#c77dff>　" + escape(text)));
+                    }
                 }
+            }
+            final int capacity = ItemStats.instilCapacity(repository, data);
+            if (capacity > 1) {
+                lore.add(line("<dark_gray>　可以注入 " + capacity + " 個核心（滿了再注入會換掉最早的）"));
             }
         }
         if (hasAffixes) {
@@ -443,6 +451,9 @@ public final class ItemRenderer {
                                     : affixLine.type() == AffixType.PREFIX ? PREFIX_COLOR : SUFFIX_COLOR) + ">" + affixLine.ranged()
                                     + " <dark_gray>(T" + affixLine.tier() + ")" + catalysedMark + chips));
                 }
+                if (unique) {
+                    lore.addAll(picksLore(repository, data)); // 2026-11-04（妄想症、信仰稜鏡）：抽到的是哪些
+                }
             }
         }
         // 符文孔（2026-10）：嵌著的符文與它給的加成，空孔
@@ -450,18 +461,22 @@ public final class ItemRenderer {
         if (runeSlots > 0 && (!data.runes().isEmpty() || data.identified())) {
             lore.add(line(SEPARATOR));
             // 2026-11-04 照站長（淵座束帶）：符文那一行寫乘上符文效果增加之後的數字（照 PoE2）；這次之前寫符文原本的數字（+75），實際算的是 ×1.92
-            final double effect = Runes.effect(repository, data);
+            final boolean bondedHere = Runes.bondedUnlocked(repository, base, data); // 2026-11-04（魔偶符文・狐狸）：這件的羈絆直接生效
             for (final String id : data.runes()) {
                 final Runes.Rune rune = repository.rune(id);
                 if (rune == null) {
                     continue;
                 }
+                final double effect = Runes.effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
+                if (rune.on(base).isEmpty()) {
+                    lore.add(line("<dark_gray>◈ " + escape(rune.name()) + "（嵌在這種裝備上沒有效果）")); // 2026-11-04：魂核、魔偶只在某些部位有效果
+                }
                 for (final Runes.Line runeLine : rune.on(base)) {
                     lore.add(line("<#7fe0c8>◈ " + escape(Runes.scaledText(runeLine.text(), effect)) + " <dark_gray>(" + escape(rune.name()) + ")"));
                 }
                 for (final Runes.Line bonded : rune.bondedOn(base)) {
-                    // 2026-10-27 照 PoE2：羈絆詞綴（只有昇華・聖賢智慧才有效果，灰字）
-                    lore.add(line("<dark_gray>  羈絆：" + escape(Runes.scaledText(bonded.text(), effect))));
+                    // 2026-10-27 照 PoE2：羈絆詞綴（只有昇華・聖賢智慧才有效果，灰字）；2026-11-04：狐狸魔偶解鎖的那件照一般顏色
+                    lore.add(line((bondedHere ? "<#7fe0c8>  羈絆：" : "<dark_gray>  羈絆：") + escape(Runes.scaledText(bonded.text(), effect))));
                 }
             }
             final double runeEffect = repository.uniqueRuneEffect(data.unique());
@@ -694,6 +709,54 @@ public final class ItemRenderer {
             for (final Component line : lines) {
                 out.add(plain(line));
             }
+        }
+        return out;
+    }
+
+    /** 2026-11-04（妄想症、信仰稜鏡，PoE2）：傳奇上「隨機的那幾個」抽到的是哪些（照物品的 UUID 決定，{@link UniquePicks}）。 */
+    private static List<net.kyori.adventure.text.Component> picksLore(final ItemRepository repository, final ItemData data) {
+        final List<net.kyori.adventure.text.Component> out = new ArrayList<>();
+        double notables = 0;
+        boolean skill = false;
+        for (final tw.exilecore.stats.Modifier mod : ItemStats.modifiers(repository, data)) {
+            if (tw.exilecore.item.unique.UniqueStats.ALLOCATE_NOTABLES.equals(mod.stat())) {
+                notables += mod.value();
+            }
+        }
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix != null && affix.mods().stream().anyMatch(mod -> tw.exilecore.item.unique.UniqueStats.PICKED_SKILL_LEVEL.equals(mod.stat()))) {
+                skill = true;
+            }
+        }
+        for (final String id : UniquePicks.picks(data, UniquePicks.NOTABLE, (int) Math.round(notables))) {
+            out.add(line("<#8888ff>　配置：" + escape(UniquePicks.name(UniquePicks.NOTABLE, id))));
+            final ItemStats.Instil notable = ItemStats.notable(id);
+            if (notable != null) {
+                for (final String text : notable.lines()) {
+                    out.add(line("<dark_gray>　　" + escape(text)));
+                }
+            }
+        }
+        if (skill) {
+            for (final String id : UniquePicks.picks(data, UniquePicks.SKILL, 1)) {
+                out.add(line("<#8888ff>　技能：" + escape(UniquePicks.name(UniquePicks.SKILL, id))));
+            }
+        }
+        // 2026-11-04（不敗亡者）：隨機插槽詞綴（每個嵌著東西的孔各一份）
+        int socketMods = 0;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix != null) {
+                for (final AffixMod mod : affix.mods()) {
+                    if (tw.exilecore.item.unique.UniqueStats.LOCAL_SOCKET_MODS.equals(mod.stat())) {
+                        socketMods += (int) Math.round(mod.toModifier(rolled.vars(), "").value());
+                    }
+                }
+            }
+        }
+        for (final UniquePicks.RolledSocketMod mod : UniquePicks.socketMods(data, socketMods)) {
+            out.add(line("<#8888ff>　" + escape(mod.text()) + " <dark_gray>（嵌著 " + data.runes().size() + " 個）"));
         }
         return out;
     }

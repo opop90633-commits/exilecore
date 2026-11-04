@@ -34,48 +34,15 @@ class PhaseMechanicTest {
 
     private static final MapConfig.Shield SHIELD = new MapConfig.Shield(3, "BLAZE", "星骸結晶", 4, 30, 40);
 
-    // ---- 輪流 ----
+    // ---- 2026-11-04 照站長：一隻 Boss 只留一個鎖血（破綻）；輪流只剩破綻、只配給第一個沒寫的階段 ----
 
     @Test
-    void rotationAvoidsRepeatsWithinOneBoss() {
+    void onlyOneOpeningPerBoss() {
+        assertEquals(List.of(PhaseMechanic.Kind.OPENING), PhaseMechanic.ROTATION, "2026-11-04：站位圈、倒數大招、元素弱點、結晶都不再自動配");
         final List<PhaseMechanic.Kind> kinds = PhaseMechanic.rotation("awakener", Arrays.asList(null, null, null));
-        assertEquals(2, new HashSet<>(kinds).size(), "三個沒寫的階段：兩種都用到（2026-11-02 元素弱點不再輪到）");
-        assertFalse(kinds.contains(PhaseMechanic.Kind.ELEMENT), "2026-11-02 照站長：元素弱點不在輪流裡");
-        assertFalse(kinds.contains(PhaseMechanic.Kind.CRYSTAL), "結晶不在輪流裡");
-        // 寫死的不動，沒寫的跳過已經用過的
-        final List<PhaseMechanic.Kind> mixed = PhaseMechanic.rotation("x", Arrays.asList(PhaseMechanic.Kind.CRYSTAL, null,
-                PhaseMechanic.Kind.COUNTDOWN));
-        assertEquals(PhaseMechanic.Kind.CRYSTAL, mixed.get(0));
-        assertEquals(PhaseMechanic.Kind.COUNTDOWN, mixed.get(2));
-        assertEquals(PhaseMechanic.Kind.ZONES, mixed.get(1), "跳過倒數大招：" + mixed.get(1));
-        // 新的三種都用過了才重複
-        final List<PhaseMechanic.Kind> full = PhaseMechanic.rotation("y", Arrays.asList(PhaseMechanic.Kind.ZONES, PhaseMechanic.Kind.COUNTDOWN,
-                PhaseMechanic.Kind.ELEMENT, null));
-        assertTrue(PhaseMechanic.ROTATION.contains(full.get(3)));
+        assertEquals(PhaseMechanic.Kind.OPENING, kinds.get(0));
         // 寫 none 的階段保持 none、不算用過
         assertEquals(PhaseMechanic.Kind.NONE, PhaseMechanic.rotation("z", Arrays.asList(PhaseMechanic.Kind.NONE, null)).get(0));
-    }
-
-    @Test
-    void rotationIsStableAndDiffersBetweenBosses() {
-        final List<PhaseMechanic.Kind> one = Arrays.asList(PhaseMechanic.Kind.CRYSTAL, null);
-        assertEquals(PhaseMechanic.rotation("sky_crucible", one), PhaseMechanic.rotation("sky_crucible", one), "同一隻每次一樣");
-        // 起點照代號的雜湊：不同 Boss 的第一個輪流不會全部一樣
-        final Set<PhaseMechanic.Kind> firsts = new HashSet<>();
-        for (final String key : List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel", "awakener", "shrine_warden",
-                "strongbox_mimic", "breach_lord", "exile_king")) {
-            firsts.add(PhaseMechanic.rotation(key, one).get(1));
-        }
-        assertTrue(firsts.size() >= 2, "不同 Boss 要有變化：" + firsts);
-        // 起點照代號的雜湊
-        final String key = "frost_throne";
-        assertEquals(PhaseMechanic.ROTATION.get(PhaseMechanic.start(key)), PhaseMechanic.rotation(key, Arrays.asList((PhaseMechanic.Kind) null)).getFirst());
-        // 四個終局（兩個階段、一個結晶）配到的不會全部一樣
-        final Set<PhaseMechanic.Kind> finals = new HashSet<>();
-        for (final String id : List.of("sky_crucible", "frost_throne", "bone_throne", "ember_citadel")) {
-            finals.add(PhaseMechanic.rotation(id, one).get(1));
-        }
-        assertEquals(2, finals.size(), "四個終局的第二種（2026-11-02 只剩站位圈、倒數大招兩種）：" + finals);
     }
 
     @Test
@@ -88,24 +55,25 @@ class PhaseMechanicTest {
         assertSame(SHIELD, specs.get(0).crystal());
         assertSame(countdown, specs.get(2), "寫了 mechanic 照寫的");
         assertNull(specs.get(3), "mechanic: none 不鎖");
-        final PhaseMechanic.Spec auto = specs.get(1);
-        assertEquals(PhaseMechanic.Kind.ZONES, auto.kind(), "沒寫的輪流、跳過用過的：" + auto.kind());
-        assertEquals(SHIELD.duration(), auto.seconds(), 1e-9, "限時照這隻 Boss 的 shield");
-        assertEquals(SHIELD.heal(), auto.heal(), 1e-9, "回血照這隻 Boss 的 shield");
+        assertNull(specs.get(1), "2026-11-04：已經有寫死的鎖血，沒寫的階段不再自動配");
         // 一般地圖（不輪流）：沒寫的不鎖
         final List<PhaseMechanic.Spec> plain = PhaseMechanic.resolve("k", List.of(phase(0.6, null, null), phase(0.3, SHIELD, null)), false, false);
         assertNull(plain.get(0));
         assertEquals(PhaseMechanic.Kind.CRYSTAL, plain.get(1).kind());
-        // 倒數大招沒寫時：極境、巔峰打得比較痛
+        // 終局以上什麼都沒寫：只有第一個階段配破綻（回血照預設 30%、30 秒、3 層），其他不鎖
         final List<MapConfig.Phase> only = List.of(phase(0.5, null, null), phase(0.25, null, null), phase(0.1, null, null));
-        final PhaseMechanic.Spec heavy = PhaseMechanic.resolve("k", only, true, true).stream()
-                .filter(s -> s.kind() == PhaseMechanic.Kind.COUNTDOWN).findFirst().orElseThrow();
-        assertEquals(PhaseMechanic.COUNTDOWN_DAMAGE_HEAVY, heavy.countdown().damage(), 1e-9);
-        final List<PhaseMechanic.Spec> light = PhaseMechanic.resolve("k", only, true, false);
-        assertEquals(PhaseMechanic.COUNTDOWN_DAMAGE, light.stream().filter(s -> s.kind() == PhaseMechanic.Kind.COUNTDOWN).findFirst().orElseThrow()
-                .countdown().damage(), 1e-9, "一般終局 60%");
-        assertEquals(25, light.stream().filter(s -> s.kind() == PhaseMechanic.Kind.ZONES).findFirst().orElseThrow().seconds(), 1e-9,
-                "沒有 shield：預設 25 秒");
+        final List<PhaseMechanic.Spec> auto = PhaseMechanic.resolve("k", only, true, true);
+        assertEquals(PhaseMechanic.Kind.OPENING, auto.get(0).kind());
+        assertNull(auto.get(1));
+        assertNull(auto.get(2));
+        assertEquals(PhaseMechanic.OPENING_DURATION, auto.get(0).seconds(), 1e-9);
+        assertEquals(PhaseMechanic.DEFAULT_HEAL, auto.get(0).heal(), 1e-9);
+        assertEquals(3, auto.get(0).opening().layers());
+        assertFalse(auto.get(0).invulnerable(), "破綻：Boss 不無敵、照常出招");
+        // 寫了 shield 的階段還是結晶（寫死的照寫），沒寫的就不再配
+        final List<PhaseMechanic.Spec> withShield = PhaseMechanic.resolve("k", List.of(phase(0.6, null, null), phase(0.3, SHIELD, null)), true, false);
+        assertNull(withShield.get(0));
+        assertEquals(PhaseMechanic.Kind.CRYSTAL, withShield.get(1).kind());
     }
 
     @Test

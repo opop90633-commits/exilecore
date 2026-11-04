@@ -138,7 +138,7 @@ class RefCharmRuneBaseTest {
 
     @Test
     void runesAreThirteenFamiliesOfFourTiersWithThreeCategories() {
-        assertEquals(52, repository.runes().size());
+        assertEquals(52, repository.runes().stream().filter(rune -> !rune.soulCore()).count()); // 2026-11-04：魂核 15、魔偶 31 另外算
         for (final String old : List.of("iron", "ember", "frost", "storm", "mind", "swift")) {
             assertNotNull(repository.rune(old), "原有的代號要留著：" + old);
             assertEquals(15, repository.rune(old).level(), old + " 是普通階（15 級）");

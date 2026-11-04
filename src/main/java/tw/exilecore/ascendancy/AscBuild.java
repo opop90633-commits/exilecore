@@ -107,9 +107,9 @@ public final class AscBuild {
         if (state == null || state.skills() == null) {
             return count;
         }
-        for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+        for (int i = 0; i < SkillLoadout.TOTAL_POSITIONS; i++) { // 2026-11-04：空座指環的光環格（開著的）也算
             final SkillLoadout.Entry entry = state.skills().skill(i);
-            if (entry == null) {
+            if (entry == null || i >= SkillLoadout.MAX_SKILLS && !state.skills().ringAuraOpen(i)) {
                 continue;
             }
             for (final String support : entry.supports()) {
@@ -128,14 +128,8 @@ public final class AscBuild {
         return new boolean[] {max > 0 && count[0] == max, max > 0 && count[1] == max, max > 0 && count[2] == max};
     }
 
-    /** 技能消耗倍率（鑲嵌的寶石・藍：技能消耗更少 30%）。 */
-    static double costScale(final AscendancyEffects effects, final Player player) {
-        final PlayerState state = effects.plugin.players().get(player);
-        if (!AscendancyEffects.has(state.sheet(), AscKeys.GEM_STUDDED)) {
-            return 1;
-        }
-        return mostNumerous(socketed(state))[2] ? 0.7 : 1;
-    }
+    // 2026-11-04 照站長「影響到的數值會直接變動嗎」：藍的「技能消耗更少 30%」改成寫進面板（SKILL_COST 的 more），技能說明、HUD 的魔力消耗
+    //   就直接顯示減過的數字；這次之前只在放技能那一刻才乘 0.7（costScale），顯示的還是原價
 
     // =====================================================================
     // 技能（SkillService.buildFresh 呼叫）
@@ -360,7 +354,8 @@ public final class AscBuild {
             }
             // 2026-10-26：展露之指照 PoE2 改成第三個戒指欄（PlayerState.RING3_SLOT）；這次之前是戒指的詞綴效果增加 50%
             // 2026-10-27 照 PoE2 聖賢智慧：嵌著的符文的羈絆詞綴生效（runes.yml 的 bonded）；這次之前沒有羈絆詞綴，平衡等效成符文效果增加 50%
-            if (bonded && plugin != null && plugin.items() != null && item.base() != null && item.data() != null) {
+            if (bonded && plugin != null && plugin.items() != null && item.base() != null && item.data() != null
+                    && !tw.exilecore.item.Runes.bondedUnlocked(plugin.items().repository(), item.base(), item.data())) { // 2026-11-04：狐狸魔偶已經解鎖的那件 ItemStats 給過了
                 for (final Modifier mod : tw.exilecore.item.Runes.bondedModifiers(plugin.items().repository(), item.base(), item.data())) {
                     sheet.add(mod);
                 }
@@ -432,6 +427,9 @@ public final class AscBuild {
                 final boolean[] most = mostNumerous(count);
                 if (most[0]) {
                     sheet.add(Modifier.increased(StatKeys.CRIT_BONUS_TAKEN, -1.0, "鑲嵌的寶石"));
+                }
+                if (most[2]) {
+                    sheet.add(Modifier.more(StatKeys.SKILL_COST, -0.30, "鑲嵌的寶石")); // 2026-11-04：藍：技能消耗更少 30%（之前在 costScale）
                 }
                 if (most[1]) {
                     // 2026-10-27 照站長「放技能減速全部移除」：原作「移動中使用技能的移動速度懲罰更少 40%」改回平衡等效的增加 10% 移動速度

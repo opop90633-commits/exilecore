@@ -58,6 +58,8 @@ public final class SpecialEffectLines {
         FLAGS.put(StatKeys.FLAG_HINDER_IMMUNE, "不會被阻礙");
         FLAGS.put(StatKeys.FLAG_BLIND_IMMUNE, "不會被致盲");
         FLAGS.put(StatKeys.FLAG_CORRUPTED_BLOOD_IMMUNE, "免疫腐化之血");
+        FLAGS.put(tw.exilecore.item.unique.UniqueStats.FLAG_CHAOS_RES_ZERO, "混沌抗性為 0"); // 2026-11-04（混沌一瞥）
+        FLAGS.put(tw.exilecore.item.unique.UniqueStats.FLAG_DODGE_ALL_HITS, "翻滾躲開全部擊中"); // 2026-11-04（源於永恆）
         FLAGS.put(StatKeys.FLAG_INSTANT_LEECH, "偷取全部立即生效（一下最多回 6% 最大生命）；生命回復沒有效果");
         FLAGS.put(StatKeys.FLAG_NO_LEECH, "無法偷取（地圖詞綴）");
         FLAGS.putAll(tw.exilecore.stats.SignatureText.TEXT); // 昇華的招牌天賦

@@ -1068,6 +1068,30 @@ sky_fragment:
   description: "星墜冰原、天文台遺跡的地圖 Boss 掉落；兩片在地圖裝置打開通往「天穹熔爐」的傳送門"
   flavor: "天穹之心最核心的一片，摸起來還在發燙。"
 
+# 2026-11-04 照站長「波次引擎＋15 層迷霧」：迷霧回廊的碎片。地圖裡的幻霧結束時，拿到獎勵的人各拿 4–8 個（吃物品數量；
+#   map_events.yml 的 fog_trial.splinter_drop），湊滿 50 個在地圖裝置開一次迷霧回廊（fog_trial.cost）。不走掉落表、沒有用法（跟碎片一樣）。
+fog_splinter:
+  name: 迷霧碎片
+  material: GRAY_DYE
+  model: exilecore:currency/fog_splinter
+  stack: 100
+  operation: NONE
+  drop_weight: 0
+  description: "地圖裡的幻霧結束時給；50 個在地圖裝置打開「迷霧回廊」（15 波，最後一波是 Boss）"
+  flavor: "霧散了，總有幾片留在手心裡，冰冰涼涼。"
+
+# 2026-11-04 照站長「軍團也要有 Boss」：時沉徽記。軍團的將領必掉 1 個、軍曹 30%（map_events.yml 的 legion.domain），
+#   湊滿 5 個在地圖裝置開「時沉領域」打不朽統帥。不走掉落表、沒有用法。
+legion_emblem:
+  name: 時沉徽記
+  material: ARMADILLO_SCUTE
+  model: exilecore:currency/legion_emblem
+  stack: 50
+  operation: NONE
+  drop_weight: 0
+  description: "軍團的將領、軍曹掉落；5 個在地圖裝置打開「時沉領域」挑戰不朽統帥"
+  flavor: "徽記上的軍號早就沒人認得，但它還在等集合。"
+
 # ---- 開服活動（2026-10，events.yml 的 world_events）：不定時事件的素材，拿去「不定時活動」的兌換商店換東西 ----
 event_swarm_shard:
   name: 潮湧殘片
@@ -3462,3 +3486,558 @@ stacked_deck:
   drop_level: 60
   description: "右鍵打開：隨機變成一張星諭卡（照每張卡的權重抽；Shift＋右鍵全部打開）"
   flavor: "洗牌的人不見了，牌還在。"
+
+# ---- 2026-11-04 照站長「地圖絕境塞核心」：魂核符文（runes.yml 檔尾；只有地圖裡的絕境給，不走掉落表）----
+rune_core_tacati:
+  name: 魂核符文・特卡蒂
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_tacati
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 25% 你所施加之中毒的幅度；防具、副手 +13% 混沌抗性。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_opiloti:
+  name: 魂核符文・歐派理堤
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_opiloti
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 你所施加之流血的幅度；頭盔 增加 25% 釘身持續時間。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_jiquani:
+  name: 魂核符文・吉卡尼
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_zalatl:
+  name: 魂核符文・札爾特
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_zalatl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 擊殺時回復 4% 最大魔力；頭盔 增加 5% 最大魔力。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_citaqualotl:
+  name: 魂核符文・希特克拉多
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_citaqualotl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 攻擊的元素傷害；防具、副手 +6% 全部元素抗性。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_puhuarte:
+  name: 魂核符文・普希瓦爾
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_puhuarte
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 40% 點燃幅度；手套（腿甲） +2% 火焰抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_tzamoto:
+  name: 魂核符文・薩摩特
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_tzamoto
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 60% 凍結累積；頭盔 +2% 冰冷抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_xopec:
+  name: 魂核符文・柔派克
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_xopec
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 25% 你所施加之感電的幅度；鞋子 +2% 閃電抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_azcapa:
+  name: 魂核符文・艾斯卡巴
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_azcapa
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 +15 精魂；手套（腿甲） 增加 10% 殺死敵人時掉落的金幣數量。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_topotante:
+  name: 魂核符文・塔普塔特
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_topotante
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 這把武器的攻擊穿透 25% 元素抗性；鞋子 減少 25% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_quipolatl:
+  name: 魂核符文・克特帕托
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_quipolatl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 增加 5% 攻擊速度；鞋子 減少 15% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_ticaba:
+  name: 魂核符文・堤卡巴
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_ticaba
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 +5% 暴擊傷害加成；胸甲、盾、輕盾 擊中你的暴擊傷害加成減少 50%。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_atmohua:
+  name: 魂核符文・艾特瑪哈
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atmohua
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為力量。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_cholotl:
+  name: 魂核符文・斯拉托
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_cholotl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為敏捷。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+rune_core_zantipi:
+  name: 魂核符文・善堤比
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_zantipi
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進一個空的符文孔（魂核）：軍用武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）"
+  flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
+
+# ---- 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（runes.yml 檔尾；只有地圖裡的軍團給，不走掉落表）----
+rune_idol_sirrius:
+  name: 魔偶符文・席里斯
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_sirrius
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 8% 攻擊速度；權杖 夥伴增加 8% 移動速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_thruldana:
+  name: 魔偶符文・特盧達納
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_thruldana
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：軍用武器 減少 25% 中毒持續時間、目標可同時受到你的 +1 個中毒影響；權杖 夥伴增加 25% 混沌傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_grold:
+  name: 魔偶符文・格羅德
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_grold
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：鞋子 增加 50% 戰吼的效果；權杖 夥伴在你的臨在範圍時增加 15% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_eeshta:
+  name: 魔偶符文・義許塔
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_eeshta
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 增加 15% 消耗效率；權杖 夥伴在你的臨在範圍時增加 15% 魔力再生速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_egrin:
+  name: 魔偶符文・埃格林
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_egrin
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 你詛咒的敵人受到的傷害增加 6%；權杖 增加 20% 詛咒持續時間。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_maxarius:
+  name: 魔偶符文・瑪薩里歐斯
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_maxarius
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 +1 護符欄位；權杖 藥劑每秒獲得 0.2 充能。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_ralakesh:
+  name: 魔偶符文・芮勒蓋許
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_ralakesh
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 召喚物技能的保留效率增加 8%；權杖 夥伴在你的臨在範圍時增加 40% 護甲、閃避與能量護盾。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_greust:
+  name: 魔偶符文・古斯特
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_greust
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：盾 護甲值的 25% 也套用在元素傷害上；輕盾 獲得等同於 20% 閃避值的偏斜值；權杖 夥伴增加 10% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_yeena:
+  name: 魔偶符文・伊娜
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_yeena
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：鞋子 植物技能增加 30% 持續時間；權杖 植物技能增加 15% 持續時間。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_eramir:
+  name: 魔偶符文・艾米爾
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_eramir
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 技能消耗戰星時 10% 機率不移除，但效果照算；權杖 增加 25% 戰星持續時間。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_oak:
+  name: 魔偶符文・歐克
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_oak
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：鞋子 獲得戰星時 15% 機率多一顆同種的；權杖 +1 最大磐星數量。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_alira:
+  name: 魔偶符文・阿莉亞
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_alira
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 獲得戰星時 15% 機率多一顆同種的；權杖 +1 最大銳星數量。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_kraityn:
+  name: 魔偶符文・克雷頓
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_kraityn
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 獲得戰星時 15% 機率多一顆同種的；權杖 +1 最大怒星數量。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_silk:
+  name: 魔偶符文・斯克
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_silk
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：盾、輕盾 夥伴在你的臨在範圍時增加 15% 格擋率；權杖 夥伴增加 30% 範圍效果。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_sycophant:
+  name: 魔偶符文・奉承
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_sycophant
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害；權杖 夥伴 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_martyr:
+  name: 魔偶符文・烈士
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_martyr
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 減少 25% 精魂、主要技能增加 40% 獲得的能量；權杖 減少 40% 臨在範圍、光環技能增加 25% 效果。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_pharisee:
+  name: 魔偶符文・偽善
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_pharisee
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：軍用武器、法杖或長杖 減少 30% 最大魔力；權杖 號令技能減少 30% 消耗、召喚物的號令技能增加 60% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_panther:
+  name: 魔偶符文・花豹
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_panther
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 +10% 混沌抗性；權杖 召喚物 +20% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_hawk:
+  name: 魔偶符文・翔鷹
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_hawk
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 增加 10% 偏斜值；權杖 夥伴增加 12% 攻擊速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_stoat:
+  name: 魔偶符文・白鼬
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_stoat
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 增加 5% 最大能量護盾；權杖 夥伴增加 25% 最大生命。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_snake:
+  name: 魔偶符文・蝮蛇
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_snake
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 8% 詛咒幅度；權杖 夥伴增加 10% 攻擊速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_primate:
+  name: 魔偶符文・靈長
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_primate
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 召喚物增加 15% 最大生命；權杖 夥伴增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_owl:
+  name: 魔偶符文・夜梟
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_owl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：法器 增加 12% 冷卻時間恢復率；權杖 夥伴增加 10% 施法速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_cat:
+  name: 魔偶符文・靈貓
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_cat
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 25% 命中值；權杖 夥伴增加 14% 暴擊率。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_wolf:
+  name: 魔偶符文・野狼
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_wolf
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 15% 你所施加之流血的幅度；權杖 夥伴增加 20% 暴擊傷害加成。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_stag:
+  name: 魔偶符文・雄鹿
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_stag
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 投射物第一次打中時分裂；權杖 夥伴增加 20% 閃電傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_boar:
+  name: 魔偶符文・野豬
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_boar
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 擊中時獲得 1 點怒氣；權杖 臨在範圍內的友方每秒回復 0.5% 最大生命。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_bear:
+  name: 魔偶符文・巨熊
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_bear
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 增加 10% 範圍效果；權杖 夥伴增加 20% 物理傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_ox:
+  name: 魔偶符文・公牛
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_ox
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：盾、輕盾 增加 15% 格擋率；權杖 夥伴 +12% 全部元素抗性。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_rabbit:
+  name: 魔偶符文・狡兔
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_rabbit
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 增加 12% 物品稀有度；權杖 增加 15% 精魂。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+rune_idol_fox:
+  name: 魔偶符文・狐狸
+  material: TOTEM_OF_UNDYING
+  stack: 10
+  operation: RUNE
+  rune: idol_fox
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魔偶）：胸甲 嵌在這件上的符文與魔偶獲得羈絆加成；權杖 增加 50% 臨在範圍。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+

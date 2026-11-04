@@ -38,7 +38,7 @@ boss:
   # 生命照在場（浮動）的高等級玩家人數：等級 count_level 以上的才算（低等級不算），最多算 max_counted_players 人（0 = 沒有上限）；
   # 每多一人，生命多 life_per_player 倍的基礎（1.0 = +100%、0.5 = +50%）。有人進來就變多、離開就變少，血量比例不變
   count_level: 80
-  life_per_player: 1.0          # 2026-10：0.5 → 1.0（跟地圖 Boss 組隊的倍率一樣：每多一人多一份）。伺服器紀錄：改 293 之後 5 人 14 秒、32 秒就倒
+  life_per_player: 2.0          # 2026-11-04 照站長「組隊的 Boss 血量每人 +200%（世界活動、祭典一起改）」；這次之前 1.0。2026-10：0.5 → 1.0（跟地圖 Boss 組隊的倍率一樣：每多一人多一份）。伺服器紀錄：改 293 之後 5 人 14 秒、32 秒就倒
   max_counted_players: 0
   damage: 4.5   # 2026-10-26 照 PoE2（這次之前 3.0）
   scale: 1.6
@@ -83,7 +83,7 @@ invasion:
     # 2026-10：生命照在場（浮動）的高等級玩家人數，跟開天者一樣：count_level 等以上才算，每多一人多 life_per_player 倍的基礎，
     # 最多算 max_counted_players 人（0 = 沒有上限）；有人進來就變多、離開就變少，血量比例不變
     count_level: 80
-    life_per_player: 1.0        # 2026-10：0.5 → 1.0（跟開天者一樣：每多一人多一份）
+    life_per_player: 2.0        # 2026-11-04 照站長「組隊的 Boss 血量每人 +200%（世界活動、祭典一起改）」；這次之前 1.0；2026-10：0.5 → 1.0（跟開天者一樣：每多一人多一份）
     max_counted_players: 0
     damage: 2.5   # 2026-10-26 照 PoE2（這次之前 1.5）
     skills: [world_ley_hunt, world_star_spiral]

@@ -1227,7 +1227,7 @@ public final class MapService {
         for (final MapInstance instance : List.copyOf(instances.values())) {
             // 2026-10-17：重開時還沒打完的終局、極境、巔峰、金庫之主（花碎片、鑰匙開的）：退回開門用掉的東西
             // 2026-10-18：門用掉過（打輸過一門）就不退；也不退「進去過但已經沒人在裡面」的（以前打輸後遇到重開就全額退，等於免費重打）
-            if ((instance.usesAttempts() || instance.singleEntry()) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING
+            if ((instance.usesAttempts() || instance.singleEntry() || FogTrial.is(instance) || Legion.isDomain(instance)) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING // 2026-11-04：迷霧回廊的碎片也退
                     && instance.portalsUntouched() && (instance.visitors().isEmpty() || !instance.inside().isEmpty())) {
                 instance.refundPaid();
             }
@@ -1387,7 +1387,23 @@ public final class MapService {
      */
     public double capBossDamage(final LivingEntity defender, final UUID source, final double amount,
                                 final java.util.Map<tw.exilecore.stats.DamageType, Double> dealt) {
-        return capBossDamage(defender, source, amount * lockDamageFactor(defender, dealt));
+        // 2026-11-04（破綻）：破綻外的傷害不算也不扣血、破綻裡照層數上限（地圖 Boss；淵鯨、鯊王照 life 的鎖血狀態）
+        final double adjusted;
+        if (defender.getPersistentDataContainer().has(bossKey())) {
+            adjusted = bosses.lockAdjust(instanceOf(defender), defender, source, amount);
+        } else {
+            final PhaseLocks.State state = plugin.life() == null ? null : plugin.life().lockState(defender);
+            adjusted = state == null ? amount : locks().adjust(state, source, amount);
+        }
+        return capBossDamage(defender, source, adjusted * lockDamageFactor(defender, dealt));
+    }
+
+    /** 2026-11-04（破綻）：這隻怪是正在破綻鎖血的 Boss（地圖 Boss、淵鯨、鯊王；免疫控場）。 */
+    public boolean lockCcImmune(final LivingEntity entity) {
+        if (entity.getPersistentDataContainer().has(bossKey())) {
+            return bosses.lockCcImmune(instanceOf(entity), entity);
+        }
+        return plugin.life() != null && PhaseLocks.openingActive(plugin.life().lockState(entity));
     }
 
     /** 2026-11-02：持續傷害（一種傷害）的寫法。 */
@@ -1487,7 +1503,7 @@ public final class MapService {
             return false;
         }
         final MapInstance instance = instanceOf(entity);
-        return instance != null && instance.usesAttempts();
+        return instance != null && (instance.usesAttempts() || MapBosses.isCalamity(config, instance)); // 2026-11-04：災厄級也不普攻
     }
 
     /** 正在打地圖 Boss（2026-10，掛機偵測用）：人在自己的地圖裡、Boss 還活著、離 Boss 48 格內。 */
@@ -1600,6 +1616,38 @@ public final class MapService {
      */
     public double heistFinaleRecommendedDps(final MapConfig.MapDef map, final int level, final int tier) {
         return recommendedDps(monsterConfig(), map.boss(), level, config.heistFinaleLifeMultiplier(Math.max(1, tier)));
+    }
+
+    /**
+     * 2026-11-04 照站長「三隻新 Boss 設一個全新的難度：DPS 1000 萬、3 分半」：事件 Boss 的生命倍率——寫了 recommended_dps 的，
+     * 生命自動對準「單人那個每秒傷害 3 分半打完」（已算牠的元素抗性）；沒寫 1。
+     */
+    public double eventBossLifeMultiplier(final MapConfig.EventBoss eventBoss) {
+        final tw.exilecore.monster.MonsterConfig monsters = monsterConfig();
+        if (eventBoss == null || eventBoss.recommendedDps() <= 0 || monsters == null) {
+            return 1;
+        }
+        final int level = eventBoss.fixedLevel() ? eventBoss.level() : config.tiers().level(config.tiers().max());
+        final double base = monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * eventBoss.boss().life();
+        if (base <= 0) {
+            return 1;
+        }
+        return eventBoss.recommendedDps() * RECOMMENDED_SECONDS * resistFactor(monsters, eventBoss.boss().mods()) / base;
+    }
+
+    /** 2026-11-04：事件 Boss 的場地數值：等級固定的照 level（最高階、等級補到 level），不然照開的人的階級 + levelBonus。 */
+    public MapStats eventBossStats(final MapConfig.EventBoss eventBoss, final Player opener, final int levelBonus) {
+        if (eventBoss != null && eventBoss.fixedLevel()) {
+            final int top = config.tiers().max();
+            return MapStats.forTier(MapStats.tiers(), top, Math.max(0, eventBoss.level() - config.tiers().level(top)));
+        }
+        return MapStats.forTier(MapStats.tiers(), Math.max(1, bestTier(opener)), levelBonus);
+    }
+
+    /** 2026-11-04：事件 Boss 的「建議每秒」那一行；沒寫 recommended_dps 回傳 ""。 */
+    public static String eventBossNote(final MapConfig.EventBoss eventBoss) {
+        return eventBoss == null || eventBoss.recommendedDps() <= 0 ? "" : "<#ff5c6a>災厄級<gray>：怪物 " + eventBoss.level() + " 級・建議打 Boss 每秒 <gold>"
+                + BossDpsCommand.wan(eventBoss.recommendedDps()) + "</gold><dark_gray>（單人約 3 分半，已算牠的抗性；組隊照人數加）";
     }
 
     /** 「建議打 Boss 每秒 50 萬」的那一行（MiniMessage）。 */

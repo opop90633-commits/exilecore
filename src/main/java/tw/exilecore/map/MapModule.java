@@ -38,6 +38,8 @@ public final class MapModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(created.events(), plugin); // 地圖事件：寶箱、流寇
         plugin.getServer().getPluginManager().registerEvents(created.events().rituals(), plugin); // 祭壇：右鍵、儀式的怪
         plugin.getServer().getPluginManager().registerEvents(created.events().delirium(), plugin); // 幻霧：霧裡殺的怪
+        plugin.getServer().getPluginManager().registerEvents(created.events().ultimatum(), plugin); // 2026-11-04 絕境：右鍵祭壇、殲滅的怪
+        plugin.getServer().getPluginManager().registerEvents(created.events().legion(), plugin); // 2026-11-04 軍團：右鍵石碑、打到、打死
         plugin.getServer().getPluginManager().registerEvents(created.events().twists(), plugin); // 地圖變化：岔路、詛咒寶匣、隱藏房
         plugin.getServer().getPluginManager().registerEvents(created.bossLog(), plugin);
         plugin.getServer().getPluginManager().registerEvents(created.hats(), plugin); // 2026-10-31：地圖怪的頭飾

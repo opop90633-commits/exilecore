@@ -71,6 +71,65 @@ public final class MapRewards {
         return null;
     }
 
+    /** 2026-11-04（絕境）：同上，鍵是字串（回合種類）。 */
+    static String pickString(final Map<String, Integer> weights, final RandomGenerator random) {
+        int total = 0;
+        for (final int weight : weights.values()) {
+            total += Math.max(0, weight);
+        }
+        if (total <= 0) {
+            return null;
+        }
+        int pick = random.nextInt(total);
+        for (final Map.Entry<String, Integer> entry : weights.entrySet()) {
+            pick -= Math.max(0, entry.getValue());
+            if (pick < 0) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 2026-11-04 照站長「絕境也塞一些通貨（poe2db The Trial of Chaos 的 Wager）」：賭注通貨——一次給一疊（數量照原作），權重是我們定的
+     * （便宜的常見、神聖石那種很少）。原作的工匠石我們拿掉了不給；奧術蝕刻師併進礪鋒石（20 個）；神聖石 x2、x5 兩種都有（x5 是 2026-11-04 照站長加回來的）。
+     */
+    /** 一種賭注：通貨代號、一次給幾個、權重。 */
+    record Wager(String currency, int amount, int weight) {
+    }
+
+    static final List<Wager> WAGERS = List.of(
+            new Wager("armour_scrap", 20, 300),   // 護甲片 x20 → 甲冑殘片
+            new Wager("whetstone", 20, 300),   // 磨刀石、奧術蝕刻師 x20 → 礪鋒石
+            new Wager("spark_orb", 10, 200),   // 點金石 x10 → 星火石
+            new Wager("bounty_orb", 20, 150),   // 富豪石 x20
+            new Wager("chance_orb", 3, 60),   // 機會石 x3 → 僥倖石
+            new Wager("zenith_orb", 20, 30),   // 崇高石 x20
+            new Wager("corrupt_orb", 10, 30),   // 瓦爾寶珠 x10 → 蝕變石
+            new Wager("glassblower_bauble", 20, 30),   // 玻璃彈珠 x20 → 凝露琉璃
+            new Wager("gemcutter_prism", 10, 25),   // 寶石匠的稜鏡 x10 → 琢星稜鏡
+            new Wager("turmoil_orb", 10, 15),   // 混沌石 x10
+            new Wager("annul_orb", 3, 8),   // 無效石 x3 → 湮滅石
+            new Wager("greater_bounty_orb", 10, 8),   // 高階富豪石 x10
+            new Wager("greater_zenith_orb", 10, 4),   // 高階崇高石 x10
+            new Wager("greater_turmoil_orb", 5, 3),   // 高階混沌石 x5
+            new Wager("perfect_bounty_orb", 3, 2),   // 完美富豪石 x3
+            new Wager("perfect_zenith_orb", 3, 1),   // 完美崇高石 x3
+            new Wager("perfect_turmoil_orb", 3, 1),   // 完美混沌石 x3
+            new Wager("oracle_orb", 2, 1),   // 神聖石 x2 → 天啟石
+            new Wager("oracle_orb", 5, 1));            // 神聖石 x5 → 天啟石（2026-11-04 照站長加回來）
+
+    /** 2026-11-04：隨機一顆魂核符文（rune_core_＊）或魔偶符文（rune_idol_＊）：通貨代號開頭是 prefix、是符文、掉落等級夠的，一樣機會。 */
+    static CurrencyType pickRune(final ExileCore plugin, final String prefix, final int level, final RandomGenerator random) {
+        final List<CurrencyType> options = new ArrayList<>();
+        for (final CurrencyType type : plugin.currencies().repository().all()) {
+            if (type.operation() == CurrencyOperation.RUNE && type.id().startsWith(prefix) && type.dropLevel() <= level) {
+                options.add(type);
+            }
+        }
+        return options.isEmpty() ? null : options.get(random.nextInt(options.size()));
+    }
+
     /** 隨機一種這類操作的通貨（掉落等級夠的）；沒有回傳 null。 */
     static CurrencyType pickCurrency(final ExileCore plugin, final CurrencyOperation operation, final int level, final RandomGenerator random) {
         final List<CurrencyType> options = new ArrayList<>();
@@ -171,6 +230,27 @@ public final class MapRewards {
                         instance.atlas().tierUp());
                 return map == null ? roll(plugin, service, MapEventConfig.Reward.CURRENCY, instance, player, delirium, uniques, random)
                         : new Bundle(kind, List.of(plugin.items().toStack(map)));
+            }
+            case CORE, IDOL -> {
+                // 2026-11-04：魂核符文（絕境）、魔偶符文（軍團）；等級不夠（魂核 65、魔偶 50）退回通貨
+                final CurrencyType rune = pickRune(plugin, kind == MapEventConfig.Reward.CORE ? "rune_core_" : "rune_idol_", level, random);
+                return rune == null ? roll(plugin, service, MapEventConfig.Reward.CURRENCY, instance, player, delirium, uniques, random)
+                        : new Bundle(kind, List.of(plugin.currencies().create(rune, 1)));
+            }
+            case WAGER -> {
+                // 2026-11-04：賭注通貨（WAGERS）：抽一種、給一疊；那種還沒解鎖（掉落等級）就重抽，都不行退回通貨
+                final java.util.Map<String, Integer> weights = new java.util.LinkedHashMap<>();
+                for (int i = 0; i < WAGERS.size(); i++) {
+                    final CurrencyType type = plugin.currencies().repository().get(WAGERS.get(i).currency());
+                    if (type != null && type.dropLevel() <= level) {
+                        weights.put(Integer.toString(i), WAGERS.get(i).weight());
+                    }
+                }
+                final String index = pickString(weights, random);
+                final Wager wager = index == null ? null : WAGERS.get(Integer.parseInt(index));
+                final CurrencyType type = wager == null ? null : plugin.currencies().repository().get(wager.currency());
+                return type == null ? roll(plugin, service, MapEventConfig.Reward.CURRENCY, instance, player, delirium, uniques, random)
+                        : new Bundle(kind, List.of(plugin.currencies().create(type, wager.amount())));
             }
             case UNIQUE -> {
                 // 祭壇、幻霧各有自己的專屬傳奇（uniques.yml 的 sources 寫 ritual、delirium）；沒有的話用地圖 Boss 的共通池

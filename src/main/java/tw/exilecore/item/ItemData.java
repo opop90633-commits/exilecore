@@ -45,6 +45,8 @@ public final class ItemData {
     private String omen;
     /** 注入在這條項鍊上的天賦核心（tree.json 的節點代號，PoE2 的注入）：那個核心的效果加在身上；null = 沒有（不寫進 JSON）。 */
     private String instilled;
+    /** 2026-11-04（掙扎吶喊，PoE2 Strugglescream：可擁有額外 3 個滴注詞綴）：第二個起注入的天賦核心；沒有是 null。 */
+    private List<String> instilledExtra;
     /** 嵌著的符文（2026-10，runes.yml 的代號）；null = 沒有（不寫進 JSON）。 */
     private List<String> runes;
     /** 映星鏡照出來的複製品（2026-10）：不能再改造、不能再複製；null = 不是（不寫進 JSON）。 */
@@ -309,6 +311,27 @@ public final class ItemData {
         this.instilled = instilled == null || instilled.isBlank() ? null : instilled;
     }
 
+    /** 2026-11-04：全部注入的天賦核心（第一個是 {@link #instilled()}，後面是掙扎吶喊多注入的）；沒有是空的。 */
+    public List<String> instilledAll() {
+        if (instilled == null) {
+            return List.of();
+        }
+        if (instilledExtra == null || instilledExtra.isEmpty()) {
+            return List.of(instilled);
+        }
+        final List<String> all = new ArrayList<>();
+        all.add(instilled);
+        all.addAll(instilledExtra);
+        return all;
+    }
+
+    /** 2026-11-04：整組換掉（第一個放 instilled，其他放 instilledExtra）。 */
+    public void setInstilledAll(final List<String> all) {
+        final List<String> clean = all == null ? List.of() : all.stream().filter(id -> id != null && !id.isBlank()).distinct().toList();
+        instilled = clean.isEmpty() ? null : clean.getFirst();
+        instilledExtra = clean.size() <= 1 ? null : new ArrayList<>(clean.subList(1, clean.size()));
+    }
+
     /** 嵌著的符文代號（沒有是空的）。 */
     public List<String> runes() {
         return runes == null ? List.of() : java.util.Collections.unmodifiableList(runes);
@@ -382,6 +405,7 @@ public final class ItemData {
         copy.catalyst = catalyst;
         copy.omen = omen;
         copy.instilled = instilled;
+        copy.instilledExtra = instilledExtra == null ? null : new ArrayList<>(instilledExtra);
         copy.runes = runes == null ? null : new ArrayList<>(runes);
         copy.mirrored = mirrored;
         copy.fractured = fractured;
@@ -416,6 +440,7 @@ public final class ItemData {
         catalyst = from.catalyst;
         omen = from.omen;
         instilled = from.instilled;
+        instilledExtra = from.instilledExtra;
         runes = from.runes;
         mirrored = from.mirrored;
         fractured = from.fractured;

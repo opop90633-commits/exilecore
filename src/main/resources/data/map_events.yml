@@ -217,6 +217,90 @@ delirium:
   emotion_weights: [500, 300, 180, 108, 65, 39, 23, 14, 8, 5, 3, 3, 3]
   ticket: { currency: ticket_delirium, chance: 0.056 }     # 2026-10-18：入場券（幻霧結束時拿到獎勵的人各擲一次）
 
+# 2026-11-04 照站長「波次引擎＋15 層迷霧」：迷霧回廊（地圖裝置用迷霧碎片開的獨立場地）。
+#   一波一波打：休息 break_seconds → 刷怪（每個人附近每 spawn.every 秒一群 spawn.group 隻，刷滿 monsters 隻）→ 全部打完或 wave_seconds 到算過關。
+#   怪物數量 = base + per_wave ×（波數 − 1），每多一個人 × (1 + per_player)；怪物生命、傷害從 0 一路加到 difficulty%（最後一波）。
+#   magic／rare 是魔法、稀有怪的機率（第一波 → 最後一波；稀有怪從 rare.from_wave 開始）；elite.waves 多一隻生命 ×elite.life 的傳奇怪。
+#   最後一波是 Boss（場地照一張隨機地圖的怪物與 Boss）。每過一波每個人各拿 rewards.per_wave 份（第一波 → 最後一波；吃物品數量），
+#   種類照 rewards.weights（跟幻霧一樣的種類，沒有傳奇）。專屬獎勵之後再加。
+fog_trial:
+  name: 迷霧回廊
+  splinter: fog_splinter
+  cost: 50
+  splinter_drop: [4, 8]   # 幻霧結束時拿到獎勵的人各拿幾個（吃物品數量）
+  level_bonus: 2          # 怪物等級比你打過最高的地圖階級多幾級
+  waves: 15
+  break_seconds: 0        # 2026-11-04 照站長「殺完怪物馬上進下一階段」；這次之前 8
+  wave_seconds: 90
+  monsters: { base: 18, per_wave: 4, per_player: 0.5 }
+  spawn: { every: 0.5, group: [3, 5] }   # 2026-11-04 照站長「怪物每 0.5 秒刷一輪」；這次之前 1.5
+  difficulty: 200
+  magic: { start: 0.15, end: 0.6 }
+  rare: { from_wave: 4, start: 0.03, end: 0.15 }
+  elite: { waves: [5, 10], life: 4.0 }
+  rewards:
+    per_wave: [1, 3]
+    weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5 }
+
+# 2026-11-04 照站長「先做絕境」：絕境（照 PoE 的 Ultimatum）。地圖裡照機率放一座審判之壇（佔一個房間當場地），右鍵開始：
+#   每回合先從三個懲罰挑一個（挑過的整場都疊著），回合種類照 types 抽：kill 殲滅（seconds 秒內殺 base + per_round×(回合−1) 隻，人多再多）、
+#   survive 生存（撐 base + per_round×(回合−1) 秒）、circle 守圈（站在光圈裡累積 base + per_round×(回合−1) 秒，圈每 move_seconds 秒換位置，時限兩倍）。
+#   刷怪：每個人附近每 spawn.every 秒一群 spawn.group 隻，每回合 ×(1 + per_round×(回合−1))；場上最多 40 隻。
+#   打完一回合累積 rewards.per_round 份（第一回合 → 最後一回合）的獎勵（種類照 weights 抽），可以收手拿走或續押；
+#   失敗（時間到、離開場地超過 leave_seconds 秒、全員倒下）全部沒收；打完全部回合乘 final_multiplier。
+#   懲罰（modifiers，權重 0 = 不出）：monster_damage 怪物狂怒 +40%、monster_life 怪物鐵壁 +60%、monster_speed 怪物疾行（極速的）、
+#   monster_more 怪物增援 +50%、recovery 回復受阻（生命、魔力回復速度更少 50%）、slow 步履維艱 −25%、vulnerable 脆弱（受到的傷害 +25%）、
+#   resist 抗性削弱 −20、cooldown 冷卻遲滯 +35%、fire_ground 烈焰地面、chill_ground 霜寒地面、shock_ground 感電地面。
+ultimatum:
+  chance: 0.2
+  rounds: 5
+  prepare_seconds: 1       # 2026-11-04 照站長；這次之前 5
+  leave_seconds: 4
+  kill: { base: 12, per_round: 6, seconds: 60 }
+  survive: { base: 15, per_round: 5 }   # 2026-11-04 照站長「生存減半」；這次之前 30＋10
+  circle: { base: 7.5, per_round: 2.5, radius: 3.5, move_seconds: 8 }   # 2026-11-04 照站長「守圈減半」；這次之前 15＋5
+  spawn: { every: 2, kill_every: 0.5, group: [2, 4], per_round: 0.25 }   # 2026-11-04 照站長：殲滅 0.5 秒一群（kill_every）；生存、守圈照舊 2 秒
+  magic: { start: 0.2, end: 0.5 }
+  rare: { start: 0.05, end: 0.15 }
+  types: { kill: 40, survive: 30, circle: 30 }
+  rewards:
+    per_round: [1, 2]
+    final_multiplier: 1      # 2026-11-04 照站長「收手 ×1」；這次之前 2
+    boss_multiplier: 2        # 2026-11-04：打完全部回合再挑戰審判者（maps.yml 的 event_bosses.ultimatum），贏了再乘這個（照站長「贏了 ×2」：1 × 2；這次之前 2 × 2 = ×4）
+    # 2026-11-04 照站長：＋core 魂核符文 12（runes.yml 的 core_＊，65 級以上的圖才有，不夠退回通貨）、wager 賭注通貨 6（一次一疊，照 PoE2 的 Wager；種類與數量在 MapRewards.WAGERS）；
+    #   這次之前 { currency: 35, emotion: 15, essence: 15, jewel: 10, map: 10, catalyst: 10, omen: 5 }
+    weights: { currency: 30, emotion: 13, essence: 12, jewel: 8, map: 8, catalyst: 8, omen: 3, core: 12, wager: 6 }
+  modifiers: { monster_damage: 10, monster_life: 10, monster_speed: 10, monster_more: 10, recovery: 10, slow: 10, vulnerable: 10,
+               resist: 10, cooldown: 10, fire_ground: 10, chill_ground: 10, shock_ground: 10 }
+
+# 2026-11-04 照站長「軍團」：軍團（照 PoE 的 Legion）。地圖裡照機率放一座時沉石碑（佔一個房間），右鍵敲開：兩支軍隊凍在房間兩側，
+#   freeze_seconds 秒內打到的才會醒來（沒打到的消失），醒來的殺了才掉東西；凍著的時候打死也算。兩軍合計 soldiers 隻（每多一個人 ×(1 + per_player)）：
+#   reward_carriers 隻帶著 1 份獎勵（名字寫著種類）、sergeants 隻軍曹（稀有、sergeant_shares 份）、generals 隻將領（傳奇、general_shares 份、生命 ×general_life；
+#   最多 2，一邊一隻）；其他是普通兵（只掉一般的東西）。獎勵種類照 rewards.weights。
+legion:
+  chance: 0.2
+  freeze_seconds: 25
+  soldiers: 24
+  per_player: 0.5
+  reward_carriers: 6
+  sergeants: 2
+  generals: 2
+  general_life: 3.0
+  rewards:
+    sergeant_shares: 2
+    general_shares: 3
+    # 2026-11-04 照站長「這些放地圖內軍團掉落」：＋idol 魔偶符文 12（runes.yml 的 idol_＊，50 級以上的圖才有）；這次之前 { currency: 35, rare: 15, essence: 15, jewel: 10, map: 10, catalyst: 10, omen: 5 }
+    weights: { currency: 31, rare: 13, essence: 13, jewel: 9, map: 9, catalyst: 9, omen: 4, idol: 12 }
+  # 2026-11-04 照站長「軍團也要有 Boss」：時沉領域（地圖裝置用徽記開的 Boss 場；Boss 寫在 maps.yml 的 event_bosses.legion）
+  domain:
+    name: 時沉領域
+    emblem: legion_emblem
+    cost: 5
+    general_drop: 1.0       # 將領掉徽記的機率（1 個）
+    sergeant_drop: 0.3      # 軍曹掉徽記的機率（1 個）
+    level_bonus: 2          # 怪物等級比你打過最高的地圖階級多幾級
+
+
 # 地圖變化（2026-10）：讓同一張圖每次打起來不一樣。每一種各自照機率出現，機率寫 0 就關掉。
 # 只放在一般的地圖（回響、試煉、極境、巔峰不放）；終局 Boss 不會有 Boss 變體與 Boss 房干擾。/ec map 的狀態會列出這張圖有哪些變化。
 twists:

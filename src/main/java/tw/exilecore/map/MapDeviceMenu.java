@@ -49,6 +49,10 @@ public final class MapDeviceMenu extends Menu {
     /** 2026-10-21：星圖上的塔與城塞（{@link AtlasSitesMenu}）。 */
     private static final int SLOT_SITES = 36;
     private static final int SLOT_CLOSE = 53;
+    /** 2026-11-04 照站長「波次引擎＋15 層迷霧」：迷霧回廊。 */
+    private static final int SLOT_FOG_TRIAL = 46;
+    /** 2026-11-04 照站長「軍團也要有 Boss」：時沉領域。 */
+    private static final int SLOT_LEGION = 47;
     private static final int SLOT_STATUS = 49;
 
     private final MapService service;
@@ -192,7 +196,60 @@ public final class MapDeviceMenu extends Menu {
                 "<#f5b942>開之前先洗地圖：<gray>微光石→魔法、添輝石 +1 條、豐饒石→稀有、至臻石 +1 條，",
                 "<gray>   詞綴越多怪越強、掉越多；星盤刻刀品質 +5（每 1% = +1% 物品數量，上限 20）"));
         drawStatus();
+        drawFogTrial();
+        drawLegion();
         set(SLOT_CLOSE, closeButton());
+    }
+
+    /** 2026-11-04 照站長：時沉領域（用時沉徽記開，只有不朽統帥）。 */
+    private void drawLegion() {
+        final Legion legion = service.events().legion();
+        final MapEventConfig.LegionSettings settings = legion.settings();
+        final CurrencyType emblem = legion.emblem();
+        final MapConfig.EventBoss boss = service.config().eventBoss(Legion.DOMAIN_KIND);
+        if (emblem == null || boss == null) {
+            return;
+        }
+        final int have = service.countCurrency(player, emblem);
+        final java.util.List<String> lore = new java.util.ArrayList<>(java.util.List.of(
+                "<gray>只有一隻 Boss：<white>" + ItemRenderer.escape(boss.boss().name()),
+                MapService.eventBossNote(boss), // 2026-11-04：災厄級
+                "<gray>招式都躲得掉：看紅圈、紅線、綠色的缺口與安全區",
+                "",
+                "<gray>" + ItemRenderer.escape(emblem.name()) + "：<white>" + have + "</white> / " + settings.domainCost() + "<dark_gray>（軍團的將領必掉、軍曹 "
+                        + Math.round(settings.sergeantEmblem() * 100) + "%）"));
+        if (have >= settings.domainCost()) {
+            lore.add("<green>點一下開啟（用掉 " + settings.domainCost() + " 個）");
+            set(SLOT_LEGION, glowing(icon(Material.CHISELED_TUFF, "<#b8c4ff>" + ItemRenderer.escape(settings.domainName()), lore)));
+        } else {
+            set(SLOT_LEGION, icon(Material.TUFF, "<gray>" + ItemRenderer.escape(settings.domainName()), lore));
+        }
+    }
+
+    /** 2026-11-04 照站長：迷霧回廊（用迷霧碎片開，15 波，最後一波 Boss）。 */
+    private void drawFogTrial() {
+        final FogTrial trial = service.events().fogTrial();
+        final MapEventConfig.FogTrialSettings settings = trial.settings();
+        final CurrencyType splinter = trial.splinter();
+        if (splinter == null || settings.waves() <= 0) {
+            return;
+        }
+        final int have = service.countCurrency(player, splinter);
+        final java.util.List<String> lore = new java.util.ArrayList<>(java.util.List.of(
+                "<gray>霧裡的場地：一波一波打，總共 <white>" + settings.waves() + "</white> 波",
+                "<gray>每一波怪更多、更硬（最後怪物生命與傷害 <#ff5c6a>+" + Math.round(settings.difficulty(settings.waves()) * 100) + "%<gray>）",
+                "<gray>菁英波：第 " + settings.eliteWaves().stream().sorted().map(String::valueOf).collect(java.util.stream.Collectors.joining("、")) + " 波多一隻霧之菁英",
+                "<gray>最後一波是 Boss；每過一波每個人各拿獎勵",
+                "<gray>中途離開、倒下：已經拿到的照拿",
+                MapService.eventBossNote(service.config().eventBoss(FogTrial.KIND)), // 2026-11-04：災厄級
+                "",
+                "<gray>" + ItemRenderer.escape(splinter.name()) + "：<white>" + have + "</white> / " + settings.cost() + "<dark_gray>（地圖裡的幻霧結束時給）"));
+        if (have >= settings.cost()) {
+            lore.add("<green>點一下開啟（用掉 " + settings.cost() + " 個）");
+            set(SLOT_FOG_TRIAL, glowing(icon(Material.WHITE_STAINED_GLASS, "<#d0d0e8>" + ItemRenderer.escape(settings.name()), lore)));
+        } else {
+            set(SLOT_FOG_TRIAL, icon(Material.LIGHT_GRAY_STAINED_GLASS, "<gray>" + ItemRenderer.escape(settings.name()), lore));
+        }
     }
 
     private void drawFinal(final MapConfig config, final Set<String> completed) {
@@ -641,6 +698,34 @@ public final class MapDeviceMenu extends Menu {
             case SLOT_UBER -> {
                 if (!uberFinals(service.config()).isEmpty()) {
                     chooseUber();
+                }
+            }
+            case SLOT_FOG_TRIAL -> {
+                final FogTrial trial = service.events().fogTrial();
+                final CurrencyType splinter = trial.splinter();
+                if (splinter == null || service.countCurrency(player, splinter) < trial.settings().cost()) {
+                    return;
+                }
+                final String problem = trial.open(player);
+                if (problem != null) {
+                    player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
+                } else {
+                    player.closeInventory();
+                }
+            }
+            case SLOT_LEGION -> {
+                final Legion legion = service.events().legion();
+                final CurrencyType emblem = legion.emblem();
+                if (emblem == null || service.countCurrency(player, emblem) < legion.settings().domainCost()) {
+                    return;
+                }
+                final String problem = legion.openDomain(player);
+                if (problem != null) {
+                    player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
+                } else {
+                    player.closeInventory();
                 }
             }
             case SLOT_CLOSE -> goBack();

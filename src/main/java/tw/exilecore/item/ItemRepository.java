@@ -46,6 +46,10 @@ public final class ItemRepository {
     private final Map<String, List<AffixType>> uniqueVeiled = new java.util.HashMap<>();
     /** 傳奇自己的符文孔數、符文效果增加（小數）：uniques.yml 的 rune_sockets、rune_effect（2026-10）。 */
     private final Map<String, Integer> uniqueRuneSockets = new java.util.HashMap<>();
+    /** 2026-11-04：掉出來就是已腐化的傳奇（uniques.yml 的 corrupted: true；PoE2 的妄想症、嗓音、信仰稜鏡、朝氣之靈）。 */
+    private final java.util.Set<String> uniqueCorrupted = new java.util.HashSet<>();
+    /** 2026-11-04 照站長「嗓音 2 孔 89%、3 孔 10%、4 孔 1%」：傳奇詞綴 value 從小到大每個整數的權重（uniques.yml mods 的 value_weights）。 */
+    private final Map<String, int[]> uniqueValueWeights = new java.util.HashMap<>();
     /** 傳奇的基底數值照哪一個基底（uniques.yml 的 stat_base，2026-10：基底合併後傳奇保留原本那一階的數值）。 */
     private final Map<String, String> uniqueStatBases = new java.util.HashMap<>();
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
@@ -121,6 +125,8 @@ public final class ItemRepository {
         bases.clear();
         uniqueVeiled.clear();
         uniqueRuneSockets.clear();
+        uniqueCorrupted.clear();
+        uniqueValueWeights.clear();
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
         uniqueDropChance.clear();
@@ -217,6 +223,28 @@ public final class ItemRepository {
                 }
                 uniques.put(id, unique);
                 // 2026-10：傳奇自己的符文孔數（rune_sockets，蓋過基底的）與符文效果增加（rune_effect，%）
+                if (root.node(id).bool("corrupted", false)) {
+                    uniqueCorrupted.add(id); // 2026-11-04
+                }
+                int weightIndex = 0;
+                for (final YamlNode weightNode : root.node(id).list("mods")) {
+                    weightIndex++;
+                    if (!weightNode.has("value_weights")) {
+                        continue;
+                    }
+                    final int[] range = weightNode.range("value");
+                    final List<String> texts = weightNode.strings("value_weights");
+                    final int[] weights = new int[texts.size()];
+                    for (int i = 0; i < weights.length; i++) {
+                        weights[i] = Math.max(0, Integer.parseInt(texts.get(i).trim()));
+                    }
+                    if (weights.length != Math.abs(range[1] - range[0]) + 1 || java.util.Arrays.stream(weights).sum() <= 0) {
+                        warnings.add("uniques.yml：" + id + " 第 " + weightIndex + " 條的 value_weights 要有 " + (Math.abs(range[1] - range[0]) + 1)
+                                + " 個（value 從小到大每個整數一個）、加起來大於 0；先照平均擲");
+                        continue;
+                    }
+                    uniqueValueWeights.put(UniqueItem.AFFIX_PREFIX + id + "." + weightIndex, weights);
+                }
                 if (root.node(id).has("rune_sockets")) {
                     uniqueRuneSockets.put(id, Math.max(0, Math.min(6, root.node(id).integer("rune_sockets", 0))));
                 }
@@ -832,6 +860,16 @@ public final class ItemRepository {
             current = base.mergedInto();
         }
         return current;
+    }
+
+    /** 2026-11-04：這條傳奇詞綴 value 從小到大每個整數的權重（沒寫回傳 null，照平均擲）。 */
+    public int[] uniqueValueWeights(final String affixId) {
+        return affixId == null ? null : uniqueValueWeights.get(affixId);
+    }
+
+    /** 2026-11-04：這件傳奇掉出來是不是已腐化（uniques.yml 的 corrupted）。 */
+    public boolean uniqueCorrupted(final String id) {
+        return id != null && uniqueCorrupted.contains(id);
     }
 
     public int uniqueRuneSockets(final String id) {

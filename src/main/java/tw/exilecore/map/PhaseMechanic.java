@@ -36,7 +36,14 @@ public final class PhaseMechanic {
         CRYSTAL("crystal", "結晶"),
         ZONES("zones", "站位圈"),
         COUNTDOWN("countdown", "倒數大招"),
-        ELEMENT("element", "元素弱點");
+        ELEMENT("element", "元素弱點"),
+        /**
+         * 2026-11-04 照站長「鎖血階段王還是能持續放招、靠招式解鎖、免疫控場、懲罰 30～45%」：破綻。Boss 不無敵、照常出招、免疫控場；
+         * 鎖血期間只有「破綻」裡打的傷害算：牠每放完一招，沒被那招打到、又在牠 reach 格內的人身上開 window 秒的破綻（受到的傷害 ×openTaken）；
+         * 鎖有 layers 層，一個破綻最多剝一層（這一階段 share 成血量 ÷ layers），全部剝掉才破盾；duration 秒內沒剝完回 heal%。
+         * 破綻外的傷害不算也不扣血（血不會掉到鎖住時的門檻以下）。
+         */
+        OPENING("opening", "破綻");
 
         private final String id;
         private final String label;
@@ -69,8 +76,11 @@ public final class PhaseMechanic {
         }
     }
 
-    /** 沒寫 mechanic 的階段輪流用的新機制（結晶要有結晶的設定，不在輪流裡）。 */
-    static final List<Kind> ROTATION = List.of(Kind.ZONES, Kind.COUNTDOWN); // 2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）；這次之前三種輪流
+    /**
+     * 沒寫 mechanic 的階段配的機制。2026-11-04 照站長「一隻 Boss 最多一個鎖血；站位圈、倒數大招、元素弱點、結晶都拿掉」：只剩破綻，
+     * 而且 {@link #resolve} 只配給第一個沒寫的階段，其他階段不鎖；這次之前站位圈、倒數大招輪流配給每個沒寫的階段。
+     */
+    static final List<Kind> ROTATION = List.of(Kind.OPENING);
 
     /**
      * 站位圈。
@@ -118,25 +128,43 @@ public final class PhaseMechanic {
     public record Element(double duration, double heal, double share, double rotate, double warn, double other) {
     }
 
-    /** 一個階段的鎖血機制（只有 kind 對應的那一個欄位不是 null）。 */
-    public record Spec(Kind kind, MapConfig.Shield crystal, Zones zones, Countdown countdown, Element element) {
+    /**
+     * 破綻（2026-11-04）。
+     *
+     * @param duration  幾秒內要剝完
+     * @param heal      沒剝完時 Boss 回幾 % 最大生命（照站長：30～45%）
+     * @param share     整個鎖要打掉這個階段血量（這個門檻到下一個門檻）的幾成
+     * @param layers    幾層（一個破綻最多剝一層；2E 一下的人也要躲滿 layers 招）
+     * @param window    破綻幾秒
+     * @param reach     招式放完時離 Boss 幾格內的人才有破綻（站太遠沒躲招不算）
+     * @param openTaken 破綻裡 Boss 受到的傷害倍率（1.5 = 比平常多 50%）
+     */
+    public record Opening(double duration, double heal, double share, int layers, double window, double reach, double openTaken) {
+    }
 
-        public static final Spec NONE = new Spec(Kind.NONE, null, null, null, null);
+    /** 一個階段的鎖血機制（只有 kind 對應的那一個欄位不是 null）。 */
+    public record Spec(Kind kind, MapConfig.Shield crystal, Zones zones, Countdown countdown, Element element, Opening opening) {
+
+        public static final Spec NONE = new Spec(Kind.NONE, null, null, null, null, null);
 
         public static Spec crystal(final MapConfig.Shield shield) {
-            return new Spec(Kind.CRYSTAL, shield, null, null, null);
+            return new Spec(Kind.CRYSTAL, shield, null, null, null, null);
         }
 
         public static Spec zones(final Zones zones) {
-            return new Spec(Kind.ZONES, null, zones, null, null);
+            return new Spec(Kind.ZONES, null, zones, null, null, null);
         }
 
         public static Spec countdown(final Countdown countdown) {
-            return new Spec(Kind.COUNTDOWN, null, null, countdown, null);
+            return new Spec(Kind.COUNTDOWN, null, null, countdown, null, null);
         }
 
         public static Spec element(final Element element) {
-            return new Spec(Kind.ELEMENT, null, null, null, element);
+            return new Spec(Kind.ELEMENT, null, null, null, element, null);
+        }
+
+        public static Spec opening(final Opening opening) {
+            return new Spec(Kind.OPENING, null, null, null, null, opening);
         }
 
         /** 限時幾秒（倒數大招是倒數的秒數）。 */
@@ -146,6 +174,7 @@ public final class PhaseMechanic {
                 case ZONES -> zones.duration();
                 case COUNTDOWN -> countdown.delay();
                 case ELEMENT -> element.duration();
+                case OPENING -> opening.duration();
                 case NONE -> 0;
             };
         }
@@ -156,6 +185,7 @@ public final class PhaseMechanic {
                 case CRYSTAL -> crystal.heal();
                 case ZONES -> zones.heal();
                 case ELEMENT -> element.heal();
+                case OPENING -> opening.heal();
                 default -> 0;
             };
         }
@@ -189,6 +219,21 @@ public final class PhaseMechanic {
         return new Element(duration, heal, 0.3, 12, 3, 0.1);
     }
 
+    /** 2026-11-04：破綻的預設：30 秒、回血照 heal、這一階段三成的血、3 層、破綻 3 秒、12 格內、破綻裡 ×1.5。 */
+    static final double OPENING_DURATION = 30;
+
+    static Opening defaultOpening(final double heal) {
+        return new Opening(OPENING_DURATION, heal, 0.3, 3, 3, 12, 1.5);
+    }
+
+    static Opening parseOpening(final YamlNode node, final double heal) {
+        final Opening d = defaultOpening(heal);
+        return new Opening(seconds(node, "duration", d.duration()), clamp(node.decimal("heal", d.heal()), 0, 100),
+                clamp(node.decimal("share", d.share()), 0.05, 0.9), (int) clamp(node.integer("layers", d.layers()), 1, 10),
+                clamp(node.decimal("window", d.window()), 1, 10), clamp(node.decimal("reach", d.reach()), 4, 40),
+                clamp(node.decimal("taken", d.openTaken()), 0.5, 5));
+    }
+
     // ---- 讀設定 ----
 
     /**
@@ -214,7 +259,7 @@ public final class PhaseMechanic {
         }
         final Kind kind = Kind.parse(type);
         if (kind == null) {
-            throw new IllegalArgumentException(phase.path() + ".mechanic：不認得「" + type + "」（要寫 crystal、zones、countdown、element 或 none）");
+            throw new IllegalArgumentException(phase.path() + ".mechanic：不認得「" + type + "」（要寫 opening、crystal、zones、countdown、element 或 none）");
         }
         final double duration = shield == null ? DEFAULT_DURATION : shield.duration();
         final double heal = shield == null ? DEFAULT_HEAL : shield.heal();
@@ -225,6 +270,7 @@ public final class PhaseMechanic {
             case ZONES -> Spec.zones(parseZones(node, duration, heal));
             case COUNTDOWN -> Spec.countdown(parseCountdown(node));
             case ELEMENT -> Spec.element(parseElement(node, duration, heal));
+            case OPENING -> Spec.opening(parseOpening(node, heal));
         };
     }
 
@@ -340,16 +386,26 @@ public final class PhaseMechanic {
         final double heal = reference == null ? DEFAULT_HEAL : reference.heal();
         final List<Kind> kinds = rotation(key, fixed);
         final List<Spec> specs = new ArrayList<>();
+        boolean filled = false; // 2026-11-04 照站長：一隻 Boss 最多一個鎖血——沒寫的只配第一個
+        for (final Kind kind : fixed) {
+            filled |= kind != null && kind != Kind.NONE;
+        }
         for (int i = 0; i < phases.size(); i++) {
             final Spec explicit = explicit(phases.get(i));
             if (explicit != null) {
                 specs.add(explicit.kind() == Kind.NONE ? null : explicit);
                 continue;
             }
+            if (filled) {
+                specs.add(null);
+                continue;
+            }
+            filled = true;
             specs.add(switch (kinds.get(i)) {
                 case ZONES -> Spec.zones(defaultZones(duration, heal));
                 case COUNTDOWN -> Spec.countdown(defaultCountdown(heavy));
                 case ELEMENT -> Spec.element(defaultElement(duration, heal));
+                case OPENING -> Spec.opening(defaultOpening(heal));
                 default -> null;
             });
         }
@@ -490,6 +546,18 @@ public final class PhaseMechanic {
         return choices.get(random.nextInt(choices.size()));
     }
 
+    /** 2026-11-04：這個機制要打掉這一階段血量的幾成（元素弱點、破綻；其他 0）。 */
+    public static double shareOf(final Spec spec) {
+        if (spec == null) {
+            return 0;
+        }
+        return switch (spec.kind()) {
+            case ELEMENT -> spec.element().share();
+            case OPENING -> spec.opening().share();
+            default -> 0;
+        };
+    }
+
     /** 要打掉的血（最大生命的比例）：這個階段（門檻到下一個門檻，最後一個階段到 0）的 share 成。 */
     public static double requiredFraction(final List<MapConfig.Phase> phases, final int index, final double share) {
         if (index < 0 || index >= phases.size()) {
@@ -551,6 +619,13 @@ public final class PhaseMechanic {
         /** 倒數大招：上一次顯示的秒數；打到幾個人。 */
         long shownSecond = -1;
         int slamHits;
+        /** 2026-11-04 破綻：每個人的破綻到哪一 tick、這個破綻已經剝了多少（絕對血量）；整個鎖剝了多少、要剝多少（絕對血量）、鎖住時的血。 */
+        final Map<java.util.UUID, long[]> openUntil = new java.util.HashMap<>();
+        final Map<java.util.UUID, Double> openUsed = new java.util.HashMap<>();
+        double peeled;
+        double requiredHealth;
+        double lockedHealth;
+        int layersDone;
         /** 上一次更新、上一次粒子與聲音、上一次提示列的 tick（{@link PhaseLocks} 照實際過了多久算）。 */
         long lastTick;
         long lastPulse = Long.MIN_VALUE / 4;

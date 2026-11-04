@@ -1037,6 +1037,13 @@ final class LifeExtras {
                 }
 
                 @Override
+                public void skillDone(final tw.exilecore.skill.BossSkill skill, final java.util.Set<java.util.UUID> victims) {
+                    if (plugin.maps() != null && fight.entity != null && fight.entity.isValid()) {
+                        plugin.maps().locks().skillDone(kingArena(fight), fight.locks, skill.name(), victims); // 2026-11-04 照站長「一起換」：鯊王也用破綻
+                    }
+                }
+
+                @Override
                 public boolean alerts() {
                     return true;
                 }
@@ -1155,7 +1162,7 @@ final class LifeExtras {
                     final tw.exilecore.map.PhaseMechanic.Spec mechanic = kingMechanic(def, king.phase - 1);
                     if (mechanic != null && plugin.maps() != null) {
                         plugin.maps().locks().start(kingArena(king), king.locks, mechanic, tw.exilecore.map.PhaseMechanic.requiredFraction(
-                                LifeConfig.kingLockPhases(def.phases()), king.phase - 1, mechanic.element() == null ? 0 : mechanic.element().share()));
+                                LifeConfig.kingLockPhases(def.phases()), king.phase - 1, tw.exilecore.map.PhaseMechanic.shareOf(mechanic))); // 2026-11-04：破綻
                     }
                 }
                 if (plugin.maps() != null) {

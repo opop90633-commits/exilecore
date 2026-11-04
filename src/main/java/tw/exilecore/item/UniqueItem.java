@@ -97,7 +97,7 @@ public record UniqueItem(String id, String name, String base, List<String> affix
             final String affixId = AFFIX_PREFIX + id + "." + index;
             final Map<String, int[]> vars = new LinkedHashMap<>();
             for (final String key : modNode.keys()) {
-                if (!key.equals("text") && !key.equals("stats") && !key.equals("chips")) { // 2026-11-04：chips 是標籤（ItemRepository 讀）
+                if (!key.equals("text") && !key.equals("stats") && !key.equals("chips") && !key.equals("value_weights")) { // 2026-11-04：chips 是標籤、value_weights 是 value 每個整數的權重（ItemRepository 讀）
                     vars.put(key, modNode.range(key));
                 }
             }

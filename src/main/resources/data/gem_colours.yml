@@ -254,6 +254,12 @@ skills:
   reflection_mist_pass: b
   bone_crack_leyline: r
   deep_chasm_hand: b
+  scale_weight_drop: b   # 2026-11-04 事件 Boss 專屬
+  verdict_cleave: r   # 2026-11-04 事件 Boss 專屬
+  faceless_mist: b   # 2026-11-04 事件 Boss 專屬
+  mask_scatter: b   # 2026-11-04 事件 Boss 專屬
+  phalanx_breach: r   # 2026-11-04 事件 Boss 專屬
+  volley_of_ages: g   # 2026-11-04 事件 Boss 專屬
   star_spell_totem: r
   critical_guide_star: b
   curse_ring: b   # 2026-10-29 照 PoE2 Blasphemy（咒環，智慧）
@@ -441,6 +447,15 @@ supports:
   marrow_surge: r
   chasm_grasp: b
   abyss_floor_chill: b
+  balanced_verdict: r   # 2026-11-04 事件 Boss 專屬
+  sentence_stun: r   # 2026-11-04 事件 Boss 專屬
+  heavier_sentence: b   # 2026-11-04 事件 Boss 專屬
+  faceless_blind: g   # 2026-11-04 事件 Boss 專屬
+  oblivion_chaos: b   # 2026-11-04 事件 Boss 專屬
+  mist_spread: b   # 2026-11-04 事件 Boss 專屬
+  time_stilled: b   # 2026-11-04 事件 Boss 專屬
+  phalanx_maim: r   # 2026-11-04 事件 Boss 專屬
+  war_horn: r   # 2026-11-04 事件 Boss 專屬
   ember_marrow: b
   frost_marrow: b
   thunder_marrow: b
@@ -485,6 +500,7 @@ supports:
   brim_mana: b
   back_to_wall: r
   element_blade: r
+  element_blade_iii: r   # 2026-11-04
   element_surge: b
   knockback: r
   heavy_shove: r
@@ -620,6 +636,7 @@ supports:
   star_suppress: g
   mad_speed: g
   shattered_earth: r
+  shattered_earth_ii: r   # 2026-11-04
   spread_cold: b
   whole_bedrock: g
   thunder_star: b

@@ -103,13 +103,13 @@ public final class GemAttributes {
 
     static {
         table(
-            entry("S", "soaring_smash ground_tremor spine_crush hero_spirit_totem shield_brace collapse_quake_totem ember_envoy stalwart_war_shout "
+            entry("S", "verdict_cleave phalanx_breach " /* 2026-11-04 事件 Boss 專屬 */ + "soaring_smash ground_tremor spine_crush hero_spirit_totem shield_brace collapse_quake_totem ember_envoy stalwart_war_shout "
                     + "hellfire_war_shout ground_shake_shout field_quake_hammers flame_vein_rift plate_crush_hammer iron_wall_ram earth_spike_eruption lava_splash "
                     + "charged_blow rushing_thunder_stomp returning_smith_hammer heaven_punish_maul sunder thousand_weight_smash shield_drum "
                     + "crimson_wrath awe_suppress gathered_scales unquenched_fury iron_rampart_guard earth_wall_strike magma_barrier "
                     // 自創／專屬：近戰猛擊、戰吼（架盾是盾牌賦予的，原作沒有需求，照效果算力量）
                     + "molten_soul_shriek altar_niche_blessing shackle_chain_sweep bone_crack_leyline "),
-            entry("D", "venom_etch_arrow myriad_arrow_fall thunderclap_arrow rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
+            entry("D", "volley_of_ages " /* 2026-11-04 事件 Boss 專屬 */ + "venom_etch_arrow myriad_arrow_fall thunderclap_arrow rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
                     + "hurricane_spear prey_kill_mark wild_beast_taming thunder_envoy thunder_call_shaft chill_fan_shafts thunderfall_spear "
                     + "spear_formation triple_stab electrocute_shaft thorn_shaft toxic_blast_shaft helix_arrow_rain flame_blast_shaft linked_lightning_arrow "
                     + "cyclone_spear snake_squall_thrust facet_light_rift thunder_bound blood_hunt blazing_sun_spear explosive_spear frost_tooth_stab "
@@ -128,7 +128,7 @@ public final class GemAttributes {
                     + "ice_ridge_rift instant_shadow_strike thunder_lure_thrust frostbind_seal spectral_step phantom_body star_reign_art "
                     + "tripod_element_art retreat_crystal_freeze roll_guide_star element_prayer_star scythe_prayer_star "
                     + "ward_prayer_star glow_jade_hand "),
-            entry("I", "blazing_star_shell frost_star_blast roaming_thunder chain_thunder falling_star flame_curtain corpse_burst corpse_summon summon_burning_souls wound_scar_curse "
+            entry("I", "scale_weight_drop faceless_mist mask_scatter " /* 2026-11-04 事件 Boss 專屬 */ + "blazing_star_shell frost_star_blast roaming_thunder chain_thunder falling_star flame_curtain corpse_burst corpse_summon summon_burning_souls wound_scar_curse "
                     + "soul_wither_curse triple_element_curse strength_sap_curse sluggish_curse bloodthirst_rite bone_rite "
                     + "soulfire_rite flowing_flame_canopy starfire_bead_chain thunder_cloud sky_column_thunder erosion_curse_rift shattered_bone_darts "
                     + "summon_bone_heavy summon_bone_bowmen summon_bone_flamecaster summon_bone_thundermage winter_shell chill_crystal_mine frost_rampart "

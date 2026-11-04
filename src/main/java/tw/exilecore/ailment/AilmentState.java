@@ -778,6 +778,23 @@ public final class AilmentState {
         groundSlowUntil = Math.max(groundSlowUntil, until);
     }
 
+    /**
+     * 2026-11-04（源於永恆，PoE2 Overencumbered 超重）：減緩 10%，可以疊加；再加一層全部重新計時（4 秒）。
+     */
+    public static final double OVERENCUMBERED_SLOW = 0.10;
+    private int overencumbered;
+    private long overencumberedUntil;
+
+    public void overencumber(final long until, final long now) {
+        overencumbered = overencumberedUntil > now ? overencumbered + 1 : 1;
+        overencumberedUntil = until;
+    }
+
+    /** 2026-11-04：超重現在幾層。 */
+    public int overencumbered(final long now) {
+        return overencumberedUntil > now ? overencumbered : 0;
+    }
+
     public long maimUntil() {
         return maimUntil;
     }
@@ -795,7 +812,8 @@ public final class AilmentState {
         final double maim = now < maimUntil ? HEX_SLOW : 0;
         final double hinder = now < hinderUntil ? HEX_SLOW : 0;
         final double ground = now < groundSlowUntil ? groundSlow : 0;
-        return 1 - (1 - maim) * (1 - hinder) * (1 - ground);
+        final double heavy = Math.min(0.9, OVERENCUMBERED_SLOW * overencumbered(now)); // 2026-11-04（超重）
+        return 1 - (1 - maim) * (1 - hinder) * (1 - ground) * (1 - heavy);
     }
 
     /** 冰緩跟癱瘓、阻礙一起算的減速（相乘，最多 90%）。 */
@@ -903,7 +921,8 @@ public final class AilmentState {
         return ignite(now) == null && bleed(now) == null && poisons(now).isEmpty() && debuffs(now).isEmpty() && chill(now) <= 0 && shock(now) <= 0
                 && freeze.idle(now) && stun.idle(now) && electrocute.idle(now) && pin.idle(now) && daze.idle(now) && flammability(now) <= 0
                 && lightStunUntil <= now && armourBroken(now) <= 0 && !fullyBroken(now) && stunsRecently(now) == 0
-                && maimUntil <= now && hinderUntil <= now && groundSlowUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0;
+                && maimUntil <= now && hinderUntil <= now && groundSlowUntil <= now && blindUntil <= now && corruptedBloodStacks(now) == 0
+                && overencumberedUntil <= now;
     }
 
     /** 2026-10-26：清掉所有緩速（冰緩、癱瘓、阻礙、減速地面；PoE2 銀護符）。 */
@@ -914,6 +933,8 @@ public final class AilmentState {
         hinderUntil = 0;
         groundSlow = 0;
         groundSlowUntil = 0;
+        overencumbered = 0;
+        overencumberedUntil = 0;
     }
 
     /** 只清掉一種異常（護符解除，2026-10）。 */

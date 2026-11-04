@@ -652,6 +652,13 @@ public final class TreeFeed implements UiFeed.Source {
                         }
                         return null;
                     }
+                    if (VoicesMenu.holdsVoices(plugin, state, node)) {
+                        new VoicesMenu(plugin, player, tree, node, Set.of()).open(); // 2026-11-04（嗓音）：嗓音多開的孔用箱子選單放
+                        if (plugin.clientMod() != null && plugin.clientMod().ui() != null) {
+                            plugin.clientMod().ui().closed(player);
+                        }
+                        return null;
+                    }
                     final PassiveState.Result result = JewelSockets.unsocket(plugin, player, node);
                     if (!result.ok()) {
                         return fail(player, result.message());

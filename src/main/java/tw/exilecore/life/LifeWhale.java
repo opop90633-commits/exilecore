@@ -517,6 +517,13 @@ final class LifeWhale {
             public boolean locked() {
                 return fight.shieldUntil > 0 || fight.locks.invulnerable(); // 2026-11-02 照站長：潮核護盾、鎖血機制進行中完全停手
             }
+
+            @Override
+            public void skillDone(final tw.exilecore.skill.BossSkill skill, final java.util.Set<java.util.UUID> victims) {
+                if (plugin.maps() != null && fight.boss != null && fight.boss.isValid()) {
+                    plugin.maps().locks().skillDone(arena(fight), fight.locks, skill.name(), victims); // 2026-11-04 照站長「一起換」：淵鯨也用破綻
+                }
+            }
         });
     }
 
@@ -658,7 +665,7 @@ final class LifeWhale {
                 raiseShield(fight, next);
             } else if (mechanic != null && plugin.maps() != null) {
                 plugin.maps().locks().start(arena(fight), fight.locks, mechanic, tw.exilecore.map.PhaseMechanic.requiredFraction(
-                        LifeConfig.whaleLockPhases(def.phases()), fight.phase - 1, mechanic.element() == null ? 0 : mechanic.element().share()));
+                        LifeConfig.whaleLockPhases(def.phases()), fight.phase - 1, tw.exilecore.map.PhaseMechanic.shareOf(mechanic))); // 2026-11-04：破綻
             }
         }
         updateShield(fight);

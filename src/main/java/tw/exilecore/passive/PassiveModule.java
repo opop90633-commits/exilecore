@@ -58,6 +58,16 @@ public final class PassiveModule implements Module {
             }
             return new tw.exilecore.item.ItemStats.Instil(node.name(), mods, node.description());
         });
+        // 2026-11-04（妄想症，PoE2 Megalomaniac）：「配置隨機核心天賦」的候選——天賦樹上的核心（塗油限定的不算）
+        final java.util.List<String> notables = new java.util.ArrayList<>();
+        final java.util.Map<String, String> notableNames = new java.util.HashMap<>();
+        for (final PassiveTree.Anointable anointable : loaded.anointable()) {
+            if (!anointable.anointOnly()) {
+                notables.add(anointable.node().id());
+                notableNames.put(anointable.node().id(), anointable.node().name());
+            }
+        }
+        tw.exilecore.item.UniquePicks.setNotables(new tw.exilecore.item.UniquePicks.Pool(notables, notableNames::get));
         plugin.getSLF4JLogger().info("天賦樹：第 {} 版，{} 個節點，{} 個職業起點", loaded.version(), loaded.size(), loaded.starts().size());
         final java.util.List<String> missing = new java.util.ArrayList<>();
         for (final tw.exilecore.character.CharacterClass type : tw.exilecore.character.CharacterClass.values()) {

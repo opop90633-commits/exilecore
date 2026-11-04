@@ -135,6 +135,10 @@ public final class BossSkills implements Listener {
             return false;
         }
 
+        /** 2026-11-04 照站長（破綻）：放完一招（真的放出去的）：這招的名字、被打到的人。 */
+        default void skillDone(final BossSkill skill, final java.util.Set<UUID> victims) {
+        }
+
         /** 2026-10-17：場地收縮（萬界崩解）的中心——地圖 Boss 是 Boss 房正中間；null = 照 Boss 當時的位置。 */
         default Location arenaCenter() {
             return null;
@@ -286,6 +290,8 @@ public final class BossSkills implements Listener {
         Location markAt;
         /** 衝鋒已經撞到的人。 */
         final Set<UUID> hit = new HashSet<>();
+        /** 2026-11-04（破綻）：這一招打到的人。 */
+        final Set<UUID> victims = new HashSet<>();
         /** 地面標示的代號前綴（每個落點是 前綴#i）。 */
         String mark;
         /** 光束：第一道的起始角度（弧度）、轉的方向（+1／-1）。 */
@@ -1973,10 +1979,18 @@ public final class BossSkills implements Listener {
     }
 
     private void finish(final Brain brain, final long now) {
-        if (brain.cast != null && brain.cast.mark != null) {
-            danger.hidePrefix(brain.cast.mark);
+        final Cast done = brain.cast;
+        if (done != null && done.mark != null) {
+            danger.hidePrefix(done.mark);
         }
         brain.cast = null;
+        if (done != null && done.fired) {
+            try {
+                brain.host.skillDone(done.skill, Set.copyOf(done.victims)); // 2026-11-04（破綻）
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().error("{} 放完招式的處理出錯", brain.host.name(), e);
+            }
+        }
         // 放完一招至少隔 gap 秒（Boss 是 boss_gap）；換階段的停頓（比較久）不會被放完的這一招蓋掉
         brain.globalReadyAt = Math.max(brain.globalReadyAt,
                 now + Math.round(settings().gapFor(brain.host.boss()) * 20 * cooldownFactor(brain.boss) * tempo(brain)));
@@ -3365,6 +3379,9 @@ public final class BossSkills implements Listener {
         if (plugin.skills() != null && plugin.skills().isTotem(victim)) {
             plugin.skills().totemHitByMonster(victim, brain.boss, profile(skill, shapeTag)); // 2026-10-26 照 PoE2：圖騰被招式打到
             return;
+        }
+        if (brain.cast != null && brain.cast.skill == skill && victim instanceof Player) {
+            brain.cast.victims.add(victim.getUniqueId()); // 2026-11-04（破綻）
         }
         damage.hitAs(brain.boss, victim, profile(skill, shapeTag), null);
         if (skill.ruin() > 0 && victim instanceof Player player && player.isOnline()) {

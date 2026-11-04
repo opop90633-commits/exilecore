@@ -23,7 +23,8 @@
 #   對照 poe2db 每件傳奇頁的「限定」（Limit）欄（跟 Path of Building PoE2 的 Source 一致）：
 #     原作沒有限定 → 全域（以前是內容專屬的加上 map_boss、chance、gamble，原本的內容照樣會掉）；
 #     原作「某某 Dropped by」→ 限定，放到我們對應的內容：萬眾歸一．烈許（裂隙）→ breach_lord、迷霧之王（祭壇）→ ritual_priest、
-#       天譴啟示．科賽斯（幻霧）→ delirium_mirror、灰燼仲裁者 → final、試煉大師（混沌試煉）／阿茲里的寶庫（瓦爾神殿）我們沒有 → final、
+#       天譴啟示．科賽斯（幻霧）→ fog_trial（2026-11-04 迷霧之主；這次之前 delirium_mirror）、灰燼仲裁者 → legion（2026-11-04 不朽統帥；這次之前 final）、
+#       試煉大師（混沌試煉）→ ultimatum（2026-11-04 審判者；這次之前 final）、阿茲里的寶庫（瓦爾神殿）我們沒有 → final、
 #       庫勒馬克之器（深淵）→ abyss_lich、奧爾羅斯 → final（永恆珠寶照 drop_chance）。
 #     例外（跟原作不同，見各件的註解）：追逐級（chase）照站長留在追逐級（原作的 Temporalis、Ingenuity、Choir of the Storm、
 #       Atziri's Step 是 Boss 限定）；劫盜的隱匿傳奇（heist）原作沒有劫盜，維持劫盜專屬。
@@ -1486,7 +1487,7 @@ voidgaze_helm:
   base: helm_str_dex_18        # 2026-10-26 照 PoE2 的基底（Closed Helm：精鐵鱗盔）；這次之前 helm_str_dex_18（stat_base helm_str_dex_12）
   stat_base: helm_str_dex_06          # 原作基底那一階的數值
   drop_level: 60
-  sources: [breach]
+  sources: [fog_trial]        # 2026-11-04 照站長「迷霧之主放科西斯的傳奇，像軍團那樣只在這裡掉」：原作科西斯掉 → 迷霧之主（event_bosses.fog_trial，1%）；這次之前 [breach]
   weight: 100
   flavour:
     - "「面甲後面沒有眼睛，但它一直在看。」"
@@ -4860,7 +4861,7 @@ spiteforge_greaves:         # Hateforge
   base: legs_str_16        # 2026-10-26 照 PoE2 的基底（Moulded Mitts：鍛紋腿鎧）；這次之前 legs_str_16
   stat_base: legs_str_05          # 原作基底那一階的數值
   drop_level: 60
-  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「試煉大師（混沌試煉）」掉落 → 我們沒有混沌試煉，放終局 Boss（天穹熔爐）（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
+  sources: [ultimatum]        # 2026-11-04 照站長：試煉大師（混沌試煉）掉的 → 絕境的審判者（maps.yml 的 event_bosses.ultimatum，1%）；這次之前 [final]
   weight: 100
   flavour:
     - "「爐火越旺，鐵裡的恨就越深。」"
@@ -6001,7 +6002,7 @@ hallowed_fire:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2
   name: 聖火
   base: csceptre_06        # 原作基底 Shrine Sceptre（神殿權杖，賦予火焰淨化）
   drop_level: 55
-  sources: [final]        # 2026-10-28 照 PoE2：poe2db 限定「灰燼仲裁者」掉落 → 終局 Boss（天穹熔爐）
+  sources: [legion]        # 2026-11-04 照站長「不朽統帥放燃燒豐碑的傳奇，其他區域不再掉落」：灰燼仲裁者掉的 → 不朽統帥（event_bosses.legion，1%）；這次之前 [final]
   weight: 100
   flavour:
     - "「火燒過的地方，來年長出新芽。」"
@@ -8640,7 +8641,7 @@ fallen_horizon:        # 2026-10-27 照 PoE2 0.5 的「Collapsing Horizon」（�
   base: qstaff_25        # 原作基底 Wyrm Quarterstaff（隕鐵長棍）
   stat_base: qstaff_19          # 原作基底那一階的數值
   drop_level: 65
-  sources: [delirium_mirror]        # 2026-10-28 照 PoE2：poe2db 限定「天譴啟示．科賽斯（譫妄的巔峰）」掉落 → 幻霧巔峰 Boss（做不出來、賭不到）；這次之前 [map_boss, chance, gamble]
+  sources: [fog_trial]        # 2026-11-04 照站長「迷霧之主放科西斯的傳奇，像軍團那樣只在這裡掉」：原作科西斯掉 → 迷霧之主（event_bosses.fog_trial，1%）；這次之前 [delirium_mirror]
   weight: 100
   flavour:
     - "「地平線塌陷的時候，力量像潮水一樣湧回來。」"
@@ -9445,7 +9446,7 @@ peerless:        # 2026-10-28 照 PoE2 0.5 的「Sine Aequo」（原作有、我
   base: legs_str_dex_14        # 原作基底 Grand Manchettes（宏偉手鐲，力敏智三防）；我們的腿甲沒有三防的，用力敏那一類
   stat_base: legs_str_dex_09          # 同樣 65 級那一階的數值
   drop_level: 85        # 巔峰 Boss 的專屬一律物品等級 85 起（需求等級照基底，65）
-  sources: [awakener]        # 原作只有「灰燼仲裁者」（燃燒巨石的巔峰 Boss）掉 → 我們的巔峰 Boss
+  sources: [legion]        # 2026-11-04 照站長「不朽統帥放燃燒豐碑的傳奇，其他區域不再掉落」：灰燼仲裁者掉的 → 不朽統帥（event_bosses.legion，1%）；這次之前 [awakener]
   weight: 100
   flavour:
     - "「最強的戰士不需要對手，他只跟自己較量。」"
@@ -9623,3 +9624,336 @@ lavian_spring:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」（po
     - text: "此藥劑無法使用，但會持續套用其效果"
       stats:
         - { stat: flask.local.always, type: FLAT, value: 1 }
+
+# =====================================================================================================
+# 2026-11-04 照站長：三隻事件 Boss（maps.yml 的 event_bosses）的專屬傳奇，每一件各自 1%（drops.unique_chance）。
+#   審判者・衡（ultimatum）＝ poe2db「The Trialmaster 傳奇」；迷霧之主・無面（fog_trial）＝「Kosis, The Revelation」與「譫妄異域」的傳奇；
+#   不朽統帥・磐（legion）＝「The Burning Monolith（灰燼仲裁者）」的傳奇。名稱照 poe2db（tw）、數值照原作，做不出來的那條在註解。
+#   已經有的：憎鑄腿鎧（試煉大師）final → ultimatum；聖火、舉世無雙（灰燼仲裁者）final／awakener → legion（照站長：其他區域不再掉落）；
+#   虛望之盔、崩落地平（科西斯）改成只有 fog_trial 掉（照站長：像軍團那樣其他區域不再掉落；這次之前 breach、delirium_mirror）。
+#   2026-11-04 照站長「這些都做出來」：＋融解漩渦、妄想症、掙扎吶喊、嗓音（迷霧之主）、信仰稜鏡（不朽統帥）。
+#   還沒做：蒼空（傳奇石板，我們的石板沒有傳奇）。
+# =====================================================================================================
+
+# ---- 審判者・衡（ultimatum）：試煉大師 ----
+glimpse_of_chaos:        # 2026-11-04 照 PoE2 0.5 的「Glimpse of Chaos」（poe2db：混沌一瞥）
+  name: 混沌一瞥
+  base: helm_dex_int_17        # 原作基底 Tribal Mask（部落之面）
+  stat_base: helm_dex_int_05   # 原作基底那一階的數值（需求 52 級的那階照部落之面）
+  drop_level: 52
+  sources: [ultimatum]
+  weight: 100
+  flavour:
+    - "「看一眼混沌，它就記住你的臉。」"
+  mods:
+    - text: "已汙染時仍可調整"   # 2026-11-04 照站長「能接的接上」：腐化了還能用通貨改（重骰數值、符文；不能再腐化）
+      stats:
+        - { stat: local.modifiable_corrupted, type: FLAT, value: 1 }
+    - text: "+{value} 最大生命"
+      value: [50, 150]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [50, 150]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "{value}% 火焰抗性"
+      value: [-30, 30]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - text: "{value}% 冰冷抗性"
+      value: [-30, 30]
+      stats:
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+    - text: "{value}% 閃電抗性"
+      value: [-30, 30]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "混沌抗性為 0"
+      stats:
+        - { stat: flag.chaos_res_zero, type: FLAT, value: 1 }
+
+zerphi_genesis:        # 2026-11-04 照 PoE2 0.5 的「Zerphi's Genesis」（poe2db：澤佛伊的創世紀）
+  name: 澤佛伊的創世紀
+  base: jbelt_07        # 原作基底 Heavy Belt（重革束帶）
+  drop_level: 56
+  sources: [ultimatum]
+  weight: 100
+  flavour:
+    - "「他把每一口氣都存起來，換成別人的明天。」"
+  # 原作「有 1–3 個護符欄位」是重革束帶本來的固定詞綴，不重寫；
+  # 「增加 25–50% 已汙染護符效果持續時間」我們的護符沒有腐化，算全部護符
+  mods:
+    - text: "增加 {value}% 暈眩門檻"
+      value: [20, 30]
+      stats:
+        - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護符效果持續時間"
+      value: [25, 50]
+      stats:
+        - { stat: charm.duration, type: INCREASED, value: "{value}" }
+    - text: "使用護符所消耗充能的 50% 會充能你的生命藥劑"   # 2026-11-04 照站長「能接的接上」
+      stats:
+        - { stat: charm.to_life_flask, type: FLAT, value: 50 }
+    - text: "使用生命藥劑所消耗充能的 50% 會充能你的護符"
+      stats:
+        - { stat: flask.life_to_charm, type: FLAT, value: 50 }
+    - text: "+{value} 力量"
+      value: [10, 30]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+    - text: "任何藥劑效果期間增加 {value}% 已汙染寶石技能的消耗效能"   # 2026-11-04 照站長補上：腐化過的技能寶石才吃（SkillService）
+      value: [15, 25]
+      stats:
+        - { stat: gem.corrupted_cost_efficiency@anyflask, type: INCREASED, value: "{value}" }
+    - text: "免疫腐化之血"
+      stats:
+        - { stat: flag.corrupted_blood_immune, type: FLAT, value: 1 }
+
+mahuxotl_machination:        # 2026-11-04 照 PoE2 0.5 的「Mahuxotl's Machination」（poe2db：瑪哈薩多的陰謀）
+  name: 瑪哈薩多的陰謀
+  base: cshield_21        # 原作基底 Omen Crest Shield（精鐵聖徽盾）
+  stat_base: cshield_06          # 原作基底那一階的數值
+  drop_level: 48
+  sources: [ultimatum]
+  weight: 100
+  flavour:
+    - "「核心在盾裡跳動，像在替別人數心跳。」"
+  # 原作「賦予技能：展開護盾」不寫（我們的盾本來就能舉盾）
+  mods:
+    - text: "增加 {value}% 嵌在這件上的魂核符文效果"
+      value: [66, 333]
+      stats:
+        - { stat: local.core_effect, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲與能量護盾"
+      value: [333, 666]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "永恆奉獻：能量護盾全滿時犧牲全部，獲得 +5% 全部抗性上限 4 秒"   # 2026-11-04 照站長（poe2db Everlasting Sacrifice；PlayerStateService 回充那邊）
+      stats:
+        - { stat: es.everlasting_sacrifice, type: FLAT, value: 5 }
+
+vitality_spirit:        # 2026-11-04 照 PoE2 0.5 的試煉大師傳奇（poe2db：朝氣之靈，鑽石）
+  name: 朝氣之靈
+  base: diamond_jewel        # 原作基底 Diamond（鑽石）
+  drop_level: 60
+  sources: [ultimatum]
+  weight: 100
+  flavour:
+    - "「腐化的不一定是壞的，只是還沒被理解。」"
+  corrupted: true        # 2026-11-04 照 PoE2：掉出來就是已汙染
+  mods:
+    - text: "嵌著已腐化魔法珠寶的珠寶孔效果增加 {value}%"
+      value: [0, 150]
+      stats:
+        - { stat: jewel.corrupted_magic_effect, type: INCREASED, value: "{value}" }
+
+# ---- 迷霧之主・無面（fog_trial）：科西斯、譫妄異域 ----
+perfidy_armour:        # 2026-11-04 照 PoE2 0.5 的「Perfidy」（poe2db：背信忘義）
+  name: 背信忘義
+  base: body_str_dex_27        # 原作基底 Knight Armour（騎士護甲，力敏）
+  stat_base: body_str_dex_07          # 原作基底那一階的數值（45 級）
+  drop_level: 45
+  sources: [fog_trial]
+  weight: 100
+  flavour:
+    - "「它對每個主人都發過誓，也背叛過每一個。」"
+  mods:
+    - text: "增加 {value}% 護甲與閃避"
+      value: [300, 450]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "{value}% 機率避免擊中的物理傷害"
+      value: [10, 30]
+      stats:
+        - { stat: avoid.hit.physical, type: FLAT, value: "{value}" }
+    - text: "{value}% 機率避免擊中的火焰傷害"
+      value: [10, 30]
+      stats:
+        - { stat: avoid.hit.fire, type: FLAT, value: "{value}" }
+    - text: "{value}% 機率避免擊中的冰冷傷害"
+      value: [10, 30]
+      stats:
+        - { stat: avoid.hit.cold, type: FLAT, value: "{value}" }
+    - text: "{value}% 機率避免擊中的閃電傷害"
+      value: [10, 30]
+      stats:
+        - { stat: avoid.hit.lightning, type: FLAT, value: "{value}" }
+    - text: "{value}% 機率避免擊中的混沌傷害"
+      value: [10, 30]
+      stats:
+        - { stat: avoid.hit.chaos, type: FLAT, value: "{value}" }
+    - text: "你存在範圍內的敵人會受到威嚇（受到的傷害增加 10%）"   # 2026-11-04 照站長「能接的接上」：照臨在的「受到的傷害增加」
+      stats:
+        - { stat: presence.taken, type: FLAT, value: 10 }
+
+# ---- 不朽統帥・磐（legion）：燃燒豐碑（灰燼仲裁者） ----
+solus_ipse_helm:        # 2026-11-04 照 PoE2 0.5 的「Solus Ipse」（poe2db：唯我論）
+  name: 唯我論
+  base: helm_str_dex_18        # 原作基底 Grand Visage（宏偉面紗，力敏智三防）；我們的頭盔沒有三防的，用力敏那一類
+  stat_base: helm_str_dex_13          # 同樣 65 級那一階的數值
+  drop_level: 65
+  sources: [legion]
+  weight: 100
+  flavour:
+    - "「世上只有我一個；所以每一條血脈都得是我的。」"
+  # 原作「增加 25% 照亮範圍」沒做（我們沒有照亮範圍）
+  mods:
+    - text: "增加 {value}% 護甲、閃避與能量護盾"
+      value: [150, 200]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [60, 100]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "增加 25% 裝備與技能寶石的能力值需求"
+      stats:
+        - { stat: item.attr_requirement, type: INCREASED, value: 25 }
+    - text: "你可以在不同技能中額外鑲嵌 2 個相同的血脈輔助寶石"   # 2026-11-04 照站長「照原作改成一個角色一顆」之後才有用（SkillConfig.supportCopies）
+      stats:
+        - { stat: lineage.extra_copies, type: FLAT, value: 2 }
+
+ab_aeterno_boots:        # 2026-11-04 照 PoE2 0.5 的「Ab Aeterno」（poe2db：源於永恆）
+  name: 源於永恆
+  base: boots_str_dex_13        # 原作基底 Grand Cuisses（宏偉腿甲，力敏智三防）；我們的鞋子沒有三防的，用力敏那一類
+  stat_base: boots_str_dex_09          # 同樣 65 級那一階的數值
+  drop_level: 65
+  sources: [legion]
+  weight: 100
+  flavour:
+    - "「從永恆走來的人，不急著到哪裡去。」"
+  mods:
+    - text: "增加 {value}% 移動速度"
+      value: [15, 30]
+      stats:
+        - { stat: movement.speed, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲、閃避與能量護盾"
+      value: [200, 250]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "翻滾躲開全部擊中（不只近戰、投射物）"
+      stats:
+        - { stat: flag.dodge_all_hits, type: FLAT, value: 1 }
+    - text: "閃避翻滾時獲得超重 4 秒（減緩 10%，可以疊加）"   # 2026-11-04 照站長補上（PoE2 Overencumbered；AilmentService.overencumber）
+      stats:
+        - { stat: dodge.overencumber_seconds, type: FLAT, value: 4 }
+    - text: "你的速度在衝刺時不受緩速影響"   # 2026-11-04：衝刺＝原版的疾跑
+      stats:
+        - { stat: flag.sprint_unslowed, type: FLAT, value: 1 }
+
+morior_invictus:        # 2026-11-04 照 PoE2 0.5 的「Morior Invictus」（poe2db：不敗亡者）
+  name: 不敗亡者
+  base: body_str_dex_18        # 原作基底 Grand Regalia（宏偉華服，力敏智三防）；我們的胸甲沒有三防的，用力敏那一類（65 級）
+  drop_level: 65
+  sources: [legion]
+  weight: 100
+  rune_sockets: 4        # 原作「有 4 個增幅插槽」
+  flavour:
+    - "「死過很多次的人，就不怕再死一次。」"
+  mods:
+    - text: "增加 {value}% 護甲、閃避與能量護盾"
+      value: [300, 400]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "3 個隨機插槽詞綴（每個嵌著東西的孔各給一份）"   # 2026-11-04 照站長補上（poe2db 的 10 種，照這件的 UUID 抽 3 種；UniquePicks.socketMods）
+      stats:
+        - { stat: local.socket_mods, type: FLAT, value: 3 }
+
+# ---- 2026-11-04 照站長「這些都做出來」：迷霧之主（fog_trial）的科西斯、譫妄異域傳奇 ----
+melting_maelstrom:        # 2026-11-04 照 PoE2 0.5 的「Melting Maelstrom」（poe2db：融解漩渦）
+  name: 融解漩渦
+  base: heavens_mana_flask        # 原作基底 Ultimate Mana Flask（終極魔力藥劑，60 級）
+  drop_level: 60
+  sources: [fog_trial]
+  weight: 100
+  flavour:
+    - "「喝下去的魔力不會消失，只是換個方向燒出去。」"
+  mods:
+    - text: "未保留魔力已滿時不移除效果"
+      stats:
+        - { stat: flask.local.maelstrom, type: FLAT, value: 1 }
+    - text: "增加 {value}% 持續時間"
+      value: [200, 250]
+      stats:
+        - { stat: flask.local.duration, type: INCREASED, value: "{value}" }
+    - text: "效果結束時，對你造成等同於當前魔力 25% 的混沌傷害"   # 機制在 FlaskService（Maelstrom），三條都掛同一個旗標
+      stats:
+        - { stat: flask.local.maelstrom, type: FLAT, value: 1 }
+    - text: "效果期間每 3 秒，對 3 格內的敵人造成等同於這 3 秒消耗的魔力 100% 的混沌傷害"
+      stats:
+        - { stat: flask.local.maelstrom, type: FLAT, value: 1 }
+
+megalomaniac_jewel:        # 2026-11-04 照 PoE2 0.5 的「Megalomaniac」（poe2db：妄想症）
+  name: 妄想症
+  base: diamond_jewel        # 原作基底 Diamond（鑽石）
+  drop_level: 60
+  sources: [fog_trial]
+  weight: 100
+  corrupted: true        # 照 PoE2：已汙染
+  flavour:
+    - "「他記得自己學過每一門功夫——雖然一門也沒學過。」"
+  mods:
+    - text: "配置 {value} 個隨機的核心天賦"   # 哪幾個照這顆的 UUID 決定（UniquePicks；天賦樹上已經配了的不重複給）；原作有 2、3 個兩種
+      value: [2, 3]
+      stats:
+        - { stat: jewel.allocate_notables, type: FLAT, value: "{value}" }
+
+strugglescream_amulet:        # 2026-11-04 照 PoE2 0.5 的「Strugglescream」（poe2db：掙扎吶喊）
+  name: 掙扎吶喊
+  base: jamulet_09        # 原作基底 Stellar Amulet（恆星項鍊＝星輝墜飾）
+  drop_level: 52
+  sources: [fog_trial]
+  weight: 100
+  flavour:
+    - "「每一聲吶喊都是一個沒說完的念頭。」"
+  mods:
+    - text: "+{value} 全部屬性"
+      value: [5, 7]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "可擁有額外 3 個滴注詞綴（蒸餾情緒可以多注入 3 個核心）"
+      stats:
+        - { stat: local.instil_extra, type: FLAT, value: 3 }
+
+voices_jewel:        # 2026-11-04 照 PoE2 0.5 的「Voices」（poe2db：嗓音）
+  name: 嗓音
+  base: sapphire_jewel        # 原作基底 Sapphire（藍寶石）
+  drop_level: 60
+  sources: [fog_trial]
+  weight: 100
+  corrupted: true        # 照 PoE2：已汙染
+  flavour:
+    - "「它們在你腦子裡開了門，門後面還有門。」"
+  mods:
+    - text: "配置 {value} 個不祥珠寶插槽（在天賦樹點這顆所在的珠寶孔放珠寶）"   # 原作有 2、3、4 個三種；孔不在天賦樹上，只能放基礎珠寶（JewelSockets.voice*）
+      value: [2, 4]
+      value_weights: [89, 10, 1]   # 2026-11-04 照站長：2 孔 89%、3 孔 10%、4 孔 1%（原作沒公開權重）；這次之前各三分之一
+      stats:
+        - { stat: jewel.voices_sockets, type: FLAT, value: "{value}" }
+
+# ---- 2026-11-04 照站長「這些都做出來」：不朽統帥（legion）的燃燒豐碑傳奇 ----
+prism_of_belief:        # 2026-11-04 照 PoE2 0.5 的「Prism of Belief」（poe2db：信仰棱鏡）
+  name: 信仰棱鏡
+  base: diamond_jewel        # 原作基底 Diamond（鑽石）
+  drop_level: 65
+  sources: [legion]
+  weight: 100
+  corrupted: true        # 照 PoE2：已汙染
+  flavour:
+    - "「信什麼，就看得見什麼；看得見的，就變得更強。」"
+  mods:
+    - text: "隨機一個技能 +{value} 等級"   # 哪一個照這顆的 UUID 決定（UniquePicks：玩家看得到、雕得出來的主動技能）
+      value: [1, 3]
+      stats:
+        - { stat: skill.level.picked, type: FLAT, value: "{value}" }

@@ -95,7 +95,7 @@ class UniqueRarityTest {
         }
         assertEquals(Set.of("breach_lord"), repository.unique("wisdom_action_wraps").sources());
         assertEquals(Set.of("ritual_priest"), repository.unique("pragmatist_armour").sources());
-        assertEquals(Set.of("delirium_mirror"), repository.unique("fallen_horizon").sources());
+        assertEquals(Set.of("fog_trial"), repository.unique("fallen_horizon").sources()); // 2026-11-04 照站長：只有迷霧之主掉
         // 原作沒有限定、以前內容專屬 → 全域（內容照樣掉）
         final UniqueItem windscream = repository.unique("somnambulist");
         assertTrue(UniqueRarity.global(windscream) && windscream.droppedBy("delirium") && windscream.droppedBy("map_boss"));

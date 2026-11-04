@@ -10,7 +10,8 @@
 #   storm → 風暴（Storm）、mind → 心智（Mind）、swift → 精巧（Adept，+敏捷）。
 #   這次之前：鐵骨 武器增加 15% 物理傷害／防具 +25 最大生命；焰紋、霜紋、雷紋 物理傷害 10% 額外附加為元素／防具 +12% 抗性；
 #   慧光 增加 15% 法術傷害／+20 最大魔力；疾風 增加 6% 攻擊速度／+10 敏捷（只有武器、防具兩類）。
-#   魂核（Soul Core）、偶像（Idol）、深淵之眼（Abyssal Eye）還沒做。
+#   深淵之眼（Abyssal Eye）還沒做。2026-11-04：魂核（Soul Core，魂核符文・…）、偶像（Idol，魔偶符文・…）做了，在檔尾；
+#     部位專屬寫 slots（head／chest／legs／feet／shield／buckler／focus／sceptre），martial_only 只能嵌軍用武器，limit 一個角色僅限幾顆。
 
 runes:
   iron_lesser:   # Lesser Iron Rune
@@ -813,3 +814,610 @@ runes:
         - { text: "增加 25% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 25 }
       armour:
         - { text: "+20 最大生命、+20 最大魔力", mods: [ { stat: life.max, type: FLAT, value: 20 }, { stat: mana.max, type: FLAT, value: 20 } ] }
+
+# =====================================================================================================
+# 2026-11-04 照站長「地圖絕境塞核心（用跟符文同名但要有區分）」：魂核符文（PoE2 Trial of Chaos 的 Soul Core，poe2db「混沌試煉物品」15 顆）。
+#   跟符文一樣嵌進符文孔（通貨的 operation: RUNE），名字都叫「魂核符文・某某」好跟一般符文分開。
+#   照原作：只能嵌軍用武器（martial_only，法杖類沒有加成）、防具那邊有的只在某個部位才有加成（slots：head 頭盔、chest 胸甲、
+#   legs 手套（我們的手套放腿甲）、feet 鞋子、shield 盾、buckler 輕盾；沒寫 slots 的 armour 全部防具與副手）、
+#   有的一個角色僅限 1 顆（limit：第二顆嵌得進去但沒效果，同一件也不能嵌兩顆）。
+#   掉落：只有地圖裡的絕境（map_events.yml 的 ultimatum.rewards 的 core）；不走掉落表（drop_weight 0）。
+#   沒做的（我們沒有那個機制）：塔普塔特鞋子那條原作是「減少 25% 你身上的非傷害型異常狀態效果」，我們只有「減少你身上的減速幅度」，
+#   先用那條（冰緩算進去，凍結、感電沒有）。
+  core_tacati:   # Soul Core of Tacati
+    name: 魂核符文・特卡蒂
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "增加 25% 你所施加之中毒的幅度", stat: poison.magnitude, type: INCREASED, value: 25 }
+    armour:
+      - { text: "+13% 混沌抗性", stat: resist.chaos, type: FLAT, value: 13 }
+  core_opiloti:   # Soul Core of Opiloti
+    name: 魂核符文・歐派理堤
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "增加 40% 你所施加之流血的幅度", stat: bleed.magnitude, type: INCREASED, value: 40 }
+    slots:
+      head:
+        - { text: "增加 25% 釘身持續時間", stat: pin.duration, type: INCREASED, value: 25 }
+  core_jiquani:   # Soul Core of Jiquani
+    name: 魂核符文・吉卡尼
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "擊殺時回復 5% 最大生命", stat: life.on_kill, type: FLAT, value: 5 }
+    slots:
+      chest:
+        - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+  core_zalatl:   # Soul Core of Zalatl
+    name: 魂核符文・札爾特
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "擊殺時回復 4% 最大魔力", stat: mana.on_kill, type: FLAT, value: 4 }
+    slots:
+      head:
+        - { text: "增加 5% 最大魔力", stat: mana.max, type: INCREASED, value: 5 }
+  core_citaqualotl:   # Soul Core of Citaqualotl
+    name: 魂核符文・希特克拉多
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "增加 40% 攻擊的元素傷害", stat: damage, type: INCREASED, value: 40, tags: [attack, elemental] }
+    armour:
+      - { text: "+6% 全部元素抗性", mods: [ { stat: resist.fire, type: FLAT, value: 6 }, { stat: resist.cold, type: FLAT, value: 6 }, { stat: resist.lightning, type: FLAT, value: 6 } ] }
+  core_puhuarte:   # Soul Core of Puhuarte
+    name: 魂核符文・普希瓦爾
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "增加 40% 點燃幅度", stat: ignite.magnitude, type: INCREASED, value: 40 }
+    slots:
+      legs:
+        - { text: "+2% 火焰抗性上限", stat: resist.max.fire, type: FLAT, value: 2 }
+  core_tzamoto:   # Soul Core of Tzamoto
+    name: 魂核符文・薩摩特
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "增加 60% 凍結累積", stat: freeze.buildup, type: INCREASED, value: 60 }
+    slots:
+      head:
+        - { text: "+2% 冰冷抗性上限", stat: resist.max.cold, type: FLAT, value: 2 }
+  core_xopec:   # Soul Core of Xopec
+    name: 魂核符文・柔派克
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "增加 25% 你所施加之感電的幅度", stat: shock.effect, type: INCREASED, value: 25 }
+    slots:
+      feet:
+        - { text: "+2% 閃電抗性上限", stat: resist.max.lightning, type: FLAT, value: 2 }
+  core_azcapa:   # Soul Core of Azcapa
+    name: 魂核符文・艾斯卡巴
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "+15 精魂", stat: spirit.max, type: FLAT, value: 15 }
+    slots:
+      legs:
+        - { text: "增加 10% 殺死敵人時掉落的金幣數量", stat: gold.find, type: INCREASED, value: 10 }
+  core_topotante:   # Soul Core of Topotante
+    name: 魂核符文・塔普塔特
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "這把武器的攻擊穿透 25% 元素抗性", stat: penetration, type: FLAT, value: 25, tags: [attack, elemental] }
+    slots:
+      feet:
+        - { text: "減少 25% 你身上的減速幅度", stat: slow.taken, type: INCREASED, value: -25 }   # 原作：減少 25% 你身上的非傷害型異常狀態效果（我們只有減速那一條）
+  core_quipolatl:   # Soul Core of Quipolatl
+    name: 魂核符文・克特帕托
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "增加 5% 攻擊速度", stat: attack.speed, type: INCREASED, value: 5 }
+    slots:
+      feet:
+        - { text: "減少 15% 你身上的減速幅度", stat: slow.taken, type: INCREASED, value: -15 }
+  core_ticaba:   # Soul Core of Ticaba
+    name: 魂核符文・堤卡巴
+    level: 65
+    martial_only: true
+    limit: 1
+    weapon:
+      - { text: "+5% 暴擊傷害加成", stat: crit.multi, type: FLAT, value: 5 }
+    slots:
+      chest:
+        - { text: "擊中你的暴擊傷害加成減少 50%", stat: crit.bonus_taken, type: INCREASED, value: -50 }
+      shield:
+        - { text: "擊中你的暴擊傷害加成減少 50%", stat: crit.bonus_taken, type: INCREASED, value: -50 }
+      buckler:
+        - { text: "擊中你的暴擊傷害加成減少 50%", stat: crit.bonus_taken, type: INCREASED, value: -50 }
+  core_atmohua:   # Soul Core of Atmohua
+    name: 魂核符文・艾特瑪哈
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "40% 需求轉換為力量", stat: local.req_convert.str, type: FLAT, value: 40 }
+    armour:
+      - { text: "40% 需求轉換為力量", stat: local.req_convert.str, type: FLAT, value: 40 }
+  core_cholotl:   # Soul Core of Cholotl
+    name: 魂核符文・斯拉托
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "40% 需求轉換為敏捷", stat: local.req_convert.dex, type: FLAT, value: 40 }
+    armour:
+      - { text: "40% 需求轉換為敏捷", stat: local.req_convert.dex, type: FLAT, value: 40 }
+  core_zantipi:   # Soul Core of Zantipi
+    name: 魂核符文・善堤比
+    level: 65
+    martial_only: true
+    weapon:
+      - { text: "40% 需求轉換為智慧", stat: local.req_convert.int, type: FLAT, value: 40 }
+    armour:
+      - { text: "40% 需求轉換為智慧", stat: local.req_convert.int, type: FLAT, value: 40 }
+
+# =====================================================================================================
+# 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（PoE2 的 Idol，poe2db「Idol」31 顆；原作是燃燒豐碑的附身怪掉的）。
+#   跟符文一樣嵌進符文孔，名字都叫「魔偶符文・某某」。照原作每一顆只在兩種東西上有加成：某個部位（頭盔、胸甲、手套＝我們的腿甲、鞋子、盾、輕盾、法器）
+#   或武器（軍用武器、法杖或長杖），以及權杖（slots 的 sceptre）；別的嵌了沒效果（不給嵌）。每顆一個角色僅限 1 顆（limit，第二顆沒效果）。
+#   權杖那條原作多半是「你存在範圍內的盟友（夥伴）…」：我們寫成夥伴（minion＋companion 標籤）的加成，不看在不在臨在範圍。
+#   羈絆（bonded）跟符文一樣：只有昇華・聖賢智慧才有效果；原作的「命定」就是這個。
+#   掉落：地圖裡的軍團（map_events.yml 的 legion.idol_chance：將領、軍曹、士兵各自的機率），不走掉落表（drop_weight 0）。
+#   沒做的（我們沒有那個機制）在各顆的註解。
+  idol_sirrius:   # Idol of Sirrius
+    name: 魔偶符文・席里斯
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "增加 8% 攻擊速度", stat: attack.speed, type: INCREASED, value: 8 }
+      sceptre:
+        - { text: "夥伴增加 8% 移動速度", stat: movement.speed, type: INCREASED, value: 8, tags: [minion, companion] }
+    bonded:
+      slots:
+        legs:
+          - { text: "減少 20% 你身上的減速幅度", stat: slow.taken, type: INCREASED, value: -20 }
+        sceptre:
+          - { text: "增加 4% 移動速度", stat: movement.speed, type: INCREASED, value: 4 }
+  idol_thruldana:   # Idol of Thruldana（權杖那條原作是夥伴附加 13–27 混沌攻擊傷害，我們沒有給召喚物的附加傷害，改成夥伴增加 25% 混沌傷害）
+    name: 魔偶符文・特盧達納
+    level: 50
+    limit: 1
+    martial_only: true
+    weapon:
+      - { text: "減少 25% 中毒持續時間、目標可同時受到你的 +1 個中毒影響", mods: [ { stat: poison.duration, type: INCREASED, value: -25 }, { stat: poison.stacks, type: FLAT, value: 1 } ] }
+    slots:
+      sceptre:
+        - { text: "夥伴增加 25% 混沌傷害", stat: damage, type: INCREASED, value: 25, tags: [minion, companion, chaos] }
+    bonded:
+      weapon:
+        - { text: "獲得等同於 13% 物理傷害的額外混沌傷害", stat: damage.gain.chaos, type: FLAT, value: 13 }
+      slots:
+        sceptre:
+          - { text: "增加 15% 凋零幅度", stat: withered.effect, type: INCREASED, value: 15 }
+  idol_grold:   # Idol of Grold（鞋子那條原作是戰吼計算的總強度 +50%，我們用戰吼效果；羈絆鞋子的「生成的榮耀」沒做）
+    name: 魔偶符文・格羅德
+    level: 50
+    limit: 1
+    slots:
+      feet:
+        - { text: "增加 50% 戰吼的效果", stat: warcry.effect, type: INCREASED, value: 50 }
+      sceptre:
+        - { text: "夥伴在你的臨在範圍時增加 15% 傷害", stat: damage@companion, type: INCREASED, value: 15 }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "夥伴技能的保留效率增加 15%", stat: aura.reservation, type: INCREASED, value: -15, tags: [minion, companion] }
+  idol_eeshta:   # Idol of Eeshta
+    name: 魔偶符文・義許塔
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "增加 15% 消耗效率", stat: skill.cost_efficiency, type: INCREASED, value: 15 }
+      sceptre:
+        - { text: "夥伴在你的臨在範圍時增加 15% 魔力再生速度", stat: mana.regen@companion, type: INCREASED, value: 15 }
+    bonded:
+      slots:
+        head:
+          - { text: "保留效率增加 15%", stat: aura.reservation, type: INCREASED, value: -15 }
+        sceptre:
+          - { text: "夥伴在你的臨在範圍時增加 8% 生命回復率", stat: life.recovery_rate@companion, type: INCREASED, value: 8 }
+  idol_egrin:   # Idol of Egrin（羈絆權杖的「減少詛咒區域爆發前延遲」沒做）
+    name: 魔偶符文・埃格林
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "你詛咒的敵人受到的傷害增加 6%", stat: damage.vs_cursed, type: INCREASED, value: 6 }
+      sceptre:
+        - { text: "增加 20% 詛咒持續時間", stat: skill.duration, type: INCREASED, value: 20, tags: [curse] }
+    bonded:
+      slots:
+        head:
+          - { text: "詛咒增加 20% 範圍效果", stat: skill.area, type: INCREASED, value: 20, tags: [curse] }
+  idol_maxarius:   # Idol of Maxarius（羈絆胸甲的「技能上限 +1」沒做）
+    name: 魔偶符文・瑪薩里歐斯
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "+1 護符欄位", stat: charm.slots, type: FLAT, value: 1 }
+      sceptre:
+        - { text: "藥劑每秒獲得 0.2 充能", mods: [ { stat: flask.charges_per_minute.life, type: FLAT, value: 12 }, { stat: flask.charges_per_minute.mana, type: FLAT, value: 12 } ] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "增加 20% 藥劑的生命與魔力回復", mods: [ { stat: flask.life_recovery, type: INCREASED, value: 20 }, { stat: flask.mana_recovery, type: INCREASED, value: 20 } ] }
+  idol_ralakesh:   # Idol of Ralakesh（羈絆頭盔的「召喚物復甦速度」沒做）
+    name: 魔偶符文・芮勒蓋許
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "召喚物技能的保留效率增加 8%", stat: aura.reservation, type: INCREASED, value: -8, tags: [minion] }
+      sceptre:
+        - { text: "夥伴在你的臨在範圍時增加 40% 護甲、閃避與能量護盾", mods: [ { stat: armour@companion, type: INCREASED, value: 40 }, { stat: evasion@companion, type: INCREASED, value: 40 }, { stat: es.max@companion, type: INCREASED, value: 40 } ] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "夥伴增加 25% 最大生命", stat: life.max, type: INCREASED, value: 25, tags: [minion, companion] }
+  idol_greust:   # Idol of Greust（權杖「每有一種已死亡的盟友，盟友造成更多傷害」、羈絆的「每施加一種元素異常增加傷害」「召喚物復甦時回復生命」沒做）
+    name: 魔偶符文・古斯特
+    level: 50
+    limit: 1
+    slots:
+      shield:
+        - { text: "護甲值的 25% 也套用在元素傷害上", stat: armour.elemental, type: FLAT, value: 25 }
+      buckler:
+        - { text: "獲得等同於 20% 閃避值的偏斜值", stat: deflection.from_evasion, type: FLAT, value: 20 }
+      sceptre:
+        - { text: "夥伴增加 10% 傷害", stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
+  idol_yeena:   # Idol of Yeena（「植物首次進入臨在範圍時立即過度生長」沒做：權杖那條改成植物技能持續時間，羈絆兩邊對調）
+    name: 魔偶符文・伊娜
+    level: 50
+    limit: 1
+    slots:
+      feet:
+        - { text: "植物技能增加 30% 持續時間", stat: skill.duration, type: INCREASED, value: 30, tags: [plant] }
+      sceptre:
+        - { text: "植物技能增加 15% 持續時間", stat: skill.duration, type: INCREASED, value: 15, tags: [plant] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "植物技能增加 30% 持續時間", stat: skill.duration, type: INCREASED, value: 30, tags: [plant] }
+  idol_eramir:   # Idol of Eramir（權杖「夥伴跟你共享戰星」沒做，改成原作羈絆那條的戰星持續時間）
+    name: 魔偶符文・艾米爾
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "技能消耗戰星時 10% 機率不移除，但效果照算", stat: charge.sup.keep, type: FLAT, value: 10 }   # 2026-11-04：接上恆星輔助的機制（ChargeService.spend）；這次之前寫成護符不消耗充能
+      sceptre:
+        - { text: "增加 25% 戰星持續時間", stat: charge.duration, type: INCREASED, value: 25 }
+    bonded:
+      slots:
+        chest:
+          - { text: "用護符時 15% 機率不消耗充能", stat: charm.free_chance, type: FLAT, value: 15 }
+  idol_oak:   # Idol of Oak（「獲得磐星時 15% 機率多一顆」我們的 charge.extra 是三種戰星都算；權杖「改為夥伴獲得」、羈絆權杖「近期消耗磐星」沒做）
+    name: 魔偶符文・歐克
+    level: 50
+    limit: 1
+    slots:
+      feet:
+        - { text: "獲得戰星時 15% 機率多一顆同種的", stat: charge.extra, type: FLAT, value: 15 }
+      sceptre:
+        - { text: "+1 最大磐星數量", stat: charge.max.endurance, type: FLAT, value: 1 }
+    bonded:
+      slots:
+        feet:
+          - { text: "+1 最大磐星數量", stat: charge.max.endurance, type: FLAT, value: 1 }
+        sceptre:
+          - { text: "增加 40% 護甲", stat: armour, type: INCREASED, value: 40 }
+  idol_alira:   # Idol of Alira（同歐克）
+    name: 魔偶符文・阿莉亞
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "獲得戰星時 15% 機率多一顆同種的", stat: charge.extra, type: FLAT, value: 15 }
+      sceptre:
+        - { text: "+1 最大銳星數量", stat: charge.max.power, type: FLAT, value: 1 }
+    bonded:
+      slots:
+        head:
+          - { text: "+1 最大銳星數量", stat: charge.max.power, type: FLAT, value: 1 }
+        sceptre:
+          - { text: "增加 40% 最大能量護盾", stat: es.max, type: INCREASED, value: 40 }
+  idol_kraityn:   # Idol of Kraityn（同歐克）
+    name: 魔偶符文・克雷頓
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "獲得戰星時 15% 機率多一顆同種的", stat: charge.extra, type: FLAT, value: 15 }
+      sceptre:
+        - { text: "+1 最大怒星數量", stat: charge.max.frenzy, type: FLAT, value: 1 }
+    bonded:
+      slots:
+        legs:
+          - { text: "+1 最大怒星數量", stat: charge.max.frenzy, type: FLAT, value: 1 }
+        sceptre:
+          - { text: "增加 40% 閃避", stat: evasion, type: INCREASED, value: 40 }
+  idol_silk:   # Idol of Silk（輕盾「招架時夥伴獲得猛攻」、權杖「夥伴擊中時獲得盛怒」、羈絆輕盾「招架距離」沒做）
+    name: 魔偶符文・斯克
+    level: 50
+    limit: 1
+    slots:
+      shield:
+        - { text: "夥伴在你的臨在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
+      buckler:
+        - { text: "夥伴在你的臨在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
+      sceptre:
+        - { text: "夥伴增加 30% 範圍效果", stat: skill.area, type: INCREASED, value: 30, tags: [minion, companion] }
+    bonded:
+      slots:
+        shield:
+          - { text: "+3% 格擋率上限", stat: block.max, type: FLAT, value: 3 }
+        buckler:
+          - { text: "+3% 格擋率上限", stat: block.max, type: FLAT, value: 3 }
+  idol_sycophant:   # Idol of the Sycophant（原作是「隨機一種元素」的額外傷害，我們沒有隨機的，用火焰）
+    name: 魔偶符文・奉承
+    level: 50
+    limit: 1
+    weapon:
+      - { text: "-20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害", mods: [ { stat: resist.fire, type: FLAT, value: -20 }, { stat: resist.cold, type: FLAT, value: -20 }, { stat: resist.lightning, type: FLAT, value: -20 }, { stat: damage.extra.fire, type: FLAT, value: 20 } ] }
+    slots:
+      sceptre:
+        - { text: "夥伴 -20% 全部元素抗性、獲得 20% 傷害為額外火焰傷害", mods: [ { stat: resist.fire, type: FLAT, value: -20, tags: [minion, companion] }, { stat: resist.cold, type: FLAT, value: -20, tags: [minion, companion] }, { stat: resist.lightning, type: FLAT, value: -20, tags: [minion, companion] }, { stat: damage.extra.fire, type: FLAT, value: 20, tags: [minion, companion] } ] }
+    bonded:
+      weapon:
+        - { text: "-20% 混沌抗性、獲得 20% 傷害為額外混沌傷害", mods: [ { stat: resist.chaos, type: FLAT, value: -20 }, { stat: damage.extra.chaos, type: FLAT, value: 20 } ] }
+      slots:
+        sceptre:
+          - { text: "夥伴 -20% 混沌抗性、獲得 20% 傷害為額外混沌傷害", mods: [ { stat: resist.chaos, type: FLAT, value: -20, tags: [minion, companion] }, { stat: damage.extra.chaos, type: FLAT, value: 20, tags: [minion, companion] } ] }
+  idol_martyr:   # Idol of the Martyr
+    name: 魔偶符文・烈士
+    level: 50
+    limit: 1
+    weapon:
+      - { text: "減少 25% 精魂、主要技能增加 40% 獲得的能量", mods: [ { stat: spirit.max, type: INCREASED, value: -25 }, { stat: meta.energy_gain, type: INCREASED, value: 40 } ] }
+    slots:
+      sceptre:
+        - { text: "減少 40% 臨在範圍、光環技能增加 25% 效果", mods: [ { stat: presence.area, type: INCREASED, value: -40 }, { stat: aura.effect, type: INCREASED, value: 25 } ] }
+    bonded:
+      weapon:
+        - { text: "主要技能增加 25% 最大能量、保留效率增加 25%", mods: [ { stat: meta.energy_max, type: INCREASED, value: 25 }, { stat: aura.reservation, type: INCREASED, value: -25 } ] }
+      slots:
+        sceptre:
+          - { text: "臨在範圍內的友方每秒回復 3% 最大生命、減少 25% 生命回復率", mods: [ { stat: presence.ally_regen, type: FLAT, value: 3 }, { stat: life.recovery_rate, type: INCREASED, value: -25 } ] }
+  idol_pharisee:   # Idol of the Pharisee（「每失去十分之一魔力獲得額外物理傷害」「貧魔時技能速度」「暫時召喚物上限 +2」沒做）
+    name: 魔偶符文・偽善
+    level: 50
+    limit: 1
+    weapon:
+      - { text: "減少 30% 最大魔力", stat: mana.max, type: INCREASED, value: -30 }
+    slots:
+      sceptre:
+        - { text: "號令技能減少 30% 消耗、召喚物的號令技能增加 60% 傷害", mods: [ { stat: skill.cost, type: INCREASED, value: -30, tags: [command] }, { stat: damage, type: INCREASED, value: 60, tags: [minion, command] } ] }
+    bonded:
+      weapon:
+        - { text: "減少 30% 消耗效率", stat: skill.cost_efficiency, type: INCREASED, value: -30 }
+      slots:
+        sceptre:
+          - { text: "召喚物技能的保留效率增加 25%", stat: aura.reservation, type: INCREASED, value: -25, tags: [minion] }
+  idol_panther:   # Panther Idol（胸甲「護甲值的 10% 套用在混沌傷害」沒有這個機制，改成 +10% 混沌抗性）
+    name: 魔偶符文・花豹
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "+10% 混沌抗性", stat: resist.chaos, type: FLAT, value: 10 }
+      sceptre:
+        - { text: "召喚物 +20% 混沌抗性", stat: resist.chaos, type: FLAT, value: 20, tags: [minion] }
+    bonded:
+      slots:
+        chest:
+          - { text: "+8% 混沌抗性", stat: resist.chaos, type: FLAT, value: 8 }
+        sceptre:
+          - { text: "召喚物有 20% 額外物理傷害減免", stat: physical.reduction, type: FLAT, value: 20, tags: [minion] }
+  idol_hawk:   # Hawk Idol
+    name: 魔偶符文・翔鷹
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "增加 10% 偏斜值", stat: deflection, type: INCREASED, value: 10 }
+      sceptre:
+        - { text: "夥伴增加 12% 攻擊速度", stat: attack.speed, type: INCREASED, value: 12, tags: [minion, companion] }
+    bonded:
+      slots:
+        chest:
+          - { text: "+12% 冰冷抗性", stat: resist.cold, type: FLAT, value: 12 }
+        sceptre:
+          - { text: "夥伴在你的臨在範圍時增加 8% 攻擊速度", stat: attack.speed@companion, type: INCREASED, value: 8 }
+  idol_stoat:   # Stoat Idol（胸甲「所受傷害的 5% 穿透能量護盾」沒有這個機制，改成 +5% 最大能量護盾）
+    name: 魔偶符文・白鼬
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "增加 5% 最大能量護盾", stat: es.max, type: INCREASED, value: 5 }
+      sceptre:
+        - { text: "夥伴增加 25% 最大生命", stat: life.max, type: INCREASED, value: 25, tags: [minion, companion] }
+    bonded:
+      slots:
+        chest:
+          - { text: "+12% 閃電抗性", stat: resist.lightning, type: FLAT, value: 12 }
+        sceptre:
+          - { text: "夥伴在你的臨在範圍時增加 25% 傷害", stat: damage@companion, type: INCREASED, value: 25 }
+  idol_snake:   # Snake Idol（羈絆手套「痕跡效果」沒做）
+    name: 魔偶符文・蝮蛇
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "增加 8% 詛咒幅度", stat: curse.effect, type: INCREASED, value: 8 }
+      sceptre:
+        - { text: "夥伴增加 10% 攻擊速度", stat: attack.speed, type: INCREASED, value: 10, tags: [minion, companion] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "變形期間增加 10% 技能速度", mods: [ { stat: attack.speed@shapeshifted, type: INCREASED, value: 10 }, { stat: cast.speed@shapeshifted, type: INCREASED, value: 10 } ] }
+  idol_primate:   # Primate Idol（羈絆頭盔「痕跡撿拾距離」沒做）
+    name: 魔偶符文・靈長
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "召喚物增加 15% 最大生命", stat: life.max, type: INCREASED, value: 15, tags: [minion] }
+      sceptre:
+        - { text: "夥伴增加 40% 傷害", stat: damage, type: INCREASED, value: 40, tags: [minion, companion] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "變形期間增加 40% 傷害", stat: damage@shapeshifted, type: INCREASED, value: 40 }
+  idol_owl:   # Owl Idol（羈絆法器「統治者增益效果」沒做）
+    name: 魔偶符文・夜梟
+    level: 50
+    limit: 1
+    slots:
+      focus:
+        - { text: "增加 12% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 12 }
+      sceptre:
+        - { text: "夥伴增加 10% 施法速度", stat: cast.speed, type: INCREASED, value: 10, tags: [minion, companion] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "變形期間增加 10% 技能速度", mods: [ { stat: attack.speed@shapeshifted, type: INCREASED, value: 10 }, { stat: cast.speed@shapeshifted, type: INCREASED, value: 10 } ] }
+  idol_cat:   # Cat Idol
+    name: 魔偶符文・靈貓
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "增加 25% 命中值", stat: accuracy, type: INCREASED, value: 25 }
+      sceptre:
+        - { text: "夥伴增加 14% 暴擊率", stat: crit.chance, type: INCREASED, value: 14, tags: [minion, companion] }
+    bonded:
+      slots:
+        legs:
+          - { text: "增加 30% 護符充能獲取", stat: charm.charges_gained, type: INCREASED, value: 30 }
+        sceptre:
+          - { text: "變形期間增加 25% 暴擊率", stat: crit.chance@shapeshifted, type: INCREASED, value: 25 }
+  idol_wolf:   # Wolf Idol（羈絆手套「減少你身上的流血幅度」沒做）
+    name: 魔偶符文・野狼
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "增加 15% 你所施加之流血的幅度", stat: bleed.magnitude, type: INCREASED, value: 15 }
+      sceptre:
+        - { text: "夥伴增加 20% 暴擊傷害加成", stat: crit.bonus, type: INCREASED, value: 20, tags: [minion, companion] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "變形期間增加 25% 暴擊率", stat: crit.chance@shapeshifted, type: INCREASED, value: 25 }
+  idol_stag:   # Stag Idol（頭盔「投射物 15% 機率分裂」改成投射物第一次打中時分裂；權杖「夥伴附加閃電攻擊傷害」、羈絆頭盔「分裂時多射一個」沒做）
+    name: 魔偶符文・雄鹿
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "投射物第一次打中時分裂", stat: skill.split_shot, type: FLAT, value: 1 }
+      sceptre:
+        - { text: "夥伴增加 20% 閃電傷害", stat: damage, type: INCREASED, value: 20, tags: [minion, companion, lightning] }
+    bonded:
+      slots:
+        sceptre:
+          - { text: "變形期間增加 40% 攻擊傷害", stat: damage@shapeshifted, type: INCREASED, value: 40, tags: [attack] }
+  idol_boar:   # Boar Idol
+    name: 魔偶符文・野豬
+    level: 50
+    limit: 1
+    slots:
+      legs:
+        - { text: "擊中時獲得 1 點怒氣", stat: rage.on_hit, type: FLAT, value: 1 }
+      sceptre:
+        - { text: "臨在範圍內的友方每秒回復 0.5% 最大生命", stat: presence.ally_regen, type: FLAT, value: 0.5 }
+    bonded:
+      slots:
+        legs:
+          - { text: "戰吼增加 25% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 25, tags: [warcry] }
+        sceptre:
+          - { text: "變形期間增加 25% 生命回復率", stat: life.recovery_rate@shapeshifted, type: INCREASED, value: 25 }
+  idol_bear:   # Bear Idol（權杖「夥伴附加物理攻擊傷害」改成夥伴增加 20% 物理傷害）
+    name: 魔偶符文・巨熊
+    level: 50
+    limit: 1
+    slots:
+      head:
+        - { text: "增加 10% 範圍效果", stat: skill.area, type: INCREASED, value: 10 }
+      sceptre:
+        - { text: "夥伴增加 20% 物理傷害", stat: damage, type: INCREASED, value: 20, tags: [minion, companion, physical] }
+    bonded:
+      slots:
+        head:
+          - { text: "夥伴技能的保留效率增加 12%", stat: aura.reservation, type: INCREASED, value: -12, tags: [minion, companion] }
+        sceptre:
+          - { text: "變形期間增加 40% 攻擊傷害", stat: damage@shapeshifted, type: INCREASED, value: 40, tags: [attack] }
+  idol_ox:   # Ox Idol
+    name: 魔偶符文・公牛
+    level: 50
+    limit: 1
+    slots:
+      shield:
+        - { text: "增加 15% 格擋率", stat: block.chance, type: INCREASED, value: 15 }
+      buckler:
+        - { text: "增加 15% 格擋率", stat: block.chance, type: INCREASED, value: 15 }
+      sceptre:
+        - { text: "夥伴 +12% 全部元素抗性", mods: [ { stat: resist.fire, type: FLAT, value: 12, tags: [minion, companion] }, { stat: resist.cold, type: FLAT, value: 12, tags: [minion, companion] }, { stat: resist.lightning, type: FLAT, value: 12, tags: [minion, companion] } ] }
+    bonded:
+      slots:
+        shield:
+          - { text: "敵人擊中你的傷害 15% 機率視為厄運", stat: damage.unlucky_taken, type: FLAT, value: 15 }
+        buckler:
+          - { text: "敵人擊中你的傷害 15% 機率視為厄運", stat: damage.unlucky_taken, type: FLAT, value: 15 }
+        sceptre:
+          - { text: "變形期間護甲值的 20% 也套用在元素傷害上", stat: armour.elemental@shapeshifted, type: FLAT, value: 20 }
+  idol_rabbit:   # Rabbit Idol
+    name: 魔偶符文・狡兔
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "增加 12% 物品稀有度", stat: drop.rarity, type: INCREASED, value: 12 }
+      sceptre:
+        - { text: "增加 15% 精魂", stat: spirit.max, type: INCREASED, value: 15 }
+    bonded:
+      slots:
+        chest:
+          - { text: "增加 10% 殺死敵人時掉落的金幣數量", stat: gold.find, type: INCREASED, value: 10 }
+        sceptre:
+          - { text: "召喚物的號令技能增加 30% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 30, tags: [minion, command] }
+  idol_fox:   # Fox Idol（胸甲「嵌在這件上的魔偶獲得羈絆加成」：local.rune_bonded，這件上所有符文、魔偶的羈絆都生效，不用聖賢智慧）
+    name: 魔偶符文・狐狸
+    level: 50
+    limit: 1
+    slots:
+      chest:
+        - { text: "嵌在這件上的符文與魔偶獲得羈絆加成", stat: local.rune_bonded, type: FLAT, value: 1 }
+      sceptre:
+        - { text: "增加 50% 臨在範圍", stat: presence.area, type: INCREASED, value: 50 }
+    bonded:
+      slots:
+        chest:
+          - { text: "+5% 全部技能的品質", stat: skill.quality, type: FLAT, value: 5 }
+        sceptre:
+          - { text: "召喚物增加 30% 範圍效果", stat: skill.area, type: INCREASED, value: 30, tags: [minion] }

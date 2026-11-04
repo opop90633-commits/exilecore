@@ -4282,13 +4282,14 @@ public final class SkillService {
             final double events;
             if (spec.kind() == MetaSpec.Kind.CRIT) {
                 // 2026-10-26：暴擊引星照打掉異常門檻的 % 給能量；估計時當每下打掉 10%（＝這次之前固定的每點強度 10）
-                events = main.rate() * main.crit() * MetaGems.CRIT_PERCENT_FALLBACK;
+                // 2026-11-04 照原作：每點強度 1 × 打掉門檻的比例；估計照打傳奇（強度 20）、每下打掉 10%；這次之前 × 10（當成普通怪、百分比數字）
+                events = main.rate() * main.crit() * MetaGems.ESTIMATE_POWER * MetaGems.CRIT_PERCENT_FALLBACK / 100.0;
             } else if (spec.kind() == MetaSpec.Kind.AILMENT) {
                 if (ailmentsPerHit == null) {
                     ailmentsPerHit = mainAilments(state, sheet, main);
                 }
                 // 2026-10-26 照 PoE2：冰凍 ×10（這次之前 ×3）；點燃照打掉異常門檻的 %，估計時當 10%（跟暴擊一樣）
-                events = main.rate() * (ailmentsPerHit[0] * MetaGems.CRIT_PERCENT_FALLBACK + ailmentsPerHit[1] + 10 * ailmentsPerHit[2]);
+                events = main.rate() * MetaGems.ESTIMATE_POWER * (ailmentsPerHit[0] * MetaGems.CRIT_PERCENT_FALLBACK / 100.0 + ailmentsPerHit[1] + 10 * ailmentsPerHit[2]); // 2026-11-04 照原作（點燃 × 比例）；估計照打傳奇
             } else {
                 continue;
             }
@@ -4870,7 +4871,39 @@ public final class SkillService {
             final SkillBuild yours = buildCached(state, sheet, definition, entry);
             return buildCached(state, djinn, definition, entry).withManaCost(yours.manaCost());
         }
+        // 2026-11-04 照站長「插兩顆範圍，冰封的範圍顯示都沒動」：巨靈還沒叫出來（剛上線、換圖還沒跟上）時，面板上的指令照估的巨靈屬性表
+        //   （含巨靈召喚技能上的輔助，同網頁的 estimatedDjinnSheet）顯示；這次之前照你自己的屬性表，巨靈身上的範圍、持續輔助都看不到
+        //   （實際放的時候巨靈一定在，照的是牠的屬性表，本來就有吃到）
+        if (djinn == null && sheet != null && state != null && DjinnCommands.djinnFor(definition.id()) != null) {
+            final StatSheet estimated = cachedEstimatedDjinn(state, sheet, definition);
+            if (estimated != null) {
+                final SkillBuild yours = buildCached(state, sheet, definition, entry);
+                return buildFresh(state, estimated, definition, entry).withManaCost(yours.manaCost());
+            }
+        }
         return buildCached(state, sheet, definition, entry);
+    }
+
+    /** 2026-11-04：估的巨靈屬性表（面板顯示用）：同一個人、同一位巨靈、同一張你的屬性表（沒改過）就用上次的，免得每次顯示都重算。 */
+    private record EstimatedDjinn(String djinn, StatSheet owner, long version, java.util.List<String> supports, StatSheet sheet) {
+    }
+
+    private final Map<java.util.UUID, EstimatedDjinn> estimatedDjinns = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private StatSheet cachedEstimatedDjinn(final PlayerState state, final StatSheet sheet, final SkillDefinition definition) {
+        final String djinn = DjinnCommands.djinnFor(definition.id());
+        final int position = state.skills().find(djinn);
+        final java.util.List<String> supports = position < 0 ? java.util.List.of() : java.util.List.copyOf(state.skills().skill(position).supportIds());
+        final EstimatedDjinn cached = estimatedDjinns.get(state.uuid());
+        if (cached != null && cached.djinn().equals(djinn) && cached.owner() == sheet && cached.version() == sheet.version()
+                && cached.supports().equals(supports)) {
+            return cached.sheet();
+        }
+        final StatSheet estimated = estimatedDjinnSheet(state, sheet, definition);
+        if (estimated != null) {
+            estimatedDjinns.put(state.uuid(), new EstimatedDjinn(djinn, sheet, sheet.version(), supports, estimated));
+        }
+        return estimated;
     }
 
     /** 2026-10-29：巨靈指令用的屬性表（那位巨靈的；不是巨靈的指令、或巨靈沒叫出來回傳 null）。 */
@@ -5154,7 +5187,8 @@ public final class SkillService {
     private SkillBuild buildFresh(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry,
                                   final List<tw.exilecore.stats.Modifier> more) {
         // 2026-10-22：宿主寶石（英靈圖騰、星咒圖騰、暴擊引星）孔裡的輔助是給放進去的技能的；宿主自己只吃其中要圖騰的、加速度與持續的
-        final List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
+        List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
+        supports = withinCopies(state, sheet, entry, supports); // 2026-11-04 照站長：血脈輔助一個角色一顆，超過的沒有效果
         // 2026-10-26（昇華・嵌晶）：技能品質 +x%、進階奇術（品質效果加倍）、鑲嵌物（技能等級）、整合效率（相連的輔助顏色）
         final tw.exilecore.ascendancy.AscBuild.Gem gem = tw.exilecore.ascendancy.AscBuild.gem(sheet, definition, supports);
         final int quality = entry.quality() + gem.quality() + bonusQuality(sheet); // 2026-10-26：＋天賦樹的技能品質
@@ -5169,6 +5203,14 @@ public final class SkillService {
         if (!more.isEmpty()) {
             extra = new ArrayList<>(extra);
             extra.addAll(more); // 2026-10-27：裂甲熊咆插槽
+        }
+        // 2026-11-04（澤佛伊的創世紀，PoE2「任何藥劑效果期間增加 x% 已汙染寶石技能的消耗效能」）：已腐化的技能寶石才吃（條件在屬性表上已經判斷過）
+        final double corruptedEfficiency = entry.corrupted() && sheet != null
+                ? sheet.increased(tw.exilecore.item.unique.UniqueStats.CORRUPTED_GEM_COST_EFFICIENCY, java.util.Set.of()) : 0;
+        if (corruptedEfficiency != 0) {
+            extra = new ArrayList<>(extra);
+            extra.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.CostKeys.COST_EFFICIENCY, tw.exilecore.stats.ModType.INCREASED,
+                    corruptedEfficiency, java.util.Set.of(), "澤佛伊的創世紀"));
         }
         final StatSheet gemSheet = gem.levels() > 0 && sheet != null
                 ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;
@@ -5767,6 +5809,27 @@ public final class SkillService {
     }
 
     /** 技能掛的輔助寶石（資料檔裡已經沒有的略過）。 */
+    /**
+     * 2026-11-04 照站長「照原作改成一個角色一顆」：同一種血脈輔助超過能掛的顆數（{@link SkillConfig#supportCopies}；脫下唯我論、
+     * 以前存下來的）照面板順序，後面的技能上那一顆沒有效果。entry 不在面板上（背包裡的寶石、網頁）照原樣。
+     */
+    List<SupportDefinition> withinCopies(final PlayerState state, final StatSheet sheet, final SkillLoadout.Entry entry, final List<SupportDefinition> supports) {
+        if (state == null || supports.isEmpty() || supports.stream().noneMatch(SupportDefinition::lineage)) {
+            return supports;
+        }
+        final List<SupportDefinition> kept = new ArrayList<>(supports.size());
+        for (final SupportDefinition support : supports) {
+            if (support.lineage()) {
+                final int before = state.skills().supportCountBefore(support.id(), entry);
+                if (before >= 0 && before >= config.supportCopies(support.id(), sheet)) {
+                    continue;
+                }
+            }
+            kept.add(support);
+        }
+        return kept;
+    }
+
     List<SupportDefinition> supportsOf(final SkillLoadout.Entry entry) {
         final List<SupportDefinition> list = new ArrayList<>();
         for (final String id : entry.supportIds()) {
@@ -6177,17 +6240,27 @@ public final class SkillService {
     /** 面板上（或寶石裡）一個技能在這個玩家身上的說明。 */
     public List<String> describe(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         final PlayerState state = plugin.players().get(player);
-        final List<String> lines = new ArrayList<>(describe(player, build(state, plugin.players().sheet(player), definition, entry)));
+        final SkillBuild built = build(state, plugin.players().sheet(player), definition, entry);
+        final List<String> lines = new ArrayList<>(describe(player, built));
         // 2026-10-23：品質、腐化放在標籤下面第一行（以前面板上看不到）
         final List<String> top = new ArrayList<>();
+        // 2026-11-04 照站長「願晶沒影響到主技能的數值」：其實有算進去，只是面板上的等級、品質沒寫——輔助加的等級（願晶、孤星、雙兆、三兆、
+        //   元素專精…）、裝備加的等級寫成「實際 Lv.」；願晶的品質也算進品質那一行
+        if (!entry.granted() || built.level() != entry.level()) {
+            if (built.level() != entry.level()) {
+                top.add("<#8888ff>◆ 實際等級 Lv." + built.level() + " <gray>（寶石 Lv." + entry.level() + (built.level() > entry.level() ? " ＋輔助、裝備加的 "
+                        + (built.level() - entry.level()) : " －角色等級、屬性不夠降的 " + (entry.level() - built.level())) + "）");
+            }
+        }
         // 2026-10-29 照站長：品質照實際生效的算（寶石＋昇華「技能寶石品質」＋天賦樹），寫出各自加了多少；這次之前只寫寶石自己的
         final StatSheet qualitySheet = plugin.players().sheet(player);
         final int ascQuality = ascendancyQuality(qualitySheet);
         final int treeQuality = bonusQuality(qualitySheet);
-        final int totalQuality = entry.quality() + ascQuality + treeQuality;
+        final int lineageQuality = lineageQuality(definition, entry); // 2026-11-04：願晶
+        final int totalQuality = entry.quality() + ascQuality + treeQuality + lineageQuality;
         final String quality = qualityText(definition, totalQuality);
         if (totalQuality > 0) {
-            top.add("<#8888ff>◆ 品質 " + totalQuality + "%" + qualitySources(entry, ascQuality, treeQuality)); // 2026-10-27：武器賦予的寫「來自武器」
+            top.add("<#8888ff>◆ 品質 " + totalQuality + "%" + qualitySources(entry, ascQuality, treeQuality, lineageQuality)); // 2026-10-27：武器賦予的寫「來自武器」
         }
         if (quality != null) {
             top.add("<#8888ff>◆ " + ItemRenderer.escape(quality));
@@ -6465,6 +6538,11 @@ public final class SkillService {
 
     /** 2026-10-29：品質的來源（寶石／武器、昇華、天賦樹），只有一種來源的寶石不寫；例如「（寶石 10% ＋昇華 4%）」。 */
     static String qualitySources(final SkillLoadout.Entry entry, final int ascQuality, final int treeQuality) {
+        return qualitySources(entry, ascQuality, treeQuality, 0);
+    }
+
+    /** 2026-11-04：同上，加上血脈輔助（願晶）給的品質。 */
+    static String qualitySources(final SkillLoadout.Entry entry, final int ascQuality, final int treeQuality, final int lineageQuality) {
         final List<String> parts = new ArrayList<>();
         if (entry.quality() > 0) {
             parts.add((entry.granted() ? "武器 " : "寶石 ") + entry.quality() + "%");
@@ -6475,10 +6553,32 @@ public final class SkillService {
         if (treeQuality > 0) {
             parts.add("天賦樹 " + treeQuality + "%");
         }
+        if (lineageQuality > 0) {
+            parts.add("輔助 " + lineageQuality + "%");
+        }
         if (parts.isEmpty() || parts.size() == 1 && entry.quality() > 0 && !entry.granted()) {
             return "";
         }
         return "<gray>（" + String.join(" ＋", parts) + "）";
+    }
+
+    /** 2026-11-04：掛在這個技能上的血脈輔助（願晶）給的品質（只算真的輔助得到的）。 */
+    public int lineageQuality(final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        int total = 0;
+        final List<SupportDefinition> supports = SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry);
+        final List<String> ids = SkillBuild.supportIds(supports);
+        for (final SupportDefinition support : supports) {
+            if (support != null && support.lineage() && support.supports(definition, ids)) {
+                total += (int) Math.round(LineageRules.total(support, tw.exilecore.stats.LineageKeys.QUALITY));
+            }
+        }
+        return total;
+    }
+
+    /** 2026-11-04：面板上這個技能實際生效的等級（寶石等級＋輔助、裝備加的，減角色等級、屬性不夠降的）。 */
+    public int effectiveLevel(final Player player, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final PlayerState state = plugin.players().get(player);
+        return build(state, plugin.players().sheet(player), definition, entry).level();
     }
 
     /** 圖鑑（2026-10）：看 Lv.30、Lv.40 這種超過寶石上限的數值——寶石當 20 級，多的當成「+x 技能等級」（再加上你裝備本來的）。 */

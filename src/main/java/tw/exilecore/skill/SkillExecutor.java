@@ -492,8 +492,11 @@ final class SkillExecutor {
                 ? TreeMechanics.aftershockRadius(build.profile().effective(plugin.players().sheet(origin.owner())), build.profile().tags()) : 1.0;
         final SkillProfile shock = TectonicSlams.aftershockProfile(profile.scaled(1.0, "餘震"));
         for (int i = 0; i < stages; i++) {
-            zones.addImpact(origin.owner(), center, SlamCascade.aftershockRadius(i) * build.areaScale() * shockArea
-                    * TectonicSlams.aftershockRadius(build.profile()), shock, build.definition().visual(), SlamCascade.aftershockDelay(i));
+            final double shockRadius = SlamCascade.aftershockRadius(i) * build.areaScale() * shockArea * TectonicSlams.aftershockRadius(build.profile());
+            zones.addImpact(origin.owner(), center, shockRadius, shock, build.definition().visual(), SlamCascade.aftershockDelay(i));
+            if (origin.self()) {
+                jaggedFromAftershock(origin.owner(), build, center, shockRadius, SlamCascade.aftershockDelay(i));
+            }
         }
         if (origin.self()) {
             uniqueAftershocks(origin.owner(), build, profile, center, radius);
@@ -515,8 +518,34 @@ final class SkillExecutor {
                 * TectonicSlams.aftershockRadius(build.profile()); // 2026-11-01 照 PoE2 Tectonic Slams：餘震範圍更少 30%
         for (int i = 1; i <= Math.min(3, extra); i++) {
             zones.addImpact(owner, center, shockRadius, profile.scaled(TectonicSlams.damageFactor(SkillZones.localFlat(build.profile(), TectonicSlams.DAMAGE_LESS)), "餘震"), build.definition().visual(), 10 * i);
+            jaggedFromAftershock(owner, build, center, shockRadius, 10 * i);
         }
     }
+
+    /** 2026-11-04 照 PoE2 Jagged Ground II（碎地 II）：餘震落下時一定在落點留下 x 秒的碎石地（support 的 jagged.aftershock_seconds）。 */
+    private void jaggedFromAftershock(final Player owner, final SkillBuild build, final Location center, final double radius, final long delayTicks) {
+        if (owner == null || plugin.skills() == null || plugin.skills().chargeEffects() == null) {
+            return;
+        }
+        final double seconds = build.profile().effective(plugin.players().sheet(owner)).flat(JAGGED_AFTERSHOCK, build.profile().tags());
+        if (seconds <= 0) {
+            return;
+        }
+        final Location at = center.clone();
+        final Runnable place = () -> {
+            if (owner.isOnline()) {
+                plugin.skills().chargeEffects().skillJagged(owner, at, radius, Math.round(seconds * 20), 0, build);
+            }
+        };
+        if (delayTicks <= 0) {
+            place.run();
+        } else {
+            plugin.getServer().getScheduler().runTaskLater(plugin, place, delayTicks);
+        }
+    }
+
+    /** 碎地 II：餘震留碎石地幾秒（FLAT）。 */
+    public static final String JAGGED_AFTERSHOCK = "jagged.aftershock_seconds";
 
     /**
      * 你自己使用的猛擊多幾次餘震：鑄父之錘、天賦樹的機率、技能自己的「x% 機率多一次餘震」（2026-10-28 照 PoE2 奔雷踏、炎脈裂地的品質，

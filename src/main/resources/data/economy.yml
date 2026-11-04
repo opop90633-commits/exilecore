@@ -206,6 +206,53 @@ values:
   # 2026-10：通貨頁上其他的東西也能拿來標價、在交易所買賣（以前沒寫價值就不行；鑑定卷軸照舊不列）。起始值是估的，之後照成交價走
   unveil_stone: 1000            # 2026-10：500 → 1000（劫盜掉落機率也減半）
   rune_iron: 400
+  # 2026-11-04：魂核符文（地圖絕境給）、魔偶符文（地圖軍團給）：估的，之後照成交價走
+  rune_core_tacati: 3000
+  rune_core_opiloti: 3000
+  rune_core_jiquani: 3000
+  rune_core_zalatl: 3000
+  rune_core_citaqualotl: 3000
+  rune_core_puhuarte: 3000
+  rune_core_tzamoto: 3000
+  rune_core_xopec: 3000
+  rune_core_azcapa: 3000
+  rune_core_topotante: 3000
+  rune_core_quipolatl: 3000
+  rune_core_ticaba: 3000
+  rune_core_atmohua: 3000
+  rune_core_cholotl: 3000
+  rune_core_zantipi: 3000
+  rune_idol_sirrius: 2500
+  rune_idol_thruldana: 2500
+  rune_idol_grold: 2500
+  rune_idol_eeshta: 2500
+  rune_idol_egrin: 2500
+  rune_idol_maxarius: 2500
+  rune_idol_ralakesh: 2500
+  rune_idol_greust: 2500
+  rune_idol_yeena: 2500
+  rune_idol_eramir: 2500
+  rune_idol_oak: 2500
+  rune_idol_alira: 2500
+  rune_idol_kraityn: 2500
+  rune_idol_silk: 2500
+  rune_idol_sycophant: 2500
+  rune_idol_martyr: 2500
+  rune_idol_pharisee: 2500
+  rune_idol_panther: 2500
+  rune_idol_hawk: 2500
+  rune_idol_stoat: 2500
+  rune_idol_snake: 2500
+  rune_idol_primate: 2500
+  rune_idol_owl: 2500
+  rune_idol_cat: 2500
+  rune_idol_wolf: 2500
+  rune_idol_stag: 2500
+  rune_idol_boar: 2500
+  rune_idol_bear: 2500
+  rune_idol_ox: 2500
+  rune_idol_rabbit: 2500
+  rune_idol_fox: 2500
   rune_ember: 400
   rune_frost: 400
   rune_storm: 400
@@ -235,6 +282,8 @@ values:
   ticket_ritual: 15000
   ticket_delirium: 15000
   ticket_abyss: 15000
+  legion_emblem: 3000              # 2026-11-04 照站長：時沉徽記（5 個開一場時沉領域；將領必掉 1）
+  fog_splinter: 300                # 2026-11-04 照站長：迷霧碎片（50 個開一次迷霧回廊；幻霧一次給 4–8 個）
   # 2026-10-21：先驅石板（插在完成的塔上）：完成塔必掉 1 片、地圖事件 3%、地圖 Boss 2%；以前沒寫價值，拆解只有 0 金幣
   # 2026-10-21：4500 → 1000（掉得比需要的多，拆解不要變成金幣來源；石板改成 3 次用完）
   tablet_shrine: 1000

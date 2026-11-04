@@ -224,7 +224,7 @@ public final class CraftBenchMenu extends Menu {
                 after.setOmen(omen.id());
             }
         }
-        if (after.corrupted() && !currency.operation().allowedOnCorrupted()) {
+        if (!currency.operation().allowedOn(after, plugin.items().repository())) { // 2026-11-04：混沌一瞥腐化了還能改
             return "已腐化的物品不能再改造";
         }
         if (!currency.canApply(after, plugin.items().generator())) {

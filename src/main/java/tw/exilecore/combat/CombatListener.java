@@ -413,6 +413,7 @@ public final class CombatListener implements Listener {
         if (defenderIsPlayer && dodge != null && dodge.invulnerable((Player) defender)
                 && (skill == null || !skill.tags().contains(DodgeRoll.UNDODGEABLE_TAG))
                 && (dodge.iframe((Player) defender) // 2026-10-31 照站長：一開始 0.1 秒什麼都躲得開
+                || tw.exilecore.stats.StatKeys.flag(plugin.players().sheet((Player) defender), tw.exilecore.item.unique.UniqueStats.FLAG_DODGE_ALL_HITS) // 2026-11-04（源於永恆）：躲開全部擊中
                 || DodgeRoll.avoids(skill == null || skill.isAttack() && skill.tags().contains(tw.exilecore.stats.Tags.MELEE),
                         event.getDamager() instanceof org.bukkit.entity.Projectile || skill != null && skill.tags().contains(tw.exilecore.stats.Tags.PROJECTILE)))) {
             event.setCancelled(true); // 翻滾中（2026-10）：打不到
@@ -686,6 +687,7 @@ public final class CombatListener implements Listener {
             if (ailments != null) {
                 for (final tw.exilecore.ailment.AilmentType type : new tw.exilecore.ailment.AilmentType[] {tw.exilecore.ailment.AilmentType.CHILL,
                         tw.exilecore.ailment.AilmentType.FREEZE, tw.exilecore.ailment.AilmentType.IGNITE, tw.exilecore.ailment.AilmentType.SHOCK,
+                        tw.exilecore.ailment.AilmentType.ELECTROCUTE, // 2026-11-04（元刃 III）：電擊也算一種元素異常
                         tw.exilecore.ailment.AilmentType.POISON, tw.exilecore.ailment.AilmentType.BLEED}) {
                     final String stat = StatKeys.DAMAGE_VS_AILMENT + ailmentWord(type);
                     final double inc = conditionSheet.increased(stat, hitTagSet);
@@ -1254,6 +1256,7 @@ public final class CombatListener implements Listener {
             case FREEZE -> "frozen";
             case IGNITE -> "ignited";
             case SHOCK -> "shocked";
+            case ELECTROCUTE -> "electrocuted"; // 2026-11-04
             case POISON -> "poisoned";
             case BLEED -> "bleeding";
             default -> type.name().toLowerCase(java.util.Locale.ROOT);

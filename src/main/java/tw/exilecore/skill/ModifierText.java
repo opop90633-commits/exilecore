@@ -493,7 +493,7 @@ public final class ModifierText {
             case StatKeys.CRYSTAL_COUNT -> "留下 " + number(value) + " 顆冰晶（技能直接打到冰晶、或擊中冰晶旁邊的敵人都算打一下，打碎時炸出一圈冰）";
             case StatKeys.CRYSTAL_HITS -> modifier.type() == tw.exilecore.stats.ModType.FLAT
                     ? (value >= 0 ? "冰晶要多打 " + number(value) + " 下才碎" : "冰晶少打 " + number(-value) + " 下就碎（最少一下）")
-                    : scaled(modifier, "冰晶要打的下數", percent);
+                    : scaled(modifier, "冰晶最大生命（照打幾下算的冰晶：要打的下數）", percent); // 2026-11-04：厚晶、霜壁品質；這次之前寫「冰晶要打的下數」
             case StatKeys.FLAG_HOARFROST -> "冰晶周圍一直結霜，冰傷周圍的敵人";
             case StatKeys.FLAG_CRYSTAL_SHARDS -> "被輔助的技能留下的冰晶爆炸時，100% 穿刺打到的敵人（冰冷傷害也算，這一下不會抽出穿刺）"; // 2026-11-01 照 PoE2 Crystalline Shards
             case StatKeys.FLAG_VERGLAS -> "打碎冰晶時，被輔助的技能 6 秒內獲得傷害的 1% 為額外冰冷傷害（冰晶最大生命每 2000 點算 1%）";
@@ -633,6 +633,10 @@ public final class ModifierText {
                 }
                 if (tw.exilecore.ascendancy.StatLines.knows(stat)) {
                     yield tw.exilecore.ascendancy.StatLines.describe(modifier);
+                }
+                final String mechanic = MechanicLines.describe(stat, value); // 2026-11-04 照站長：怪物詞綴的機制、輔助的旗標寫成一句話
+                if (mechanic != null) {
+                    yield mechanic;
                 }
                 yield "特殊效果（" + number(value) + "）";
             }

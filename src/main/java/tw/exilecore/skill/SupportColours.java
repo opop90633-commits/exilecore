@@ -24,7 +24,8 @@ public final class SupportColours {
 
     private static final Map<Character, String> LISTS = Map.of(
             RED, // PoE2 RePoE 紅色
-            "savage_cruelty awe_shock grave_wound angry_roar_ii execute final_sentence_ii final_sentence_iii melt_break sinking_hammer ponderous_weight burning_will "
+            "balanced_verdict sentence_stun phalanx_maim war_horn " // 2026-11-04 事件 Boss 專屬
+                    + "savage_cruelty awe_shock grave_wound angry_roar_ii execute final_sentence_ii final_sentence_iii melt_break sinking_hammer ponderous_weight burning_will "
                     + "burning_servant_ii rend_cut_iii life_leech deep_brand_ii flesh_bulwark blood_oath_howl "
                     + "long_stay rage merciless_heart firm_post blood_renown "
                     // 自己歸類（火焰、物理近戰、護甲、戰吼、圖騰、流血、磐星）
@@ -40,6 +41,8 @@ public final class SupportColours {
                     + "reveal_howl twin_chamber jolt_load fury_cast dizzy_howl sow_fire quake_ring "
                     + "low_resound twin_quake stored_howl gather_fury_howl slow_detonate rapid_detonate plate_burst "
                     + "bedrock_shatter bedrock_quake blood_pay shattered_earth dormant_shell "
+                    // 2026-11-04 照站長「要根據原作去處理」：元刃 III、碎地 II（PoB2 都是力量）
+                    + "element_blade_iii shattered_earth_ii "
                     // 2026-10-27 照 PoE2 0.5 恢復的節流（Efficiency，RePoE 紅色）
                     + "cost_saving "
                     // 2026-10-27 照 PoE2 0.5 補上的一般輔助（照 RePoE 的顏色；tools/apply_poe2_missing_supports.py）
@@ -50,7 +53,8 @@ public final class SupportColours {
                     + "split_totem_ii steady_guard_ii iron_grit_ii tread_quake merged_orbit split_wound unflinching_will never_broken dig_weakness "
                     + "stand_fast land_uplift_ii front_line_ii",
             GREEN, // PoE2 RePoE 綠色
-            "minion_speed chain full_stars hug_range hug_range_ii conduction slay_cut_ii electrocute "
+            "faceless_blind " // 2026-11-04 事件 Boss 專屬
+                    + "minion_speed chain full_stars hug_range hug_range_ii conduction slay_cut_ii electrocute "
                     + "poison_temper_iii quick_strike swift_bolt_iii split_shot thunder_pass far_pierce_ii "
                     + "light_split blazing_volt pierce thunder_smite rapid_corrode_iii "
                     + "quick_return potent_toxin "
@@ -73,7 +77,8 @@ public final class SupportColours {
                     + "volt_load clever_break flawless_form breach_hit chase_strike_iii withdraw_strike_iii redeploy_ii bounce_shot_iii "
                     + "rise_again_iii slow_vigor light_shadow unrest_stir shadowless_step good_chance_ii",
             BLUE, // PoE2 RePoE 藍色
-            "grudge_cinder quake_zone decay_infuse frost_grudge_howl chill_through condense_power charged_chant fine_control abyss_floor_chill element_corps "
+            "heavier_sentence oblivion_chaos mist_spread time_stilled " // 2026-11-04 事件 Boss 專屬
+                    + "grudge_cinder quake_zone decay_infuse frost_grudge_howl chill_through condense_power charged_chant fine_control abyss_floor_chill element_corps "
                     + "purify_essence quick_chant ice_seal zone_expand mana_draw twin_chant "
                     // 自己歸類（法術、冰冷、混沌、召喚、詛咒、光環、銳星、暴擊率）
                     + "minion_life bloodthirst_summon huge_soul nether_river_crossing "

@@ -54,7 +54,7 @@ class EventPinnacleContentTest {
     void everyEventBossHasThreeUniquesTwoSkillsAndThreeSupports() {
         // 2026-10-28 照 PoE2：原作限定那隻巔峰 Boss 掉的傳奇（物品等級照原作）也放進來：裂隙 ← 知行捲布、祭壇 ← 務實戰甲、幻霧 ← 崩落地平
         final java.util.Map<String, Set<String>> ref = java.util.Map.of("breach_lord", Set.of("wisdom_action_wraps"),
-                "ritual_priest", Set.of("pragmatist_armour"), "delirium_mirror", Set.of("fallen_horizon"));
+                "ritual_priest", Set.of("pragmatist_armour")); // 2026-11-04 照站長：崩落地平（科西斯）只有迷霧之主掉，不在幻霧巔峰了
         for (final String boss : BOSSES.keySet()) {
             final Set<String> extra = ref.getOrDefault(boss, Set.of());
             final List<UniqueItem> uniques = repository.uniquesFor(boss, 92).stream().filter(u -> !extra.contains(u.id())).toList();

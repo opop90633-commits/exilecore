@@ -81,9 +81,14 @@ class PhaseMechanicDataTest {
             assertEquals(phases.size(), specs.size(), entry.label());
             final Set<PhaseMechanic.Kind> kinds = EnumSet.noneOf(PhaseMechanic.Kind.class);
             table.append(entry.label()).append("：");
+            int locks = 0;
             for (int i = 0; i < specs.size(); i++) {
                 final PhaseMechanic.Spec spec = specs.get(i);
-                assertNotNull(spec, entry.label() + " 第 " + (i + 1) + " 階段沒有鎖血機制");
+                if (spec == null) {
+                    table.append(i == 0 ? "" : "、").append(Math.round(phases.get(i).at() * 100)).append("% 不鎖");
+                    continue; // 2026-11-04：一隻 Boss 只留一個鎖血，其他階段不鎖
+                }
+                locks++;
                 kinds.add(spec.kind());
                 // 數值跟結晶同級（限時 5～120 秒、回血 0～100%）
                 assertTrue(spec.seconds() >= 3 && spec.seconds() <= 120, entry.label() + " 第 " + (i + 1) + " 階段限時 " + spec.seconds());
@@ -97,13 +102,19 @@ class PhaseMechanicDataTest {
                 table.append(i == 0 ? "" : "、").append(Math.round(phases.get(i).at() * 100)).append("% ").append(spec.kind().label());
             }
             table.append('\n');
-            assertTrue(kinds.size() >= 2, entry.label() + " 至少兩種不同的鎖血：" + kinds);
-            if (phases.stream().anyMatch(p -> p.shield() != null)) {
-                assertTrue(kinds.contains(PhaseMechanic.Kind.CRYSTAL), entry.label() + "：寫了 shield 的維持結晶");
+            // 2026-11-04 照站長：一隻 Boss 最多一個鎖血（破綻）；淵鯨、鯊王也一起換
+            assertEquals(1, locks, entry.label() + " 只能有一個鎖血（破綻），實際 " + locks + "：" + kinds);
+            assertTrue(kinds.contains(PhaseMechanic.Kind.OPENING), entry.label() + "：鎖血要是破綻：" + kinds);
+            assertFalse(kinds.contains(PhaseMechanic.Kind.CRYSTAL), entry.label() + "：結晶退役");
+            assertFalse(kinds.contains(PhaseMechanic.Kind.ZONES) || kinds.contains(PhaseMechanic.Kind.COUNTDOWN) || kinds.contains(PhaseMechanic.Kind.ELEMENT),
+                    entry.label() + "：站位圈、倒數大招、元素弱點拿掉");
+            for (final PhaseMechanic.Spec spec : specs) {
+                if (spec != null && spec.kind() == PhaseMechanic.Kind.OPENING) {
+                    assertTrue(spec.heal() >= 30 && spec.heal() <= 45, entry.label() + "：懲罰回血 30～45%，實際 " + spec.heal());
+                }
             }
         }
         System.out.println(table);
-        assertTrue(countdowns > 0 && zones > 0, "兩種新機制都有用到");
         assertEquals(0, elements, "2026-11-02 照站長：元素弱點拿掉（不是每個人都有元素傷害）");
     }
 

@@ -45,6 +45,32 @@ public final class ItemGenerator {
         return data;
     }
 
+    /**
+     * 2026-11-04 照站長「嗓音 2 孔 89%、3 孔 10%、4 孔 1%」：傳奇詞綴的數值；寫了 value_weights 的照權重擲 value，其他照平均。
+     * 這次之前一律平均。
+     */
+    private java.util.Map<String, Integer> rollUnique(final Affix affix, final RandomGenerator random) {
+        final java.util.Map<String, Integer> rolled = affix.tiers().getFirst().roll(random);
+        final int[] weights = repository.uniqueValueWeights(affix.id());
+        final int[] range = affix.tiers().getFirst().vars().get("value");
+        if (weights == null || range == null) {
+            return rolled;
+        }
+        int total = 0;
+        for (final int weight : weights) {
+            total += weight;
+        }
+        int pick = random.nextInt(total);
+        int index = 0;
+        while (index < weights.length - 1 && pick >= weights[index]) {
+            pick -= weights[index];
+            index++;
+        }
+        final java.util.Map<String, Integer> out = new java.util.LinkedHashMap<>(rolled);
+        out.put("value", Math.min(range[0], range[1]) + index);
+        return out;
+    }
+
     /** 生成一件傳奇：固定的名字與詞綴，數值在範圍裡擲。 */
     public ItemData generateUnique(final UniqueItem unique, final int itemLevel, final RandomGenerator random) {
         final ItemBase base = repository.requireBase(unique.base());
@@ -61,10 +87,13 @@ public final class ItemGenerator {
         for (final String affixId : unique.affixIds()) {
             final Affix affix = repository.affix(affixId);
             if (affix != null) {
-                data.affixes().add(new RolledAffix(affixId, 1, affix.tiers().getFirst().roll(random)));
+                data.affixes().add(new RolledAffix(affixId, 1, rollUnique(affix, random)));
             }
         }
         Veiled.addUniqueVeiled(data, repository, random);
+        if (repository.uniqueCorrupted(unique.id())) {
+            data.setCorrupted(true); // 2026-11-04 照 PoE2：妄想症、嗓音、信仰稜鏡、朝氣之靈掉出來就是已腐化
+        }
         return data;
     }
 
@@ -81,7 +110,7 @@ public final class ItemGenerator {
         for (final String affixId : unique.affixIds()) {
             final Affix affix = repository.affix(affixId);
             if (affix != null) {
-                data.affixes().add(new RolledAffix(affixId, 1, affix.tiers().getFirst().roll(random)));
+                data.affixes().add(new RolledAffix(affixId, 1, rollUnique(affix, random)));
             }
         }
         Veiled.addUniqueVeiled(data, repository, random);

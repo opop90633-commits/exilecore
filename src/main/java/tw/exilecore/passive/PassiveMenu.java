@@ -857,6 +857,10 @@ public final class PassiveMenu extends Menu {
                 new JewelPickMenu(plugin, player, tree, node, highlights).open();
                 return;
             }
+            if (VoicesMenu.holdsVoices(plugin, state, node)) {
+                new VoicesMenu(plugin, player, tree, node, highlights).open(); // 2026-11-04（嗓音）：嗓音多開的孔在這裡放
+                return;
+            }
             result = JewelSockets.unsocket(plugin, player, node);
             if (result.ok()) {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>珠寶拿回背包了"));

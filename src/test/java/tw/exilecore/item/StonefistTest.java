@@ -89,7 +89,7 @@ class StonefistTest {
     @Test
     void newUniquesDropWhereTheyDropInRef() {
         assertEquals(Set.of("abyss_lich"), repository.unique("binder_grasp").sources(), "骸王的容器");
-        assertEquals(Set.of("awakener"), repository.unique("peerless").sources(), "灰燼仲裁者（巔峰）");
+        assertEquals(Set.of("legion"), repository.unique("peerless").sources(), "灰燼仲裁者 → 2026-11-04 照站長移到不朽統帥");
         assertEquals(Set.of("map_boss"), repository.unique("terror_glide").sources(), "渡鴉欺詐者（Boss 限定，做不出來）");
         for (final String id : ADDED) {
             if (!Set.of("binder_grasp", "peerless", "terror_glide").contains(id)) {

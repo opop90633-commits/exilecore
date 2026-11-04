@@ -593,6 +593,11 @@ public final class CharmService implements Listener {
                 state.setMana(state.mana() - state.maxMana() * manaShare / 100.0);
             } else if (free <= 0 || plugin.items().random().nextDouble() >= free) {
                 setCharges(state, index, base, data.charges() - perUse);
+                // 2026-11-04（澤佛伊的創世紀）：使用護符消耗的充能 x% 會充能你的生命藥劑
+                final double share = sheet.flat(tw.exilecore.item.unique.UniqueStats.CHARM_TO_LIFE_FLASK, java.util.Set.of()) / 100.0;
+                if (share > 0 && plugin.flasks() != null) {
+                    plugin.flasks().addCharges(player, (int) Math.round(perUse * share), FlaskKind.LIFE);
+                }
             }
             if (base.cure() && plugin.ailments() != null) {
                 final AilmentType type = ailmentOf(trigger);

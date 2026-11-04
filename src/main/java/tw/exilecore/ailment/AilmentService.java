@@ -214,6 +214,14 @@ public final class AilmentService {
         return true;
     }
 
+    /** 2026-11-04（源於永恆）：玩家疊一層超重（減緩 10%，seconds 秒，再加一層重新計時）。 */
+    public void overencumber(final Player player, final double seconds) {
+        final Tracked entry = track(player);
+        entry.state.overencumber(now() + ticks(seconds), now());
+        update(player, entry, now());
+        refreshAt(player, entry, ticks(seconds) + 1);
+    }
+
     /** 這個目標身上最強的點燃（沒有回傳 null）。 */
     public AilmentState.Ignite ignite(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -1836,6 +1844,9 @@ public final class AilmentService {
         if (entity instanceof Player player) {
             return plugin.players() != null && ccImmune(plugin.players().sheet(player));
         }
+        if (plugin.maps() != null && plugin.maps().lockCcImmune(entity)) {
+            return true; // 2026-11-04 照站長：鎖血（破綻）中的地圖 Boss 免疫控場
+        }
         if (plugin.monsters() == null) {
             return false;
         }
@@ -2282,7 +2293,11 @@ public final class AilmentService {
         final boolean burning = entry.state.ignite(now) != null;
         final boolean bleeding = entry.state.bleed(now) != null;
         final boolean poisoned = !entry.state.poisons(now).isEmpty();
-        final double slowed = AilmentState.combineSlow(chill, entry.state.hexSlow(now)); // 2026-10-23：癱瘓、阻礙一起算
+        double slowed = AilmentState.combineSlow(chill, entry.state.hexSlow(now)); // 2026-10-23：癱瘓、阻礙一起算
+        if (living instanceof Player sprinter && sprinter.isSprinting()
+                && StatKeys.flag(plugin.players().sheet(sprinter), tw.exilecore.item.unique.UniqueStats.FLAG_SPRINT_UNSLOWED)) {
+            slowed = 0; // 2026-11-04（源於永恆，PoE2「你的速度在衝刺時不受緩速影響」）：衝刺時冰緩、癱瘓、阻礙、超重都不減速（凍結、暈眩照舊不能動）
+        }
         // 2026-10-26 照 PoE2：怪物最慢降到原本速度的 25%
         setSlow(living, entry, held ? 1.0 : entry.player ? slowed : Math.min(1 - MONSTER_MIN_SPEED, slowed));
         if (living instanceof Player) {

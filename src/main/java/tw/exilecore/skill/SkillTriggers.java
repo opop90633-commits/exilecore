@@ -43,7 +43,7 @@ public final class SkillTriggers implements Listener {
                 && !event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX)) {
             // 2026-10-26 照 PoE2 Cast on Critical：每點怪物強度 1 能量 × 這一下打掉牠異常門檻的百分比（最多 100）；這次之前固定 10 × 強度
             service.metas().gain(player, MetaSpec.Kind.CRIT, service.metas().power(event.defender())
-                    * service.metas().critPercent(event.defender(), event.result().total())
+                    * service.metas().critPercent(event.defender(), event.result().total()) / 100.0 // 2026-11-04 照站長「照原作修」：比例（打掉 100% 才拿滿 1 點）；這次之前直接乘 0～100 的百分比數字，多給 100 倍
                     * ShapeshiftParity.energyScale(service.config().skill(event.skill().id())), event.defender()); // 2026-11-01 照 PoE2：熾息的能量更少 98%
         }
         // 2026-10-26（久印，PoE2 Eternal Mark）：第一次觸發不用掉印記（怒星照給）
@@ -232,7 +232,7 @@ public final class SkillTriggers implements Listener {
         // 2026-10-26 照 PoE2 Cast on Elemental Ailment：冰凍每點強度 10、感電每點強度 1、點燃每點強度 1 × 打掉異常門檻的 %
         //   （異變引星的 energy 寫 1）；這次之前冰凍 ×3、點燃固定 1
         final double kind = type == tw.exilecore.ailment.AilmentType.FREEZE ? 10
-                : type == tw.exilecore.ailment.AilmentType.IGNITE ? Math.max(0, Math.min(100, igniteThresholdPercent)) : 1;
+                : type == tw.exilecore.ailment.AilmentType.IGNITE ? Math.max(0, Math.min(100, igniteThresholdPercent)) / 100.0 : 1; // 2026-11-04 照原作：點燃每點強度 1 × 比例；這次之前 × 0～100 的百分比數字（多 100 倍）
         tw.exilecore.ascendancy.AscendancyEffects.ailment(player, target, type); // 2026-10-26（昇華）：易爆、感電／冰緩地面
         service.metas().gain(player, MetaSpec.Kind.AILMENT, kind * service.metas().power(target)
                 * ShapeshiftParity.energyScale(skillId == null ? null : service.config().skill(skillId)), target); // 2026-11-01 照 PoE2：熾息的能量更少 98%

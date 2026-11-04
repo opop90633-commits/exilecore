@@ -254,7 +254,7 @@ public final class InstilMenu extends Menu {
             fail(data.mirrored() ? "鏡像複製品不能再改造" : "已腐化的物品不能再改造");
             return;
         }
-        if (node.id().equals(data.instilled())) {
+        if (data.instilledAll().contains(node.id())) {
             fail("這條項鍊已經注入這個核心了");
             return;
         }
@@ -268,7 +268,7 @@ public final class InstilMenu extends Menu {
             consume(entry.getKey(), entry.getValue());
         }
         final String before = plugin.items().toJson(data);
-        Crafting.instil(data, node.id());
+        Crafting.instil(data, node.id(), tw.exilecore.item.ItemStats.instilCapacity(plugin.items().repository(), data)); // 2026-11-04：掙扎吶喊可以注入好幾個
         plugin.items().update(stack, data);
         player.getInventory().setItem(amuletSlot, stack);
         final PlayerState state = plugin.players().get(player);

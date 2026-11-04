@@ -5,7 +5,10 @@
 #
 # 血脈輔助的規則：
 #   - 切不出來（未切割輔助寶石切不出血脈輔助，照 PoE2）；只有怪物、Boss 會掉（下面的 drops）。
-#   - 不算「一個技能只能掛一顆專屬輔助」的專屬輔助（PoE2 沒有這條限制）；同一顆血脈輔助照 once_per_character 的規則。
+#   - 不算「一個技能只能掛一顆專屬輔助」的專屬輔助（PoE2 沒有這條限制）。
+#   - 2026-11-04 照站長「照原作改成一個角色一顆」：同一種血脈輔助一個角色只能掛一顆（不同技能也不行）；
+#     傳奇唯我論（lineage.extra_copies）可以在不同技能上再多掛 2 顆。超過的（例如脫下唯我論）照面板順序，後面的那幾顆沒有效果。
+#     這次之前照 supports.yml 的 once_per_character（false：不同技能可以各掛一顆）。
 #   - 2026-10-28 照 PoE2（站長）：不同的血脈輔助可以掛在同一個技能上，不互相衝突（這次之前一個技能只能一顆）。
 #   - source 寫掉落的等級：lineage（一般）、lineage_rare（稀有）、lineage_pinnacle（巔峰）。
 #   - 有 I／II／III 的只留最高階（PoE2 的血脈輔助本來就只有一階）。
@@ -584,7 +587,7 @@ supports:
   lone_encircle:           # Vorana's Siege
     name: 孤圍
     description: 被輔助的範圍技能增加 35% 範圍；擊中孤立的敵人（6 格內沒有其他敵人）時更多 20% 傷害。
-    icon: COMPASS
+    icon: ENDER_EYE   # 2026-11-04：COMPASS 的物品定義太複雜、資源包掛不上圖示（技能面板看不到圖）；這次之前 COMPASS
     tier: 3
     source: lineage_rare
     requires: [area]

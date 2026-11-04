@@ -68,11 +68,116 @@ public final class FlaskService {
         final FlaskKind kind;
         final double perTick;
         int ticksLeft;
+        /** 2026-11-04（融解漩渦）：魔力滿了也不移除。 */
+        boolean sticky;
 
         Recovery(final FlaskKind kind, final double perTick, final int ticksLeft) {
             this.kind = kind;
             this.perTick = perTick;
             this.ticksLeft = ticksLeft;
+        }
+    }
+
+    /**
+     * 2026-11-04 照站長「融解漩渦（藥劑效果期間照消耗的魔力打周圍）做出來」（PoE2 Melting Maelstrom）：效果期間每 3 秒，
+     * 對 3 格內的敵人造成這 3 秒消耗的魔力 100% 的混沌傷害；效果結束時對你造成當時魔力 25% 的混沌傷害。
+     */
+    private static final class Maelstrom {
+        long until;
+        long nextPulse;
+        double spent;
+    }
+
+    private final Map<UUID, Maelstrom> maelstroms = new HashMap<>();
+    /** 融解漩渦：幾 tick 打一次、打多遠（格）、照消耗魔力的幾成、結束時傷到自己（當時魔力的幾成）。 */
+    static final int MAELSTROM_PULSE_TICKS = 60;
+    static final double MAELSTROM_RADIUS = 3;
+    static final double MAELSTROM_SHARE = 1.0;
+    static final double MAELSTROM_SELF = 0.25;
+
+    /** 2026-11-04（融解漩渦）：技能真的花了魔力（TreeMechanics.onUse 呼叫）：效果期間記下來，下一次脈衝照這個打。 */
+    public void manaSpent(final Player player, final double amount) {
+        final Maelstrom maelstrom = maelstroms.get(player.getUniqueId());
+        if (maelstrom != null && amount > 0) {
+            maelstrom.spent += amount;
+        }
+    }
+
+    /** 2026-11-04：這瓶自己的某個詞綴加總（藥劑的傳奇詞綴；沒有 0）。 */
+    private double localSum(final ItemStack stack, final FlaskBase base, final String stat, final tw.exilecore.stats.ModType type) {
+        final ItemData data = itemData(stack, base);
+        if (data == null) {
+            return 0;
+        }
+        double total = 0;
+        for (final tw.exilecore.item.RolledAffix rolled : data.affixes()) {
+            final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final tw.exilecore.item.AffixMod mod : affix.mods()) {
+                if (stat.equals(mod.stat()) && mod.type() == type) {
+                    total += mod.toModifier(rolled.vars(), "").value();
+                }
+            }
+        }
+        return total;
+    }
+
+    private void tickMaelstroms() {
+        if (maelstroms.isEmpty()) {
+            return;
+        }
+        final long now = now();
+        final Iterator<Map.Entry<UUID, Maelstrom>> iterator = maelstroms.entrySet().iterator();
+        while (iterator.hasNext()) {
+            final Map.Entry<UUID, Maelstrom> entry = iterator.next();
+            final Player player = plugin.getServer().getPlayer(entry.getKey());
+            if (player == null || !eligible(player)) {
+                iterator.remove();
+                continue;
+            }
+            final Maelstrom maelstrom = entry.getValue();
+            if (now >= maelstrom.nextPulse) {
+                maelstrom.nextPulse += MAELSTROM_PULSE_TICKS;
+                final double amount = maelstrom.spent * MAELSTROM_SHARE;
+                maelstrom.spent = 0;
+                if (amount > 0 && plugin.combat() != null) {
+                    final tw.exilecore.stats.SkillProfile profile = new tw.exilecore.stats.SkillProfile("flask.maelstrom",
+                            java.util.Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.CHAOS), 0,
+                            new tw.exilecore.stats.DamagePacket().set(tw.exilecore.stats.DamageType.CHAOS, amount));
+                    for (final org.bukkit.entity.LivingEntity target : player.getWorld().getNearbyLivingEntities(player.getLocation(), MAELSTROM_RADIUS)) {
+                        if (target instanceof Player || target.isDead() || !target.isValid() || plugin.monsters().data(target).isEmpty()
+                                || target.getLocation().distanceSquared(player.getLocation()) > MAELSTROM_RADIUS * MAELSTROM_RADIUS) {
+                            continue;
+                        }
+                        plugin.combat().skillDamage().hit(player, target, profile, null);
+                    }
+                    tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.DUST, player.getLocation().add(0, 1, 0), 24, 1.4, 0.5, 1.4, 0,
+                            new Particle.DustOptions(Color.fromRGB(0x7A2BB5), 1.3f));
+                }
+            }
+            if (now >= maelstrom.until) {
+                iterator.remove();
+                final PlayerState state = plugin.players().get(player);
+                final double self = state.mana() * MAELSTROM_SELF;
+                if (self > 0) {
+                    // 效果結束：對你造成當時魔力 25% 的混沌傷害（照抗性減免，先扣能量護盾）
+                    final tw.exilecore.stats.DamagePacket dealt = tw.exilecore.stats.DamageCalculator.mitigate(
+                            new tw.exilecore.stats.DamagePacket().set(tw.exilecore.stats.DamageType.CHAOS, self), plugin.players().sheet(player));
+                    double left = dealt.total();
+                    final double fromEs = Math.min(state.energyShield(), left);
+                    state.setEnergyShield(state.energyShield() - fromEs);
+                    left -= fromEs;
+                    state.setLife(Math.max(0, state.life() - left));
+                    state.setLastDamageTick(now);
+                    if (state.life() <= 0) {
+                        player.setHealth(0);
+                    } else {
+                        plugin.players().display(player, state);
+                    }
+                }
+            }
         }
     }
 
@@ -553,7 +658,9 @@ public final class FlaskService {
             return true;
         }
         final boolean full = life ? state.isFullLife() : state.mana() >= state.maxMana() - 1e-6; // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
-        if (full) {
+        // 2026-11-04（融解漩渦）：魔力滿了也能喝（效果不會因為滿了就結束）
+        final boolean maelstrom = !life && localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_MAELSTROM, tw.exilecore.stats.ModType.FLAT) > 0;
+        if (full && !maelstrom) {
             fail(player, state, base.kind().displayName() + "已經是滿的");
             return true;
         }
@@ -564,6 +671,11 @@ public final class FlaskService {
         final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.FLASK_FREE_CHANCE) / 100.0));
         if (free <= 0 || plugin.items().random().nextDouble() >= free) {
             setCharges(inventory, hotbarSlot, data.charges() - perUse);
+            // 2026-11-04（澤佛伊的創世紀）：使用生命藥劑消耗的充能 x% 會充能你的護符
+            final double share = life ? sheet.flat(tw.exilecore.item.unique.UniqueStats.LIFE_FLASK_TO_CHARM, java.util.Set.of()) / 100.0 : 0;
+            if (share > 0 && charms != null) {
+                charms.addCharges(player, (int) Math.round(perUse * share));
+            }
         }
         // 回復量：藥劑自己的詞綴（低血時更多）× 「藥劑回復」的全域加成（任務獎勵、裝備）
         final boolean low = life ? state.life() < state.maxLife() * FlaskMods.LOW_FRACTION : state.mana() < state.maxMana() * FlaskMods.LOW_FRACTION;
@@ -576,7 +688,8 @@ public final class FlaskService {
         // 2026-10-27 照 PoE2：「藥劑魔力回復速率」（flask_mana_recovery_rate_+%）、生命／魔力回復速度（life／mana_recovery_rate_+%，
         // 回復速度管所有隨時間的回復，藥劑也算）也一樣：同樣的量、更短的時間；這次之前只有藥劑生命回復速率
         final double baseSeconds = mods.recoveryTime(base.duration())
-                * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()));
+                * Math.max(0.1, 1 + sheet.increased(tw.exilecore.stats.StatKeys.FLASK_DURATION, java.util.Set.of()))
+                * Math.max(0.1, 1 + localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_LOCAL_DURATION, tw.exilecore.stats.ModType.INCREASED)); // 2026-11-04（融解漩渦）
         final int lifeTicks = Math.max(1, (int) Math.round(baseSeconds * 20 / flaskRate(sheet, true)));
         final int manaTicks = Math.max(1, (int) Math.round(baseSeconds * 20 / flaskRate(sheet, false)));
         final int ticks = life ? lifeTicks : manaTicks;
@@ -603,8 +716,16 @@ public final class FlaskService {
                 list.add(new Recovery(FlaskKind.LIFE, gradual / lifeTicks, lifeTicks));
             }
             if (!life || both) {
-                list.add(new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks));
+                final Recovery mana = new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks);
+                mana.sticky = maelstrom; // 2026-11-04（融解漩渦）：魔力滿了不移除效果
+                list.add(mana);
             }
+        }
+        if (maelstrom) {
+            // 2026-11-04（融解漩渦）：效果期間每 3 秒照消耗的魔力打周圍；重喝一次重新算時間
+            final Maelstrom effect = maelstroms.computeIfAbsent(player.getUniqueId(), uuid -> new Maelstrom());
+            effect.until = now + manaTicks;
+            effect.nextPulse = now + MAELSTROM_PULSE_TICKS;
         }
         // 2026-11-01 照 PoE2 Alchemist's Boon（recovery_from_flasks_applies_to_allies_in_presence_%）：回復量的 x% 也套在存在範圍內的友軍身上
         final double allyShare = allyShare(sheet);
@@ -847,6 +968,7 @@ public final class FlaskService {
     void tick() {
         // 2026-10-27 效能：空瓶提示攤開補（每 2 tick 一小批，每個人一樣每 2 秒一次）；這次之前每 2 秒所有人同一個 tick 一起補
         sweepSlice();
+        tickMaelstroms(); // 2026-11-04（融解漩渦）
         minuteTicks += TICK_INTERVAL;
         if (minuteTicks % 20 == 0) {
             tickConstant(); // 2026-10-28 照 PoE2（綺夢）：生命藥劑的效果一直套用，每秒一次
@@ -890,7 +1012,7 @@ public final class FlaskService {
             // 2026-10-26（昇華・耐久靈藥）：生命全滿時不移除生命藥劑效果
             final boolean enduring = tw.exilecore.ascendancy.AscendancyEffects.enduringElixirs(player);
             entry.getValue().removeIf(recovery -> recovery.ticksLeft <= 0
-                    || (recovery.kind == FlaskKind.LIFE && lifeFull && !enduring) || (recovery.kind == FlaskKind.MANA && manaFull));
+                    || (recovery.kind == FlaskKind.LIFE && lifeFull && !enduring) || (recovery.kind == FlaskKind.MANA && manaFull && !recovery.sticky));
             if (life > 0 || mana > 0) {
                 plugin.players().display(player, state);
             }

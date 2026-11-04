@@ -692,6 +692,31 @@ public final class SkillLoadout {
     }
 
     /** 哪個技能掛著這個輔助寶石（PoE2：同一個輔助一個角色只能用一次）；沒有回傳 -1。 */
+    /** 2026-11-04：除了 except 那一格，有幾個技能掛著這種輔助。 */
+    public int supportCount(final String supportId, final int except) {
+        int count = 0;
+        for (int i = 0; i < MAX_SKILLS; i++) {
+            if (i != except && skills[i] != null && skills[i].hasSupport(supportId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /** 2026-11-04：entry 前面（面板順序）有幾個技能掛著這種輔助；entry 不在面板上回傳 -1。 */
+    public int supportCountBefore(final String supportId, final Entry entry) {
+        int count = 0;
+        for (int i = 0; i < MAX_SKILLS; i++) {
+            if (skills[i] == entry) {
+                return count;
+            }
+            if (skills[i] != null && skills[i].hasSupport(supportId)) {
+                count++;
+            }
+        }
+        return -1;
+    }
+
     public int supportUsedBy(final String supportId) {
         for (int i = 0; i < MAX_SKILLS; i++) {
             if (skills[i] != null && skills[i].hasSupport(supportId)) {

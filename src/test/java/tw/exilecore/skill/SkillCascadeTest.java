@@ -118,7 +118,8 @@ class SkillCascadeTest {
                 shaped.add(skill.id());
             }
         }
-        assertEquals(new TreeSet<>(List.of("whale_gulp_vortex", "blood_sacrifice_dais", "fissure_spread", "morning_light_column", "hollow_star_fall")), shaped);
+        assertEquals(new TreeSet<>(List.of("whale_gulp_vortex", "blood_sacrifice_dais", "fissure_spread", "morning_light_column", "hollow_star_fall",
+                "faceless_mist", "scale_weight_drop")), shaped);
     }
 
     @Test
