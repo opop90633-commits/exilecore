@@ -5210,7 +5210,7 @@ public final class SkillService {
         if (corruptedEfficiency != 0) {
             extra = new ArrayList<>(extra);
             extra.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.CostKeys.COST_EFFICIENCY, tw.exilecore.stats.ModType.INCREASED,
-                    corruptedEfficiency, java.util.Set.of(), "澤佛伊的創世紀"));
+                    corruptedEfficiency, java.util.Set.of(), "血契新生"));
         }
         final StatSheet gemSheet = gem.levels() > 0 && sheet != null
                 ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;

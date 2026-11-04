@@ -188,7 +188,7 @@ public final class JewelSockets {
             return PassiveState.Result.fail("這個孔是空的");
         }
         if (voicesOccupied(state, node.id())) {
-            return PassiveState.Result.fail("嗓音多開的孔裡還有珠寶，先把它們拿出來"); // 2026-11-04（嗓音）
+            return PassiveState.Result.fail("低語之門多開的孔裡還有珠寶，先把它們拿出來"); // 2026-11-04（嗓音）
         }
         if (plugin.loot() != null && !plugin.loot().fits(player, state, jewel)) {
             return PassiveState.Result.fail("背包與隨身背包都滿了，先清出一格");
@@ -454,7 +454,7 @@ public final class JewelSockets {
                 continue;
             }
             for (final Modifier mod : notable.modifiers()) {
-                out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "妄想症：" + notable.name()));
+                out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "狂念之晶：" + notable.name()));
             }
         }
         return out;
@@ -529,7 +529,7 @@ public final class JewelSockets {
             return PassiveState.Result.fail("先建立角色（/char）");
         }
         if (tree == null || !voiceOpen(plugin.items().repository(), jewelData(plugin, state), state.passives(), tree, key)) {
-            return PassiveState.Result.fail("這個孔沒有開（嗓音要嵌在配了的珠寶孔裡）");
+            return PassiveState.Result.fail("這個孔沒有開（低語之門要嵌在配了的珠寶孔裡）");
         }
         if (state.jewel(key) != null) {
             return PassiveState.Result.fail("這個孔已經有珠寶了，先點它拿出來");
@@ -541,10 +541,10 @@ public final class JewelSockets {
         final ItemData data = plugin.items().read(stack).orElseThrow();
         final ItemBase base = plugin.items().repository().base(data.base());
         if (base.isRadiusJewel() || TimelessJewels.isTimeless(base)) {
-            return PassiveState.Result.fail("嗓音的孔不在天賦樹上，只能放基礎珠寶（不能放半徑、恆時珠寶）");
+            return PassiveState.Result.fail("低語之門的孔不在天賦樹上，只能放基礎珠寶（不能放半徑、恆時珠寶）");
         }
         if (voiceCount(plugin.items().repository(), data) > 0) {
-            return PassiveState.Result.fail("嗓音不能放進嗓音的孔");
+            return PassiveState.Result.fail("低語之門不能放進低語之門的孔");
         }
         final String unique = uniqueOf(plugin, stack);
         if (unique != null) {

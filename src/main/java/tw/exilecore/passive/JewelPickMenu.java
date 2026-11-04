@@ -104,7 +104,7 @@ public final class JewelPickMenu extends Menu {
 
     public JewelPickMenu(final ExileCore plugin, final Player player, final PassiveTree tree, final PassiveNode node, final Set<String> highlights,
                          final String voiceKey) {
-        super(plugin, player, ROWS, voiceKey == null ? "<dark_gray>選一顆珠寶放進珠寶孔" : "<dark_gray>選一顆珠寶放進嗓音的孔");
+        super(plugin, player, ROWS, voiceKey == null ? "<dark_gray>選一顆珠寶放進珠寶孔" : "<dark_gray>選一顆珠寶放進低語之門的孔");
         this.tree = tree;
         this.node = node;
         this.highlights = highlights;

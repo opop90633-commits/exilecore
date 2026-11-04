@@ -650,7 +650,7 @@ public final class GemService {
         lines.add("");
         lines.add("<gray>可以輔助：<white>" + support.supportsText(config().all()));
         lines.add("<gray>第 " + support.tier() + " 階・" + (config().oncePerCharacter(support.id())
-                ? (support.lineage() ? "同一種血脈輔助一個角色只能用一顆（唯我論可以多 2 顆）" : "同一種輔助一個角色只能用一次")
+                ? (support.lineage() ? "同一種血脈輔助一個角色只能用一顆（獨我之冠可以多 2 顆）" : "同一種輔助一個角色只能用一次")
                 : "不同技能可以各掛一顆（一顆只能掛一個技能）"));
         lines.add("<yellow>打開 /skills，拿在游標上點技能掛上去");
     }

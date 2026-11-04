@@ -9637,7 +9637,7 @@ lavian_spring:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」（po
 
 # ---- 審判者・衡（ultimatum）：試煉大師 ----
 glimpse_of_chaos:        # 2026-11-04 照 PoE2 0.5 的「Glimpse of Chaos」（poe2db：混沌一瞥）
-  name: 混沌一瞥
+  name: 亂相之窺        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「混沌一瞥」（原作的中文名）
   base: helm_dex_int_17        # 原作基底 Tribal Mask（部落之面）
   stat_base: helm_dex_int_05   # 原作基底那一階的數值（需求 52 級的那階照部落之面）
   drop_level: 52
@@ -9674,7 +9674,7 @@ glimpse_of_chaos:        # 2026-11-04 照 PoE2 0.5 的「Glimpse of Chaos」（p
         - { stat: flag.chaos_res_zero, type: FLAT, value: 1 }
 
 zerphi_genesis:        # 2026-11-04 照 PoE2 0.5 的「Zerphi's Genesis」（poe2db：澤佛伊的創世紀）
-  name: 澤佛伊的創世紀
+  name: 血契新生        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「澤佛伊的創世紀」（原作的中文名）
   base: jbelt_07        # 原作基底 Heavy Belt（重革束帶）
   drop_level: 56
   sources: [ultimatum]
@@ -9711,7 +9711,7 @@ zerphi_genesis:        # 2026-11-04 照 PoE2 0.5 的「Zerphi's Genesis」（poe
         - { stat: flag.corrupted_blood_immune, type: FLAT, value: 1 }
 
 mahuxotl_machination:        # 2026-11-04 照 PoE2 0.5 的「Mahuxotl's Machination」（poe2db：瑪哈薩多的陰謀）
-  name: 瑪哈薩多的陰謀
+  name: 魂核詭盾        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「瑪哈薩多的陰謀」（原作的中文名）
   base: cshield_21        # 原作基底 Omen Crest Shield（精鐵聖徽盾）
   stat_base: cshield_06          # 原作基底那一階的數值
   drop_level: 48
@@ -9735,7 +9735,7 @@ mahuxotl_machination:        # 2026-11-04 照 PoE2 0.5 的「Mahuxotl's Machinat
         - { stat: es.everlasting_sacrifice, type: FLAT, value: 5 }
 
 vitality_spirit:        # 2026-11-04 照 PoE2 0.5 的試煉大師傳奇（poe2db：朝氣之靈，鑽石）
-  name: 朝氣之靈
+  name: 蝕光之心        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「朝氣之靈」（原作的中文名）
   base: diamond_jewel        # 原作基底 Diamond（鑽石）
   drop_level: 60
   sources: [ultimatum]
@@ -9751,7 +9751,7 @@ vitality_spirit:        # 2026-11-04 照 PoE2 0.5 的試煉大師傳奇（poe2db
 
 # ---- 迷霧之主・無面（fog_trial）：科西斯、譫妄異域 ----
 perfidy_armour:        # 2026-11-04 照 PoE2 0.5 的「Perfidy」（poe2db：背信忘義）
-  name: 背信忘義
+  name: 千誓叛甲        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「背信忘義」（原作的中文名）
   base: body_str_dex_27        # 原作基底 Knight Armour（騎士護甲，力敏）
   stat_base: body_str_dex_07          # 原作基底那一階的數值（45 級）
   drop_level: 45
@@ -9791,7 +9791,7 @@ perfidy_armour:        # 2026-11-04 照 PoE2 0.5 的「Perfidy」（poe2db：背
 
 # ---- 不朽統帥・磐（legion）：燃燒豐碑（灰燼仲裁者） ----
 solus_ipse_helm:        # 2026-11-04 照 PoE2 0.5 的「Solus Ipse」（poe2db：唯我論）
-  name: 唯我論
+  name: 獨我之冠        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「唯我論」（原作的中文名）
   base: helm_str_dex_18        # 原作基底 Grand Visage（宏偉面紗，力敏智三防）；我們的頭盔沒有三防的，用力敏那一類
   stat_base: helm_str_dex_13          # 同樣 65 級那一階的數值
   drop_level: 65
@@ -9819,7 +9819,7 @@ solus_ipse_helm:        # 2026-11-04 照 PoE2 0.5 的「Solus Ipse」（poe2db�
         - { stat: lineage.extra_copies, type: FLAT, value: 2 }
 
 ab_aeterno_boots:        # 2026-11-04 照 PoE2 0.5 的「Ab Aeterno」（poe2db：源於永恆）
-  name: 源於永恆
+  name: 亙古行履        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「源於永恆」（原作的中文名）
   base: boots_str_dex_13        # 原作基底 Grand Cuisses（宏偉腿甲，力敏智三防）；我們的鞋子沒有三防的，用力敏那一類
   stat_base: boots_str_dex_09          # 同樣 65 級那一階的數值
   drop_level: 65
@@ -9849,7 +9849,7 @@ ab_aeterno_boots:        # 2026-11-04 照 PoE2 0.5 的「Ab Aeterno」（poe2db�
         - { stat: flag.sprint_unslowed, type: FLAT, value: 1 }
 
 morior_invictus:        # 2026-11-04 照 PoE2 0.5 的「Morior Invictus」（poe2db：不敗亡者）
-  name: 不敗亡者
+  name: 百死不滅        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「不敗亡者」（原作的中文名）
   base: body_str_dex_18        # 原作基底 Grand Regalia（宏偉華服，力敏智三防）；我們的胸甲沒有三防的，用力敏那一類（65 級）
   drop_level: 65
   sources: [legion]
@@ -9870,7 +9870,7 @@ morior_invictus:        # 2026-11-04 照 PoE2 0.5 的「Morior Invictus」（poe
 
 # ---- 2026-11-04 照站長「這些都做出來」：迷霧之主（fog_trial）的科西斯、譫妄異域傳奇 ----
 melting_maelstrom:        # 2026-11-04 照 PoE2 0.5 的「Melting Maelstrom」（poe2db：融解漩渦）
-  name: 融解漩渦
+  name: 熔魔渦流        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「融解漩渦」（原作的中文名）
   base: heavens_mana_flask        # 原作基底 Ultimate Mana Flask（終極魔力藥劑，60 級）
   drop_level: 60
   sources: [fog_trial]
@@ -9893,7 +9893,7 @@ melting_maelstrom:        # 2026-11-04 照 PoE2 0.5 的「Melting Maelstrom」�
         - { stat: flask.local.maelstrom, type: FLAT, value: 1 }
 
 megalomaniac_jewel:        # 2026-11-04 照 PoE2 0.5 的「Megalomaniac」（poe2db：妄想症）
-  name: 妄想症
+  name: 狂念之晶        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「妄想症」（原作的中文名）
   base: diamond_jewel        # 原作基底 Diamond（鑽石）
   drop_level: 60
   sources: [fog_trial]
@@ -9908,7 +9908,7 @@ megalomaniac_jewel:        # 2026-11-04 照 PoE2 0.5 的「Megalomaniac」（poe
         - { stat: jewel.allocate_notables, type: FLAT, value: "{value}" }
 
 strugglescream_amulet:        # 2026-11-04 照 PoE2 0.5 的「Strugglescream」（poe2db：掙扎吶喊）
-  name: 掙扎吶喊
+  name: 未竟之嘯        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「掙扎吶喊」（原作的中文名）
   base: jamulet_09        # 原作基底 Stellar Amulet（恆星項鍊＝星輝墜飾）
   drop_level: 52
   sources: [fog_trial]
@@ -9927,7 +9927,7 @@ strugglescream_amulet:        # 2026-11-04 照 PoE2 0.5 的「Strugglescream」�
         - { stat: local.instil_extra, type: FLAT, value: 3 }
 
 voices_jewel:        # 2026-11-04 照 PoE2 0.5 的「Voices」（poe2db：嗓音）
-  name: 嗓音
+  name: 低語之門        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「嗓音」（原作的中文名）
   base: sapphire_jewel        # 原作基底 Sapphire（藍寶石）
   drop_level: 60
   sources: [fog_trial]
@@ -9944,7 +9944,7 @@ voices_jewel:        # 2026-11-04 照 PoE2 0.5 的「Voices」（poe2db：嗓音
 
 # ---- 2026-11-04 照站長「這些都做出來」：不朽統帥（legion）的燃燒豐碑傳奇 ----
 prism_of_belief:        # 2026-11-04 照 PoE2 0.5 的「Prism of Belief」（poe2db：信仰棱鏡）
-  name: 信仰棱鏡
+  name: 篤信稜晶        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「信仰棱鏡」（原作的中文名）
   base: diamond_jewel        # 原作基底 Diamond（鑽石）
   drop_level: 65
   sources: [legion]

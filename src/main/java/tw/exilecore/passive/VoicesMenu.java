@@ -33,7 +33,7 @@ public final class VoicesMenu extends Menu {
     private final Set<String> highlights;
 
     public VoicesMenu(final ExileCore plugin, final Player player, final PassiveTree tree, final PassiveNode node, final Set<String> highlights) {
-        super(plugin, player, ROWS, "<dark_gray>嗓音的珠寶孔");
+        super(plugin, player, ROWS, "<dark_gray>低語之門的珠寶孔");
         this.tree = tree;
         this.node = node;
         this.highlights = highlights;
@@ -61,15 +61,15 @@ public final class VoicesMenu extends Menu {
         for (int i = 1; i <= count; i++) {
             final ItemStack held = state.jewel(JewelSockets.voiceKey(node.id(), i));
             if (held == null) {
-                set(FIRST + i - 1, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<#c77dff>嗓音的孔 " + i + "（空的）",
+                set(FIRST + i - 1, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<#c77dff>低語之門的孔 " + i + "（空的）",
                         "<gray>只能放基礎珠寶（赤星晶、翠星晶、蒼星晶、白星晶）", "<gray>半徑、恆時珠寶不行", "", "<yellow>左鍵：選一顆珠寶放進去"));
             } else {
-                set(FIRST + i - 1, appendLore(held.clone(), List.of("", "<dark_gray>嗓音的孔 " + i, "<yellow>左鍵：拿回背包")));
+                set(FIRST + i - 1, appendLore(held.clone(), List.of("", "<dark_gray>低語之門的孔 " + i, "<yellow>左鍵：拿回背包")));
             }
         }
         final ItemStack voices = state.jewel(node.id());
         if (voices != null) {
-            set(SLOT_VOICES, appendLore(voices.clone(), List.of("", "<yellow>左鍵：把嗓音拿回背包（孔裡要先清空）")));
+            set(SLOT_VOICES, appendLore(voices.clone(), List.of("", "<yellow>左鍵：把低語之門拿回背包（孔裡要先清空）")));
         }
         set(SLOT_BACK, icon(Material.ARROW, "<white>回到天賦樹"));
         set(SLOT_CLOSE, closeButton());
@@ -97,7 +97,7 @@ public final class VoicesMenu extends Menu {
                 return;
             }
             plugin.characters().save(player);
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>嗓音拿回背包了"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<yellow>低語之門拿回背包了"));
             back();
             return;
         }
