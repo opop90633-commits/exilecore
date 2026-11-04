@@ -300,7 +300,7 @@ final class Legion implements Listener {
         final List<Player> players = players(monolith.instance);
         int woke = 0;
         for (final LivingEntity monster : List.copyOf(monolith.monsters)) {
-            if (!monolith.touched.contains(monster.getUniqueId())) {
+            if (!touched(monolith, monster)) {
                 tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.SNOWFLAKE, monster.getLocation().add(0, 1, 0), 15, 0.3, 0.5, 0.3, 0.02);
                 monster.remove();
                 monolith.monsters.remove(monster);
@@ -350,12 +350,32 @@ final class Legion implements Listener {
 
     // ---- 打到、打死 ----
 
-    /** 凍著的怪被打到：記下來（時間到才會醒）。 */
-    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
-    public void onDamage(final EntityDamageEvent event) {
-        if (byInstance.isEmpty() || !(event.getEntity() instanceof LivingEntity entity) || !entity.getPersistentDataContainer().has(monsterKey)) {
+    /**
+     * 2026-11-04 照站長「軍團不會醒來」（醒了 0 隻）：凍著的怪有沒有被打到——自己記的（傷害事件、技能擊中），
+     * 或怪物的傷害紀錄裡有人（扣過血）、最後碰過牠的人（技能、召喚物、持續傷害碰到）。
+     * 這次之前只看原版傷害事件（ignoreCancelled），技能傷害走自己的結算時事件被取消，全部算沒打到、時間到全部消失。
+     */
+    private boolean touched(final Monolith monolith, final LivingEntity monster) {
+        final UUID id = monster.getUniqueId();
+        if (monolith.touched.contains(id)) {
+            return true;
+        }
+        if (plugin.monsters() == null || plugin.monsters().ledger() == null) {
+            return false;
+        }
+        return !plugin.monsters().ledger().damageTo(id).isEmpty() || plugin.monsters().ledger().lastTouched(id) != null;
+    }
+
+    /** 2026-11-04：技能擊中也算打到（馬上發光，不用等到時間到）。 */
+    @EventHandler(priority = EventPriority.MONITOR)
+    public void onHit(final tw.exilecore.stats.HitEvent event) {
+        if (byInstance.isEmpty() || event.defender() == null || !event.defender().getPersistentDataContainer().has(monsterKey)) {
             return;
         }
+        mark(event.defender());
+    }
+
+    private void mark(final LivingEntity entity) {
         final MapInstance instance = service.instanceOf(entity);
         final Monolith monolith = instance == null ? null : byInstance.get(instance.id());
         if (monolith == null || monolith.phase != Phase.FROZEN) {
@@ -363,6 +383,18 @@ final class Legion implements Listener {
         }
         if (monolith.touched.add(entity.getUniqueId())) {
             entity.setGlowing(true);
+        }
+    }
+
+    /** 凍著的怪被打到：記下來（時間到才會醒）。 */
+    @EventHandler(priority = EventPriority.MONITOR) // 2026-11-04：取消的也算（我們的傷害結算會取消原版事件）；這次之前 ignoreCancelled = true
+    public void onDamage(final EntityDamageEvent event) {
+        if (byInstance.isEmpty() || !(event.getEntity() instanceof LivingEntity entity) || !entity.getPersistentDataContainer().has(monsterKey)) {
+            return;
+        }
+        if (event instanceof org.bukkit.event.entity.EntityDamageByEntityEvent || event.getCause() != EntityDamageEvent.DamageCause.SUFFOCATION
+                && event.getCause() != EntityDamageEvent.DamageCause.FALL && event.getCause() != EntityDamageEvent.DamageCause.VOID) {
+            mark(entity); // 窒息、摔落、虛空不算（凍著的怪卡牆）
         }
     }
 
