@@ -59,7 +59,7 @@ class UiPackTest {
      * 資源包大小的上限：2026-10 多了招式預警的地面範圍（256×256）、裝備幻化、3D 時裝（web/pack3d.zip），
      * 已經不是 512 KB 以內了；還是一次下載、之後有快取，只是不能無限長大。
      */
-    static final int MAX_PACK_BYTES = 12 * 1024 * 1024; // 2026-10：加了背景音樂（music/*.ogg）之後約 9.8 MB，上限 8 → 12 MB
+    static final int MAX_PACK_BYTES = 16 * 1024 * 1024; // 2026-11-04：補上 57 個技能／輔助圖示與 9 個原版物品定義之後超過 12 MB，上限 12 → 16 MB；2026-10：加了背景音樂（music/*.ogg）之後約 9.8 MB，上限 8 → 12 MB
 
     /**
      * 改寫的原版物品定義（assets/minecraft/items/）最外層是鎖定的小鎖頭（2026-10）：custom_model_data 的 flag 0
