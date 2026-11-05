@@ -16,6 +16,8 @@
 #   poe2db 寶石頁 Additional Effects From Quality 的第二條是額外的品質效果（進階奇術才有，RePoE quality_stats 沒有那條），寫在下面 advanced；
 #   急裝、瞬影擊、寒夜嗥、銀月庇這次之前把第二條算在一般品質裡，這次移到 advanced。
 
+molten_dive_crash:   # Molten Crash（2026-11-05 照 PoE2：熔岩地裂持續時間 +(0—2) 秒；品質照焚王獸符的品質）
+  - { stat: molten.fissure_seconds, type: FLAT, per: 0.1 }   # 熔岩地裂 +秒（SkillExecutor.moltenCrash）
 potion_craft_insight:   # Alchemist's Boon（2026-10-28 照 PoE2：每分鐘另外獲得 (0—2) 點藥劑充能（生命、魔力藥劑各一份，加在增益上）；這次之前照通用規則）
   - { stat: effect.flask.charges_per_minute.life, type: FLAT, per: 0.1 }   # 增益：生命藥劑每分鐘充能 +x
   - { stat: effect.flask.charges_per_minute.mana, type: FLAT, per: 0.1 }   # 增益：魔力藥劑每分鐘充能 +x

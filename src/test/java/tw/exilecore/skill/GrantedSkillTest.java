@@ -94,12 +94,45 @@ class GrantedSkillTest {
         assertTrue(loadout.dormant(loadout.skill(position)));
         assertNull(loadout.boundSkill(3));
         assertEquals(position, loadout.find("erosion_star_shot"), "輔助、按鍵都留著");
-        // 已經有寶石的技能不另外放（2026-10-28：游雷有寶石、傳奇也賦予；這次之前用烈陽珠，照 PoE2 它沒有寶石）
+        // 2026-11-05 照站長：已經有寶石的技能也另外放一格賦予的（項鍊的暴擊引星＋寶石的暴擊引星同時存在）；
+        //   這次之前（2026-10-28）有寶石就不另外放
         final SkillLoadout gem = new SkillLoadout();
         gem.put("roaming_thunder", 12);
-        assertFalse(gem.syncGranted(Map.of("roaming_thunder", 3)));
-        assertFalse(gem.skill(gem.find("roaming_thunder")).granted());
-        assertEquals(12, gem.skill(gem.find("roaming_thunder")).level());
+        assertTrue(gem.syncGranted(Map.of("roaming_thunder", 3)));
+        assertEquals(2, gem.count("roaming_thunder"));
+        final int granted = gem.findGranted("roaming_thunder");
+        assertTrue(granted >= 0);
+        assertEquals(3, gem.skill(granted).level());
+        assertEquals(12, gem.skill(gem.find("roaming_thunder")).level(), "都沒綁時照面板順序（寶石那格）");
+        assertTrue(gem.bind(2, granted));
+        assertEquals(granted, gem.find("roaming_thunder"), "綁著的那格先");
+    }
+
+    @Test
+    void amuletGrantFreeReservationAndCopies() {
+        // 2026-11-05 照站長（空無墜飾）：項鍊賦予的不用保留精魂；寶石那格照常；兩顆寶石照舊不行
+        assertEquals(7, items.grantsOneOf("jamulet_absent").size());
+        for (final String id : items.grantsOneOf("jamulet_absent")) {
+            assertNotNull(config.skill(id), "空無墜飾的技能 " + id);
+        }
+        assertTrue(items.grantsNoReservation("jamulet_absent"));
+        final tw.exilecore.item.ItemData amulet = new tw.exilecore.item.ItemData("jamulet_absent", tw.exilecore.item.Rarity.NORMAL, 70);
+        items.rollGrant(amulet, new java.util.Random(1));
+        final String picked = items.pickedGrant(amulet);
+        assertTrue(items.grantsOneOf("jamulet_absent").contains(picked));
+        assertEquals(picked, items.pickedGrant(amulet.copy()), "複製的同一個");
+        final SkillLoadout loadout = new SkillLoadout();
+        loadout.put("critical_guide_star", 20);
+        loadout.syncGranted(Map.of("critical_guide_star", 18));
+        loadout.setReservationFree(java.util.Set.of("critical_guide_star"));
+        final int granted = loadout.findGranted("critical_guide_star");
+        assertTrue(loadout.reservationFree(loadout.skill(granted)));
+        assertFalse(loadout.reservationFree(loadout.skill(loadout.find("critical_guide_star"))));
+        assertNull(GemCopies.placeProblem(config, new SkillLoadout(), new SkillLoadout.Entry("critical_guide_star", 1), 0));
+        final SkillLoadout onlyGranted = new SkillLoadout();
+        onlyGranted.syncGranted(Map.of("critical_guide_star", 18));
+        assertNull(GemCopies.placeProblem(config, onlyGranted, new SkillLoadout.Entry("critical_guide_star", 20), 5), "項鍊那格不擋寶石");
+        assertNotNull(GemCopies.placeProblem(config, loadout, new SkillLoadout.Entry("critical_guide_star", 20), 7), "兩顆寶石不行");
     }
 
     @Test

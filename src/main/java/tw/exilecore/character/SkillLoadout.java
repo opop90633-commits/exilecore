@@ -583,8 +583,34 @@ public final class SkillLoadout {
         this.ringAuraSlots = Math.max(0, Math.min(RING_AURA_SLOTS, count));
     }
 
-    /** 技能在面板上的位置；沒有回傳 -1。 */
+    /**
+     * 技能在面板上的位置；沒有回傳 -1。2026-11-05：同一個技能面板上有兩格（項鍊賦予的＋寶石）時，綁在按鍵上的那格先
+     * （光環、常駐看的是綁鍵的那一格）；這次之前照面板順序第一格。
+     */
     public int find(final String skillId) {
+        int unbound = -1;
+        int freeBound = -1;
+        for (int i = 0; i < MAX_SKILLS; i++) {
+            if (skills[i] != null && skills[i].skillId().equals(skillId)) {
+                if (isBound(i)) {
+                    if (!reservationFree(skills[i])) {
+                        return i; // 兩格都綁著時要保留精魂的那格先（光環照這一格算保留，免得寶石那格跟著免費）
+                    }
+                    if (freeBound < 0) {
+                        freeBound = i;
+                    }
+                }
+                if (unbound < 0) {
+                    unbound = i;
+                }
+            }
+        }
+        if (freeBound >= 0) {
+            return freeBound;
+        }
+        if (unbound >= 0) {
+            return unbound;
+        }
         for (int i = 0; i < MAX_SKILLS; i++) {
             if (skills[i] != null && skills[i].skillId().equals(skillId)) {
                 return i;
@@ -599,6 +625,28 @@ public final class SkillLoadout {
             }
         }
         return -1;
+    }
+
+    /** 2026-11-05：面板第 position 格有沒有綁在任何一個按鍵格上。 */
+    public boolean isBound(final int position) {
+        for (final int bound : binds) {
+            if (bound == position) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** 2026-11-05 照 PoE2 空無墜飾：不用保留精魂的賦予技能（每次重算照身上的裝備設，不存檔）。 */
+    private java.util.Set<String> reservationFree = java.util.Set.of();
+
+    public void setReservationFree(final java.util.Set<String> skillIds) {
+        reservationFree = skillIds == null ? java.util.Set.of() : java.util.Set.copyOf(skillIds);
+    }
+
+    /** 2026-11-05：這一格是不用保留精魂的賦予技能（項鍊給的那一格；同一個技能的寶石照常保留）。 */
+    public boolean reservationFree(final Entry entry) {
+        return entry != null && entry.granted() && reservationFree.contains(entry.skillId());
     }
 
     /** 2026-10-28：面板上武器、昇華賦予的這個技能的位置；沒有回傳 -1。 */
@@ -863,10 +911,9 @@ public final class SkillLoadout {
         for (final java.util.Map.Entry<String, Integer> grant : grantedNow.entrySet()) {
             final int weaponQuality = quality == null ? 0 : Math.max(0, quality.getOrDefault(grant.getKey(), 0));
             // 2026-10-28：同一個技能可以放好幾顆，先找賦予的那一顆（這次之前一個技能只有一顆，直接 find）
+            // 2026-11-05 照站長「項鍊一個暴擊引星、寶石一顆暴擊引星要能同時存在」：已經有同一個技能的寶石也另外放一格賦予的
+            //   （寶石照舊只能一顆，見 GemCopies）；這次之前有寶石就不另外放（用寶石那個）
             final int grantedAt = findGranted(grant.getKey());
-            if (grantedAt < 0 && find(grant.getKey()) >= 0) {
-                continue; // 已經有同一個技能的寶石就不另外放（用寶石那個）
-            }
             final int position = grantedAt;
             if (position >= 0) {
                 final Entry entry = skills[position];

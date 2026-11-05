@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import tw.exilecore.ExileCore;
 import tw.exilecore.module.Module;
@@ -85,9 +86,36 @@ public final class SlotsModule implements Module, Listener {
         }
     }
 
-    /** 玩家指令：/slots 打開拉霸機（營地裡）。 */
+    /** 2026-11-05 照站長「每走一格拉一下，可以在各種地方走」：開著走路拉霸的人走到新的一格（腳下的方塊換了）拉一把。 */
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onMove(final PlayerMoveEvent event) {
+        if (service == null || !service.walking(event.getPlayer()) || event.getTo() == null) {
+            return;
+        }
+        if (event.getFrom().getBlockX() == event.getTo().getBlockX() && event.getFrom().getBlockZ() == event.getTo().getBlockZ()
+                && event.getFrom().getWorld() == event.getTo().getWorld()) {
+            return; // 同一格裡移動、轉頭、跳：不算
+        }
+        service.walkStep(event.getPlayer());
+    }
+
+    /** 玩家指令：/slots 打開拉霸機（營地裡）；/slots walk 開關走路拉霸（哪裡都可以，2026-11-05）。 */
     public static List<LiteralCommandNode<CommandSourceStack>> commands(final ExileCore plugin) {
-        return List.of(Commands.literal("slots").executes(context -> {
+        return List.of(Commands.literal("slots").then(Commands.literal("walk").executes(context -> {
+            final Entity executor = context.getSource().getExecutor();
+            if (!(executor instanceof Player player)) {
+                context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>這個指令要在遊戲內使用"));
+                return Command.SINGLE_SUCCESS;
+            }
+            final SlotsService slots = plugin.slots();
+            if (slots == null) {
+                player.sendMessage(plugin.text().prefixed("<red>拉霸機模組沒有啟用（看主控台的錯誤訊息）"));
+                return Command.SINGLE_SUCCESS;
+            }
+            final Long chosen = slots.chosenBet(player);
+            slots.toggleWalk(player, chosen != null && slots.config().bets().contains(chosen) ? chosen : slots.config().bets().getFirst());
+            return Command.SINGLE_SUCCESS;
+        })).executes(context -> {
             final Entity executor = context.getSource().getExecutor();
             if (!(executor instanceof Player player)) {
                 context.getSource().getSender().sendMessage(plugin.text().prefixed("<red>這個指令要在遊戲內使用"));

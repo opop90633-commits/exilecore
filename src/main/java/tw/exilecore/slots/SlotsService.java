@@ -79,6 +79,122 @@ public final class SlotsService {
         int jackpots;
     }
 
+    /**
+     * 2026-11-05 照站長「拉霸機新增歷史損益」：這個帳號拉霸機的累計（存在帳號進度 {@link #HISTORY_KEY}，所有角色一起算）＋今天（台灣時間）的押注與拿回。
+     * 這次之前只有「本次戰績」（下線就清掉）。
+     */
+    static final class History {
+        long spins;
+        long wins;
+        long wagered;
+        long returned;
+        long best;
+        long jackpots;
+        long day;
+        long dayWagered;
+        long dayReturned;
+        long dayBest;
+
+        long net() {
+            return returned - wagered;
+        }
+
+        long dayNet() {
+            return dayReturned - dayWagered;
+        }
+
+        /** 換日了就把今天的歸零。 */
+        void roll(final long today) {
+            if (day != today) {
+                day = today;
+                dayWagered = 0;
+                dayReturned = 0;
+                dayBest = 0;
+            }
+        }
+
+        String encode() {
+            return spins + ":" + wins + ":" + wagered + ":" + returned + ":" + best + ":" + jackpots + ":" + day + ":" + dayWagered + ":"
+                    + dayReturned + ":" + dayBest;
+        }
+
+        static History decode(final String text) {
+            final History history = new History();
+            if (text == null || text.isBlank()) {
+                return history;
+            }
+            final String[] parts = text.split(":");
+            final long[] values = new long[10];
+            for (int i = 0; i < Math.min(parts.length, values.length); i++) {
+                try {
+                    values[i] = Long.parseLong(parts[i].trim());
+                } catch (final NumberFormatException ignored) {
+                    values[i] = 0;
+                }
+            }
+            history.spins = values[0];
+            history.wins = values[1];
+            history.wagered = values[2];
+            history.returned = values[3];
+            history.best = values[4];
+            history.jackpots = values[5];
+            history.day = values[6];
+            history.dayWagered = values[7];
+            history.dayReturned = values[8];
+            history.dayBest = values[9];
+            return history;
+        }
+    }
+
+    /** 帳號進度的鍵：拉霸機的歷史損益（2026-11-05 照站長「每隻角色一起就好，金幣共用的」：整個帳號一份；同日稍早每隻角色各一份）。 */
+    static final String HISTORY_KEY = "slots_history";
+    /** 走路拉霸一秒拉好幾把：歷史最多每幾毫秒寫一次資料庫（下線、關服一定寫）。 */
+    private static final long HISTORY_FLUSH_MILLIS = 10_000;
+    private final Map<UUID, History> histories = new HashMap<>();
+    private final Map<UUID, Long> historyFlushed = new HashMap<>();
+    private final java.util.Set<UUID> historyDirty = new java.util.HashSet<>();
+
+    private static long today() {
+        return java.time.LocalDate.now(java.time.ZoneId.of("Asia/Taipei")).toEpochDay();
+    }
+
+    /** 這個帳號的歷史；第一次從帳號進度讀（帳號還沒載入就先給空的，載入後再讀）。 */
+    History history(final Player player) {
+        final UUID uuid = player.getUniqueId();
+        History history = histories.get(uuid);
+        if (history == null) {
+            if (plugin.bounties() == null || !plugin.bounties().accountLoaded(player)) {
+                return new History();
+            }
+            history = History.decode(plugin.bounties().progressValue(player, HISTORY_KEY));
+            histories.put(uuid, history);
+        }
+        history.roll(today());
+        return history;
+    }
+
+    private void markHistory(final Player player) {
+        if (histories.containsKey(player.getUniqueId())) {
+            historyDirty.add(player.getUniqueId());
+        }
+    }
+
+    /** 歷史改過了：距離上次寫超過 {@link #HISTORY_FLUSH_MILLIS}（或 force）就寫進帳號進度。 */
+    private void saveHistory(final Player player, final boolean force) {
+        final UUID uuid = player.getUniqueId();
+        final History history = histories.get(uuid);
+        if (history == null || !historyDirty.contains(uuid) || plugin.bounties() == null) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        if (!force && now - historyFlushed.getOrDefault(uuid, 0L) < HISTORY_FLUSH_MILLIS) {
+            return;
+        }
+        historyDirty.remove(uuid);
+        historyFlushed.put(uuid, now);
+        plugin.bounties().writeProgress(player, HISTORY_KEY, history.encode());
+    }
+
     private final ExileCore plugin;
     private final SlotsConfig config;
     private final Map<UUID, Spin> pending = new HashMap<>();
@@ -196,6 +312,16 @@ public final class SlotsService {
         return autoCounts.getOrDefault(player.getUniqueId(), config.autoSpins());
     }
 
+    /** 2026-11-05 照站長「拉霸機次數讓玩家自己手動輸入」：自動連拉最多幾把（同日照站長「能超過 500 嗎」：500 → 9999）。 */
+    static final int AUTO_MAX = 9999;
+
+    /** 2026-11-05：玩家自己輸入的把數（夾在 1～{@link #AUTO_MAX}）；回傳設好的把數。 */
+    int setAutoCount(final Player player, final int count) {
+        final int next = Math.max(1, Math.min(AUTO_MAX, count));
+        autoCounts.put(player.getUniqueId(), next);
+        return next;
+    }
+
     /** 換下一個（step 1）或上一個（step -1）把數，到頭繞回去。 */
     int cycleAutoCount(final Player player, final int step) {
         final int current = autoCount(player);
@@ -237,6 +363,69 @@ public final class SlotsService {
 
     /** 拉一把的結果：成功是 spin，不行是 problem。 */
     record Started(Spin spin, String problem) {
+    }
+
+    // ---- 2026-11-05 照站長「拉霸機新增每走一格拉一下，可以在各種地方走」----
+
+    /** 開著走路拉霸的人 → 每一把押多少。 */
+    private final Map<UUID, Long> walkers = new HashMap<>();
+
+    /** 有沒有開著走路拉霸。 */
+    public boolean walking(final Player player) {
+        return walkers.containsKey(player.getUniqueId());
+    }
+
+    /** 走路拉霸每一把押多少（沒開回傳 0）。 */
+    long walkBet(final Player player) {
+        return walkers.getOrDefault(player.getUniqueId(), 0L);
+    }
+
+    /**
+     * 開或關走路拉霸（押 bet）；回傳開了沒有。開著的時候每走到新的一格（腳下的方塊換了）拉一把、馬上結算，
+     * 不用打開選單、哪裡都可以（不限營地）；金幣不夠、或拉不了就自己關掉。
+     */
+    boolean toggleWalk(final Player player, final long bet) {
+        if (walkers.remove(player.getUniqueId()) != null) {
+            player.sendMessage(plugin.text().prefixed("<gray>🎰 走路拉霸關掉了"));
+            return false;
+        }
+        if (!config.enabled()) {
+            player.sendMessage(plugin.text().prefixed("<gray>拉霸機暫停中"));
+            return false;
+        }
+        walkers.put(player.getUniqueId(), bet);
+        player.sendMessage(plugin.text().prefixed("<" + GOLD_COLOR + ">🎰 走路拉霸開了<gray>：每走一格拉一把，每把押 <white>"
+                + GoldService.format(bet) + "</white> 金幣（輸入 <white>/slots walk</white> 或在拉霸機上再按一次關掉）"));
+        return true;
+    }
+
+    /** 走到新的一格：拉一把、馬上結算，結果寫在動作列；拉不了就關掉走路拉霸。 */
+    public void walkStep(final Player player) {
+        final Long bet = walkers.get(player.getUniqueId());
+        if (bet == null) {
+            return;
+        }
+        final Started started = start(player, bet);
+        if (started.problem() != null) {
+            if ("還在轉".equals(started.problem())) {
+                return; // 選單那邊正在轉：這一格不拉
+            }
+            walkers.remove(player.getUniqueId());
+            player.sendMessage(plugin.text().prefixed("<red>🎰 走路拉霸停了：" + tw.exilecore.item.ItemRenderer.escape(started.problem())));
+            return;
+        }
+        final Spin spin = started.spin();
+        spin.shown = true; // 結果寫在動作列（不另外發「結算」訊息）
+        settle(player);
+        final String text = prizeText(spin);
+        tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<" + GOLD_COLOR + ">🎰 <white>" + text + " <dark_gray>・ <gray>金幣 "
+                + GoldService.format(plugin.gold().balance(player))));
+        if (spin.win() && (spin.outcome.kind() != SlotsConfig.Kind.GOLD || spin.outcome.multiplier() >= 10)) {
+            player.sendMessage(plugin.text().prefixed("<" + GOLD_COLOR + ">🎰 走路拉霸：" + text));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.2f);
+        } else if (spin.win()) {
+            player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.4f, 1.2f);
+        }
     }
 
     /**
@@ -281,6 +470,11 @@ public final class SlotsService {
         final Session session = session(player);
         session.spins++;
         session.wagered += bet;
+        final History history = history(player); // 2026-11-05：歷史損益
+        history.spins++;
+        history.wagered += bet;
+        history.dayWagered += bet;
+        markHistory(player);
         return new Started(spin, null);
     }
 
@@ -392,7 +586,18 @@ public final class SlotsService {
             if (spin.outcome.kind() == SlotsConfig.Kind.JACKPOT) {
                 session.jackpots++;
             }
+            final History history = history(player); // 2026-11-05：歷史損益
+            history.wins++;
+            history.returned += returned;
+            history.dayReturned += returned;
+            history.best = Math.max(history.best, returned);
+            history.dayBest = Math.max(history.dayBest, returned);
+            if (spin.outcome.kind() == SlotsConfig.Kind.JACKPOT) {
+                history.jackpots++;
+            }
+            markHistory(player);
         }
+        saveHistory(player, false);
         plugin.players().markDirty(player);
         log(player, spin);
         announce(player, spin);
@@ -551,12 +756,18 @@ public final class SlotsService {
         chosen.remove(uuid);
         speeds.remove(uuid);
         autoCounts.remove(uuid);
+        walkers.remove(uuid); // 2026-11-05：下線就關掉走路拉霸
+        saveHistory(player, true); // 2026-11-05：歷史損益下線一定寫
+        histories.remove(uuid);
+        historyFlushed.remove(uuid);
+        historyDirty.remove(uuid);
     }
 
     /** 關服、重讀插件：每個人還在轉的那一把都結算。 */
     void settleAll() {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             settle(player);
+            saveHistory(player, true); // 2026-11-05：關服、重讀插件時歷史損益寫進去
         }
         pending.clear();
     }

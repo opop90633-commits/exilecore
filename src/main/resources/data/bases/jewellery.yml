@@ -610,12 +610,17 @@ jamulet_portent:
       - { stat: local.max_suffixes, type: FLAT, value: -1 }
 
 jamulet_absent:
-  # PoE2 Absent Amulet：「賦予一個隨機技能」先略過（還沒有這個機制），只剩缺點，先不掉落
-  retired: true        # 2026-10-26：賦予技能的機制還沒有，只剩缺點；先停用（定義留著，不掉落、商人不賣），做了技能再打開
+  # PoE2 Absent Amulet（poe2db.tw/tw/Absent_Amulet）：掉落時從 grants_one_of 隨機定一個賦予的技能（等級照物品等級，跟法杖一樣），
+  #   賦予的技能不用保留精魂（grantedSkillsHaveNoReservation）；可以少 1 條前綴、少 1 條後綴。
+  # 2026-11-05 照站長「新增這個項鍊，放在裂痕王裡 1% 掉落」：打開（這次之前 retired，賦予技能的機制還沒有）；
+  #   只在淵底之王・骨潮（maps.yml 的 abyss_lich；同日稍早在裂隙之主 breach_lord）掉 1%，一般掉落、劫盜、商人、賭博都沒有（drop_weight 0）。
+  #   項鍊賦予的技能跟同一個技能的寶石可以同時放在面板上（寶石本身照舊只能一顆）
   name: 空無墜飾
   family: jamulet_special
   heist_only: true     # 2026-10-28 照站長：特殊項鍊只在劫盜掉（heist.yml 的 special_amulet_chance、金庫之主的收藏）；這次之前一般掉落、賭裝商人都拿得到
   drop_weight: 0
+  grants_one_of: [mutation_guide_star, critical_guide_star, roll_guide_star, steed_call, arcane_heart, tripod_element_art, unquenched_fury]   # 照原作順序：異變引星、暴擊引星、翻滾引星、喚駒、祕法之心、鼎元訣、不熄怒
+  grants_no_reservation: true
   material: GLASS_BOTTLE
   model: exilecore:jewellery/amber_amulet
   slot: AMULET

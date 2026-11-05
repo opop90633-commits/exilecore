@@ -19,6 +19,9 @@ import tw.exilecore.character.SkillLoadout;
  * （2026-10-30：原作 0.3 起面板上任何技能寶石都只能一顆，主要寶石也是，跟原作一樣；這次之前註記成偏離）。
  * <p>
  * 這次之前（2026-10-23 起）同一個技能只能有一顆：面板上有就不能再放進宿主孔裡，反過來也不行。
+ * <p>
+ * 2026-11-05 照站長：裝備賦予的那一格（空無墜飾、法杖、昇華）不算在「只能一顆」裡：項鍊的暴擊引星＋寶石的暴擊引星可以同時在面板上
+ * （主要寶石的能量照面板位置分開記，MetaGems），兩顆暴擊引星寶石照舊不行。
  */
 public final class GemCopies {
 
@@ -71,7 +74,8 @@ public final class GemCopies {
             }
             for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
                 final SkillLoadout.Entry other = loadout.skill(i);
-                if (i != ignorePanel && other != null && other.skillId().equals(skillId)) {
+                // 2026-11-05 照站長：裝備賦予的那一格（空無墜飾、法杖…）不算，寶石跟賦予的可以同時有；寶石本身照舊只能一顆
+                if (i != ignorePanel && other != null && !other.granted() && other.skillId().equals(skillId)) {
                     final SkillDefinition definition = config.skill(skillId);
                     return "面板上已經有" + (definition == null ? skillId : definition.name()) + "了（同一個技能寶石只能放一顆；放進主要寶石孔裡的不算）";
                 }
@@ -84,7 +88,8 @@ public final class GemCopies {
             if (other == null) {
                 continue;
             }
-            if (i != ignorePanel && other.skillId().equals(skillId)) {
+            // 2026-11-05 照站長「項鍊一個暴擊引星、寶石一顆暴擊引星要能同時存在，但不能有兩顆寶石暴擊引星」：賦予的那一格不算
+            if (i != ignorePanel && !other.granted() && other.skillId().equals(skillId)) {
                 return "面板上已經有" + definition.name() + "了（" + why(definition) + "）";
             }
             for (int s = 0; s < other.sockets(); s++) {

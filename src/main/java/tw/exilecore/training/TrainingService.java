@@ -751,8 +751,10 @@ public final class TrainingService {
         final StringBuilder sources = new StringBuilder("<gray>　來源：");
         boolean first = true;
         for (final java.util.Map.Entry<String, Double> entry : meter.topSources(5)) {
+            final int count = meter.hitsOf(entry.getKey());
             sources.append(first ? "" : "<dark_gray>・").append("<white>").append(ItemRenderer.escape(entry.getKey())).append(" <gray>")
-                    .append(percent(entry.getValue() / Math.max(1, meter.total())));
+                    .append(percent(entry.getValue() / Math.max(1, meter.total())))
+                    .append(count > 0 ? "<dark_gray>（" + count + " 下）" : ""); // 2026-11-05：每個來源打中幾下（觸發的法術看得出觸發了幾次）
             first = false;
         }
         player.sendMessage(plugin.text().parse(sources.toString()));

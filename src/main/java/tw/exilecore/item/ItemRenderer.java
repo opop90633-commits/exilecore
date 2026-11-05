@@ -87,6 +87,13 @@ public final class ItemRenderer {
         this.grantedLabel = label;
     }
 
+    /** 2026-11-05（空無墜飾）：技能代號, 物品等級 → 「Lv.x 名稱」（技能模組接上，沒有就不寫）。 */
+    private java.util.function.BiFunction<String, Integer, String> skillLabel;
+
+    public void setSkillLabel(final java.util.function.BiFunction<String, Integer, String> label) {
+        this.skillLabel = label;
+    }
+
     /** 這個基底在這個物品等級賦予的技能（「Lv.x 名稱」）；沒有回傳 null。 */
     public String grantedLabel(final String baseId, final int itemLevel) {
         return grantedLabel == null || repository.grantedSkill(baseId) == null ? null : grantedLabel.apply(baseId, itemLevel);
@@ -318,6 +325,13 @@ public final class ItemRenderer {
         final String granted = grantedLabel(data.base(), Math.max(1, data.ilvl()));
         if (granted != null) {
             lore.add(line("<gray>賦予技能：<#c9a7ff>" + escape(granted)));
+        }
+        // 2026-11-05 照站長（PoE2 Absent Amulet，空無墜飾）：掉落時隨機定的賦予技能；不用保留精魂
+        final String picked = repository.pickedGrant(data);
+        final String pickedLabel = picked == null || skillLabel == null ? null : skillLabel.apply(picked, Math.max(1, data.ilvl()));
+        if (pickedLabel != null) {
+            lore.add(line("<gray>賦予技能：<#c9a7ff>" + escape(pickedLabel)
+                    + (repository.grantsNoReservation(data.base()) ? " <dark_gray>(不用保留精魂)" : "")));
         }
 
         // 基底數值

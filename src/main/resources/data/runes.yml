@@ -970,7 +970,7 @@ runes:
 # =====================================================================================================
 # 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（PoE2 的 Idol，poe2db「Idol」31 顆；原作是燃燒豐碑的附身怪掉的）。
 #   跟符文一樣嵌進符文孔，名字都叫「魔偶符文・某某」。照原作每一顆只在兩種東西上有加成：某個部位（頭盔、胸甲、手套＝我們的腿甲、鞋子、盾、輕盾、法器）
-#   或武器（軍用武器、法杖或長杖），以及權杖（slots 的 sceptre）；別的嵌了沒效果（不給嵌）。每顆一個角色僅限 1 顆（limit，第二顆沒效果）。
+#   或武器（軍用武器、法杖或長杖），以及權杖（slots 的 sceptre）；別的嵌了沒效果（不給嵌）。一個角色僅限 1 顆（limit，第二顆沒效果）——2026-11-05 照 poe2db：蛇、猿、梟、貓、狼、野豬、熊、牛這 8 顆原作沒有 Limited to，不限顆數；這次之前 31 顆全部僅限 1 顆。
 #   權杖那條原作多半是「你存在範圍內的盟友（夥伴）…」：我們寫成夥伴（minion＋companion 標籤）的加成，不看在不在臨在範圍。
 #   羈絆（bonded）跟符文一樣：只有昇華・聖賢智慧才有效果；原作的「命定」就是這個。
 #   掉落：地圖裡的軍團（map_events.yml 的 legion.idol_chance：將領、軍曹、士兵各自的機率），不走掉落表（drop_weight 0）。
@@ -1265,7 +1265,7 @@ runes:
   idol_snake:   # Snake Idol（羈絆手套「痕跡效果」沒做）
     name: 魔偶符文・蝮蛇
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       legs:
         - { text: "增加 8% 詛咒幅度", stat: curse.effect, type: INCREASED, value: 8 }
@@ -1278,7 +1278,7 @@ runes:
   idol_primate:   # Primate Idol（羈絆頭盔「痕跡撿拾距離」沒做）
     name: 魔偶符文・靈長
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       head:
         - { text: "召喚物增加 15% 最大生命", stat: life.max, type: INCREASED, value: 15, tags: [minion] }
@@ -1291,7 +1291,7 @@ runes:
   idol_owl:   # Owl Idol（羈絆法器「統治者增益效果」沒做）
     name: 魔偶符文・夜梟
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       focus:
         - { text: "增加 12% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 12 }
@@ -1304,7 +1304,7 @@ runes:
   idol_cat:   # Cat Idol
     name: 魔偶符文・靈貓
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       legs:
         - { text: "增加 25% 命中值", stat: accuracy, type: INCREASED, value: 25 }
@@ -1319,7 +1319,7 @@ runes:
   idol_wolf:   # Wolf Idol（羈絆手套「減少你身上的流血幅度」沒做）
     name: 魔偶符文・野狼
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       legs:
         - { text: "增加 15% 你所施加之流血的幅度", stat: bleed.magnitude, type: INCREASED, value: 15 }
@@ -1345,7 +1345,7 @@ runes:
   idol_boar:   # Boar Idol
     name: 魔偶符文・野豬
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       legs:
         - { text: "擊中時獲得 1 點怒氣", stat: rage.on_hit, type: FLAT, value: 1 }
@@ -1360,7 +1360,7 @@ runes:
   idol_bear:   # Bear Idol（權杖「夥伴附加物理攻擊傷害」改成夥伴增加 20% 物理傷害）
     name: 魔偶符文・巨熊
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       head:
         - { text: "增加 10% 範圍效果", stat: skill.area, type: INCREASED, value: 10 }
@@ -1375,7 +1375,7 @@ runes:
   idol_ox:   # Ox Idol
     name: 魔偶符文・公牛
     level: 50
-    limit: 1
+    # 2026-11-05 照 PoE2（poe2db 這顆沒有「Limited to」）：不限顆數；這次之前 limit: 1
     slots:
       shield:
         - { text: "增加 15% 格擋率", stat: block.chance, type: INCREASED, value: 15 }

@@ -3919,7 +3919,7 @@ rune_idol_snake:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 8% 詛咒幅度；權杖 夥伴增加 10% 攻擊速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 8% 詛咒幅度；權杖 夥伴增加 10% 攻擊速度。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_primate:
@@ -3931,7 +3931,7 @@ rune_idol_primate:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：頭盔 召喚物增加 15% 最大生命；權杖 夥伴增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 召喚物增加 15% 最大生命；權杖 夥伴增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_owl:
@@ -3943,7 +3943,7 @@ rune_idol_owl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：法器 增加 12% 冷卻時間恢復率；權杖 夥伴增加 10% 施法速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：法器 增加 12% 冷卻時間恢復率；權杖 夥伴增加 10% 施法速度。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_cat:
@@ -3955,7 +3955,7 @@ rune_idol_cat:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 25% 命中值；權杖 夥伴增加 14% 暴擊率。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 25% 命中值；權杖 夥伴增加 14% 暴擊率。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_wolf:
@@ -3967,7 +3967,7 @@ rune_idol_wolf:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 15% 你所施加之流血的幅度；權杖 夥伴增加 20% 暴擊傷害加成。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 增加 15% 你所施加之流血的幅度；權杖 夥伴增加 20% 暴擊傷害加成。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_stag:
@@ -3991,7 +3991,7 @@ rune_idol_boar:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 擊中時獲得 1 點怒氣；權杖 臨在範圍內的友方每秒回復 0.5% 最大生命。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：手套（腿甲） 擊中時獲得 1 點怒氣；權杖 臨在範圍內的友方每秒回復 0.5% 最大生命。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_bear:
@@ -4003,7 +4003,7 @@ rune_idol_bear:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：頭盔 增加 10% 範圍效果；權杖 夥伴增加 20% 物理傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：頭盔 增加 10% 範圍效果；權杖 夥伴增加 20% 物理傷害。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_ox:
@@ -4015,7 +4015,7 @@ rune_idol_ox:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魔偶）：盾、輕盾 增加 15% 格擋率；權杖 夥伴 +12% 全部元素抗性。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
+  description: "嵌進一個空的符文孔（魔偶）：盾、輕盾 增加 15% 格擋率；權杖 夥伴 +12% 全部元素抗性。別的裝備嵌了沒效果（需求等級 50）（羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
 
 rune_idol_rabbit:

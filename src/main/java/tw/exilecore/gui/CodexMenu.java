@@ -960,6 +960,23 @@ public final class CodexMenu extends Menu {
         return codexBases(plugin.items().repository());
     }
 
+    /** 2026-11-05：掉落時從幾個技能隨機定一個的基底（空無墜飾）：列出可能的技能；沒有回傳空的。 */
+    private List<String> grantOneOfLines(final ItemBase base) {
+        final List<String> ids = plugin.items().repository().grantsOneOf(base.id());
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        final List<String> names = new ArrayList<>();
+        for (final String id : ids) {
+            final tw.exilecore.skill.SkillDefinition skill = plugin.skills() == null ? null : plugin.skills().config().skill(id);
+            names.add(skill == null ? id : skill.name());
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add("<#c9a7ff>賦予技能：掉落時隨機一個" + (plugin.items().repository().grantsNoReservation(base.id()) ? "<dark_gray>（不用保留精魂）" : ""));
+        lines.add("<gray>　" + ItemRenderer.escape(String.join("、", names)));
+        return lines;
+    }
+
     private List<ItemStack> baseEntries() {
         final List<ItemStack> stacks = new ArrayList<>();
         final List<ItemBase> list = bases();
@@ -985,6 +1002,7 @@ public final class CodexMenu extends Menu {
             if (each.implicit() != null && each.implicit().text() != null) { // 2026-10-31：白裝就有的固定詞綴
                 baseLore.add("<#a0a0ff>" + each.implicit().rangeText() + " <dark_gray>(固定)");
             }
+            baseLore.addAll(grantOneOfLines(each)); // 2026-11-05 照站長：空無墜飾賦予的技能（掉落時隨機一個）
             baseLore.add("<#8888ff>前綴 " + prefixes + " 種<gray>・<#ffd27f>後綴 " + suffixes + " 種"
                     + (unveiled > 0 ? "<gray>・<#c48bff>揭露 " + unveiled + " 種" : ""));
             baseLore.add("");

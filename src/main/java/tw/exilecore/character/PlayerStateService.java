@@ -615,6 +615,7 @@ public final class PlayerStateService {
             final Map<String, Integer> granted = new java.util.LinkedHashMap<>(weaponGranted);
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
             // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質；2026-10-29：脫下武器馬上拿掉賦予的技能（角色載入好了才拿）
+            state.skills().setReservationFree(reservationFree(active)); // 2026-11-05 照 PoE2 空無墜飾：賦予的技能不用保留精魂
             state.skills().syncGranted(granted, ascendancyQuality(grantedQuality(active), weaponGranted.keySet(), granted.keySet()), state.isLoaded());
             // 2026-11-04 照站長：戴著空座指環（bases 的 aura_slot）時技能面板多一格光環格
             int ringAura = 0; // 2026-11-04 照站長：取消僅限一個，每戴一個開一格（最多 2 格）
@@ -875,6 +876,11 @@ public final class PlayerStateService {
             }
             // 2026-10-30 照 PoE2（RePoE base_items skills_granted）：盾牌賦予架盾（Raise Shield）、圓盾（敏捷盾）賦予招架（Parry），法器不賦予；
             // 等級照盾的物品等級。這次之前架盾、招架是要雕的技能寶石
+            // 2026-11-05 照站長（PoE2 Absent Amulet，空無墜飾）：掉落時隨機定的那個技能，等級照物品等級（跟法杖一樣）
+            final String picked = plugin.items().repository().pickedGrant(item.data());
+            if (picked != null && plugin.skills().config().skill(picked) != null) {
+                granted.merge(picked, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+            }
             final String shieldSkill = shieldSkill(item.base());
             if (shieldSkill != null && plugin.skills().config().skill(shieldSkill) != null) {
                 granted.merge(shieldSkill, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
@@ -896,6 +902,23 @@ public final class PlayerStateService {
         return granted;
     }
 
+    /** 2026-11-05 照 PoE2（Absent Amulet：grantedSkillsHaveNoReservation）：身上這種基底賦予的技能（不用保留精魂）。 */
+    private java.util.Set<String> reservationFree(final List<EquippedItem> active) {
+        if (plugin.items() == null) {
+            return java.util.Set.of();
+        }
+        final java.util.Set<String> free = new java.util.HashSet<>();
+        for (final EquippedItem item : active) {
+            if (plugin.items().repository().grantsNoReservation(item.data().base())) {
+                final String picked = plugin.items().repository().pickedGrant(item.data());
+                if (picked != null) {
+                    free.add(picked);
+                }
+            }
+        }
+        return free;
+    }
+
     /**
      * 2026-10-27 照 PoE2 0.5（poe2wiki Quality）：法杖、長杖、權杖的品質不加武器自己的數值，加在賦予的技能上
      * （技能代號 → 武器的品質；同一個技能有好幾把取最高）。這次之前賦予的技能沒有品質。
@@ -912,6 +935,10 @@ public final class PlayerStateService {
             final String skill = plugin.items().repository().grantedSkill(item.data().base());
             if (skill != null) {
                 quality.merge(skill, item.data().quality(), Math::max);
+            }
+            // 2026-11-05 照站長「熔軀崩擊的品質改成照原作」：傳奇武器賦予的技能（焚王獸符的熔軀崩擊）品質照那把武器的品質；這次之前沒有品質
+            for (final String own : tw.exilecore.item.unique.UniqueDerived.grantedSkills(item.modifiers())) {
+                quality.merge(own, item.data().quality(), Math::max);
             }
         }
         return quality;

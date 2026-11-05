@@ -52,6 +52,8 @@ public final class SkillResources implements Listener {
         long enragedUntil;
         /** 2026-10-26 原初飢餓：最近（4 秒）消耗的怒氣：{tick, 點數}。 */
         final java.util.ArrayDeque<long[]> rageSpent = new java.util.ArrayDeque<>();
+        /** 2026-11-05 照 PoE2 熊形態：熊形態下花掉、還沒湊滿 15 點的怒氣。 */
+        int bearRage;
         /** 2026-10-26 照 PoE2 天賦樹：怒氣開始流失前等幾 tick、每掉 1 點隔幾 tick（拿到怒氣時照屬性表更新）。 */
         long decayDelay = RAGE_DECAY_DELAY;
         double decayTicks = RAGE_DECAY_TICKS;
@@ -128,6 +130,9 @@ public final class SkillResources implements Listener {
         }
     }
 
+    /** 2026-11-05 照 PoE2 熊形態：每花幾點怒氣得一顆磐星。 */
+    static final int BEAR_RAGE_PER_ENDURANCE = 15;
+
     /** 用掉怒氣（最多 amount 點）；回傳實際用掉幾點。怒嘯（2026-10）用。 */
     public int spendRage(final Player player, final int amount) {
         final State s = states.get(player.getUniqueId());
@@ -143,6 +148,15 @@ public final class SkillResources implements Listener {
             s.rageSpent.addLast(new long[] {tick, spent}); // 2026-10-26 原初飢餓：最近消耗的怒氣
             if (plugin.skills() != null) {
                 plugin.skills().supportMechanics().extras().rageSpent(player, spent); // 2026-10-27 照 PoE2 Relentless Rage
+                // 2026-11-05 照 PoE2 熊形態（每花 15 點怒氣獲得一顆耐力球＝磐星）；這次之前熊形態沒有這條
+                if (SkillService.BEAR_FORM.equals(plugin.skills().formName(player)) && plugin.combat() != null && plugin.combat().charges() != null) {
+                    s.bearRage += spent;
+                    final int charges = s.bearRage / BEAR_RAGE_PER_ENDURANCE;
+                    if (charges > 0) {
+                        s.bearRage -= charges * BEAR_RAGE_PER_ENDURANCE;
+                        plugin.combat().charges().grant(player, "endurance", charges);
+                    }
+                }
             }
         }
         return spent;

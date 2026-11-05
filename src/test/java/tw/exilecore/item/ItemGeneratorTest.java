@@ -90,11 +90,11 @@ class ItemGeneratorTest {
         // 2026-10-26：＋照 PoE2 的法杖 14、長杖 17、權杖 16（bases/casters.yml），舊的 wand_14、staff_17、sceptre_16 退役
         // 2026-10-26：＋照 PoE2 補上的腰帶 8、戒指 10、項鍊 10 與淨化護符 1（熔星、星骸藥劑與續命護符停用但定義留著，照樣算）；這次之前 987
         assertEquals(1024, /* 2026-10-31：＋6 張地圖 */ repository.baseCount(), "現役 238 + 退役 744 + 藥劑與護符 36（2026-10-27：＋傳奇專用的素面指環 jring_plain，這次之前 1017；2026-10-26：＋恆時珠寶基底 timeless_jewel）");
-        assertEquals(244, repository.bases().size(), "現役的裝備基底（2026-10-31 地圖 14 → 20 張；含 14 張地圖、9 種珠寶；2026-10-26 ＋25 種飾品、＋恆時珠寶，這次之前 212）");
+        assertEquals(245, repository.bases().size(), "現役的裝備基底（2026-11-05 ＋空無墜飾；2026-10-31 地圖 14 → 20 張；含 14 張地圖、9 種珠寶；2026-10-26 ＋25 種飾品、＋恆時珠寶，這次之前 212）");
         assertEquals(20, repository.bases().stream().filter(ItemBase::isMap).count()); // 2026-10-31：＋6 張
         assertEquals(9, repository.bases().stream().filter(ItemBase::isJewel).count(), "4 種珠寶 + 4 種半徑珠寶 + 恆時珠寶（2026-10-26）");
         // 2026-10-26：停用的藥劑（4）與護符（1）不在 flaskLikeBases，算在「退役」裡（這次之前 987 - 212 - 35）
-        assertEquals(1018 - 238 - 31, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
+        assertEquals(1018 - 238 - 31 - 1 /* 2026-11-05：空無墜飾從退役變現役 */, repository.baseCount() - repository.bases().size() - repository.flaskLikeBases().size());
         assertTrue(repository.affixCount() >= 30, "詞綴數 " + repository.affixCount());
         // 2026-10-26 照 PoE2 0.5：星魄 16 → 75（分階＋新的精髓）、催化劑 10 → 17（13 種＋4 種舊的）、星籤 6 → 26、
         //   ＋10 種高階／完美通貨、星紋蝕刻器、工匠石、預見鎖；2026-10-26（第二次）：工匠石照站長拿掉（－1）
@@ -193,7 +193,9 @@ class ItemGeneratorTest {
         assertTrue(prefixes <= generator.maxAffixes(data, AffixType.PREFIX), "前綴超過上限");
         assertTrue(suffixes <= generator.maxAffixes(data, AffixType.SUFFIX), "後綴超過上限");
         if (base.implicit() != null) {
-            assertEquals(base.implicit().vars().keySet(), data.implicitVars().keySet());
+            final java.util.Set<String> keys = new java.util.HashSet<>(data.implicitVars().keySet());
+            keys.remove(ItemRepository.GRANT_PICK); // 2026-11-05：空無墜飾隨機定的賦予技能也記在這裡
+            assertEquals(base.implicit().vars().keySet(), keys);
         }
     }
 

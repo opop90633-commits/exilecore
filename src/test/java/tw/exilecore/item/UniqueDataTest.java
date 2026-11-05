@@ -112,9 +112,10 @@ class UniqueDataTest {
         stats.add(tw.exilecore.stats.TreeEffectKeys.FLASK_MANA_RATE);
         stats.add(tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT); // 2026-11-04（唯我論）：裝備與寶石的屬性需求（PlayerStateService 第一輪的表就有裝備）
         for (final String skill : List.of("rotting_corpse_blast", "wilting_breath", "thunder_drop", "roaming_thunder", "blink",
-                "rebirth_ceremony")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢
+                "rebirth_ceremony", "molten_dive_crash")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢；2026-11-05：＋焚王獸符
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
         }
+        stats.add("glory.regen"); // 2026-11-05（焚王獸符）：消耗榮耀的技能每 2 秒獲得榮耀（SupportMechanics.GLORY_REGEN）
         tags = constants(Tags.class);
         // 2026-10-28：敵人狀態的條件標籤（vs_immobilised、vs_cursed…；TargetConditions 照目標的狀態加進擊中的情境，帶這些標籤的修飾器才算）
         tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY);

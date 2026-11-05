@@ -3790,27 +3790,32 @@ public final class SkillService {
     static final int FORM_TICKS = 160;
     /** 變身形態的增益代號（獸血沸的狂暴要看現在是不是獸形、把形態撐到狂暴結束）。 */
     static final String FORM_BUFF = "shapeshift";
+    /** 2026-11-05：熊形態的名字（SkillResources 照這個判斷花怒氣給磐星）。 */
+    public static final String BEAR_FORM = "熊形態";
 
     private void shapeshift(final Player player, final SkillDefinition definition) {
         final java.util.Set<String> tags = definition.tags();
         final String name;
         final List<tw.exilecore.stats.Modifier> mods;
+        // 2026-11-05 照站長「照原作」（PoE2 0.5，PoB2 CalcPerform 照遊戲資料）：
+        //   熊：每級 +10 護甲、30% 護甲也對元素傷害生效、每花 15 點怒氣得一顆磐星（SkillResources.spendRage）
+        //   狼人：增加 30% 移動速度
+        //   飛龍：能量護盾回充增加 50%、暈眩門檻增加 50%、異常門檻增加 50%
+        //   這次之前是自己定的：熊最大生命更多 15%、增加 50% 護甲、暈眩門檻 +30%、移動 −5%；狼人攻速 +15%、移動 +10%、暴擊率 +25%；
+        //   飛龍元素傷害 +20%、閃避 +40%
         if (tags.contains(tw.exilecore.stats.Tags.BEAR)) {
-            name = "熊形態";
-            mods = List.of(tw.exilecore.stats.Modifier.more(StatKeys.LIFE_MAX, 0.15, name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.ARMOUR, 0.5, name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.STUN_THRESHOLD, 0.3, name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.MOVEMENT_SPEED, -0.05, name));
+            name = BEAR_FORM;
+            final int level = plugin.players().get(player).level();
+            mods = List.of(tw.exilecore.stats.Modifier.flat(StatKeys.ARMOUR, 10.0 * Math.max(1, level), name),
+                    tw.exilecore.stats.Modifier.flat(StatKeys.ARMOUR_ELEMENTAL, 30, name));
         } else if (tags.contains(tw.exilecore.stats.Tags.WEREWOLF)) {
             name = "狼人形態";
-            mods = List.of(tw.exilecore.stats.Modifier.increased(StatKeys.ATTACK_SPEED, 0.15, name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.1, name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.CRIT_CHANCE, 0.25, name));
+            mods = List.of(tw.exilecore.stats.Modifier.increased(StatKeys.MOVEMENT_SPEED, 0.3, name));
         } else if (tags.contains(tw.exilecore.stats.Tags.WYVERN)) {
             name = "飛龍形態";
-            mods = List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED, 0.2,
-                            java.util.Set.of(tw.exilecore.stats.Tags.ELEMENTAL), name),
-                    tw.exilecore.stats.Modifier.increased(StatKeys.EVASION, 0.4, name));
+            mods = List.of(tw.exilecore.stats.Modifier.increased(StatKeys.ES_RECHARGE, 0.5, name),
+                    tw.exilecore.stats.Modifier.increased(StatKeys.STUN_THRESHOLD, 0.5, name),
+                    tw.exilecore.stats.Modifier.increased(StatKeys.AILMENT_THRESHOLD, 0.5, name));
         } else {
             return;
         }
@@ -4863,6 +4868,12 @@ public final class SkillService {
 
     /** 面板上（或寶石裡）的一個技能在這個角色身上的數值。 */
     SkillBuild build(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        final SkillBuild built = buildWithDjinn(state, sheet, definition, entry);
+        // 2026-11-05 照 PoE2（Absent Amulet：grantedSkillsHaveNoReservation）：空無墜飾賦予的那一格不用保留精魂（同一個技能的寶石照常保留）
+        return state != null && state.skills() != null && state.skills().reservationFree(entry) ? built.withoutReservation() : built;
+    }
+
+    private SkillBuild buildWithDjinn(final PlayerState state, final StatSheet sheet, final SkillDefinition definition, final SkillLoadout.Entry entry) {
         // 2026-10-29 照 PoE2：巨靈的指令是巨靈放的——範圍、持續時間、冷卻回復、暴擊、傷害照巨靈（召喚物）的屬性表；
         //   魔力消耗是你付的，照你的（施法動作的時間由呼叫的地方用你的屬性表算 intervalTicks）。巨靈沒叫出來照舊用你的
         //   2026-11-01 照 PoE2：你的動作改成下指令的 0.4 秒（DjinnCommands.commandTicks），巨靈照自己的施法速度出手（djinnCastTicks）
@@ -5670,6 +5681,7 @@ public final class SkillService {
         final double value = modifier.value();
         return switch (modifier.stat()) {
             case StageAttacks.LIMIT + "jagged" -> "鋸齒地面上限 +" + (int) Math.floor(value + 1e-9);
+            case MaceSlams.MOLTEN_QUALITY_SECONDS -> "熔岩地裂持續時間 +" + trimNumber(value) + " 秒"; // 2026-11-05 熔軀崩擊
             // 2026-10-31：犧牲、雷雲的額外品質效果（之前沒有說明，整行不顯示）
             case "effect.life.max" -> "召喚物最大生命增加 " + trimNumber(value * 100) + "%";
             // 2026-11-01 照 PoB2 altQualityStats：拾鱗、調藥心得的額外品質效果

@@ -111,8 +111,9 @@ class RefCharmRuneBaseTest {
             assertTrue(base.isJewellery() && !repository.retiredBase(id), id);
         }
         assertEquals(52, repository.base("jring_biostatic").requirements().level());
-        // 賦予技能的三種（悲歌、兆示、空無）還沒有技能，只剩缺點：先停用
-        for (final String id : List.of("jamulet_lament", "jamulet_portent", "jamulet_absent")) {
+        // 賦予技能的兩種（悲歌、兆示）還沒有技能，只剩缺點：先停用（2026-11-05：空無墜飾打開了，裂隙之主掉）
+        assertFalse(repository.retiredBase("jamulet_absent"));
+        for (final String id : List.of("jamulet_lament", "jamulet_portent")) {
             assertNotNull(repository.base(id), id);
             assertTrue(repository.retiredBase(id), id);
         }
@@ -125,7 +126,7 @@ class RefCharmRuneBaseTest {
         final ItemData dusk = new ItemData("jring_dusk", Rarity.RARE, 60);
         assertEquals(4, generator.maxAffixes(dusk, AffixType.PREFIX));
         assertEquals(2, generator.maxAffixes(dusk, AffixType.SUFFIX));
-        final ItemData absent = new ItemData("jamulet_absent", Rarity.RARE, 60); // 停用的基底，規則照樣算
+        final ItemData absent = new ItemData("jamulet_absent", Rarity.RARE, 60);
         assertEquals(2, generator.maxAffixes(absent, AffixType.PREFIX));
         assertEquals(2, generator.maxAffixes(absent, AffixType.SUFFIX));
         final ItemData plain = new ItemData("jring_02", Rarity.RARE, 60);

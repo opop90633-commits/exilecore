@@ -685,7 +685,9 @@ final class AscGranted implements Listener {
                     break;
                 }
                 // 2026-11-01 照 PoE2（Command：娜瑟菈放完 Navira's Oasis 的施法時間 1.8 秒 ÷ 她的施法速度才變出綠洲）；這次之前按下去馬上變
-                final double area = areaScale(player);
+                // 2026-11-05 照站長「插兩顆範圍沒跟著變大」：綠洲的範圍照這次指令的倍率（巨靈的屬性表，含娜瑟菈召喚技能上的範圍輔助）；
+                //   這次之前照你自己的屬性表，掛在娜瑟菈身上的範圍輔助吃不到
+                final double area = build.areaScale();
                 whenCast(djinnCast(player, build), () -> {
                     if (!player.isOnline()) {
                         return;

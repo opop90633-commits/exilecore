@@ -36,6 +36,7 @@ public final class ItemGenerator {
         if (base.implicit() != null) {
             data.setImplicitVars(ItemStats.implicit(repository, base, data).roll(random)); // 2026-10：低物品等級的固定詞綴比較小
         }
+        repository.rollGrant(data, random); // 2026-11-05 照站長（空無墜飾）：賦予的技能掉落時隨機定
         data.setSockets(rollSockets(base, itemLevel, random));
         switch (rarity) {
             case MAGIC -> upgradeToMagic(data, random, true);

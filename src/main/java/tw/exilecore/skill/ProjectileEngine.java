@@ -704,7 +704,9 @@ final class ProjectileEngine implements Listener {
                 continue;
             }
             final double below = candidate.isOnGround() ? 0 : WANDER_FLYING_REACH;
-            final org.bukkit.util.BoundingBox box = candidate.getBoundingBox().clone().expand(shot.size, below, shot.size, shot.size, 0, shot.size);
+            // 2026-11-05 照站長「游雷是不是打不到蠹魚」：碰撞箱往上也加投射物的大小——游雷離地 0.35 格（WANDER_HOVER），
+            //   蠹魚、蟎蟲這種只有 0.3 格高的怪整隻在游雷下面，永遠擦不到；這次之前往上不加（expand 的第 5 個是往上）
+            final org.bukkit.util.BoundingBox box = candidate.getBoundingBox().clone().expand(shot.size, below, shot.size, shot.size, shot.size, shot.size);
             final RayTraceResult hit = box.rayTrace(from, direction, travel);
             if (hit == null) {
                 continue;

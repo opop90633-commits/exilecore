@@ -691,6 +691,16 @@ public final class CodexValues {
                 b.addProperty("grants", skill == null ? granted : skill.name());
                 b.addProperty("grantsId", granted);
             }
+            // 2026-11-05 照站長：空無墜飾（掉落時隨機一個賦予的技能）網頁圖鑑也寫出可能的技能（用同一個 grants 欄位顯示）
+            final List<String> oneOf = repository.grantsOneOf(base.id());
+            if (!oneOf.isEmpty()) {
+                final List<String> names = new ArrayList<>();
+                for (final String id : oneOf) {
+                    final SkillDefinition skill = skills == null ? null : skills.skill(id);
+                    names.add(skill == null ? id : skill.name());
+                }
+                b.addProperty("grants", "隨機一個：" + String.join("、", names) + (repository.grantsNoReservation(base.id()) ? "（不用保留精魂）" : ""));
+            }
             if (repository.reloadTime(base.id()) > 0) {
                 b.addProperty("reload", repository.reloadTime(base.id()));
             }

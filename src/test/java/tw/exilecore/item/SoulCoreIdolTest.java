@@ -44,7 +44,10 @@ class SoulCoreIdolTest {
             }
             if (rune.id().startsWith("idol_")) {
                 assertTrue(rune.name().startsWith("魔偶符文・"), rune.id());
-                assertEquals(1, rune.limit(), rune.id() + "：魔偶一個角色僅限 1 顆");
+                // 2026-11-05 照 poe2db：蛇、猿、梟、貓、狼、野豬、熊、牛不限顆數，其他 23 顆一個角色僅限 1 顆；這次之前 31 顆全部僅限 1 顆
+                final boolean unlimited = java.util.Set.of("idol_snake", "idol_primate", "idol_owl", "idol_cat", "idol_wolf",
+                        "idol_boar", "idol_bear", "idol_ox").contains(rune.id());
+                assertEquals(unlimited ? 0 : 1, rune.limit(), rune.id() + "：魔偶的僅限顆數照原作");
                 assertTrue(rune.slots().containsKey("sceptre"), rune.id() + "：每顆魔偶都有權杖那條");
             }
         }

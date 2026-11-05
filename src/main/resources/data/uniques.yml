@@ -3081,11 +3081,14 @@ ember_king_talisman:
   rarity: very_rare        # 2026-10-28 照 PoE2 稀有度（Fury of the King／Ashbark Talisman：t1）；這次之前 weight: 100
   flavour:
     - "「熊王倒下的那一夜，怒火鑽進了這塊骨頭。」"
-  version: 2        # 2026-10-26 照 PoE2 0.5 的「Fury of the King」重做詞綴、數值範圍與基底（舊的對得上的保留數值）
-  legacy: { 1: [0, 0, 2, 0, 0, 0, 0] }
-  # 2026-10-26 原作的「Grants Skill: Level (1-20) Molten Crash」做不出來（改成平衡等效，見最後一條）
-  # 2026-10-26 原作的「Skills which require Glory generate (2-5) Glory every 2 seconds」做不出來（改成平衡等效，見最後一條）
+  version: 3        # 2026-11-05：補上賦予技能與榮耀回復、拿掉熊形態 +30% 傷害（舊的對得上的保留數值）；2026-10-26 照 PoE2 0.5 的「Fury of the King」重做詞綴、數值範圍與基底
+  legacy: { 1: [0, 0, 0, 2, 0, 0, 0, 0], 2: [0, 1, 2, 3, 4, 5, 6, 0] }
+  # 2026-11-05 照站長「改成跟原作一樣」：補上原作的賦予技能（熔軀崩擊＝Molten Crash）與「消耗榮耀的技能每 2 秒獲得 2～5 榮耀」，
+  #   拿掉平衡等效的「熊形態技能增加 30% 傷害」（2026-10-26 那時候做不出來才加的）
   mods:
+    - text: "賦予技能：熔軀崩擊"
+      stats:
+        - { stat: grant_skill.molten_dive_crash, type: FLAT, value: 1 }
     - text: "增加 {value}% 點燃機率"
       value: [50, 80]
       stats:
@@ -3110,9 +3113,10 @@ ember_king_talisman:
     - text: "你身邊的敵人曝露（元素抗性 -20%）"
       stats:
         - { stat: presence.exposure, type: FLAT, value: 1 }
-    - text: "熊形態技能增加 30% 傷害"        # 2026-10-26 原作的賦予技能「熔岩崩擊」與榮耀做不出來，改成強度相當的這條
+    - text: "消耗榮耀的技能每 2 秒獲得 {value} 榮耀"
+      value: [2, 5]
       stats:
-        - { stat: damage, type: INCREASED, value: 30, tags: [bear] }
+        - { stat: glory.regen, type: FLAT, value: "{value}" }
 
 wrathroot_talisman:
   name: 怒根獸符

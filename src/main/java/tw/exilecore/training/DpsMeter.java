@@ -29,7 +29,19 @@ public final class DpsMeter {
     /** 打中，記在 source 名下（null = 普攻／不知道）。 */
     public void hit(final long nowMillis, final double damage, final boolean crit, final String source) {
         bySource.merge(source == null ? "普攻／其他" : source, Math.max(0, damage), Double::sum);
+        hitsBySource.merge(source == null ? "普攻／其他" : source, 1, Integer::sum); // 2026-11-05：每個來源打中幾下
         hit(nowMillis, damage, crit);
+    }
+
+    /**
+     * 2026-11-05 照站長「引星能量 0% 跟 100% 打出去的擊中數好像都一樣」：每個來源打中幾下（觸發的法術一次觸發打中一下，
+     * 看「（追加）」的下數就知道觸發了幾次）。
+     */
+    private final java.util.Map<String, Integer> hitsBySource = new java.util.HashMap<>();
+
+    /** 這個來源打中幾下（流血、點燃、中毒那一列回傳 0）。 */
+    public int hitsOf(final String source) {
+        return hitsBySource.getOrDefault(source, 0);
     }
 
     /** 傷害最多的前 n 個來源（名字 → 傷害，由大到小）。 */

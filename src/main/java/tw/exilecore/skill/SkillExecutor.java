@@ -1422,6 +1422,8 @@ final class SkillExecutor {
             // 2026-11-01 照 PoE2 Leap Slam（skill_added_attack_time_by_distance_ms 500）：跳得越遠多花越多時間（3 公尺內不加，最遠 +0.5 秒，不吃攻擊速度）；
             //   這次之前固定 +0.65 秒
             runtime.readyAt += MaceSlams.leapAddedSeconds(Math.sqrt(dx * dx + dz * dz), build.range()) * 20;
+        } else if (MaceSlams.MOLTEN.equals(build.definition().id())) {
+            runtime.readyAt += MaceSlams.moltenAddedSeconds(Math.sqrt(dx * dx + dz * dz), build.range()) * 20; // 2026-11-05 照 PoE2 Molten Crash
         }
         final double[] velocity = SkillMath.leapVelocity(dx, dy, dz, ticks, SkillService.grounded(player));
         player.setFallDistance(0);
@@ -1459,6 +1461,9 @@ final class SkillExecutor {
         if (leapSlam) {
             moltenFissures.slammed(player, leap.build().definition().id(), at, radius); // 2026-11-01 照 PoE2：猛擊打在熔岩地裂上引爆
         }
+        if (MaceSlams.MOLTEN.equals(leap.build().definition().id())) {
+            moltenCrash(player, leap.build(), at, radius); // 2026-11-05 照 PoE2 Molten Crash：第二下、熔岩地裂
+        }
         targets.strike(player, leap.build().profile(), SkillTargets.sphere(at, radius), new Object()); // 2026-10-25
         player.setFallDistance(0);
         visuals.leapLand(at, radius);
@@ -1466,6 +1471,45 @@ final class SkillExecutor {
         if (plugin.skills() != null) {
             plugin.skills().supportMechanics().lineage().landed(player, leap.build(), at); // 2026-10-27 照 PoE2 燼躍：落地引爆屍體
         }
+    }
+
+    /**
+     * 2026-11-05 照站長「焚王獸符改成跟原作一樣」（PoE2 Molten Crash）：落地這一下打過之後，猛擊打在自己的熔岩地裂上引爆；
+     * 有 10 點怒氣就用掉、多裂一道；往前裂出熔岩地裂（分岔 2 道、8 秒、最多 8 道，傷害照 stages.fissure、100% 轉火焰）；
+     * {@link MaceSlams#MOLTEN_SECOND_DELAY} tick 後在同一個地方再砸一下（也會引爆地裂）。
+     */
+    private void moltenCrash(final Player player, final SkillBuild build, final Location at, final double radius) {
+        final String id = build.definition().id();
+        moltenFissures.slammed(player, id, at, radius);
+        final int extra = plugin.skills() != null && plugin.skills().resources().rage(player) >= MaceSlams.MOLTEN_RAGE
+                && plugin.skills().resources().spendRage(player, MaceSlams.MOLTEN_RAGE) >= MaceSlams.MOLTEN_RAGE ? 1 : 0;
+        final SkillProfile profile = SkillStages.profile(build, build.profile(), "fissure");
+        final double width = SkillStages.radius(build, "fissure", 1.0 * build.areaScale());
+        final double length = FissureSkills.FURY_LENGTH * build.areaScale();
+        // 2026-11-05 照 PoE2：品質每 1% 熔岩地裂 +0.1 秒（gem_quality.yml 的 molten.fissure_seconds）
+        final int ticks = build.durationTicks(MaceSlams.MOLTEN_FISSURE_SECONDS + build.qualityFlat(MaceSlams.MOLTEN_QUALITY_SECONDS));
+        final int max = MaceSlams.MOLTEN_FISSURE_MAX + SkillLimits.bonus(plugin.players().sheet(player), build);
+        final Vector facing = SkillTargets.facing(player).setY(0);
+        if (facing.lengthSquared() > 1e-6) {
+            facing.normalize();
+            for (int i = 0; i <= extra; i++) {
+                final Vector dir = i == 0 ? facing.clone() : facing.clone().rotateAroundY(Math.toRadians(MaceSlams.MOLTEN_EXTRA_ANGLE));
+                moltenFissures.create(player, id, at, dir, length, width, MoltenFissures.VOLCANIC_BRANCHES, profile,
+                        build.definition().visual(), ticks, max);
+            }
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!player.isOnline() || !player.getWorld().equals(at.getWorld())) {
+                return;
+            }
+            for (final LivingEntity target : targets.around(at, radius, player)) {
+                if (player.hasLineOfSight(target)) {
+                    damage.hit(player, target, build.profile(), null);
+                }
+            }
+            moltenFissures.slammed(player, id, at, radius);
+            visuals.leapLand(at, radius);
+        }, MaceSlams.MOLTEN_SECOND_DELAY);
     }
 
     /**

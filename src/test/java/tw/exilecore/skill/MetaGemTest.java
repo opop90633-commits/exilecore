@@ -123,7 +123,11 @@ class MetaGemTest {
         final MetaGems.Socket socket = new MetaGems.Socket(0, new tw.exilecore.character.SkillLoadout.Entry("critical_guide_star", 1), config.meta("critical_guide_star"),
                 List.of(new tw.exilecore.character.SkillLoadout.Entry("blazing_star_shell", 1), new tw.exilecore.character.SkillLoadout.Entry("chain_thunder", 1)),
                 List.of(fireball, config.skill("chain_thunder")));
-        assertEquals("critical_guide_star:blazing_star_shell+chain_thunder", socket.key());
+        assertEquals("0@critical_guide_star:blazing_star_shell+chain_thunder", socket.key()); // 2026-11-05：前面加面板位置
+        // 2026-11-05：幾次暴擊觸發一次（觸發時能量全部用掉）：31.4 能量、上限 130 → 5 次；62.8 → 3 次；一次就滿 → 每次
+        assertEquals(5, MetaGems.critsPerTrigger(31.4, 130));
+        assertEquals(3, MetaGems.critsPerTrigger(62.8, 130));
+        assertEquals(1, MetaGems.critsPerTrigger(200, 130));
         assertEquals(MetaSpec.maxEnergy(fireball) + MetaSpec.maxEnergy(config.skill("chain_thunder")), socket.maxEnergy(), 1e-9);
         assertEquals(fireball, socket.spell(), "第一個插槽法術");
     }

@@ -40,6 +40,27 @@ final class MaceSlams {
     /** leap_slam_always_knockback_within_range：落點範圍內一定擊退（擊退力道；技能自己的擊退比較大照技能的）。 */
     static final double LEAP_KNOCKBACK = 0.6;
 
+    // ---- 熔軀崩擊（2026-11-05 照 PoE2 Molten Crash，焚王獸符賦予）----
+    static final String MOLTEN = "molten_dive_crash";
+    /** 依跳的距離最多 +0.3 秒（原作「+0.55 秒，依距離最多再 +0.3 秒」；+0.55 寫在 skills.yml 的 skill.added_time）。 */
+    static final double MOLTEN_DISTANCE_SECONDS = 0.3;
+    /** 第二下在落地後幾 tick。 */
+    static final long MOLTEN_SECOND_DELAY = 6;
+    /** 落地時用掉幾點怒氣多裂一道（molten_crash 的 consume 10 rage）。 */
+    static final int MOLTEN_RAGE = 10;
+    /** 熔岩地裂：留 8 秒、同時最多 8 道、分岔 2 道。 */
+    static final double MOLTEN_FISSURE_SECONDS = 8;
+    static final int MOLTEN_FISSURE_MAX = 8;
+    /** 品質：熔岩地裂多幾秒（gem_quality.yml）。 */
+    static final String MOLTEN_QUALITY_SECONDS = "molten.fissure_seconds";
+    /** 多裂的那一道往旁邊偏幾度。 */
+    static final double MOLTEN_EXTRA_ANGLE = 25;
+
+    /** 熔軀崩擊跳了 distance 格多花幾秒：3 公尺內不加，到最遠加 0.3 秒（線性，同騰躍砸擊的算法）。 */
+    static double moltenAddedSeconds(final double distance, final double range) {
+        return leapAddedSeconds(distance, range) / LEAP_DISTANCE_SECONDS * MOLTEN_DISTANCE_SECONDS;
+    }
+
     // ---- 震野雙錘 ----
     /** 第一下更多 50% 暈眩累積（只有第一下）、第二下對重暈的敵人更多 50% 傷害、兩下中間往前滾 2 公尺（attack_maximum_action_distance_+ 20）。 */
     static final double ROLLING_FIRST_STUN_MORE = 0.5;
@@ -65,7 +86,7 @@ final class MaceSlams {
 
     /** 這些技能自己處理「打在地裂上引爆」（{@link SkillExecutor#slamUsed}）。 */
     static boolean handlesOwnEruption(final String skillId) {
-        return LEAP.equals(skillId) || ROLLING.equals(skillId) || FURIOUS.equals(skillId) || MoltenFissures.is(skillId);
+        return LEAP.equals(skillId) || ROLLING.equals(skillId) || FURIOUS.equals(skillId) || MOLTEN.equals(skillId) || MoltenFissures.is(skillId);
     }
 
     /** 騰躍砸擊跳了 distance 格（最遠 range 格）多花幾秒：3 公尺內不加，到最遠加 0.5 秒（線性）。 */

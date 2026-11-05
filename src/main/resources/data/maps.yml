@@ -1878,3 +1878,4 @@ finals:
           - { support: abyss_floor_chill, chance: 0.01 }
           - { skill: bone_crack_leyline, chance: 0.01 }
           - { skill: deep_chasm_hand, chance: 0.01 }
+          - { base: jamulet_absent, chance: 0.01 }   # 2026-11-05 照站長「空無墜飾放進深淵王裡」（賦予的技能掉落時隨機定；同日稍早在裂隙之主）

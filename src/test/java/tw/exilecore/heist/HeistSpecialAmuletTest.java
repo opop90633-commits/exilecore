@@ -31,9 +31,9 @@ class HeistSpecialAmuletTest {
             // 2026-10-28 照站長：特殊戒指也只在劫盜掉；2026-11-04：攫握指環也是
             "jring_biostatic", "jring_grasping", "jring_dusk", "jring_gloam",
             "jring_penumbra", "jring_tenebrous");
-    static final Set<String> RETIRED_SPECIAL = Set.of("jamulet_lament", "jamulet_portent", "jamulet_absent");
+    static final Set<String> RETIRED_SPECIAL = Set.of("jamulet_lament", "jamulet_portent"); // 2026-11-05：空無墜飾打開了（裂隙之主掉），移到下面
     /** 2026-11-04 照站長：裂隙指環在裂隙、精煉裂隙指環在裂隙之主、淵印指環在深淵裂縫掉；一般掉落、商人、劫盜都不掉。 */
-    static final Set<String> EVENT_ONLY = Set.of("jring_breach", "jring_breach_refined", "jring_abyssal");
+    static final Set<String> EVENT_ONLY = Set.of("jring_breach", "jring_breach_refined", "jring_abyssal", "jamulet_absent"); // 2026-11-05：空無墜飾在淵底之王・骨潮掉
     static ItemRepository repository;
     static HeistConfig heist;
 

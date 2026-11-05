@@ -155,6 +155,7 @@ final class PersistentBuffs implements Listener {
         for (final Player player : plugin.getServer().getOnlinePlayers()) {
             try {
                 service.resources().regenerate(player, PERIOD); // 不熄怒
+                service.supportMechanics().regenGlory(player, PERIOD); // 2026-11-05 照 PoE2 Fury of the King：消耗榮耀的技能每 2 秒獲得榮耀
                 final int need = level(player, TIME_OF_NEED);
                 final int ghost = level(player, GHOST_DANCE);
                 final int bark = level(player, BARKSKIN);

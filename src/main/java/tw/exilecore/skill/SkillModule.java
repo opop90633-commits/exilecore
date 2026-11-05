@@ -40,6 +40,10 @@ public final class SkillModule implements Module {
                 final SkillDefinition skill = id == null ? null : config.skill(id);
                 return skill == null ? null : "Lv." + config.maxLevelFor(Math.max(1, ilvl)) + " " + skill.name();
             });
+            plugin.items().renderer().setSkillLabel((skillId, ilvl) -> { // 2026-11-05：空無墜飾隨機定的賦予技能
+                final SkillDefinition skill = skillId == null ? null : config.skill(skillId);
+                return skill == null ? null : "Lv." + config.maxLevelFor(Math.max(1, ilvl)) + " " + skill.name();
+            });
         }
         final SkillService created = new SkillService(plugin, config, plugin.combat().skillDamage());
         final PluginManager manager = plugin.getServer().getPluginManager();

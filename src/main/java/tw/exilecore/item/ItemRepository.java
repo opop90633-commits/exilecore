@@ -42,6 +42,15 @@ public final class ItemRepository {
     private final Map<String, Double> reloadTimes = new java.util.HashMap<>();
     /** 2026-10-26：法杖、長杖、權杖賦予的技能（PoE2：Grants Skill；bases 的 grants）：基底代號 → 技能代號。 */
     private final Map<String, String> grantedSkills = new java.util.HashMap<>();
+    /**
+     * 2026-11-05 照站長（PoE2 Absent Amulet）：掉落時從這幾個技能隨機定一個賦予的技能（bases 的 grants_one_of）；
+     * 定好的記在物品的固定詞綴變數 {@link #GRANT_PICK}（第幾個，從 1 開始）。
+     */
+    private final Map<String, List<String>> grantsOneOf = new java.util.HashMap<>();
+    /** 2026-11-05：賦予的技能不用保留精魂的基底（bases 的 grants_no_reservation）。 */
+    private final java.util.Set<String> grantsNoReservation = new java.util.HashSet<>();
+    /** 物品上記「隨機賦予的技能是第幾個」的固定詞綴變數名稱。 */
+    public static final String GRANT_PICK = "grant";
     /** 隱匿傳奇：傳奇代號 → 帶的那條隱匿詞綴是前綴還是後綴（uniques.yml 的 veiled）。 */
     private final Map<String, List<AffixType>> uniqueVeiled = new java.util.HashMap<>();
     /** 傳奇自己的符文孔數、符文效果增加（小數）：uniques.yml 的 rune_sockets、rune_effect（2026-10）。 */
@@ -144,6 +153,8 @@ public final class ItemRepository {
         auraSlotBases.clear();
         reloadTimes.clear();
         grantedSkills.clear();
+        grantsOneOf.clear();
+        grantsNoReservation.clear();
         warnings.clear();
         runes.clear();
         runes.putAll(Runes.load(dataFolder)); // 2026-10 符文
@@ -162,6 +173,13 @@ public final class ItemRepository {
                 final String grants = root.node(id).string("grants", null);
                 if (grants != null && !grants.isBlank()) {
                     grantedSkills.put(id, grants.trim());
+                }
+                final List<String> oneOf = root.node(id).strings("grants_one_of");
+                if (oneOf != null && !oneOf.isEmpty()) {
+                    grantsOneOf.put(id, List.copyOf(oneOf)); // 2026-11-05：空無墜飾
+                }
+                if (root.node(id).bool("grants_no_reservation", false)) {
+                    grantsNoReservation.add(id);
                 }
                 if (root.node(id).bool("retired", false)) {
                     retiredBases.add(id); // 拿掉的基底（2026-10：劍、斧、匕首、爪）：舊物品照常能用，其他地方都看不到
@@ -478,6 +496,45 @@ public final class ItemRepository {
     }
 
     /** 所有賦予技能的基底（基底代號 → 技能代號；唯讀）。 */
+    /** 2026-11-05：這個基底掉落時隨機定的那幾個技能；沒有回傳空的。 */
+    public List<String> grantsOneOf(final String baseId) {
+        final List<String> own = baseId == null ? null : grantsOneOf.get(baseId);
+        return own == null ? List.of() : own;
+    }
+
+    /** 2026-11-05：這個基底賦予的技能不用保留精魂。 */
+    public boolean grantsNoReservation(final String baseId) {
+        return baseId != null && grantsNoReservation.contains(baseId);
+    }
+
+    /**
+     * 2026-11-05（空無墜飾）：這件物品隨機定的賦予技能；不是這種基底回傳 null。舊物品沒記的照 uuid 定一個（同一件永遠一樣）。
+     */
+    public String pickedGrant(final ItemData data) {
+        if (data == null) {
+            return null;
+        }
+        final List<String> list = grantsOneOf(data.base());
+        if (list.isEmpty()) {
+            return null;
+        }
+        final Integer pick = data.implicitVars() == null ? null : data.implicitVars().get(GRANT_PICK);
+        final int index = pick != null && pick >= 1 && pick <= list.size() ? pick - 1
+                : Math.floorMod(data.uuid() == null ? 0 : data.uuid().hashCode(), list.size());
+        return list.get(index);
+    }
+
+    /** 2026-11-05：生成時隨機定賦予的技能（不是這種基底不動）。 */
+    public void rollGrant(final ItemData data, final java.util.random.RandomGenerator random) {
+        final List<String> list = data == null ? List.of() : grantsOneOf(data.base());
+        if (list.isEmpty()) {
+            return;
+        }
+        final Map<String, Integer> vars = new java.util.LinkedHashMap<>(data.implicitVars() == null ? Map.of() : data.implicitVars());
+        vars.put(GRANT_PICK, 1 + random.nextInt(list.size()));
+        data.setImplicitVars(vars);
+    }
+
     public Map<String, String> grantedSkills() {
         return java.util.Collections.unmodifiableMap(grantedSkills);
     }

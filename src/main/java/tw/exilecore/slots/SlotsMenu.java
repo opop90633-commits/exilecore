@@ -38,6 +38,10 @@ final class SlotsMenu extends Menu {
     private static final int SLOT_AUTO = 50;
     /** 2026-11-02 照站長：加速鈕（自動連拉旁邊）；這次之前沒有。 */
     private static final int SLOT_SPEED = 51;
+    /** 2026-11-05 照站長：走路拉霸（每走一格拉一把，哪裡都可以）。 */
+    private static final int SLOT_WALK = 52;
+    /** 2026-11-05 照站長：歷史損益（整個帳號的累計、今天）。 */
+    private static final int SLOT_HISTORY = 46;
     private static final Material[] BET_ICONS = {Material.GOLD_NUGGET, Material.GOLD_INGOT, Material.GOLD_BLOCK, Material.RAW_GOLD_BLOCK,
             Material.GOLD_BLOCK, Material.GOLD_BLOCK, Material.GOLD_BLOCK};
 
@@ -113,10 +117,12 @@ final class SlotsMenu extends Menu {
                 "結果在按下去的那一刻就決定了，滾輪只是動畫；",
                 "中途關掉選單、斷線也照常結算。",
                 "",
-                "自動連拉：一次拉幾把自己選（右鍵換），中途可以停。")));
+                "自動連拉：一次拉幾把自己輸入（右鍵；Shift＋右鍵換常用的），中途可以停。",
+                "走路拉霸：開著時每走一格拉一把，在哪裡走都可以（/slots walk 開關）。")));
         // 2026-11-02 照站長：拿掉冷卻與「記在全服的經濟報表」那幾行；這次之前說明裡有寫
         drawAuto();
         drawSpeed();
+        drawWalk(); // 2026-11-05
         set(SLOT_CLOSE_BAR, closeButton());
     }
 
@@ -211,8 +217,20 @@ final class SlotsMenu extends Menu {
                 "<gray>每把押 " + GoldService.format(bet) + " 金幣（最多 " + GoldService.format(bet * count) + "）",
                 "<gray>金幣不夠、關掉選單就停", "",
                 wait > 0 ? "<dark_gray>冷卻中：" + wait + " 秒後可以再開" : "<yellow>左鍵：開始",
-                "<yellow>右鍵：多一點　Shift＋右鍵：少一點",
-                "<dark_gray>（5、10、20、50、100、200、500 把）"));
+                "<yellow>右鍵：自己輸入把數（1～" + SlotsService.AUTO_MAX + "）",
+                "<yellow>Shift＋右鍵：換常用的把數（5、10、20、50、100、200、500）")); // 2026-11-05 照站長：把數讓玩家自己輸入；這次之前右鍵多一點、Shift＋右鍵少一點
+    }
+
+    /** 2026-11-05：走路拉霸的開關。 */
+    private void drawWalk() {
+        final boolean on = service.walking(player);
+        set(SLOT_WALK, icon(on ? Material.GOLDEN_BOOTS : Material.LEATHER_BOOTS,
+                on ? "<" + SlotsService.GOLD_COLOR + ">走路拉霸：開著" : "<white>走路拉霸：關著",
+                "<gray>開著的時候每走一格拉一把、馬上結算",
+                "<gray>不用開選單，在哪裡走都可以（打怪、地圖裡也行）",
+                on ? "<gray>每把押 <white>" + GoldService.format(service.walkBet(player)) + "</white> 金幣" : "<gray>每把押現在選的 <white>" + GoldService.format(bet) + "</white> 金幣",
+                "<gray>金幣不夠就自己停；輸入 /slots walk 也可以開關", "",
+                on ? "<yellow>左鍵：關掉" : "<yellow>左鍵：開始"));
     }
 
     /** 加速鈕：現在幾倍、按了換下一段。 */
@@ -243,6 +261,35 @@ final class SlotsMenu extends Menu {
         }
         lore.add("<dark_gray>這次登入的紀錄（下線就清掉）");
         set(SLOT_STATS, icon(Material.WRITABLE_BOOK, "<white>本次戰績", lore));
+        drawHistory();
+    }
+
+    /** 2026-11-05 照站長「拉霸機新增歷史損益」：這個帳號（所有角色一起）從以前到現在、今天的押注、拿回與輸贏。 */
+    private void drawHistory() {
+        final SlotsService.History history = service.history(player);
+        final List<String> lore = new ArrayList<>();
+        lore.add("<white>今天");
+        lore.add("<gray>　押了 " + gold(history.dayWagered) + "<gray>，拿回 " + gold(history.dayReturned));
+        lore.add("<gray>　輸贏：" + signed(history.dayNet()) + "<gray>　最大一把：<white>" + GoldService.format(history.dayBest));
+        lore.add("");
+        lore.add("<white>累計");
+        lore.add("<gray>　拉了 <white>" + GoldService.format(history.spins) + "</white> 把，中了 <white>" + GoldService.format(history.wins) + "</white> 把"
+                + (history.spins > 0 ? String.format(Locale.ROOT, "（%.1f%%）", history.wins * 100.0 / history.spins) : ""));
+        lore.add("<gray>　押了 " + gold(history.wagered) + "<gray>，拿回 " + gold(history.returned));
+        lore.add("<gray>　輸贏：" + signed(history.net())
+                + (history.wagered > 0 ? String.format(Locale.ROOT, "<dark_gray>（回報 %.1f%%）", history.returned * 100.0 / history.wagered) : ""));
+        lore.add("<gray>　最大一把：<white>" + GoldService.format(history.best) + (history.jackpots > 0 ? "<gray>　頭獎 <gradient:#ffe066:#ff9f1c>" + history.jackpots + " 次" : ""));
+        lore.add("");
+        lore.add("<dark_gray>這隻角色的紀錄（帳號裡所有角色一起算；中的通貨照市價換算成金幣，時裝、稱號不算）");
+        set(SLOT_HISTORY, icon(Material.KNOWLEDGE_BOOK, "<" + SlotsService.GOLD_COLOR + ">歷史損益", lore));
+    }
+
+    private static String gold(final long amount) {
+        return "<" + SlotsService.GOLD_COLOR + ">" + GoldService.format(amount) + "</" + SlotsService.GOLD_COLOR + ">";
+    }
+
+    private static String signed(final long net) {
+        return (net >= 0 ? "<green>+" : "<red>") + GoldService.format(net);
     }
 
     /** 賠率表：每一種結果的獎與機率、期望回報率。 */
@@ -309,6 +356,14 @@ final class SlotsMenu extends Menu {
                 return;
             }
         }
+        if (slot == SLOT_WALK) {
+            if (acceptAction(click)) {
+                service.toggleWalk(player, bet); // 2026-11-05 照站長：走路拉霸
+                player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.4f);
+                drawWalk();
+            }
+            return;
+        }
         if (slot == SLOT_SPEED) {
             if (acceptAction(click)) {
                 service.cycleSpeed(player); // 轉動中也可以換：下一把起生效
@@ -327,11 +382,27 @@ final class SlotsMenu extends Menu {
             if (!acceptAction(click)) {
                 return;
             }
-            if (!auto && (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)) {
-                // 2026-11-02 照站長：右鍵換把數（Shift＋右鍵往回）
-                service.cycleAutoCount(player, click == ClickType.SHIFT_RIGHT ? -1 : 1);
+            if (!auto && click == ClickType.SHIFT_RIGHT) {
+                // 2026-11-02 照站長：換常用的把數（2026-11-05：改成 Shift＋右鍵往下一個；這次之前右鍵多一點、Shift＋右鍵少一點）
+                service.cycleAutoCount(player, 1);
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.4f);
                 drawAuto();
+                return;
+            }
+            if (!auto && click == ClickType.RIGHT && spinning == null) {
+                // 2026-11-05 照站長「拉霸機次數讓玩家自己手動輸入拉多少次」：跳出輸入框，輸入完回到拉霸機
+                final Runnable back = () -> new SlotsMenu(plugin, player, service).open();
+                plugin.dialogs().text(player, "<dark_gray>自動連拉幾把", List.of("<gray>輸入 1～" + SlotsService.AUTO_MAX + " 的數字",
+                                "<gray>每把押 " + GoldService.format(bet) + " 金幣；金幣不夠、關掉選單就停"),
+                        "把數", String.valueOf(service.autoCount(player)), 4, text -> {
+                            try {
+                                final int set = service.setAutoCount(player, Integer.parseInt(text.trim()));
+                                player.sendMessage(plugin.text().prefixed("<gray>自動連拉改成 <white>" + set + "</white> 把"));
+                            } catch (final NumberFormatException e) {
+                                player.sendMessage(plugin.text().prefixed("<red>要輸入數字（1～" + SlotsService.AUTO_MAX + "）"));
+                            }
+                            back.run();
+                        }, back);
                 return;
             }
             if (auto) {

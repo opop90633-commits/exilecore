@@ -268,6 +268,33 @@ public final class SupportMechanics implements Listener {
         }
     }
 
+    /** 2026-11-05 照 PoE2 Fury of the King（焚王獸符）：FLAT：消耗榮耀的技能每 2 秒獲得幾點榮耀。 */
+    public static final String GLORY_REGEN = "glory.regen";
+
+    /**
+     * 2026-11-05：榮耀回復（每 ticks tick 呼叫一次，PersistentBuffs）：面板上每個消耗榮耀的技能各自加 {@link #GLORY_REGEN} × ticks ÷ 40 點
+     * （照它自己的上限，吃榮耀獲得增加）。沒有的玩家什麼都不做。
+     */
+    void regenGlory(final Player player, final long ticks) {
+        final double perTwoSeconds = plugin.players().sheet(player).flat(GLORY_REGEN, Set.of());
+        if (perTwoSeconds <= 0 || ticks <= 0) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return;
+        }
+        final double amount = perTwoSeconds * ticks / 40.0;
+        for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+            final SkillLoadout.Entry entry = state.skills().skill(i);
+            final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
+            final int cap = definition == null ? 0 : gloryCap(definition);
+            if (cap > 0) {
+                addGlory(player, definition.id(), amount, cap);
+            }
+        }
+    }
+
     /** 2026-10-31：快捷欄上方顯示用：{現在的榮耀, 要幾點}；不用榮耀的技能回傳 null。 */
     int[] gloryHud(final Player player, final SkillBuild build, final StatSheet sheet) {
         if (gloryCap(build.definition()) <= 0) {

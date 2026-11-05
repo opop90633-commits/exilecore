@@ -64,7 +64,11 @@ final class AreaText {
             Map.entry("proc_caltrops", List.of("炸開（0.5 格")),
             Map.entry("proc_mana_flare", List.of("炸開（2 格")),
             Map.entry("proc_quill_burst", List.of("周圍 1.5 格")),
-            Map.entry("proc_fan_flames", List.of("炸開 3.5 格")));
+            Map.entry("proc_fan_flames", List.of("炸開 3.5 格")),
+            // 2026-11-05 照站長「插兩顆範圍，冰封的半徑好像沒跟著變大」：巨靈指令的範圍吃巨靈召喚技能上的輔助（倍率照巨靈的屬性表，SkillService.build）；
+            //   這次之前說明的數字照寫原始的（實際施放有變大，說明看不出來）
+            Map.entry("mirage_spirit_freeze", List.of("附近 6 格")),
+            Map.entry("mirage_spirit_haven", List.of("身邊 8 格")));
 
     /** 倍率跟 1 差這麼少就當作沒變（照寫原始數字）。 */
     private static final double EPSILON = 1e-6;

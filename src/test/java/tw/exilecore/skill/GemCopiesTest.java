@@ -134,10 +134,10 @@ class GemCopiesTest {
         assertTrue(loadout.syncGranted(Map.of("chain_thunder", 9)));
         assertEquals(5, loadout.skill(gem).level(), "寶石那顆不動");
         assertEquals(9, loadout.skill(granted).level());
-        // 只有寶石那顆：照舊不另外放賦予的
+        // 2026-11-05 照站長：只有寶石那顆也另外放賦予的（寶石＋賦予的同時存在）；這次之前不另外放
         final SkillLoadout plain = new SkillLoadout();
         plain.add(new SkillLoadout.Entry("chain_thunder", 5));
-        assertFalse(plain.syncGranted(Map.of("chain_thunder", 9)));
-        assertEquals(1, plain.size());
+        assertTrue(plain.syncGranted(Map.of("chain_thunder", 9)));
+        assertEquals(2, plain.size());
     }
 }

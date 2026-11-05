@@ -442,7 +442,78 @@ class Model:
                 del face["_tex"]
         if has_glow:
             textures["1"] = tex + "_glow"
-        return {"textures": textures, "elements": elements, "display": DISPLAY[self.kind]}
+        display = DISPLAY[self.kind]
+        if self.kind in HELD_KINDS and elements:
+            display = held_display(self.kind, elements, display)   # 2026-11-05：第三人稱放大（見 held_display）
+        return {"textures": textures, "elements": elements, "display": display}
+
+
+# 2026-11-05 照站長「有些時裝武器要再放大，但第一人稱不要放大擋到畫面」→「放大全部」：拿在手上的武器、弓、弩在第三人稱（別人看你、F5）
+#   一律放大：至少 ×THIRD_PERSON_MORE，看起來的長度（模型最長的那一邊 × 手持縮放）不到 THIRD_PERSON_MIN_LENGTH 的再放大到這個長度，
+#   最多 ×THIRD_PERSON_MAX_MORE。第一人稱、背包圖示、地上、展示框都不動。
+#   武器的握把在下面：放大是以模型中心為準，所以照握把的位置把手持位置一起移，握把還在手上（弓、弩握在中間，不用移）。
+#   這次之前第三人稱照 HANDHELD／BOW_DISPLAY／CROSSBOW_DISPLAY 的固定縮放（武器 0.68、弓 0.75、弩 0.9），短的時裝看起來比原版的劍還小
+HELD_KINDS = ("weapon", "bow", "crossbow")
+THIRD_PERSON_MORE = 1.2
+THIRD_PERSON_MIN_LENGTH = 18.0
+THIRD_PERSON_MAX_MORE = 1.45
+GRIP_FROM_BOTTOM = 3.0   # 握把：模型最下面往上 3 格（柄頭之上）
+
+
+def _rot(v, deg, axis):
+    r = math.radians(deg)
+    c, s_ = math.cos(r), math.sin(r)
+    x, y, z = v
+    if axis == "x":
+        return (x, y * c - z * s_, y * s_ + z * c)
+    if axis == "y":
+        return (x * c + z * s_, y, -x * s_ + z * c)
+    return (x * c - y * s_, x * s_ + y * c, z)
+
+
+def held_scale(elements, display):
+    """第三人稱要放大幾倍（照模型最長的那一邊）。"""
+    ext = max(max(e["to"][i] for e in elements) - min(e["from"][i] for e in elements) for i in range(3))
+    base = display["thirdperson_righthand"]["scale"][0]
+    return min(THIRD_PERSON_MAX_MORE, max(THIRD_PERSON_MORE, THIRD_PERSON_MIN_LENGTH / max(1e-6, ext * base)))
+
+
+def grip_point(kind, elements):
+    """握把相對模型中心 (8, 8, 8) 的位置（武器：最下面往上 GRIP_FROM_BOTTOM 格，再照整把的斜角轉）；弓、弩在中心。"""
+    if kind != "weapon":
+        return (0.0, 0.0, 0.0)
+    bottom = min(e["from"][1] for e in elements)
+    p = (0.0, bottom + GRIP_FROM_BOTTOM - 8, 0.0)
+    rots = {json.dumps(e.get("rotation"), sort_keys=True) for e in elements}
+    if len(rots) == 1 and elements[0].get("rotation"):
+        r = elements[0]["rotation"]
+        o = r["origin"]
+        q = _rot((p[0] + 8 - o[0], p[1] + 8 - o[1], p[2] + 8 - o[2]), r["angle"], r["axis"])
+        p = (q[0] + o[0] - 8, q[1] + o[1] - 8, q[2] + o[2] - 8)
+    return p
+
+
+def held_display(kind, elements, display):
+    """第三人稱放大、握把留在手上（照原版 ItemTransform：平移 → 轉 XYZ → 縮放；左手的 y、z 轉向與 x 平移再反過來）。"""
+    more = held_scale(elements, display)
+    grip = grip_point(kind, elements)
+    out = json.loads(json.dumps(display))
+    for key, left in (("thirdperson_righthand", False), ("thirdperson_lefthand", True)):
+        t = out.get(key)
+        if t is None:
+            continue
+        s0 = t["scale"][0]
+        s1 = round(s0 * more, 4)
+        rx, ry, rz = t["rotation"]
+        if left:
+            ry, rz = -ry, -rz
+        d = tuple((s0 - s1) * g for g in grip)
+        d = _rot(_rot(_rot(d, rz, "z"), ry, "y"), rx, "x")   # rotationXYZ：先 z 再 y 再 x 作用在向量上
+        tx, ty, tz = t["translation"]
+        tx += -d[0] if left else d[0]
+        t["translation"] = [round(max(-80, min(80, tx)), 3), round(max(-80, min(80, ty + d[1])), 3), round(max(-80, min(80, tz + d[2])), 3)]
+        t["scale"] = [s1, s1, s1]
+    return out
 
 
 

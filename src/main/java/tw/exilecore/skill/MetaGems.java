@@ -65,9 +65,12 @@ public final class MetaGems {
             return totalMaxEnergy(spells);
         }
 
-        /** 能量記在「主要寶石:插槽法術」上（好幾個用 + 連起來）：換了插槽法術就從 0 開始。 */
+        /**
+         * 能量記在「主要寶石:插槽法術」上（好幾個用 + 連起來）：換了插槽法術就從 0 開始。
+         * 2026-11-05 照站長（項鍊賦予的暴擊引星＋寶石的暴擊引星同時在面板上）：前面加面板位置「位置@」，兩格各記各的；這次之前只照技能代號，會搶同一份能量
+         */
         String key() {
-            final StringBuilder text = new StringBuilder(metaEntry.skillId()).append(':');
+            final StringBuilder text = new StringBuilder().append(metaPosition).append('@').append(metaEntry.skillId()).append(':');
             for (int i = 0; i < spells.size(); i++) {
                 text.append(i == 0 ? "" : "+").append(spells.get(i).id());
             }
@@ -308,6 +311,9 @@ public final class MetaGems {
             if (spec == null || spec.kind() != kind || !service.auras().isActive(player.getUniqueId(), entry.skillId())) {
                 continue; // 主要寶石要開著（綁在按鍵格、精魂付得起）才會充能
             }
+            if (loadout.count(entry.skillId()) > 1 && !loadout.isBound(i)) {
+                continue; // 2026-11-05：同一個主要寶石面板上有兩格（項鍊賦予的＋寶石）時，各自要綁在按鍵格上才充能
+            }
             final Socket socket = socket(state, i);
             if (socket == null) {
                 warnProblem(player, state, i, now); // 2026-10：插槽放錯（不是法術、增益技能…）以前完全沒反應，看不出為什麼不觸發
@@ -328,7 +334,8 @@ public final class MetaGems {
             final Map<String, Double> mine = energy.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
             // 能量記在「主要寶石:插槽法術」上：換了插槽法術就從 0 開始
             final String key = socket.key();
-            mine.keySet().removeIf(k -> k.startsWith(entry.skillId() + ":") && !k.equals(key));
+            final String mineKey = socket.metaPosition() + "@" + entry.skillId() + ":";
+            mine.keySet().removeIf(k -> k.startsWith(mineKey) && !k.equals(key));
             if (spec.invocation()) {
                 // 2026-10-26 照 PoE2 Invocation：存到上限（500，擴能、天賦加大）為止，不自動觸發；按下去才花（invoke）
                 mine.put(key, Math.min(mine.getOrDefault(key, 0.0) + gained, invocationMax(spec, mods, own,
@@ -340,7 +347,7 @@ public final class MetaGems {
             final double refundChance = mods[2] + own[2];
             mine.put(key, afterGain(raw, max, refundChance > 0 && plugin.items().random().nextDouble() * 100 < refundChance));
             if (raw >= max - 1e-9) {
-                lastFired.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>()).put(entry.skillId(), now);
+                lastFired.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>()).put(i + "@" + entry.skillId(), now); // 2026-11-05：照面板位置記
                 fireAll(player, socket, target != null && target.isValid() && !target.isDead() ? target : null,
                         metaDefinition == null ? "主要寶石" : metaDefinition.name(), metaTags);
             }
@@ -423,7 +430,7 @@ public final class MetaGems {
         }
         final long now = plugin.getServer().getCurrentTick();
         final Map<String, Long> fired = lastFired.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
-        if (now - fired.getOrDefault(entry.skillId(), Long.MIN_VALUE / 2) < MIN_GAP) {
+        if (now - fired.getOrDefault(position + "@" + entry.skillId(), Long.MIN_VALUE / 2) < MIN_GAP) { // 2026-11-05：照面板位置記
             return null; // 冷卻 0.2 秒
         }
         // 2026-10-26 照 PoE2：每次觸發所有插槽法術，花它們的上限加起來（每個基礎施法時間每 0.1 秒 10 點）
@@ -452,7 +459,7 @@ public final class MetaGems {
             }
         }
         mine.put(key, Math.max(0, Math.min(left, invocationMax(spec, mods, own, service.qualityFlat(player, entry.skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY)))));
-        fired.put(entry.skillId(), now);
+        fired.put(position + "@" + entry.skillId(), now);
         final String source = metaDefinition == null ? "主要寶石" : metaDefinition.name();
         final LivingEntity first = preferred != null && preferred.isValid() && !preferred.isDead() ? preferred : nearestEnemy(player);
         fireAll(player, socket, first, source, metaTags);
@@ -513,10 +520,10 @@ public final class MetaGems {
                 continue;
             }
             final Map<String, Long> fired = lastFired.computeIfAbsent(player.getUniqueId(), id -> new HashMap<>());
-            if (now - fired.getOrDefault(entry.skillId(), Long.MIN_VALUE / 2) < CADENCE_TICKS) {
+            if (now - fired.getOrDefault(i + "@" + entry.skillId(), Long.MIN_VALUE / 2) < CADENCE_TICKS) { // 2026-11-05：照面板位置記
                 continue;
             }
-            fired.put(entry.skillId(), now);
+            fired.put(i + "@" + entry.skillId(), now);
             LivingEntity target = null;
             double best = 12 * 12;
             for (final org.bukkit.entity.Entity near : player.getNearbyEntities(12, 6, 12)) {
@@ -593,7 +600,18 @@ public final class MetaGems {
                 ? Math.min(entry.level(), SkillLoadout.CORRUPT_CAP) : service.config().maxLevelFor(state.level()); // 2026-10-30：腐化的 Lv.22
         // 2026-10-27 照站長：屬性不夠時也照自動降到的等級算能量（跟 SkillBuild 一樣；這次之前只看角色等級）
         final int attributes = GemAttributes.usableLevel(service.config(), entry, state.sheet());
-        return Math.max(1, Math.min(Math.min(entry.level(), usable), attributes));
+        final int base = Math.max(1, Math.min(Math.min(entry.level(), usable), attributes));
+        // 2026-11-05 照 PoE2（energy_generated_+% 照寶石實際等級）：裝備、輔助加的技能等級也算（說明的「實際等級 Lv.22」）；
+        //   這次之前只看寶石本身的等級（+2 技能等級的人能量獲得還是照 20 級的 57%）
+        final SkillDefinition definition = service.config().skill(entry.skillId());
+        if (definition == null || state.sheet() == null) {
+            return base;
+        }
+        try {
+            return Math.max(base, service.build(state, state.sheet(), definition, entry).level());
+        } catch (final RuntimeException e) {
+            return base;
+        }
     }
 
     /** 上次提醒插槽有問題的時間（每 15 秒最多提醒一次）。 */
@@ -647,7 +665,17 @@ public final class MetaGems {
     /** 這顆主要寶石現在累積的能量（說明用）。 */
     double energyOf(final UUID player, final String metaId, final String spellId) {
         final Map<String, Double> mine = energy.get(player);
-        return mine == null ? 0 : mine.getOrDefault(metaId + ":" + spellId, 0.0);
+        if (mine == null) {
+            return 0;
+        }
+        final String suffix = "@" + metaId + ":" + spellId; // 2026-11-05：能量前面多了面板位置
+        double best = 0;
+        for (final Map.Entry<String, Double> each : mine.entrySet()) {
+            if (each.getKey().endsWith(suffix)) {
+                best = Math.max(best, each.getValue());
+            }
+        }
+        return best;
     }
 
     /** 2026-10-26：同上，照插槽（好幾個法術）。 */
@@ -656,15 +684,32 @@ public final class MetaGems {
         return mine == null ? 0 : mine.getOrDefault(socket.key(), 0.0);
     }
 
+    /** 2026-11-05：能量的鍵（位置@主要寶石:插槽法術）指的那一格還是這顆主要寶石。 */
+    static boolean stillThere(final SkillLoadout loadout, final String key) {
+        final int at = key.indexOf('@');
+        final int colon = key.indexOf(':');
+        if (at <= 0 || colon < at) { // 「位置@代號:」
+            return false;
+        }
+        final int position;
+        try {
+            position = Integer.parseInt(key.substring(0, at));
+        } catch (final NumberFormatException e) {
+            return false;
+        }
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        return entry != null && entry.skillId().equals(key.substring(at + 1, colon));
+    }
+
     /** 2026-10-27：面板上已經沒有的主要寶石的能量、上次觸發時間清掉。 */
     private void prune(final UUID player, final SkillLoadout loadout) {
         final Map<String, Double> mine = energy.get(player);
         if (mine != null) {
-            mine.keySet().removeIf(key -> loadout.find(key.substring(0, Math.max(0, key.indexOf(':')))) < 0);
+            mine.keySet().removeIf(key -> !stillThere(loadout, key)); // 2026-11-05：照「位置@代號」看那一格還是不是這顆主要寶石
         }
         final Map<String, Long> fired = lastFired.get(player);
         if (fired != null) {
-            fired.keySet().removeIf(key -> loadout.find(key) < 0);
+            fired.keySet().removeIf(key -> !stillThere(loadout, key + ":"));
         }
     }
 
@@ -833,11 +878,34 @@ public final class MetaGems {
                                 service.qualityFlat(player, socket.metaEntry().skillId(), tw.exilecore.stats.GemQualityKeys.META_MAX_ENERGY))),
                         number(cost), invokeTimes(stored, cost, socket.anyCooldown())));
             } else {
+                final double[] mods = energyModifiers(socket.metaEntry());
+                final double[] own = sheetEnergy(plugin.players().sheet(player), meta.tags());
+                final double max = socket.maxEnergy() * (1 + mods[1] / 100.0) * own[1]; // 2026-11-05：跟實際充能一樣含擴能、天賦的上限（這次之前寫插槽法術的基礎上限）
                 lines.add(String.format(Locale.ROOT, "<gray>插槽：<white>%s</white>（能量 %s／%s）", ItemRenderer.escape(socket.names()),
-                        number(Math.floor(energyOf(player.getUniqueId(), socket))), number(socket.maxEnergy())));
+                        number(Math.floor(energyOf(player.getUniqueId(), socket))), number(Math.round(max))));
+                if (spec.kind() == MetaSpec.Kind.CRIT) {
+                    // 2026-11-05 照站長「能量撐到 100% 跟 0% 打出去的擊中數好像都一樣」：寫出打首領一次暴擊拿多少能量、幾次暴擊觸發一次。
+                    //   觸發時能量全部用掉、超過上限的不會留（照 PoE2），一次暴擊就滿的話每次暴擊都已經觸發，再加能量不會變多
+                    final double gemMore = spec.energyMore() == null ? 0 : spec.energyMore().at(usableLevel(state, socket.metaEntry()));
+                    final double perCrit = spec.energy() * ESTIMATE_POWER * (1 + gemMore / 100.0) * (1 + mods[0] / 100.0) * own[0];
+                    final int crits = critsPerTrigger(perCrit, max);
+                    lines.add(crits <= 1
+                            ? String.format(Locale.ROOT, "<gray>打首領一次暴擊約 <white>+%s</white> 能量：<white>每次暴擊都觸發</white><dark_gray>（已經滿了，再加能量獲得不會多觸發；要更多次暴擊）",
+                                    number(Math.round(perCrit)))
+                            : String.format(Locale.ROOT, "<gray>打首領一次暴擊約 <white>+%s</white> 能量：每 <white>%d</white> 次暴擊觸發一次<dark_gray>（打掉牠的異常門檻才拿滿）",
+                                    number(Math.round(perCrit)), crits));
+                }
             }
         }
         return lines;
+    }
+
+    /** 2026-11-05：每次拿 perCrit 能量、上限 max（觸發時全部用掉）時幾次觸發一次；拿不到能量回傳很大的數。 */
+    static int critsPerTrigger(final double perCrit, final double max) {
+        if (perCrit <= 1e-9) {
+            return Integer.MAX_VALUE;
+        }
+        return Math.max(1, (int) Math.ceil((max - 1e-9) / perCrit));
     }
 
     /**
