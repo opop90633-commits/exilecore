@@ -734,7 +734,7 @@ public final class StatsReport {
                 lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：<dark_gray>原初飢餓，怒氣沒有效果",
                         rage, plugin.skills().resources().rageMax(plugin.players().sheet(player))));
             } else if (rage > 0) {
-                lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：攻擊傷害增加 <white>%d%%",
+                lines.add(String.format(Locale.ROOT, "<#ff6b4a>怒氣 <white>%d<dark_gray>/%d<gray>：攻擊傷害更多 <white>%d%%", // 2026-11-06：更多（這次之前增加）
                         rage, plugin.skills().resources().rageMax(plugin.players().sheet(player)),
                         Math.round(BuffImpact.rageBonus(plugin, player) * 100)));
             }

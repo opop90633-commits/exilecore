@@ -101,6 +101,18 @@ public final class MonsterListener implements Listener {
      *   <li>地圖：殺怪數、地圖 Boss 的完成（一次）。</li>
      * </ul>
      */
+    /** 2026-11-06：最後打死牠的是召喚物（或召喚物射的投射物）：回傳主人；不是 null。 */
+    private Player minionKiller(final LivingEntity victim) {
+        if (!(victim.getLastDamageCause() instanceof org.bukkit.event.entity.EntityDamageByEntityEvent byEntity)) {
+            return null;
+        }
+        org.bukkit.entity.Entity damager = byEntity.getDamager();
+        if (damager instanceof org.bukkit.entity.Projectile projectile && projectile.getShooter() instanceof org.bukkit.entity.Entity shooter) {
+            damager = shooter;
+        }
+        return damager instanceof LivingEntity living ? plugin.skills().minions().owner(living) : null;
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDeath(final EntityDeathEvent event) {
         final LivingEntity entity = event.getEntity();
@@ -118,6 +130,12 @@ public final class MonsterListener implements Listener {
             }
             if (killer != null && plugin.combat().killEffects() != null) {
                 plugin.combat().killEffects().onKill(killer, entity, maxLife);
+            } else if (killer == null && plugin.combat().killEffects() != null && plugin.skills() != null && plugin.skills().minions() != null) {
+                // 2026-11-06 照站長「照原作改」（PoE Headhunter：召喚物、陷阱、地雷、圖騰殺死稀有怪物也算你的）：召喚物殺的，斬獲腰環算主人的
+                final Player owner = minionKiller(entity);
+                if (owner != null) {
+                    plugin.combat().killEffects().onMinionKill(owner, entity);
+                }
             }
             // 2026-10-28 照 PoE2（幽墓束縛）：在你臨在範圍內被任何人殺死的敵人算是你殺的（擊殺效果）
             if (plugin.combat().killEffects() != null) {

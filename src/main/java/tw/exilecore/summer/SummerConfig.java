@@ -52,9 +52,11 @@ public final class SummerConfig {
     public record Boss(String name, String type, SortedSet<Integer> hours, int warnMinutes, int durationMinutes, int emptyCloseSeconds,
                        int level, double life, double lifePerPlayer, int countLevel, int maxCounted, double damage, double scale,
                        List<String> mods, String intro, String defeat, List<BossSkillUse> skills,
-                       int[] pearl, int shells, double cosmeticChance, List<Double> phases) {
+                       int[] pearl, int shells, double cosmeticChance, List<Double> phases,
+                       List<String> uniques, double uniqueChance) { // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：專屬傳奇（每個人各擲 uniqueChance，掉 uniques 隨機一件）
         public Boss {
             phases = phases == null ? List.of() : List.copyOf(phases);
+            uniques = uniques == null ? List.of() : List.copyOf(uniques);
         }
 
         /** 生命比例 fraction（0～1）現在是第幾階段（0 = 一開始；純函式，測試用）。 */
@@ -112,9 +114,11 @@ public final class SummerConfig {
     public record Title(String id, String name, String color, List<Modifier> stats) {
     }
 
-    public enum Kind { COSMETIC, TITLE, CURRENCY }
+    public enum Kind { COSMETIC, TITLE, CURRENCY, UNIQUE } // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：UNIQUE（專屬傳奇）
 
-    public record ShopItem(String id, Kind kind, String cosmetic, String title, String currency, int amount, Map<String, Integer> cost) {
+    /** @param unique kind: unique 的傳奇代號；itemLevel 給的物品等級（2026-11-05） */
+    public record ShopItem(String id, Kind kind, String cosmetic, String title, String currency, int amount, Map<String, Integer> cost,
+                           String unique, int itemLevel) {
     }
 
     private boolean enabled;
@@ -214,7 +218,8 @@ public final class SummerConfig {
                 Math.max(1, b.integer("count_level", 80)), Math.max(0, b.integer("max_counted_players", 0)),
                 Math.max(0.1, b.decimal("damage", 4.5)), Math.max(0.3, b.decimal("scale", 1.8)), b.strings("mods"),
                 b.string("intro", ""), b.string("defeat", ""), BossSkillUse.parseList(b, "skills"),
-                range(br, "pearl", 3, 5), Math.max(0, br.integer("shells", 50)), clamp01(br.decimal("cosmetic_chance", 0.02)), phases(b));
+                range(br, "pearl", 3, 5), Math.max(0, br.integer("shells", 50)), clamp01(br.decimal("cosmetic_chance", 0.02)), phases(b),
+                br.strings("uniques"), clamp01(br.decimal("unique_chance", 0)));
 
         final YamlNode bo = root.node("bottle");
         final List<String> letters = new ArrayList<>();
@@ -262,7 +267,7 @@ public final class SummerConfig {
             try {
                 kind = Kind.valueOf(node.requireString("kind").trim().toUpperCase(Locale.ROOT));
             } catch (final IllegalArgumentException e) {
-                throw new IllegalArgumentException(node.path() + ".kind：要寫 cosmetic、title 或 currency");
+                throw new IllegalArgumentException(node.path() + ".kind：要寫 cosmetic、title、currency 或 unique");
             }
             final Map<String, Integer> cost = new LinkedHashMap<>();
             final YamlNode costNode = node.node("cost");
@@ -279,8 +284,12 @@ public final class SummerConfig {
             if (kind == Kind.COSMETIC && node.string("cosmetic", null) == null) {
                 throw new IllegalArgumentException(node.path() + ".cosmetic：要寫時裝代號");
             }
+            if (kind == Kind.UNIQUE && node.string("unique", null) == null) {
+                throw new IllegalArgumentException(node.path() + ".unique：要寫傳奇代號");
+            }
             items.add(new ShopItem(id, kind, trim(node.string("cosmetic", null)), trim(title), trim(node.string("currency", null)),
-                    Math.max(1, node.integer("amount", 1)), java.util.Collections.unmodifiableMap(cost)));
+                    Math.max(1, node.integer("amount", 1)), java.util.Collections.unmodifiableMap(cost),
+                    trim(node.string("unique", null)), Math.max(1, node.integer("item_level", 84))));
         }
         shop = List.copyOf(items);
     }

@@ -1110,6 +1110,21 @@ public final class SkillConfig {
         return requirements[Math.max(1, Math.min(SkillLoadout.MAX_LEVEL, skillLevel)) - 1];
     }
 
+    /**
+     * 2026-11-05 照站長「物品等級 84 的傳奇，技能等級要是 20」「一般（非傳奇）的武器也要 84 就 20 級」：物品等級到這裡，賦予的技能就是 20 級
+     * （這次之前照需求等級表，84 是 19 級、90 才 20 級）。常數名字留著（一開始只有傳奇）。
+     */
+    public static final int UNIQUE_FULL_GRANT_ILVL = 84;
+
+    /**
+     * 裝備賦予的技能幾級（法杖、長杖、權杖、盾、矛、傳奇的「賦予技能」、空無墜飾）：照物品等級查需求等級表；
+     * 2026-11-05 照站長：物品等級 {@value #UNIQUE_FULL_GRANT_ILVL} 以上一律 20 級——一開始只有傳奇，後來「一般（非傳奇）的武器也要」，
+     * unique 現在不影響結果（參數留著，呼叫的地方不用改）。
+     */
+    public int grantedLevelFor(final int itemLevel, final boolean unique) {
+        return itemLevel >= UNIQUE_FULL_GRANT_ILVL ? SkillLoadout.MAX_LEVEL : maxLevelFor(itemLevel);
+    }
+
     /** 這個角色等級能用的最高技能等級（至少 1）。 */
     public int maxLevelFor(final int characterLevel) {
         int best = 1;

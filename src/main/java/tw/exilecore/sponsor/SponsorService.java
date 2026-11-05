@@ -2417,6 +2417,11 @@ public final class SponsorService {
         return plugin.getConfig().getBoolean("resource-pack.send", true);
     }
 
+    /** 2026-11-05：伺服器有送資源包（Gear 放德魯伊變身的頭套用：沒送的話頭上只會是一張紙）。 */
+    public boolean resourcePackSent() {
+        return packSent();
+    }
+
     /**
      * 畫面上顯示的裝備（{@code Gear} 的顯示用複本）套上幻化：只改外觀（物品模型、穿在身上的樣子），真的裝備、數值都不動。
      * 美術在介面資源包裡（web/skins/），所以沒送資源包時不換。

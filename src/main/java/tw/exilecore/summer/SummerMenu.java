@@ -32,6 +32,9 @@ public final class SummerMenu extends Menu {
     private final SummerService service;
     private final Map<Integer, SummerConfig.ShopItem> shown = new HashMap<>();
     private int confirmSlot = -1;
+    /** 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：兌換變多（入場券、傳奇），一頁 27 格放不下，分頁（第幾頁，0 起）。 */
+    private int page;
+    private static final int PER_PAGE = 45 - FIRST_ITEM;
     private long confirmUntil;
 
     public SummerMenu(final ExileCore plugin, final Player player, final SummerService service) {
@@ -166,14 +169,23 @@ public final class SummerMenu extends Menu {
         set(SLOT_CHALLENGES, icon(Material.WRITABLE_BOOK, "<#f5b942>活動挑戰", challenges));
 
         // 兌換
+        final List<SummerConfig.ShopItem> items = config.shop();
+        final int pages = Math.max(1, (items.size() + PER_PAGE - 1) / PER_PAGE);
+        page = Math.max(0, Math.min(page, pages - 1));
         int slot = FIRST_ITEM;
-        for (final SummerConfig.ShopItem item : config.shop()) {
-            if (slot >= 45) {
-                break;
-            }
+        for (int i = page * PER_PAGE; i < items.size() && slot < 45; i++) {
+            final SummerConfig.ShopItem item = items.get(i);
             shown.put(slot, item);
             set(slot, entry(item, slot));
             slot++;
+        }
+        if (pages > 1) { // 2026-11-05：分頁
+            if (page > 0) {
+                set(SLOT_PREV, pageButton(false, page, pages));
+            }
+            if (page < pages - 1) {
+                set(SLOT_NEXT, pageButton(true, page, pages));
+            }
         }
         set(SLOT_CLOSE_BAR, closeButton());
     }
@@ -248,6 +260,25 @@ public final class SummerMenu extends Menu {
                 }
                 stack = icon(Material.NAME_TAG, title == null ? item.title() : "【" + styled(title) + "】", List.of());
             }
+            case UNIQUE -> { // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：直接畫出這件傳奇（跟不定時活動的兌換一樣）
+                final tw.exilecore.item.UniqueItem unique = plugin.items().repository().unique(item.unique());
+                if (unique != null && plugin.items().repository().base(unique.base()) != null) {
+                    try {
+                        final tw.exilecore.item.ItemData data = plugin.items().generator().generateUnique(unique, item.itemLevel(),
+                                new java.util.Random(unique.id().hashCode()));
+                        data.setIdentified(true);
+                        stack = plugin.items().renderer().create(data); // 只畫外觀，不寫物品資料
+                    } catch (final RuntimeException e) {
+                        stack = null;
+                    }
+                }
+                lore.add("");
+                lore.add("<" + color() + ">★ " + ItemRenderer.escape(service.config().name()) + "專屬傳奇<gray>（物品等級 " + item.itemLevel() + "）");
+                lore.add("<dark_gray>預覽：數值是隨機擲的一個例子；兌換時重新擲");
+                if (stack == null) {
+                    stack = icon(Material.GOLDEN_SWORD, "<#af6025>" + ItemRenderer.escape(unique == null ? item.unique() : unique.name()), List.of());
+                }
+            }
             default -> {
                 final CurrencyType type = plugin.currencies().repository().get(item.currency());
                 final String name = "<white>" + ItemRenderer.escape(service.currencyName(item.currency())) + " ×" + item.amount();
@@ -296,6 +327,13 @@ public final class SummerMenu extends Menu {
             return;
         }
         if (!acceptAction(click)) {
+            return;
+        }
+        final int pages = Math.max(1, (service.config().shop().size() + PER_PAGE - 1) / PER_PAGE);
+        if (slot == SLOT_PREV && page > 0 || slot == SLOT_NEXT && page < pages - 1) { // 2026-11-05：換頁
+            page += slot == SLOT_NEXT ? 1 : -1;
+            confirmSlot = -1;
+            redraw();
             return;
         }
         if (slot == SLOT_TRAVEL) {

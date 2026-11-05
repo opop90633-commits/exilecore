@@ -363,6 +363,17 @@ public final class ItemStats {
                 list.addAll(mod.modifiers(data.runes().size(), base.name() + " 插槽詞綴"));
             }
         }
+        // 2026-11-05 照站長「照原作」：武器上的「+x% 暴擊傷害加成」是本地的，只算用這把武器的攻擊：
+        //   武器上沒有標籤的 crit.multi FLAT（詞綴、蝕變、符文、傳奇）改成 weapon.crit_bonus（只算攻擊、雙持照出手的那一把）；
+        //   有標籤的（法杖、長杖的「+x% 法術暴擊傷害加成」）照舊是全域的。這次之前全部是全域的：法術、另一把武器的攻擊也吃得到
+        if (base.isWeapon()) {
+            for (int i = 0; i < list.size(); i++) {
+                final Modifier mod = list.get(i);
+                if (StatKeys.CRIT_MULTI.equals(mod.stat()) && mod.type() == ModType.FLAT && mod.tags().isEmpty()) {
+                    list.set(i, new Modifier(StatKeys.WEAPON_CRIT_BONUS, ModType.FLAT, mod.value(), mod.tags(), mod.source()));
+                }
+            }
+        }
         // 2026-11-04（信仰稜鏡）：「隨機一個技能 +x 等級」換成那個技能的等級（skill.level［skill:代號］）
         if (data.unique() != null) {
             for (int i = 0; i < list.size(); i++) {

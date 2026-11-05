@@ -52,6 +52,10 @@ public final class WorldEventConfig {
     }
 
     private boolean enabled = true;
+    /** 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」：事件（開天者、怪潮）只到 end，兌換到 shop_until（照 schedule.timezone；沒寫 = 不結束）。這次之前沒有結束日期。 */
+    private java.time.LocalDateTime end;
+    private java.time.LocalDateTime shopUntil;
+    private static final java.time.format.DateTimeFormatter DATE = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", java.util.Locale.ROOT);
     private String name = "開服活動";
     private int[] interval = {120, 240};
     private int firstDelay = 30;
@@ -85,6 +89,8 @@ public final class WorldEventConfig {
             fresh.enabled = false;
         }
         enabled = fresh.enabled;
+        end = fresh.end;
+        shopUntil = fresh.shopUntil;
         name = fresh.name;
         interval = fresh.interval;
         firstDelay = fresh.firstDelay;
@@ -125,6 +131,11 @@ public final class WorldEventConfig {
             timezone = java.time.ZoneId.of(zone);
         } catch (final java.time.DateTimeException e) {
             throw new IllegalArgumentException(schedule.path() + ".timezone：不認得的時區「" + zone + "」（例如 Asia/Taipei）");
+        }
+        end = date(settings, "end");
+        shopUntil = settings.has("shop_until") ? date(settings, "shop_until") : end;
+        if (end != null && shopUntil != null && shopUntil.isBefore(end)) {
+            throw new IllegalArgumentException(settings.path() + "：shop_until 要在 end 之後");
         }
         if (schedule.has("hours")) {
             final java.util.SortedSet<Integer> list = new java.util.TreeSet<>();
@@ -229,6 +240,37 @@ public final class WorldEventConfig {
 
     public boolean enabled() {
         return enabled;
+    }
+
+    private static java.time.LocalDateTime date(final YamlNode node, final String key) {
+        if (!node.has(key)) {
+            return null;
+        }
+        final String text = node.string(key, "").trim();
+        try {
+            return java.time.LocalDateTime.parse(text, DATE);
+        } catch (final java.time.format.DateTimeParseException e) {
+            throw new IllegalArgumentException(node.path() + "." + key + "：日期要寫成「2026-11-11 23:59」（現在是「" + text + "」）");
+        }
+    }
+
+    /** 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」：這個時間（毫秒）已經過了活動的結束時間（之後不再開事件）。 */
+    public boolean eventsOver(final long millis) {
+        return end != null && !java.time.Instant.ofEpochMilli(millis).atZone(timezone).toLocalDateTime().isBefore(end.plusMinutes(1));
+    }
+
+    /** 同上：兌換已經關了。 */
+    public boolean shopClosed(final long millis) {
+        return shopUntil != null && !java.time.Instant.ofEpochMilli(millis).atZone(timezone).toLocalDateTime().isBefore(shopUntil.plusMinutes(1));
+    }
+
+    /** 選單寫的日期（「11/11 23:59」）；沒有結束 null。 */
+    public String endText() {
+        return end == null ? null : end.format(java.time.format.DateTimeFormatter.ofPattern("M/d HH:mm", java.util.Locale.ROOT));
+    }
+
+    public String shopUntilText() {
+        return shopUntil == null ? null : shopUntil.format(java.time.format.DateTimeFormatter.ofPattern("M/d HH:mm", java.util.Locale.ROOT));
     }
 
     public String name() {

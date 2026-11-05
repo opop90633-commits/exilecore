@@ -418,12 +418,17 @@ public final class DamageCalculator {
         final double fixed = attacker.flat(tw.exilecore.item.unique.UniqueStats.CRIT_BONUS_OVERRIDE, Set.of());
         // 2026-10-28 照 PoE2（馬雷葛蘿的血染手套）：「你的暴擊傷害加成為 250%」——固定，不吃增加／更多
         double bonus = fixed > 0 ? fixed / 100.0
-                : Math.max(0, attacker.get(StatKeys.CRIT_MULTI, tags) - 100) / 100.0 * Math.max(0, 1 + attacker.increased(StatKeys.CRIT_BONUS, tags))
+                : Math.max(0, attacker.get(StatKeys.CRIT_MULTI, tags) - 100 + weaponCritBonus(attacker, tags)) / 100.0 * Math.max(0, 1 + attacker.increased(StatKeys.CRIT_BONUS, tags))
                 * Math.max(0, attacker.more(StatKeys.CRIT_BONUS, tags));
         if (defender != null) {
             bonus *= Math.max(0, 1 + defender.increased(StatKeys.CRIT_BONUS_TAKEN, Set.of()));
         }
         return 1 + bonus;
+    }
+
+    /** 2026-11-05 照站長「照原作」：武器上的「+x% 暴擊傷害加成」是本地的，只算用這把武器的攻擊：武器本地的暴擊傷害加成（weapon.crit_bonus），只有攻擊才算。 */
+    static double weaponCritBonus(final StatSheet attacker, final Set<String> tags) {
+        return tags != null && tags.contains(Tags.ATTACK) ? attacker.flat(StatKeys.WEAPON_CRIT_BONUS, tags) : 0;
     }
 
     /** 防禦方減免（不含護盾）。基石「混沌免疫」讓混沌傷害歸零。 */

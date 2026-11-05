@@ -188,6 +188,19 @@ public final class ExileCoreCommand {
                                         .executes(context -> dropPenalty(plugin, context.getSource().getSender(),
                                                 StringArgumentType.getString(context, "player"),
                                                 com.mojang.brigadier.arguments.DoubleArgumentType.getDouble(context, "factor"))))))
+                // 2026-11-05 照站長「有指令能測試嗎」：/ec form bear|werewolf|wyvern [秒]（預設 60 秒）、/ec form off——測試德魯伊變身的頭套外觀
+                .then(Commands.literal("form")
+                        .then(Commands.argument("form", StringArgumentType.word())
+                                .suggests((context, builder) -> {
+                                    for (final String value : new String[] {"bear", "werewolf", "wyvern", "off"}) {
+                                        builder.suggest(value);
+                                    }
+                                    return builder.buildFuture();
+                                })
+                                .executes(context -> testForm(plugin, context, StringArgumentType.getString(context, "form"), 60))
+                                .then(Commands.argument("seconds", IntegerArgumentType.integer(1, 3600))
+                                        .executes(context -> testForm(plugin, context, StringArgumentType.getString(context, "form"),
+                                                IntegerArgumentType.getInteger(context, "seconds"))))))
                 .then(Commands.literal("resetpassives").executes(context -> resetPassives(plugin, context)))
                 .then(Commands.literal("setclass")
                         .then(Commands.argument("class", StringArgumentType.word())
@@ -811,6 +824,20 @@ public final class ExileCoreCommand {
     }
 
     /** 2026-10-18：看或改一個人的掉落倍率（factor null = 只看）。 */
+    /** 2026-11-05 照站長「有指令能測試嗎」：自己變身（只有外觀）或變回人形。 */
+    private static int testForm(final ExileCore plugin, final com.mojang.brigadier.context.CommandContext<io.papermc.paper.command.brigadier.CommandSourceStack> context,
+                                final String form, final int seconds) {
+        final CommandSender sender = context.getSource().getSender();
+        if (!(sender instanceof org.bukkit.entity.Player player) || plugin.skills() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>要在遊戲裡用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String name = plugin.skills().testForm(player, "off".equals(form) ? null : form, seconds);
+        sender.sendMessage(plugin.text().prefixed(name == null ? "<gray>變回人形（寫 bear、werewolf、wyvern 變身）"
+                : "<green>變成" + name + " " + seconds + " 秒（只有外觀；按 F5 看第三人稱）"));
+        return Command.SINGLE_SUCCESS;
+    }
+
     private static int dropPenalty(final ExileCore plugin, final CommandSender sender, final String name, final Double factor) {
         org.bukkit.OfflinePlayer target = plugin.getServer().getPlayerExact(name);
         if (target == null) {

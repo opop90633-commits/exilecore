@@ -773,7 +773,16 @@ public final class MetaGems {
             }
             // 2026-10-26 照 PoE2：主要寶石自己的品質（gem_quality.yml：+秒圖騰持續時間、每根圖騰增加施法速度）；這次之前只算插槽法術的品質
             if (tw.exilecore.currency.GemQuality.has(metaDefinition.id())) {
-                mods.addAll(SkillService.qualityModifiers(metaDefinition, socket.metaEntry().quality() + SkillService.bonusQuality(sheet)));
+                // 2026-11-06 照站長「星咒圖騰的施法速度品質有作用嗎」：品質也算昇華・嵌晶的技能品質、進階奇術的額外品質效果
+                //   （每根圖騰增加施法速度），跟一般技能 buildFresh 一樣；這次之前只算寶石品質＋天賦樹——
+                //   說明寫的 26%、額外效果都沒進到真的圖騰（持續時間照 20% 算、施法速度的額外品質效果沒有作用）
+                final tw.exilecore.ascendancy.AscBuild.Gem metaGem = tw.exilecore.ascendancy.AscBuild.gem(sheet, metaDefinition, List.of());
+                final int quality = socket.metaEntry().quality() + metaGem.quality() + SkillService.bonusQuality(sheet);
+                List<Modifier> qualityMods = SkillService.qualityModifiers(metaDefinition, quality);
+                if (metaGem.twice()) {
+                    qualityMods = tw.exilecore.ascendancy.AscBuild.advanced(metaDefinition.id(), quality, qualityMods);
+                }
+                mods.addAll(qualityMods);
             }
         }
         // 2026-10-22：寶石其他孔的輔助全部套在插槽法術上（spellEntry 的輔助就是它們；要圖騰的疾樁、樁怒也在裡面）
@@ -826,8 +835,9 @@ public final class MetaGems {
             final int level = position >= 0 ? usableLevel(state, state.skills().skill(position)) : 1;
             final double more = spec.energyMore().at(level);
             final double at20 = spec.energyMore().at(20);
-            lines.add("<gray>能量獲得增加 <white>" + number(more) + "%</white>（Lv." + level + "，隨寶石等級"
-                    + (level != 20 ? "；20 級 " + number(at20) + "%" : "") + "）");
+            // 2026-11-05 照站長（天賦加了 15% 引星獲得的能量，這行還是 63%）：這行只是寶石等級的那份，標清楚；天賦、裝備的另外乘（下一行）
+            lines.add("<gray>寶石等級：能量獲得增加 <white>" + number(more) + "%</white>（Lv." + level
+                    + (level != 20 ? "；20 級 " + number(at20) + "%" : "") + "<gray>，不含天賦、裝備）");
         }
         if (position < 0) {
             return lines;
@@ -841,6 +851,7 @@ public final class MetaGems {
             final double gemMore = spec.energyMore() == null ? 0 : spec.energyMore().at(usableLevel(state, metaEntry));
             final double total = (1 + gemMore / 100.0) * (1 + mods[0] / 100.0) * own[0];
             lines.add("<gray>天賦、裝備：能量獲得 <white>×" + number(Math.round(own[0] * 100) / 100.0) + "</white>"
+                    + (Math.abs(own[0] - 1) > 1e-6 ? "<gray>（" + (own[0] >= 1 ? "+" : "") + number(Math.round((own[0] - 1) * 100)) + "%）" : "")
                     + (mods[0] != 0 ? "<gray>・輔助：增加 <white>" + number(mods[0]) + "%" : "")
                     + "<gray>　合計每次獲得 <white>×" + number(Math.round(total * 100) / 100.0));
         }

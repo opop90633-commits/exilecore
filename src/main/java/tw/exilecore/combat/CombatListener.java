@@ -759,13 +759,10 @@ public final class CombatListener implements Listener {
             if (plugin.skills() != null) {
                 conditional.addAll(plugin.skills().supportMechanics().preHit((Player) attacker, defender, skillSheet, hitTagSet, skill)); // 2026-10-27：多帶技能描述
             }
-            // 2026-10：怒氣：每點增加 1% 攻擊傷害
+            // 怒氣：2026-11-06 照站長：怒氣本身改成「每點更多 1% 攻擊傷害」（照 PoE2／Path of Building 2：Damage MORE RageEffect，怒氣效果＝floor(怒氣 ×(1+增加怒氣效果))）；
+            //   這次之前每點增加 1% 攻擊傷害（×增加怒氣效果）。原初飢餓：怒氣沒有效果（rageEffect 是 0）
             if (plugin.skills() != null) {
-                final int rage = plugin.skills().resources().rage((Player) attacker);
-                if (rage > 0 && !StatKeys.flag(attackerSheet, tw.exilecore.stats.KeystoneKeys.FLAG_PRIMAL_HUNGER)) { // 2026-10-26 原初飢餓：怒氣沒有效果
-                    final double per = 0.01 * Math.max(0, 1 + attackerSheet.increased(StatKeys.RAGE_EFFECT, java.util.Set.of()));
-                    conditional.add(new Modifier(StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED, rage * per, java.util.Set.of(Tags.ATTACK), "怒氣"));
-                }
+                conditional.addAll(tw.exilecore.character.BuffImpact.rageModifiers(plugin.skills().resources().rage((Player) attacker), attackerSheet));
             }
             // 2026-10-26（傳奇）：霜環、寒息箭袋、屠王巨鎚、夢魘長棍（tw.exilecore.item.unique.UniqueMechanics）
             conditional.addAll(tw.exilecore.item.unique.UniqueMechanics.attackerConditional(ailments, defender, skillSheet, hitTagSet));

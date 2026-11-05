@@ -264,7 +264,8 @@ public final class ConditionTracker {
         final tw.exilecore.skill.SkillService skills = plugin.skills();
         final double presence = sample == null ? tw.exilecore.combat.Presence.BASE_RADIUS : sample.presenceRadius;
         return switch (base) {
-            case TreeConditions.RAGE_AT_LEAST -> skills == null || skills.resources() == null ? 0 : skills.resources().rage(player);
+            // 2026-11-06 照站長「照原作改」（PoE2 原初飢餓 No Rage effect、怒氣效果）：「每點怒氣也……」照怒氣效果（原初飢餓 0、增加怒氣效果放大）；這次之前照怒氣點數
+            case TreeConditions.RAGE_AT_LEAST -> skills == null || skills.resources() == null ? 0 : skills.resources().rageEffect(player);
             case TreeConditions.TOTEMS_AT_LEAST -> skills == null ? 0 : skills.totemCount(player);
             case TreeConditions.MINIONS_AT_LEAST -> skills == null || skills.minions() == null ? 0 : skills.minions().countNear(player, presence);
             case TreeConditions.CLOSE_ENEMIES_AT_LEAST -> enemiesNear(player, StatKeys.CLOSE_RANGE, false);

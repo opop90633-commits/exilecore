@@ -452,7 +452,7 @@ class LootTest {
         std.toggleBaseHidden("short_bow");
         assertEquals(LootFilter.BaseRule.SHOW, std.baseRule("short_bow"));
         assertEquals(Set.of(), std.hiddenBases());
-        assertEquals(Set.of("gold_ring"), std.alwaysBases());
+        assertEquals(Set.of("gold_ring", "jamulet_absent"), std.alwaysBases()); // 2026-11-06：空無墜飾預設必撿
         assertEquals("p=standard;v=2;ab=gold_ring", std.encode());
         assertEquals(std, LootFilter.decode(std.encode(), config));
         std.clearBaseRules();

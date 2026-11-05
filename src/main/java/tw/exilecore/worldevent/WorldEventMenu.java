@@ -57,12 +57,18 @@ public final class WorldEventMenu extends Menu {
             }
         } else {
             final long minutes = service.minutesUntilNext();
-            status.add(!config.enabled() ? "<dark_gray>活動沒有開啟" : minutes < 0 ? "<gray>等待下一次事件"
+            final boolean over = config.eventsOver(System.currentTimeMillis()); // 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」
+            status.add(!config.enabled() ? "<dark_gray>活動沒有開啟" : over ? "<gray>活動已經結束（" + config.endText() + "）"
+                    + (config.shopClosed(System.currentTimeMillis()) ? "，兌換也結束了" : "，兌換開到 <white>" + config.shopUntilText())
+                    : minutes < 0 ? "<gray>等待下一次事件"
                     : service.nextClock() != null && config.onTheHour()
                     ? "<gray>下一次事件：<white>" + service.nextClock() + "</white> "
                     + (service.upcoming() == null ? "" : "<#ffd060>" + service.upcoming().displayName() + " ")
                     + "<gray>（台灣時間，約 " + minutes + " 分鐘後）"
                     : "<gray>下一次事件：大約 <white>" + minutes + "</white> 分鐘後");
+        }
+        if (config.endText() != null && !config.eventsOver(System.currentTimeMillis())) {
+            status.add("<gray>活動到 <white>" + config.endText() + "<gray>，兌換到 <white>" + config.shopUntilText()); // 2026-11-05
         }
         status.add("");
         status.add(config.onTheHour() ? "<gray>整點在活動場地出現（選單可以傳送過去）：" : "<gray>不定時在活動場地出現：");

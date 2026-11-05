@@ -127,7 +127,8 @@ public final class BuffImpact {
         final int rage = plugin.skills() == null ? 0 : plugin.skills().resources().rage(player);
         out.addAll(rageModifiers(rage, sheet));
         // 2026-10-27：德魯伊之冠（每 2 點怒氣法術更多 1%，AscendancyMechanics 擊中時乘）；這次之前面板沒算
-        out.addAll(tw.exilecore.ascendancy.AscendancyMechanics.druidicModifiers(sheet, rage));
+        out.addAll(tw.exilecore.ascendancy.AscendancyMechanics.druidicModifiers(sheet,
+                tw.exilecore.skill.SkillResources.rageEffect(rage, sheet))); // 2026-11-06 照站長「照原作改」（PoE2 原初飢餓 No Rage effect、怒氣效果）：照怒氣效果
         // 2026-10-27：馭星訣（身上每顆戰星增加 x% 傷害，CombatListener 擊中時算）；這次之前面板沒算
         final double perCharge = sheet.flat(StatKeys.DAMAGE_PER_CHARGE, Set.of());
         if (perCharge > 0 && plugin.combat() != null && plugin.combat().charges() != null) {
@@ -147,14 +148,15 @@ public final class BuffImpact {
      * （這次之前面板照樣顯示怒氣的加成）。純函式（測試用）。
      */
     public static List<Modifier> rageModifiers(final int rage, final StatSheet sheet) {
-        if (rage <= 0 || StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_PRIMAL_HUNGER)) {
+        // 2026-11-06 照站長：怒氣本身改成「每點更多 1% 攻擊傷害」（照 PoE2／Path of Building 2：Damage MORE RageEffect，怒氣效果＝floor(怒氣 ×(1+增加怒氣效果))）；這次之前 INCREASED（rage × 1% ×(1+增加怒氣效果)）
+        final int effect = tw.exilecore.skill.SkillResources.rageEffect(rage, sheet);
+        if (effect <= 0) {
             return List.of();
         }
-        final double per = 0.01 * Math.max(0, 1 + sheet.increased(StatKeys.RAGE_EFFECT, Set.of()));
-        return List.of(new Modifier(StatKeys.DAMAGE, ModType.INCREASED, rage * per, Set.of(Tags.ATTACK), "怒氣"));
+        return List.of(new Modifier(StatKeys.DAMAGE, ModType.MORE, effect * 0.01, Set.of(Tags.ATTACK), "怒氣"));
     }
 
-    /** 怒氣讓攻擊傷害增加多少（小數；沒有怒氣、原初飢餓是 0）。 */
+    /** 怒氣讓攻擊傷害更多多少（小數；沒有怒氣、原初飢餓是 0）。2026-11-06：更多（這次之前增加）。 */
     public static double rageBonus(final ExileCore plugin, final Player player) {
         double total = 0;
         for (final Modifier modifier : rageModifiers(plugin.skills() == null ? 0 : plugin.skills().resources().rage(player),

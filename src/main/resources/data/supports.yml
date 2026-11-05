@@ -632,7 +632,7 @@ supports:
 
   rage:
     name: 怒火
-    description: 被輔助的近戰攻擊打中敵人時獲得 3 點怒氣（最多 30 點，每點增加 1% 攻擊傷害；兩秒沒拿到就慢慢掉）。
+    description: 被輔助的近戰攻擊打中敵人時獲得 3 點怒氣（最多 30 點，每點更多 1% 攻擊傷害；兩秒沒拿到就慢慢掉）。
     icon: BLAZE_POWDER
     tier: 1
     requires: [melee]

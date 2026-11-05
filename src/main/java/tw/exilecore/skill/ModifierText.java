@@ -365,6 +365,8 @@ public final class ModifierText {
             case StatKeys.MOVEMENT_SPEED -> scaled(modifier, tagPrefix(modifier) + "移動速度", percent);
             case StatKeys.CRIT_CHANCE -> scaled(modifier, tagPrefix(modifier) + "暴擊率", percent);
             case StatKeys.CRIT_MULTI -> tagPrefix(modifier) + "暴擊傷害 +" + number(value) + "%";
+            case StatKeys.WEAPON_CRIT_BONUS -> "這把武器的攻擊暴擊傷害加成 +" + number(value) + "%"; // 2026-11-05
+            case "asc.demonflame_stacks" -> "惡魔烈焰 " + number(value) + " 層（每層法術傷害更多 3%、每秒失去生命）"; // 2026-11-05：只顯示用（AscGranted）
             case StatKeys.LIFE_ON_HIT -> tagPrefix(modifier) + "每次擊中回復 " + number(value) + " 生命";
             case StatKeys.DAMAGE_DOUBLE -> "擊中時 " + number(value) + "% 機率造成雙倍傷害";
             case StatKeys.SKILL_LEVEL -> plus(value) + " " + tagPrefix(modifier) + "技能等級";

@@ -44,6 +44,66 @@ public final class ShapeshiftCostumes implements Listener {
     /** 幾格內的玩家要重送（看得到的範圍）。 */
     private static final double VIEW = 64;
 
+    /**
+     * 2026-11-05 照站長「先關閉變形這個部分，變形後還是自己的 skin」：關掉外觀（不隱形、不生野獸、裝備照常給人看）；
+     * 形態的效果照舊。tick 還是照跑，關掉之前已經穿上的會照常脫掉。改回 true 就恢復（模組 1.5.0 的第三人稱顯示也還在）。
+     */
+    static final boolean ENABLED = false;
+
+    /**
+     * 2026-11-05 照站長「德魯伊變形改成頭套，三種都先做」：變身時頭上的顯示用物品換成那個形態的 3D 頭套（資源包 exilecore:skin/form_<形態>_helmet，tools/gen_models3d.py 的 form_*），
+     * 身上的盔甲不顯示、本人隱形（頭上的東西隱形也照畫）。遊戲在第一人稱本來就不畫自己頭上的東西，所以第一人稱看不到、
+     * 第三人稱與別人看得到；不用模組、不生假生物（不擋視線、不推人）。頭上的東西由 Gear.sync 放（headModel）。
+     * 缺點：模型跟著頭轉，抬頭、低頭會一起傾斜。關掉（false）就跟 ENABLED 一樣只有效果、沒有外觀。
+     */
+    public static final boolean HEAD_MODE = true;
+
+    private static final Map<String, String> HEAD_MODELS = Map.of(
+            "熊形態", "form_bear", "狼人形態", "form_werewolf", "飛龍形態", "form_wyvern");
+
+    /** 頭套模式：正在變身的人 → 形態名稱；我們加了隱形的人。 */
+    private final Map<UUID, String> heads = new HashMap<>();
+    private final java.util.Set<UUID> headInvisible = new java.util.HashSet<>();
+
+    /** 頭上該戴的頭套模型代號（form_bear…）；沒變身、頭套模式關掉回傳 null。Gear.sync 用。 */
+    public String headModel(final Player player) {
+        if (!HEAD_MODE || player == null) {
+            return null;
+        }
+        final String form = heads.get(player.getUniqueId());
+        return form == null ? null : HEAD_MODELS.get(form);
+    }
+
+    private void headTick(final Player player, final String form, final long now) {
+        final UUID id = player.getUniqueId();
+        final boolean wants = HEAD_MODELS.containsKey(form) && !player.isDead() && player.isOnline();
+        final String was = heads.get(id);
+        if (!wants) {
+            if (was != null) {
+                heads.remove(id);
+                if (headInvisible.remove(id) && player.isOnline()) {
+                    player.removePotionEffect(PotionEffectType.INVISIBILITY);
+                }
+                syncGear(player); // 頭盔、盔甲換回來
+            }
+            return;
+        }
+        if (!form.equals(was)) {
+            heads.put(id, form);
+            syncGear(player);
+        }
+        if (now % 10 == 0 && (!player.hasPotionEffect(PotionEffectType.INVISIBILITY) || headInvisible.contains(id))) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, 40, 0, false, false, false));
+            headInvisible.add(id);
+        }
+    }
+
+    private void syncGear(final Player player) {
+        if (plugin.characters() != null && plugin.characters().gear() != null) {
+            plugin.characters().gear().sync(player);
+        }
+    }
+
     private record Look(EntityType type, double scale, double lift) {
     }
 
@@ -67,7 +127,10 @@ public final class ShapeshiftCostumes implements Listener {
 
     /** 每 tick：照現在的形態穿上、換掉或脫掉外觀，外觀跟著人走。form 是空字串 = 沒變身。 */
     void tick(final Player player, final String form, final long now) {
-        final Look look = LOOKS.get(form);
+        if (HEAD_MODE) {
+            headTick(player, form, now); // 2026-11-05：頭套模式
+        }
+        final Look look = ENABLED && !HEAD_MODE ? LOOKS.get(form) : null; // 2026-11-05：外觀先關掉；頭套模式時不生假生物
         Costume costume = costumes.get(player.getUniqueId());
         if (look == null || player.isDead() || !player.isOnline()) {
             if (costume != null) {
@@ -88,7 +151,11 @@ public final class ShapeshiftCostumes implements Listener {
         costume.form = form;
         if (costume.entity == null) {
             costume.entity = spawn(player, look);
-            player.hideEntity(plugin, costume.entity); // 自己看不到：不擋視線（spawn 時已經預設看不到，這行是保險）
+            if (seesOwn(player)) {
+                player.showEntity(plugin, costume.entity); // 2026-11-05 照站長「第三人稱變形時會隱形」：裝了模組（1.5.0 起）的人自己也看得到，模組在第一人稱時不畫
+            } else {
+                player.hideEntity(plugin, costume.entity); // 自己看不到：不擋視線（spawn 時已經預設看不到，這行是保險）
+            }
             showToOthers(player, costume.entity);
             hideEquipment(player);
         }
@@ -103,6 +170,9 @@ public final class ShapeshiftCostumes implements Listener {
         if (now % EQUIPMENT_EVERY == 0) {
             hideEquipment(player);
             showToOthers(player, costume.entity); // 2026-11-05：後來走進來的人也看得到
+            if (seesOwn(player) && !player.canSee(costume.entity)) {
+                player.showEntity(plugin, costume.entity); // 2026-11-05：變身之後才連上模組的也看得到自己的
+            }
         }
     }
 
@@ -125,20 +195,43 @@ public final class ShapeshiftCostumes implements Listener {
     /** 2026-11-05：外觀實體放進「不推擠」的隊伍（碰撞規則 NEVER）：伺服器那邊也不會把變身的人推開。 */
     private static final String NO_PUSH_TEAM = "ec_costume";
 
-    private static void noPush(final LivingEntity entity) {
+    /**
+     * 2026-11-05 照站長「第三人稱變形時會隱形」：每個人的外觀實體各自一個隊伍「ecc_＋變身的人的 UUID（沒有 -）」（碰撞規則一樣 NEVER）。
+     * 模組（1.5.0 起）看到隊伍名稱是自己的就知道這隻是自己的變形，第一人稱時不畫、第三人稱照畫。
+     * 這次之前全部放在同一個 {@link #NO_PUSH_TEAM}（模組分不出是誰的），自己一律看不到，第三人稱就變成隱形。
+     */
+    static final String OWN_TEAM_PREFIX = "ecc_";
+
+    /** 裝了模組、而且是會在第一人稱藏起自己變形的版本。 */
+    static final String SEES_OWN_SINCE = "1.5.0";
+
+    static String ownTeam(final java.util.UUID owner) {
+        return OWN_TEAM_PREFIX + owner.toString().replace("-", "");
+    }
+
+    private boolean seesOwn(final Player player) {
+        return plugin.clientMod() != null && plugin.clientMod().modAtLeast(player, SEES_OWN_SINCE);
+    }
+
+    private static void noPush(final LivingEntity entity, final java.util.UUID owner) {
         final org.bukkit.scoreboard.Scoreboard board = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
-        org.bukkit.scoreboard.Team team = board.getTeam(NO_PUSH_TEAM);
+        final String name = ownTeam(owner);
+        org.bukkit.scoreboard.Team team = board.getTeam(name);
         if (team == null) {
-            team = board.registerNewTeam(NO_PUSH_TEAM);
+            team = board.registerNewTeam(name);
         }
         team.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
         team.addEntry(entity.getUniqueId().toString());
     }
 
     private static void leaveNoPush(final LivingEntity entity) {
-        final org.bukkit.scoreboard.Team team = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard().getTeam(NO_PUSH_TEAM);
-        if (team != null) {
+        final org.bukkit.scoreboard.Scoreboard board = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
+        final org.bukkit.scoreboard.Team team = board.getEntryTeam(entity.getUniqueId().toString());
+        if (team != null && (team.getName().equals(NO_PUSH_TEAM) || team.getName().startsWith(OWN_TEAM_PREFIX))) {
             team.removeEntry(entity.getUniqueId().toString());
+            if (team.getName().startsWith(OWN_TEAM_PREFIX) && team.getEntries().isEmpty()) {
+                team.unregister(); // 每個人一個的隊伍用完就收掉，不留在主計分板
+            }
         }
     }
 
@@ -166,7 +259,7 @@ public final class ShapeshiftCostumes implements Listener {
             if (scale != null) {
                 scale.setBaseValue(look.scale());
             }
-            noPush(living); // 2026-11-05：不會把變身的人推開
+            noPush(living, player.getUniqueId()); // 2026-11-05：不會把變身的人推開
         });
     }
 
@@ -216,6 +309,17 @@ public final class ShapeshiftCostumes implements Listener {
 
     /** 下線、停用：全部收掉。 */
     void clear() {
+        for (final UUID id : java.util.List.copyOf(heads.keySet())) { // 2026-11-05：頭套模式
+            final Player player = plugin.getServer().getPlayer(id);
+            heads.remove(id);
+            if (player != null) {
+                if (headInvisible.contains(id)) {
+                    player.removePotionEffect(PotionEffectType.INVISIBILITY);
+                }
+                syncGear(player);
+            }
+        }
+        headInvisible.clear();
         final Iterator<Map.Entry<UUID, Costume>> iterator = costumes.entrySet().iterator();
         while (iterator.hasNext()) {
             final Map.Entry<UUID, Costume> entry = iterator.next();
@@ -231,6 +335,8 @@ public final class ShapeshiftCostumes implements Listener {
 
     /** 不在線上的人：外觀收掉。 */
     void prune() {
+        heads.keySet().removeIf(id -> plugin.getServer().getPlayer(id) == null); // 2026-11-05：頭套模式
+        headInvisible.removeIf(id -> plugin.getServer().getPlayer(id) == null);
         final Iterator<Map.Entry<UUID, Costume>> iterator = costumes.entrySet().iterator();
         while (iterator.hasNext()) {
             final Map.Entry<UUID, Costume> entry = iterator.next();

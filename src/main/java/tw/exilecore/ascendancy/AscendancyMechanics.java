@@ -86,7 +86,7 @@ public final class AscendancyMechanics {
         }
         final double champion = sheet.flat(DRUIDIC_CHAMPION, java.util.Set.of());
         if (champion > 0 && skill.tags().contains(Tags.SPELL) && plugin.skills() != null && plugin.skills().resources() != null) {
-            more *= druidicChampion(champion, plugin.skills().resources().rage(attacker));
+            more *= druidicChampion(champion, plugin.skills().resources().rageEffect(attacker)); // 2026-11-06 照站長「照原作改」（PoE2 原初飢餓 No Rage effect、怒氣效果）：照怒氣效果
         }
         return more;
     }

@@ -220,12 +220,15 @@ public final class WorldEventService {
             tickActive(now);
             return;
         }
-        if (!config.enabled()) {
-            return;
+        if (!config.enabled() || config.eventsOver(now)) {
+            return; // 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」：活動結束後不再開事件（兌換照開到 shop_until）
         }
         if (nextMillis < 0) {
             schedule(now, true);
             return;
+        }
+        if (config.eventsOver(nextMillis)) {
+            return; // 2026-11-05：下一次已經在結束時間之後：不預告、不開
         }
         if (!warned && config.warnMinutes() > 0 && now >= nextMillis - config.warnMinutes() * 60_000L) {
             warned = true;
@@ -1139,6 +1142,9 @@ public final class WorldEventService {
         final PlayerState state = plugin.players().get(player);
         if (!state.hasCharacter()) {
             return "先選一個角色";
+        }
+        if (config.shopClosed(System.currentTimeMillis())) {
+            return "兌換已經結束了（到 " + config.shopUntilText() + "）"; // 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」
         }
         final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
         for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {

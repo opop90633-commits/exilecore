@@ -296,6 +296,35 @@ public final class Gear {
     }
 
     /** 顯示用的複本：外觀、名稱、說明照原本的，物品資料（詞綴、代號）拿掉，盾不能舉。 */
+    /** 2026-11-05：變身頭套的「來源」（place 比對用；每種形態一個固定的物件）。 */
+    private static final Map<String, Object> FORM_TOKENS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Object FORM_EMPTY = new Object();
+
+    private static Object formToken(final String form) {
+        return FORM_TOKENS.computeIfAbsent(form, key -> new Object());
+    }
+
+    private static final Object FORM_HAND = new Object();
+
+    /** 2026-11-05：變身中手上那一格：武器（空手就是空手的圖示）的顯示用複本，物品模型換成什麼都不畫的。 */
+    private static ItemStack hiddenHand(final ItemStack real) {
+        final ItemStack stack = real == null ? unarmed() : display(real);
+        stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, NamespacedKey.fromString("exilecore:skin/form_hidden_hand"));
+        return stack;
+    }
+
+    /** 2026-11-05：變身頭套的顯示用物品（紙＋物品模型 exilecore:skin/<代號>_helmet）。 */
+    private static ItemStack formHead(final String form) {
+        final ItemStack stack = ItemStack.of(Material.PAPER);
+        stack.editMeta(meta -> meta.displayName(ItemRenderer.line("<#c9a7ff>" + switch (form) {
+            case "form_bear" -> "熊形態";
+            case "form_werewolf" -> "狼人形態";
+            default -> "飛龍形態";
+        })));
+        stack.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL, NamespacedKey.fromString("exilecore:skin/" + form + "_helmet"));
+        return display(stack);
+    }
+
     static ItemStack display(final ItemStack real) {
         final ItemStack copy = real.clone();
         copy.setAmount(1);
@@ -372,12 +401,31 @@ public final class Gear {
         if (isDisplay(player.getItemOnCursor())) {
             player.setItemOnCursor(null);
         }
-        show(player, HAND_SLOT, state.jewellery(MAIN), true, ItemSlot.MAIN_HAND);
-        show(player, 40, hiddenInHand(player, state.jewellery(OFF)) ? null : state.jewellery(OFF), false, ItemSlot.OFF_HAND);
-        show(player, 39, state.jewellery(HEAD), false, ItemSlot.HEAD);
-        show(player, 38, state.jewellery(CHEST), false, ItemSlot.CHEST);
-        show(player, 37, state.jewellery(LEGS), false, ItemSlot.LEGS);
-        show(player, 36, state.jewellery(FEET), false, ItemSlot.FEET);
+        final String form = plugin.skills() == null ? null : plugin.skills().costumes().headModel(player);
+        final boolean formShown = form != null && plugin.sponsors() != null && plugin.sponsors().resourcePackSent();
+        if (formShown) {
+            // 2026-11-05 照站長「德魯伊能隱藏武器跟副手嗎」：變身中手上的武器換成什麼都不畫的模型（還是那把武器的顯示用複本，
+            //   右鍵、按住照常；快捷列那一格看起來是空的），副手不放
+            final ItemStack main = state.jewellery(MAIN);
+            place(player, HAND_SLOT, FORM_HAND, () -> hiddenHand(main), GEAR_REBUILD_TICKS);
+            place(player, 40, FORM_EMPTY, () -> null, GEAR_REBUILD_TICKS);
+        } else {
+            show(player, HAND_SLOT, state.jewellery(MAIN), true, ItemSlot.MAIN_HAND);
+            show(player, 40, hiddenInHand(player, state.jewellery(OFF)) ? null : state.jewellery(OFF), false, ItemSlot.OFF_HAND);
+        }
+        if (formShown) {
+            // 2026-11-05 照站長「德魯伊變形改成頭套，三種都先做」：變身中頭上戴那個形態的 3D 頭套（第一人稱看不到、第三人稱看得到），
+            //   盔甲不顯示（本人隱形，ShapeshiftCostumes）；裝備本身還在角色面板，效果照算
+            place(player, 39, formToken(form), () -> formHead(form), GEAR_REBUILD_TICKS);
+            place(player, 38, FORM_EMPTY, () -> null, GEAR_REBUILD_TICKS);
+            place(player, 37, FORM_EMPTY, () -> null, GEAR_REBUILD_TICKS);
+            place(player, 36, FORM_EMPTY, () -> null, GEAR_REBUILD_TICKS);
+        } else {
+            show(player, 39, state.jewellery(HEAD), false, ItemSlot.HEAD);
+            show(player, 38, state.jewellery(CHEST), false, ItemSlot.CHEST);
+            show(player, 37, state.jewellery(LEGS), false, ItemSlot.LEGS);
+            show(player, 36, state.jewellery(FEET), false, ItemSlot.FEET);
+        }
         if (changed) {
             plugin.players().markDirty(player);
         }

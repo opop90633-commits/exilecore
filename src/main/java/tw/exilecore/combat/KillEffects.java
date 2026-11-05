@@ -166,6 +166,20 @@ public final class KillEffects implements Listener {
     }
 
     /**
+     * 2026-11-06 照站長「照原作改」（PoE Headhunter：召喚物、陷阱、地雷、圖騰殺死稀有怪物也算你的）：召喚物殺死的敵人——只有斬獲腰環算主人的（偷詞綴），其他擊殺效果照舊不算（原作一般的「當你擊殺」召喚物殺的不算）。
+     * 圖騰、陷阱打的本來就算你打的（擊殺者就是你），不用另外處理。
+     */
+    public void onMinionKill(final Player owner, final LivingEntity victim) {
+        if (owner == null || !owner.isOnline() || !plugin.players().get(owner).hasCharacter()) {
+            return;
+        }
+        final double steal = plugin.players().sheet(owner).flat(StatKeys.STEAL_MODS, Set.of());
+        if (steal > 0) {
+            stealMods(owner, victim, steal);
+        }
+    }
+
+    /**
      * 斬獲腰環（追逐級傳奇；2026-10 以前叫逐星者）：殺死稀有怪物時，牠的詞綴變成你的增益 seconds 秒（同一種詞綴再殺一隻就重新計時）。
      * 詞綴的 stats 直接套（壯碩的 = 更多最大生命、鐵甲的 = 增加護甲、致命的 = 暴擊…），
      * 「附加 X% 物理為火焰」變成你的額外獲得，極速的變成增加移動速度，光環的詞綴給光環裡的數值；只有招式的詞綴沒有東西可拿。

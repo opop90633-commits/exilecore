@@ -16,7 +16,6 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -118,9 +117,13 @@ class SummerConfigTest {
             }
         }
         assertEquals(inShop.size(), limited, "星潮祭限定的時裝要跟兌換商店一樣多");
-        // 2026-11-03 照站長：不換通貨（這次之前照萬燈夜有四樣）
+        // 2026-11-03 照站長：不換通貨（這次之前照萬燈夜有四樣）；2026-11-05 照站長：只換 Boss 的入場券（SummerTicketsUniquesTest）
         for (final SummerConfig.ShopItem item : config.shop()) {
-            assertNotEquals(SummerConfig.Kind.CURRENCY, item.kind(), item.id());
+            if (item.kind() == SummerConfig.Kind.CURRENCY) {
+                assertTrue((item.currency().startsWith(tw.exilecore.currency.CurrencyGroups.TICKET_PREFIX)
+                        || item.currency().startsWith(tw.exilecore.currency.CurrencyGroups.FRAGMENT_PREFIX) || tw.exilecore.currency.CurrencyGroups.BOSS_KEYS.contains(item.currency())
+                        || "fog_splinter".equals(item.currency())), item.id() + "：只換開 Boss 用的");
+            }
         }
         // 挑戰的稱號、兌換的稱號都有加成
         assertEquals("summer_surfer", config.challenges().title());

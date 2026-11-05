@@ -10,6 +10,10 @@
 settings:
   enabled: true
   name: 開服活動                # 選單、公告用的活動名稱
+  # 2026-11-05 照站長「開天者的活動日期訂到 11/11，兌換延長 7 天」：事件（開天者、星潮入侵）開到 end，之後不再出現；兌換開到 shop_until（照 schedule.timezone）。
+  #   兩個都不寫 = 一直開（這次之前沒有結束日期）
+  end: "2026-11-11 23:59"
+  shop_until: "2026-11-18 23:59"
   schedule:
     on_the_hour: true           # 整點開始（好追蹤）；false = 照下面的 interval_minutes 隨機
     timezone: Asia/Taipei       # 照這個時區的整點

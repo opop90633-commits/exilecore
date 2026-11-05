@@ -35,14 +35,14 @@ public final class SkillModule implements Module {
         }
         config.load(plugin.dataFolder().resolve("data"));
         if (plugin.items() != null) { // 2026-10-28：法杖、長杖、權杖的說明寫賦予的技能（等級照物品等級，跟 PlayerStateService.grantedSkills 一樣）
-            plugin.items().renderer().setGrantedLabel((baseId, ilvl) -> {
+            plugin.items().renderer().setGrantedLabel((baseId, data) -> {
                 final String id = plugin.items().repository().grantedSkill(baseId);
                 final SkillDefinition skill = id == null ? null : config.skill(id);
-                return skill == null ? null : "Lv." + config.maxLevelFor(Math.max(1, ilvl)) + " " + skill.name();
+                return skill == null ? null : "Lv." + grantLevel(data) + " " + skill.name();
             });
-            plugin.items().renderer().setSkillLabel((skillId, ilvl) -> { // 2026-11-05：空無墜飾隨機定的賦予技能
+            plugin.items().renderer().setSkillLabel((skillId, data) -> { // 2026-11-05：空無墜飾隨機定的賦予技能
                 final SkillDefinition skill = skillId == null ? null : config.skill(skillId);
-                return skill == null ? null : "Lv." + config.maxLevelFor(Math.max(1, ilvl)) + " " + skill.name();
+                return skill == null ? null : "Lv." + grantLevel(data) + " " + skill.name();
             });
         }
         final SkillService created = new SkillService(plugin, config, plugin.combat().skillDamage());
@@ -184,5 +184,10 @@ public final class SkillModule implements Module {
 
     public SkillService service() {
         return service;
+    }
+
+    /** 2026-11-05 照站長「物品等級 84 的傳奇，技能等級要是 20」：說明寫的賦予技能等級，跟 PlayerStateService.grantedSkills 一樣（傳奇 84 以上 20 級）。 */
+    private int grantLevel(final tw.exilecore.item.ItemData data) {
+        return config.grantedLevelFor(Math.max(1, data.ilvl()), data.rarity() == tw.exilecore.item.Rarity.UNIQUE);
     }
 }

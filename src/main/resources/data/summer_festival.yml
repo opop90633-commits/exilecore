@@ -19,7 +19,7 @@
 #   ・漂流瓶：地圖裡的怪掉貝殼（bottle.normal／magic／rare_shells／boss_shells）；稀有怪、地圖 Boss 倒下 bottle.rare／bottle.boss 機率
 #     留下「漂流瓶」（bottle.seconds 秒消失），右鍵：bottle.letter_chance 是瓶中信（貝殼＋一句話），否則是藏寶圖
 #     （帳號狀態：下一張地圖的 Boss 倒下多掉 bottle.map_extra 件東西＋bottle.map_pearls 顆珍珠，用掉就沒了）。
-#   ・挑戰（帳號共用）與兌換商店（限定時裝、限定稱號；2026-11-03 起不換通貨）。
+#   ・挑戰（帳號共用）與兌換商店（限定時裝、限定稱號；2026-11-03 起不換通貨；2026-11-05 照站長補上各 Boss 的入場券與兩件專屬傳奇）。
 #   ・海灘在活動世界裡：死在這裡不扣經驗（CharacterListener.onDeath：整個活動世界都不扣）。
 # 活動結束後兌換商店再開到 shop_until。時裝、稱號拿到就是永久的。
 
@@ -110,6 +110,9 @@ boss:
     pearl: [3, 5]
     shells: 50
     cosmetic_chance: 0.02   # 掉一件還沒有的星潮祭時裝（每個人各擲；吃物品稀有度）
+    # 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：專屬傳奇（uniques.yml；每個人各擲 unique_chance，吃物品稀有度，掉其中隨機一件；跟開天者一樣 2%）
+    unique_chance: 0.02
+    uniques: [coral_throat_spear, tide_pearl_heart]
 
 # 漂流瓶與地圖裡的貝殼
 bottle:
@@ -170,3 +173,22 @@ shop:
   - { id: emote_surf,          kind: cosmetic, cosmetic: sf_emote_surf,     cost: { event_shell: 3000, event_pearl: 30 } }
   - { id: cos_armor_coral,     kind: cosmetic, cosmetic: sf_armor_coral,    cost: { event_shell: 4000, event_pearl: 40 } }
   # 2026-11-03 照站長：拿掉通貨兌換（劫盜合約、天空碎片、至臻石、深淵核心）；這次之前照萬燈夜有這四樣
+  # 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：
+  #   各 Boss 的入場券（價錢照不定時活動的同一張：開天核心 ≈ 珍珠、星潮碎片 ×3.3 ≈ 貝殼）＋兩件專屬傳奇（海妖也會掉 2%）
+  - { id: u_coral_spear,  kind: unique,   unique: coral_throat_spear, item_level: 84, cost: { event_shell: 1500, event_pearl: 60 } }
+  - { id: u_pearl_heart,  kind: unique,   unique: tide_pearl_heart,   item_level: 84, cost: { event_shell: 1500, event_pearl: 60 } }
+  - { id: k_shrine,       kind: currency, currency: ticket_shrine,     amount: 1, cost: { event_shell: 400, event_pearl: 15 } }
+  - { id: k_strongbox,    kind: currency, currency: ticket_strongbox,  amount: 1, cost: { event_shell: 400, event_pearl: 15 } }
+  - { id: k_breach,       kind: currency, currency: ticket_breach,     amount: 1, cost: { event_shell: 330, event_pearl: 12 } }
+  - { id: k_abyss,        kind: currency, currency: ticket_abyss,      amount: 1, cost: { event_shell: 330, event_pearl: 12 } }
+  - { id: k_ritual,       kind: currency, currency: ticket_ritual,     amount: 1, cost: { event_shell: 300, event_pearl: 10 } }
+  - { id: k_delirium,     kind: currency, currency: ticket_delirium,   amount: 1, cost: { event_shell: 300, event_pearl: 10 } }
+  - { id: k_exile,        kind: currency, currency: ticket_exile,      amount: 1, cost: { event_shell: 270, event_pearl: 9 } }
+  - { id: f_crucible,     kind: currency, currency: fragment_crucible, amount: 1, cost: { event_shell: 170, event_pearl: 6 } }   # 萬界之巔（四種各一個）
+  - { id: f_frost,        kind: currency, currency: fragment_frost,    amount: 1, cost: { event_shell: 170, event_pearl: 6 } }
+  - { id: f_bone,         kind: currency, currency: fragment_bone,     amount: 1, cost: { event_shell: 170, event_pearl: 6 } }
+  - { id: f_ember,        kind: currency, currency: fragment_ember,    amount: 1, cost: { event_shell: 170, event_pearl: 6 } }
+  - { id: c_sky,          kind: currency, currency: sky_fragment,      amount: 2, cost: { event_shell: 170 } }                    # 終局（兩片開一次）
+  - { id: c_abyss,        kind: currency, currency: abyss_core,        amount: 1, cost: { event_shell: 200, event_pearl: 12 } }   # 極境
+  - { id: c_finale,       kind: currency, currency: heist_finale_key,  amount: 1, cost: { event_shell: 270, event_pearl: 6 } }    # 金庫之主
+  - { id: c_fog,          kind: currency, currency: fog_splinter,      amount: 50, cost: { event_shell: 270, event_pearl: 9 } }   # 迷霧回廊（50 個開一次）

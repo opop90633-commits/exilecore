@@ -81,22 +81,27 @@ public final class ItemRenderer {
     }
 
     /** 2026-10-28：法杖、長杖、權杖賦予的技能顯示文字（基底代號, 物品等級 → 「Lv.x 名稱」；技能模組接上，沒有就不寫）。 */
-    private java.util.function.BiFunction<String, Integer, String> grantedLabel;
+    private java.util.function.BiFunction<String, ItemData, String> grantedLabel; // 2026-11-05 照站長「物品等級 84 的傳奇，技能等級要是 20」：給整個物品（傳奇 84 以上 20 級）；這次之前只給物品等級
 
-    public void setGrantedLabel(final java.util.function.BiFunction<String, Integer, String> label) {
+    public void setGrantedLabel(final java.util.function.BiFunction<String, ItemData, String> label) {
         this.grantedLabel = label;
     }
 
     /** 2026-11-05（空無墜飾）：技能代號, 物品等級 → 「Lv.x 名稱」（技能模組接上，沒有就不寫）。 */
-    private java.util.function.BiFunction<String, Integer, String> skillLabel;
+    private java.util.function.BiFunction<String, ItemData, String> skillLabel;
 
-    public void setSkillLabel(final java.util.function.BiFunction<String, Integer, String> label) {
+    public void setSkillLabel(final java.util.function.BiFunction<String, ItemData, String> label) {
         this.skillLabel = label;
     }
 
     /** 這個基底在這個物品等級賦予的技能（「Lv.x 名稱」）；沒有回傳 null。 */
+    /** 2026-11-05：只有基底與物品等級（賭博的選單還沒有物品）：照一件普通的算。 */
     public String grantedLabel(final String baseId, final int itemLevel) {
-        return grantedLabel == null || repository.grantedSkill(baseId) == null ? null : grantedLabel.apply(baseId, itemLevel);
+        return grantedLabel(new ItemData(baseId, Rarity.NORMAL, Math.max(1, itemLevel)));
+    }
+
+    public String grantedLabel(final ItemData data) {
+        return grantedLabel == null || repository.grantedSkill(data.base()) == null ? null : grantedLabel.apply(data.base(), data);
     }
 
     /** 建立一個全新的 ItemStack（不含 PDC，由 ItemService 補上）。 */
@@ -322,13 +327,13 @@ public final class ItemRenderer {
             return buildMapLore(base, data, lore);
         }
         // 2026-10-28 照站長（PoE2 的 Grants Skill）：法杖、長杖、權杖直接寫賦予的技能；這次之前要拿在手上看技能面板才知道
-        final String granted = grantedLabel(data.base(), Math.max(1, data.ilvl()));
+        final String granted = grantedLabel(data);
         if (granted != null) {
             lore.add(line("<gray>賦予技能：<#c9a7ff>" + escape(granted)));
         }
         // 2026-11-05 照站長（PoE2 Absent Amulet，空無墜飾）：掉落時隨機定的賦予技能；不用保留精魂
         final String picked = repository.pickedGrant(data);
-        final String pickedLabel = picked == null || skillLabel == null ? null : skillLabel.apply(picked, Math.max(1, data.ilvl()));
+        final String pickedLabel = picked == null || skillLabel == null ? null : skillLabel.apply(picked, data);
         if (pickedLabel != null) {
             lore.add(line("<gray>賦予技能：<#c9a7ff>" + escape(pickedLabel)
                     + (repository.grantsNoReservation(data.base()) ? " <dark_gray>(不用保留精魂)" : "")));

@@ -862,6 +862,7 @@ public final class PlayerStateService {
         return base.tags().contains("dex_only") ? PARRY : RAISE_SHIELD;
     }
 
+    // 2026-11-05 照站長「物品等級 84 的傳奇，技能等級要是 20」：賦予技能的等級都走 SkillConfig.grantedLevelFor（傳奇 84 以上 20 級）
     private Map<String, Integer> grantedSkills(final List<EquippedItem> active) {
         if (plugin.items() == null || plugin.skills() == null) {
             return Map.of();
@@ -871,7 +872,7 @@ public final class PlayerStateService {
             // 2026-10-26（傳奇：司祭法衣、踏骸之履）：武器以外的裝備也可以賦予技能（grant_skill.代號）
             for (final String own : tw.exilecore.item.unique.UniqueDerived.grantedSkills(item.modifiers())) {
                 if (plugin.skills().config().skill(own) != null) {
-                    granted.merge(own, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+                    granted.merge(own, plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
                 }
             }
             // 2026-10-30 照 PoE2（RePoE base_items skills_granted）：盾牌賦予架盾（Raise Shield）、圓盾（敏捷盾）賦予招架（Parry），法器不賦予；
@@ -879,24 +880,24 @@ public final class PlayerStateService {
             // 2026-11-05 照站長（PoE2 Absent Amulet，空無墜飾）：掉落時隨機定的那個技能，等級照物品等級（跟法杖一樣）
             final String picked = plugin.items().repository().pickedGrant(item.data());
             if (picked != null && plugin.skills().config().skill(picked) != null) {
-                granted.merge(picked, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+                granted.merge(picked, plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
             }
             final String shieldSkill = shieldSkill(item.base());
             if (shieldSkill != null && plugin.skills().config().skill(shieldSkill) != null) {
-                granted.merge(shieldSkill, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+                granted.merge(shieldSkill, plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
             }
             if (!item.base().isWeapon() && !item.base().tags().contains("sceptre")) {
                 continue;
             }
             // 2026-10-27 照 PoE2：每把矛都賦予擲矛（Spear Throw；品質照常加在矛上，不算 grants）；這次之前拿矛沒有擲矛
             if (item.base().tags().contains(tw.exilecore.stats.Tags.SPEAR) && plugin.skills().config().skill(SPEAR_THROW) != null) {
-                granted.merge(SPEAR_THROW, plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl())), Math::max);
+                granted.merge(SPEAR_THROW, plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
             }
             final String skill = plugin.items().repository().grantedSkill(item.data().base());
             if (skill == null || plugin.skills().config().skill(skill) == null) {
                 continue;
             }
-            final int level = plugin.skills().config().maxLevelFor(Math.max(1, item.data().ilvl()));
+            final int level = plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE);
             granted.merge(skill, level, Math::max);
         }
         return granted;

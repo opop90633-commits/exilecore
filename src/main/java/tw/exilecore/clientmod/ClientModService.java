@@ -256,6 +256,12 @@ public final class ClientModService implements Module, Listener, PluginMessageLi
         return player != null && clients.containsKey(player.getUniqueId());
     }
 
+    /** 2026-11-05：這個玩家裝的模組是 version 以上（沒裝 false）。 */
+    public boolean modAtLeast(final Player player, final String version) {
+        final Client client = player == null ? null : clients.get(player.getUniqueId());
+        return client != null && client.hello.modVersion() != null && ClientModProtocol.compareVersions(client.hello.modVersion(), version) >= 0;
+    }
+
     /** 模組會畫技能列與增益倒數：動作列不用再寫增益倒數。 */
     public boolean drawsBuffs(final Player player) {
         final Client client = player == null ? null : clients.get(player.getUniqueId());

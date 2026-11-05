@@ -1402,6 +1402,14 @@ public final class SummerService {
                             + "的珊瑚喉裡撈出了限定時裝 <white>" + ItemRenderer.escape(cosmeticName(cosmetic)) + "<" + config.color() + ">！");
                 }
             }
+            if (!def.uniques().isEmpty() && random.nextDouble() < bonus.rare(def.uniqueChance())) {
+                // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：海妖的專屬傳奇（吃物品稀有度；跟開天者一樣）
+                final tw.exilecore.item.ItemData data = giveUnique(player, def.uniques().get(random.nextInt(def.uniques().size())), def.level());
+                if (data != null) {
+                    broadcast("<" + config.color() + ">🌊 " + ItemRenderer.escape(who(player)) + " 從" + ItemRenderer.escape(def.name())
+                            + "身上拿到了專屬傳奇 <#af6025>" + ItemRenderer.escape(data.name()) + "<" + config.color() + ">！");
+                }
+            }
             if (plugin.bounties() != null && plugin.bounties().accountLoaded(player)) {
                 plugin.bounties().commitAccount(player, Map.of(KRAKEN, String.valueOf(number(player, KRAKEN) + 1)), config.name() + "海妖");
                 checkChallenges(player);
@@ -1836,6 +1844,13 @@ public final class SummerService {
                 }
             }
             case CURRENCY -> giveCurrency(player, item.currency(), item.amount());
+            case UNIQUE -> { // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」
+                if (giveUnique(player, item.unique(), item.itemLevel()) == null) {
+                    plugin.getSLF4JLogger().warn("{}：{} 換傳奇 {} 失敗（沒有這件；素材退回）", config.name(), player.getName(), item.unique());
+                    refundCosts(player, taken);
+                    return "沒有這件傳奇（素材退回了，請通知管理員）";
+                }
+            }
         }
         // 兌換成功才記素材消耗（wallet.take 不記流水帳；用 EVENT_SHOP，記 EVENT 會跟活動產出抵掉）
         for (final Map.Entry<String, Integer> cost : taken.entrySet()) {
@@ -1845,6 +1860,18 @@ public final class SummerService {
         plugin.characters().save(player);
         plugin.getSLF4JLogger().info("[{}] {} 兌換 {}", config.name(), player.getName(), item.id());
         return null;
+    }
+
+    /** 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」：給一件專屬傳奇（背包滿了掉在腳下）；沒有這件回傳 null。 */
+    tw.exilecore.item.ItemData giveUnique(final Player player, final String uniqueId, final int itemLevel) {
+        final tw.exilecore.item.UniqueItem unique = plugin.items() == null ? null : plugin.items().repository().unique(uniqueId);
+        if (unique == null) {
+            return null;
+        }
+        final tw.exilecore.item.ItemData data = plugin.items().generator().generateUnique(unique, itemLevel, random);
+        final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
+        wallet.dropFor(player, wallet.give(player, plugin.items().toStack(data)));
+        return data;
     }
 
     String currencyName(final String id) {

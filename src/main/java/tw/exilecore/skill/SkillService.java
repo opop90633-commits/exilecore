@@ -1310,6 +1310,71 @@ public final class SkillService {
         return auras.isActive(player.getUniqueId(), skillId);
     }
 
+    /**
+     * 2026-11-06 照站長「技能消耗戰星時 x% 機率不移除，統計總共的 % 數顯示在有使用戰星的技能面板上（含輔助與品質給的）」：
+     * 會消耗戰星的技能（本身就消耗、冷卻中用戰星跳過、掛了會消耗戰星的輔助）寫一行「消耗戰星時 x% 機率不移除」：
+     * 合計＝這個技能疊好輔助、品質後的屬性表（跟 ChargeService.spend 真的擲的一樣），括號裡分輔助、品質、天賦與裝備（符文）。
+     */
+    private void chargeKeepLine(final List<String> lines, final SkillBuild build, final StatSheet sheet) {
+        final SkillDefinition definition = build.definition();
+        boolean uses = SupportDefinition.consumesAny(definition)
+                || definition.cooldownBypass() != null; // 冷卻中用戰星跳過（瞬影擊的怒星…）
+        for (final SupportDefinition support : build.supports()) {
+            uses |= support.spendsCharges();
+        }
+        if (!uses) {
+            return;
+        }
+        final String key = tw.exilecore.charge.ChargeService.SUP_KEEP;
+        final double total = build.profile().effective(sheet).flat(key, build.profile().tags());
+        double fromSupports = 0;
+        for (final SupportDefinition support : build.supports()) {
+            for (final tw.exilecore.stats.Modifier modifier : support.modifiers()) {
+                if (key.equals(modifier.stat()) && modifier.type() == tw.exilecore.stats.ModType.FLAT) {
+                    fromSupports += modifier.value();
+                }
+            }
+        }
+        double fromQuality = 0;
+        for (final tw.exilecore.stats.Modifier modifier : build.qualityModifiers()) {
+            if (key.equals(modifier.stat()) && modifier.type() == tw.exilecore.stats.ModType.FLAT) {
+                fromQuality += modifier.value();
+            }
+        }
+        final double other = Math.max(0, total - fromSupports - fromQuality);
+        final List<String> parts = new ArrayList<>();
+        if (fromSupports > 0) {
+            parts.add("輔助 " + trimNumber(fromSupports) + "%");
+        }
+        if (fromQuality > 0) {
+            parts.add("品質 " + trimNumber(fromQuality) + "%");
+        }
+        if (other > 0) {
+            parts.add("天賦、裝備 " + trimNumber(other) + "%");
+        }
+        lines.add("<gray>消耗戰星時 <white>" + trimNumber(Math.min(100, total)) + "%</white> 機率不移除（效果照算）"
+                + (parts.isEmpty() ? "" : "<dark_gray>（" + String.join("＋", parts) + "）"));
+    }
+
+    /**
+     * 2026-11-05 照站長「有指令能測試嗎」：管理員測試變身外觀（/ec form）：直接掛上形態的增益 seconds 秒（只有外觀，沒有形態的效果）；
+     * form 寫 null 或不認得就變回人形。回傳掛上的形態名稱（變回人形 null）。
+     */
+    public String testForm(final Player player, final String form, final int seconds) {
+        final String name = form == null ? null : switch (form) {
+            case "bear" -> BEAR_FORM;
+            case "werewolf", "wolf" -> "狼人形態";
+            case "wyvern" -> "飛龍形態";
+            default -> null;
+        };
+        if (name == null) {
+            removeBuff(player, FORM_BUFF);
+            return null;
+        }
+        buff(player, FORM_BUFF, name, Math.max(20, seconds * 20), List.of(tw.exilecore.stats.Modifier.flat("form.test", 1, name)));
+        return name;
+    }
+
     /** 2026-10-26（蟄甲）：現在的形態名稱（熊形態、狼人形態、飛龍形態）；不是獸形回傳空字串。 */
     String formName(final Player player) {
         for (final SkillBuffs.Buff buff : buffs.active(player.getUniqueId())) {
@@ -6740,6 +6805,7 @@ public final class SkillService {
             lines.add("<gray>魔力消耗：<#5599ff>" + (drainSpec != null && drainSpec.drain() ? drainSpec.drainCost(build, sheet) : build.manaCost()) // 2026-10-28：穿雲箭的攻擊速度倍率
                     + (drainSpec != null && drainSpec.drain() ? "<gray>／秒（引導中逐秒扣）" : "")); // 2026-10-26 照 PoE2 的每分鐘魔力消耗
         }
+        chargeKeepLine(lines, build, sheet); // 2026-11-06 照站長「技能消耗戰星時 x% 機率不移除，統計總共的 % 數顯示在有使用戰星的技能面板上（含輔助與品質給的）」
         // 2026-10-27：血滲、傲寒（放的時候才加）照滿魔力估；「擊中傷害更少」只乘平均每次（異常照沒減的算）；這次之前說明都沒算
         final SkillBuild estimate = LineageMechanics.estimated(build, PlayerState.maxMana(sheet));
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, estimate.profile());

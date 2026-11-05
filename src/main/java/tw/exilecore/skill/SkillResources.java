@@ -18,7 +18,7 @@ import java.util.UUID;
 
 /**
  * 怒氣（2026-10 PoE2）：近戰攻擊打中敵人時照 {@code rage.on_hit} 加（同一下打中好幾個只算一次），
- * 上限 {@value #RAGE_BASE_MAX} ＋ {@code rage.max}；每點增加 1% 攻擊傷害（{@code rage.effect} 可以加）。
+ * 上限 {@value #RAGE_BASE_MAX} ＋ {@code rage.max}；每點更多 1% 攻擊傷害（{@code rage.effect} 可以加；2026-11-06 照 PoE2 改成更多，這次之前增加）。
  * {@value #RAGE_DECAY_DELAY} tick 沒拿到就開始每 {@value #RAGE_DECAY_TICKS} tick 掉 1 點。
  * <p>
  * 以前的連段、榮耀、元素灌注已經拿掉（2026-10）：要它們的技能直接就能放。
@@ -194,6 +194,31 @@ public final class SkillResources implements Listener {
         }
         decay(s, now());
         return (int) s.rage;
+    }
+
+    /**
+     * 2026-11-06 照站長「照原作改」（PoE2 原初飢餓 No Rage effect、怒氣效果）：「怒氣效果」——「每點怒氣也……」（天賦、傳奇、德魯伊之魁）照這個數算。
+     * 照 Path of Building 2（CalcPerform：RageEffect = floor(怒氣 × (1 + 增加怒氣效果))；原初飢餓 No Rage effect = 0）。
+     * 這次之前「每點怒氣也……」直接看怒氣點數：原初飢餓照樣有效、增加怒氣效果也放大不到。
+     * 用身上已經算好的屬性表（不重算，條件判斷時也能呼叫）。
+     */
+    public int rageEffect(final Player player) {
+        final int rage = rage(player);
+        if (rage <= 0 || plugin.players() == null) {
+            return 0;
+        }
+        return rageEffect(rage, plugin.players().get(player).sheet());
+    }
+
+    /** 同上，純函式（測試用）。 */
+    public static int rageEffect(final int rage, final tw.exilecore.stats.StatSheet sheet) {
+        if (rage <= 0 || sheet == null) {
+            return Math.max(0, rage);
+        }
+        if (tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_PRIMAL_HUNGER)) {
+            return 0;
+        }
+        return (int) Math.floor(rage * Math.max(0, 1 + sheet.increased(tw.exilecore.stats.StatKeys.RAGE_EFFECT, java.util.Set.of())) + 1e-9);
     }
 
     /**

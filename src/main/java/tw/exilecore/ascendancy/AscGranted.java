@@ -553,6 +553,7 @@ final class AscGranted implements Listener {
     }
 
     void forget(final UUID player) {
+        demonBars.remove(player); // 2026-11-05：下線的人用不到了
         final Own own = owns.remove(player);
         remnants.removeIf(remnant -> {
             if (remnant.owner.equals(player)) {
@@ -947,10 +948,44 @@ final class AscGranted implements Listener {
         return Math.max(10, level(player, "final_mirage_spirit", "asc.calming_regen"));
     }
 
+    /** 2026-11-05：顯示惡魔烈焰層數的增益（只顯示，沒有效果）。 */
+    static final String DEMONFLAME_BUFF = "asc_demonflame";
+    static final String DEMONFLAME_STACKS = "asc.demonflame_stacks";
+
+    /**
+     * 2026-11-05 照站長「沒裝模組的人改成在上方顯示」：沒裝模組（或模組不畫增益列）的人，畫面上方多一條血條「惡魔烈焰 N 層」（10 格，一層一格；
+     * 黑暗精通沒有上限時滿 10 層就一直是滿的）。裝了模組的人看模組的增益列，不送這條。
+     */
+    private final Map<UUID, net.kyori.adventure.bossbar.BossBar> demonBars = new HashMap<>();
+
+    private void demonBar(final Player player, final int stacks) {
+        if (plugin.clientMod() != null && plugin.clientMod().drawsBuffs(player)) {
+            hideDemonBar(player);
+            return;
+        }
+        final net.kyori.adventure.text.Component name = plugin.text().parse("<#ff5a3c>🔥 惡魔烈焰 <white>" + stacks + "</white> 層"
+                + "<gray>（法術傷害更多 " + (3 * stacks) + "%，每秒失去生命）");
+        final float progress = Math.max(0f, Math.min(1f, stacks / 10f));
+        final net.kyori.adventure.bossbar.BossBar bar = demonBars.computeIfAbsent(player.getUniqueId(), id -> net.kyori.adventure.bossbar.BossBar.bossBar(
+                name, progress, net.kyori.adventure.bossbar.BossBar.Color.RED, net.kyori.adventure.bossbar.BossBar.Overlay.NOTCHED_10));
+        bar.name(name);
+        bar.progress(progress);
+        player.showBossBar(bar);
+    }
+
+    private void hideDemonBar(final Player player) {
+        final net.kyori.adventure.bossbar.BossBar bar = demonBars.remove(player.getUniqueId());
+        if (bar != null) {
+            player.hideBossBar(bar);
+        }
+    }
+
     private void endDemon(final Player player, final Own own) {
+        hideDemonBar(player); // 2026-11-05
         own.demonUntil = 0;
         own.demonflame = 0;
         if (plugin.skills() != null) {
+            plugin.skills().removeBuff(player, DEMONFLAME_BUFF); // 2026-11-05
             plugin.skills().removeBuff(player, "become_fiend");
         }
         plugin.players().markDirty(player);
@@ -1807,6 +1842,15 @@ final class AscGranted implements Listener {
             }
             plugin.players().display(player, state);
             o.demonUntil = Math.max(o.demonUntil, now + AscendancyEffects.PERIOD + 1); // 一直到變回人形
+            if (o.demonflame > 0 && plugin.skills() != null) {
+                // 2026-11-05 照站長「惡魔烈焰的層數要有地方顯示」：增益列（模組的增益列、沒裝模組的動作條）寫「惡魔烈焰 N 層」；
+                //   修飾器只是顯示用的（DEMONFLAME_STACKS 沒有人讀），傷害照舊在擊中時算（上面的 demonflame）。這次之前層數完全看不到
+                plugin.skills().buff(player, DEMONFLAME_BUFF, "惡魔烈焰 " + o.demonflame + " 層", (int) AscendancyEffects.PERIOD * 3,
+                        List.of(Modifier.flat(DEMONFLAME_STACKS, o.demonflame, "惡魔烈焰")));
+            }
+            demonBar(player, o.demonflame);
+        } else if (demonBars.containsKey(player.getUniqueId())) {
+            hideDemonBar(player); // 2026-11-05：保險（變回人形沒走 endDemon 時）
         }
         // 納維拉的綠洲：站在裡面的你與隊友藥劑充能、受到的傷害回復
         for (final Oasis oasis : oases) {

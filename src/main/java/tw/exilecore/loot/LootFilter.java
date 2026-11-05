@@ -544,12 +544,25 @@ public final class LootFilter {
 
     /** 這種基底的規則（沒設定的是顯示）。 */
     public BaseRule baseRule(final String baseId) {
-        return baseId == null ? BaseRule.SHOW : bases.getOrDefault(baseId, BaseRule.SHOW);
+        return baseId == null ? BaseRule.SHOW : bases.getOrDefault(baseId, DEFAULT_ALWAYS_BASES.contains(baseId) ? BaseRule.ALWAYS : BaseRule.SHOW);
     }
+
+    /**
+     * 2026-11-06 照站長「空無墜飾預設必撿」：沒設定時就是必撿的基底（每個人、每個角色都是，已經有存檔的也一樣）。
+     * 玩家改成顯示的話另外記（存檔 sb=），改回必撿就拿掉；這次之前只有劫盜特殊基底在換新格式時補上必撿。
+     */
+    public static final Set<String> DEFAULT_ALWAYS_BASES = Set.of("jamulet_absent");
 
     /** 設定一種基底（顯示 = 拿掉設定）。跟護符一樣另外記：不會讓預設組合變成自訂，換預設組合也留著。 */
     public void setBaseRule(final String baseId, final BaseRule rule) {
+        final boolean defaultAlways = DEFAULT_ALWAYS_BASES.contains(baseId); // 2026-11-06：預設必撿的，顯示要另外記、必撿是預設
         if (rule == null || rule == BaseRule.SHOW) {
+            if (defaultAlways) {
+                bases.put(baseId, BaseRule.SHOW);
+            } else {
+                bases.remove(baseId);
+            }
+        } else if (rule == BaseRule.ALWAYS && defaultAlways) {
             bases.remove(baseId);
         } else {
             bases.put(baseId, rule);
@@ -573,7 +586,13 @@ public final class LootFilter {
 
     /** 必撿的基底。 */
     public Set<String> alwaysBases() {
-        return basesWith(BaseRule.ALWAYS);
+        final Set<String> out = basesWith(BaseRule.ALWAYS);
+        for (final String id : DEFAULT_ALWAYS_BASES) {
+            if (!bases.containsKey(id)) {
+                out.add(id); // 2026-11-06：預設必撿（沒改過）的也算
+            }
+        }
+        return out;
     }
 
     private Set<String> basesWith(final BaseRule rule) {
@@ -1116,8 +1135,10 @@ public final class LootFilter {
             hiddenGroups.add(group.id());
         }
         final Set<String> hidden = hiddenBases();
-        final Set<String> always = alwaysBases();
+        final Set<String> always = basesWith(BaseRule.ALWAYS); // 2026-11-06：只存設定過的（預設必撿的不用存）
+        final Set<String> shown = basesWith(BaseRule.SHOW);    // 2026-11-06：預設必撿、玩家改成顯示的
         final String extras = (hidden.isEmpty() ? "" : ";xb=" + String.join(",", hidden)) + (always.isEmpty() ? "" : ";ab=" + String.join(",", always))
+                + (shown.isEmpty() ? "" : ";sb=" + String.join(",", shown))
                 + (hiddenGroups.isEmpty() ? "" : ";hu=" + String.join(",", hiddenGroups))
                 + (uniquesWith(UniqueRule.HIDE).isEmpty() ? "" : ";xu=" + String.join(",", uniquesWith(UniqueRule.HIDE))) // 2026-11-04
                 + (uniquesWith(UniqueRule.ALWAYS).isEmpty() ? "" : ";au=" + String.join(",", uniquesWith(UniqueRule.ALWAYS)))
@@ -1219,9 +1240,10 @@ public final class LootFilter {
                 }
                 case "ab" -> {
                     for (final String id : list(value)) {
-                        filter.bases.put(id, BaseRule.ALWAYS);
+                        filter.setBaseRule(id, BaseRule.ALWAYS);
                     }
                 }
+                case "sb" -> list(value).forEach(id -> filter.setBaseRule(id, BaseRule.SHOW)); // 2026-11-06：預設必撿改成顯示的
                 // ---- 舊格式（2026-11-03 之前）----
                 case "kb" -> keepBases.addAll(list(value));
                 case "jr" -> jewelRarity = integer(value);

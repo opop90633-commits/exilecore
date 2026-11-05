@@ -39,6 +39,8 @@ public final class StatKeys {
     public static final String WEAPON_MAX = "weapon.max";
     public static final String WEAPON_APS = "weapon.aps";          // 每秒攻擊次數
     public static final String WEAPON_CRIT = "weapon.crit";        // 百分比點數
+    /** 2026-11-05 照站長「照原作」：武器上的「+x% 暴擊傷害加成」是本地的，只算用這把武器的攻擊（PoE2 LocalCriticalStrikeMultiplier）：加在暴擊加成上，只有攻擊才算；雙持時照出手的那一把（DualWield 換 weapon.*）。 */
+    public static final String WEAPON_CRIT_BONUS = "weapon.crit_bonus";
     public static final String WEAPON_RELOAD = "weapon.reload";    // 2026-10-26：弩的裝填時間（秒，照 PoE2 每把基底不同）
 
     // 速度與暴擊
@@ -480,7 +482,7 @@ public final class StatKeys {
     public static final String RAGE_ON_HIT = "rage.on_hit";
     /** FLAT：怒氣上限多幾點（基礎 30）。 */
     public static final String RAGE_MAX = "rage.max";
-    /** INCREASED：每點怒氣給的攻擊傷害（基礎每點 1%）。 */
+    /** INCREASED：怒氣效果（2026-11-06：怒氣效果＝floor(怒氣 ×(1+這個))；每點怒氣效果攻擊傷害更多 1%、「每點怒氣也……」也照怒氣效果算）。 */
     public static final String RAGE_EFFECT = "rage.effect";
     /** FLAT：擊中時 x% 機率讓敵人曝露（打出的那幾種元素的抗性 −20%，4 秒）。 */
     public static final String EXPOSURE_CHANCE = "exposure.chance";
