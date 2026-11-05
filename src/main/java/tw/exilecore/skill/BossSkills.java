@@ -3380,10 +3380,11 @@ public final class BossSkills implements Listener {
             plugin.skills().totemHitByMonster(victim, brain.boss, profile(skill, shapeTag)); // 2026-10-26 照 PoE2：圖騰被招式打到
             return;
         }
-        if (brain.cast != null && brain.cast.skill == skill && victim instanceof Player) {
-            brain.cast.victims.add(victim.getUniqueId()); // 2026-11-04（破綻）
-        }
         damage.hitAs(brain.boss, victim, profile(skill, shapeTag), null);
+        if (brain.cast != null && brain.cast.skill == skill && victim instanceof Player && damage.landed()) {
+            // 2026-11-04（破綻）；2026-11-05 照站長「有躲到招但破綻沒有上去」：真的打到才算（翻滾躲掉、閃避、格擋的照樣有破綻）；這次之前碰到就算
+            brain.cast.victims.add(victim.getUniqueId());
+        }
         if (skill.ruin() > 0 && victim instanceof Player player && player.isOnline()) {
             plugin.players().get(player).ruin(now() + Math.round(skill.ruin() * 20)); // 2026-10：荒蕪（黑水）——禁療
         }

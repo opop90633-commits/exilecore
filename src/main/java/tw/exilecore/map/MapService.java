@@ -1403,7 +1403,8 @@ public final class MapService {
         if (entity.getPersistentDataContainer().has(bossKey())) {
             return bosses.lockCcImmune(instanceOf(entity), entity);
         }
-        return plugin.life() != null && PhaseLocks.openingActive(plugin.life().lockState(entity));
+        final PhaseLocks.State state = plugin.life() == null ? null : plugin.life().lockState(entity);
+        return state != null && state.active(); // 2026-11-05 照站長「鎖血階段完全不吃控場」：淵鯨、鯊王任何鎖血都算；這次之前只有破綻
     }
 
     /** 2026-11-02：持續傷害（一種傷害）的寫法。 */

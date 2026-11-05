@@ -312,6 +312,15 @@ public final class PhaseLocks {
                 tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>剝掉第 " + lock.layersDone + " 層（剩 " + (opening.layers() - lock.layersDone) + " 層）"));
                 player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 1.3f);
             }
+        } else if (lock.layersDone == before && applied > 0) {
+            // 2026-11-05 照站長「破綻一直是 1/3」：還沒剝完一層時也告訴打的人這層剝了多少、這個破綻還能剝多少（這次之前沒有，看起來像沒算到）
+            final Player player = plugin.getServer().getPlayer(source);
+            if (player != null) {
+                final long part = Math.max(0, Math.min(99, (long) Math.floor((lock.peeled - lock.layersDone * layer) / layer * 100)));
+                final long room = Math.max(0, Math.round((layer - used - applied) / layer * 100));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>破綻：第 " + (lock.layersDone + 1) + " 層剝了 " + part + "%"
+                        + (room <= 0 ? "<gray>（這個破綻剝滿了，再躲一招）" : "")));
+            }
         }
         return applied;
     }
@@ -816,8 +825,11 @@ public final class PhaseLocks {
     public String barPrefix(final State state, final LivingEntity boss) {
         final PhaseMechanic.Active lock = state.lock;
         if (lock != null && lock.spec.kind() == PhaseMechanic.Kind.OPENING) {
-            return "<white>🔒 鎖血：<#ffb347>躲招開破綻、破綻裡打牠 " + lock.layersDone + "/" + lock.spec.opening().layers() + " 層<white>（剩 "
-                    + secondsLeft(lock) + " 秒）<dark_gray>｜ ";
+            // 2026-11-05 照站長「破綻一直是 1/3」：也寫這一層剝了幾 %（傷害不夠的一個破綻剝不完一層，要多躲幾招累積；這次之前只寫層數，看起來像沒動）
+            final double layer = lock.requiredHealth / Math.max(1, lock.spec.opening().layers());
+            final long part = layer <= 0 ? 0 : Math.max(0, Math.min(99, (long) Math.floor((lock.peeled - lock.layersDone * layer) / layer * 100)));
+            return "<white>🔒 鎖血：<#ffb347>躲招開破綻、破綻裡打牠 " + lock.layersDone + "/" + lock.spec.opening().layers() + " 層"
+                    + (part > 0 ? "（這層 " + part + "%）" : "") + "<white>（剩 " + secondsLeft(lock) + " 秒）<dark_gray>｜ ";
         }
         if (lock != null && lock.spec.kind() == PhaseMechanic.Kind.ZONES) {
             return "<white>🔒 無敵：站滿光圈 " + charged(lock) + "/" + lock.charges.length + "（剩 " + secondsLeft(lock) + " 秒）<dark_gray>｜ ";

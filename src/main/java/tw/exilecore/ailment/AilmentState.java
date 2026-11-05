@@ -937,6 +937,26 @@ public final class AilmentState {
         overencumberedUntil = 0;
     }
 
+    /**
+     * 2026-11-05 照站長「鎖血階段完全不吃控場」：清掉全部控場（暈眩、凍結、電擊、釘住、眩暈、冰緩、阻礙這些緩速）；點燃、流血、中毒、感電、破甲照留。
+     * 回傳本來有沒有控場（沒有就什麼都不用更新）。
+     */
+    public boolean clearControl(final long now) {
+        final boolean had = !freeze.idle(now) || !stun.idle(now) || !electrocute.idle(now) || !pin.idle(now) || !daze.idle(now)
+                || lightStunUntil > now || chill > 0 || hinderUntil > now || maimUntil > now || groundSlowUntil > now || overencumberedUntil > now;
+        if (!had) {
+            return false;
+        }
+        freeze.clear();
+        stun.clear();
+        electrocute.clear();
+        pin.clear();
+        daze.clear();
+        lightStunUntil = 0;
+        clearSlows();
+        return true;
+    }
+
     /** 只清掉一種異常（護符解除，2026-10）。 */
     public void cure(final AilmentType type) {
         switch (type) {

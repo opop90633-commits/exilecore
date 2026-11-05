@@ -26,6 +26,9 @@ public final class SkillDamage implements Listener {
 
     private Context current;
 
+    /** 2026-11-05：這一下真的打到了（傷害事件沒被取消：沒被翻滾躲掉、沒閃避、沒格擋）。{@link #landed()} 讀。 */
+    private boolean landed;
+
     /**
      * 用技能打一個目標。
      *
@@ -57,13 +60,33 @@ public final class SkillDamage implements Listener {
         }
         final Context previous = current;
         current = new Context(attacker, target, profile, knockback);
+        landed = false;
+        boolean hit = false;
         try {
             // 數值由 CombatListener 換掉，這裡的 1 只是觸發
             target.damage(1.0, attacker);
+            hit = landed;
         } finally {
             current = previous;
+            landed = hit;
         }
         return target.isValid() && !target.isDead();
+    }
+
+    /**
+     * 2026-11-05 照站長「有躲到招但破綻沒有上去」：上一次 {@link #hitAs} 有沒有真的打到（翻滾躲掉、閃避、格擋的不算）。
+     * Boss 的破綻用：這次之前只要招式碰到人就算「被打到」，翻滾躲掉的也沒有破綻。
+     */
+    public boolean landed() {
+        return landed;
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onLanded(final org.bukkit.event.entity.EntityDamageByEntityEvent event) {
+        final Context context = current;
+        if (context != null && event.getEntity() == context.target()) {
+            landed = true;
+        }
     }
 
     /** 正在結算、打這個目標的技能代號（不是技能命中回傳 null）。Boss 的傷害紀錄用。 */

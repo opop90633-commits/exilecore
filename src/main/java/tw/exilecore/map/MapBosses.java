@@ -880,7 +880,7 @@ final class MapBosses {
     /** 2026-11-04（破綻）：這隻 Boss 正在破綻鎖血（免疫控場）。 */
     boolean lockCcImmune(final MapInstance instance, final LivingEntity entity) {
         return instance != null && instance.boss() != null && entity.getUniqueId().equals(instance.boss().getUniqueId())
-                && PhaseLocks.openingActive(instance.lockState());
+                && (instance.locked() || instance.phaseHold()); // 2026-11-05 照站長「鎖血階段完全不吃控場」：任何鎖血、換階段的停頓都算；這次之前只有破綻
     }
 
     // ---- 狂暴 ----
