@@ -88,7 +88,8 @@ public final class ShapeshiftCostumes implements Listener {
         costume.form = form;
         if (costume.entity == null) {
             costume.entity = spawn(player, look);
-            player.hideEntity(plugin, costume.entity); // 自己看不到：不擋視線
+            player.hideEntity(plugin, costume.entity); // 自己看不到：不擋視線（spawn 時已經預設看不到，這行是保險）
+            showToOthers(player, costume.entity);
             hideEquipment(player);
         }
         final Location at = player.getLocation().add(0, look.lift(), 0);
@@ -101,6 +102,43 @@ public final class ShapeshiftCostumes implements Listener {
         }
         if (now % EQUIPMENT_EVERY == 0) {
             hideEquipment(player);
+            showToOthers(player, costume.entity); // 2026-11-05：後來走進來的人也看得到
+        }
+    }
+
+    /**
+     * 2026-11-05 照站長「第一人稱要看不到德魯伊的變形，並且不能被自己的變形推擠」：外觀實體預設誰都看不到（spawn 時就設，
+     * 變身的人從頭到尾收不到這隻）、只給附近別的玩家看。這次之前生出來之後才對自己 hideEntity，生出來那一下會先送到自己的畫面
+     * （看得到一下、被它擠開）。
+     */
+    private void showToOthers(final Player owner, final LivingEntity entity) {
+        if (entity == null || !entity.isValid()) {
+            return;
+        }
+        for (final Player viewer : owner.getWorld().getPlayers()) {
+            if (viewer != owner && !viewer.canSee(entity) && viewer.getLocation().distanceSquared(owner.getLocation()) <= VIEW * VIEW) {
+                viewer.showEntity(plugin, entity);
+            }
+        }
+    }
+
+    /** 2026-11-05：外觀實體放進「不推擠」的隊伍（碰撞規則 NEVER）：伺服器那邊也不會把變身的人推開。 */
+    private static final String NO_PUSH_TEAM = "ec_costume";
+
+    private static void noPush(final LivingEntity entity) {
+        final org.bukkit.scoreboard.Scoreboard board = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard();
+        org.bukkit.scoreboard.Team team = board.getTeam(NO_PUSH_TEAM);
+        if (team == null) {
+            team = board.registerNewTeam(NO_PUSH_TEAM);
+        }
+        team.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
+        team.addEntry(entity.getUniqueId().toString());
+    }
+
+    private static void leaveNoPush(final LivingEntity entity) {
+        final org.bukkit.scoreboard.Team team = org.bukkit.Bukkit.getScoreboardManager().getMainScoreboard().getTeam(NO_PUSH_TEAM);
+        if (team != null) {
+            team.removeEntry(entity.getUniqueId().toString());
         }
     }
 
@@ -109,6 +147,7 @@ public final class ShapeshiftCostumes implements Listener {
         return (LivingEntity) at.getWorld().spawn(at, look.type().getEntityClass(), entity -> {
             final LivingEntity living = (LivingEntity) entity;
             living.addScoreboardTag(TAG);
+            living.setVisibleByDefault(false); // 2026-11-05：預設誰都看不到，只給別的玩家看（showToOthers）；變身的人自己永遠收不到
             living.setPersistent(false);
             living.setRemoveWhenFarAway(false);
             living.setAI(false);
@@ -127,6 +166,7 @@ public final class ShapeshiftCostumes implements Listener {
             if (scale != null) {
                 scale.setBaseValue(look.scale());
             }
+            noPush(living); // 2026-11-05：不會把變身的人推開
         });
     }
 
@@ -166,6 +206,9 @@ public final class ShapeshiftCostumes implements Listener {
     }
 
     private static void removeEntity(final Costume costume) {
+        if (costume.entity != null) {
+            leaveNoPush(costume.entity); // 2026-11-05：隊伍裡不留舊的
+        }
         if (costume.entity != null && costume.entity.isValid()) {
             costume.entity.remove();
         }

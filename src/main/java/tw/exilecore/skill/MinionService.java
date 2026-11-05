@@ -1750,7 +1750,7 @@ public final class MinionService implements Listener, MinionHooks {
             minion.nextPath = now + 10;
             // 碰得到但看不到（隔著柱子）：繼續走過去，不然會站在柱子後面發呆（2026-10）
             if (!inReach || !seesTarget) {
-                mob.getPathfinder().moveTo(target, 1.2);
+                mob.getPathfinder().moveTo(target, pathSpeed(mob, 1.2)); // 2026-11-05：太快的照上限（pathSpeed）
             } else {
                 mob.getPathfinder().stopPathfinding();
             }
@@ -1973,7 +1973,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (distance > FOLLOW_START) {
             if (now >= minion.nextPath) {
                 minion.nextPath = now + 10;
-                mob.getPathfinder().moveTo(home, distance > 12 ? 1.5 : 1.15); // 落後太多就用跑的
+                mob.getPathfinder().moveTo(home, pathSpeed(mob, distance > 12 ? 1.5 : 1.15)); // 落後太多就用跑的（2026-11-05：太快的照上限）
                 minion.idleStopped = false;
             }
         } else if (distance <= FOLLOW_STOP && !minion.idleStopped) {
@@ -1995,6 +1995,25 @@ public final class MinionService implements Listener, MinionHooks {
         }
         final double speed = Math.min(length, FLY_SPEED * factor * speedScale(mob));
         mob.setVelocity(delta.multiply(speed / length));
+    }
+
+    /**
+     * 2026-11-05 照站長「召喚物移動速度快一點好像會變得有點笨笨的」：原版找路的走法（MoveControl）一 tick 走超過路徑點的判定距離
+     * （約 0.45 格）就會衝過頭、在路徑點附近來回繞、擠成一團。移動速度屬性 × 找路的倍數超過 {@link #MAX_PATH_SPEED} 時把倍數壓下來
+     * （每 tick 大約走 0.45 格＝每秒 9 格，比玩家跑步還快）；沒那麼快的照原本的倍數。這次之前不管多快都照 1.2～1.5 倍找路。
+     */
+    static final double MAX_PATH_SPEED = 0.85;
+
+    static double pathSpeed(final double attribute, final double wanted) {
+        if (attribute <= 0 || attribute * wanted <= MAX_PATH_SPEED) {
+            return wanted;
+        }
+        return Math.max(0.5, MAX_PATH_SPEED / attribute);
+    }
+
+    private static double pathSpeed(final Mob mob, final double wanted) {
+        final AttributeInstance speed = mob.getAttribute(Attribute.MOVEMENT_SPEED);
+        return speed == null ? wanted : pathSpeed(speed.getValue(), wanted);
     }
 
     private double speedScale(final Mob mob) {
@@ -3255,7 +3274,7 @@ public final class MinionService implements Listener, MinionHooks {
         final double distance = mob.getLocation().distance(spot);
         if (distance > 1.2 && now >= minion.nextPath) {
             minion.nextPath = now + 10;
-            mob.getPathfinder().moveTo(spot, distance > 8 ? 1.5 : 1.15);
+            mob.getPathfinder().moveTo(spot, pathSpeed(mob, distance > 8 ? 1.5 : 1.15)); // 2026-11-05：太快的照上限
         } else if (distance <= 0.8) {
             mob.getPathfinder().stopPathfinding();
         }
