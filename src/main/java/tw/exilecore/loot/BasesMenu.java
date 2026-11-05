@@ -225,7 +225,8 @@ final class BasesMenu extends Menu {
             case HIDE -> "<red>✘ ";
             case ALWAYS -> "<#f5b942>★ ";
         };
-        final ItemStack stack = icon(Menu.material(base.iconMaterial(), Material.PAPER), prefix + ItemRenderer.escape(base.name()), lore);
+        // 2026-11-05 照站長「過濾那邊的基底圖示都是原版的圖案」：跟圖鑑一樣用基底的圖（Menu.baseIcon：普通裝備的簡圖 plain:種類）；這次之前直接用原版材質
+        final ItemStack stack = Menu.baseIcon(base, prefix + ItemRenderer.escape(base.name()), lore);
         return switch (rule) {
             case SHOW -> stack;
             case HIDE -> offMark(stack);

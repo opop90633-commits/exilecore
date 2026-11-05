@@ -161,9 +161,9 @@ class PartyTest {
             assertEquals(expected[i][1], config.lifeFactor(rarities[i], 6), 1e-9);
             assertEquals(expected[i][1], config.lifeFactor(rarities[i], 9), 1e-9, "最多算 6 人");
         }
-        // 2026-11-04 照站長「組隊的 Boss 血量每人 +200%」；這次之前 +135%（2 人 ×2.35、6 人 ×7.75）
-        assertEquals(3.0, config.lifeFactor(MonsterRarity.UNIQUE, 2), 1e-9);
-        assertEquals(11.0, config.lifeFactor(MonsterRarity.UNIQUE, 6), 1e-9);
+        // 2026-11-05 照站長「BOSS 組隊血量改回每人 +135%，包含世界王那些的」；這次之前（11-04）每人 +200%（2 人 ×3、6 人 ×11）
+        assertEquals(2.35, config.lifeFactor(MonsterRarity.UNIQUE, 2), 1e-9);
+        assertEquals(7.75, config.lifeFactor(MonsterRarity.UNIQUE, 6), 1e-9);
         final PartyConfig defaults = new PartyConfig();
         for (final MonsterRarity rarity : MonsterRarity.values()) {
             assertEquals(defaults.lifeFactor(rarity, 6), config.lifeFactor(rarity, 6), 1e-9, "程式的預設值跟出貨的 party.yml 一樣：" + rarity);

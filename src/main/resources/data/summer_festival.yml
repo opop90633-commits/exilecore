@@ -76,7 +76,7 @@ boss:
   empty_close_seconds: 180
   level: 88
   life: 86.79   # 2026-11-03 照站長：數值比照巔峰（maps.yml finals.awakener 的 life），一個人的份；這次之前 44.36（比照極境）
-  life_per_player: 2.0  # 2026-11-04 照站長「組隊的 Boss 血量每人 +200%（世界活動、祭典一起改）」；這次之前 1.0
+  life_per_player: 1.35  # 2026-11-05 照站長「BOSS 組隊血量改回每人 +135%，包含世界王那些的」；這次之前（11-04）每人 +200%。2026-11-04 照站長「組隊的 Boss 血量每人 +200%（世界活動、祭典一起改）」；這次之前 1.0
   count_level: 80
   max_counted_players: 0
   damage: 4.078   # 2026-11-03 照站長：比照巔峰（這次之前 4.5）
