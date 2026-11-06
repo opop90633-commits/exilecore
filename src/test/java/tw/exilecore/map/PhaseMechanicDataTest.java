@@ -102,8 +102,8 @@ class PhaseMechanicDataTest {
                 table.append(i == 0 ? "" : "、").append(Math.round(phases.get(i).at() * 100)).append("% ").append(spec.kind().label());
             }
             table.append('\n');
-            // 2026-11-04 照站長：一隻 Boss 最多一個鎖血（破綻）；淵鯨、鯊王也一起換
-            assertEquals(1, locks, entry.label() + " 只能有一個鎖血（破綻），實際 " + locks + "：" + kinds);
+            // 2026-11-04 照站長：鎖血只剩破綻；2026-11-06 照站長「破綻改成每階段 1 個」：每個階段都有（淵鯨、鯊王也一起）；這次之前一隻 Boss 最多一個
+            assertEquals(specs.size(), locks, entry.label() + " 每個階段一個破綻，實際 " + locks + "：" + kinds);
             assertTrue(kinds.contains(PhaseMechanic.Kind.OPENING), entry.label() + "：鎖血要是破綻：" + kinds);
             assertFalse(kinds.contains(PhaseMechanic.Kind.CRYSTAL), entry.label() + "：結晶退役");
             assertFalse(kinds.contains(PhaseMechanic.Kind.ZONES) || kinds.contains(PhaseMechanic.Kind.COUNTDOWN) || kinds.contains(PhaseMechanic.Kind.ELEMENT),

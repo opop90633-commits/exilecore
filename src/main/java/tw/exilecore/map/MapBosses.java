@@ -1375,8 +1375,10 @@ final class MapBosses {
         boss.getWorld().playSound(boss.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.8f, 1.0f);
         // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
         // 2026-10-27：還要對 Boss 打到傷害門檻（跟掉落、星圖一樣）；這次之前站在旁邊沒打也拿得到稱號與永久加成
+        // 2026-11-06 照站長：迷霧之主（fog_trial）、審判者（ultimatum）、不朽統帥（legion）也記（代號＝事件 Boss 的代號）；這次之前只有極境、巔峰、金庫之主
         final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"
-                : instance.isUber() || instance.isPinnacle() ? instance.map().id() : null;
+                : instance.isUber() || instance.isPinnacle() ? instance.map().id()
+                : instance.special() != null && service.config().eventBoss(instance.map().id()) != null ? instance.map().id() : null;
         if (killKey != null && plugin.bounties() != null) {
             for (final java.util.UUID uuid : instance.inside()) {
                 final org.bukkit.entity.Player player = plugin.getServer().getPlayer(uuid);

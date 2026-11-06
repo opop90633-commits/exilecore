@@ -54,25 +54,31 @@ class PhaseMechanicTest {
         assertEquals(PhaseMechanic.Kind.CRYSTAL, specs.get(0).kind(), "寫了 shield：維持結晶");
         assertSame(SHIELD, specs.get(0).crystal());
         assertSame(countdown, specs.get(2), "寫了 mechanic 照寫的");
-        assertNull(specs.get(3), "mechanic: none 不鎖");
-        assertNull(specs.get(1), "2026-11-04：已經有寫死的鎖血，沒寫的階段不再自動配");
+        assertEquals(PhaseMechanic.Kind.OPENING, specs.get(3).kind(), "2026-11-06：有破綻的 Boss，寫 none 的階段也照第一個破綻配（這次之前不鎖）");
+        assertEquals(PhaseMechanic.Kind.OPENING, specs.get(1).kind(), "2026-11-06：沒寫的階段照樣自動配破綻（這次之前已有寫死的鎖血就不配）");
         // 一般地圖（不輪流）：沒寫的不鎖
         final List<PhaseMechanic.Spec> plain = PhaseMechanic.resolve("k", List.of(phase(0.6, null, null), phase(0.3, SHIELD, null)), false, false);
         assertNull(plain.get(0));
         assertEquals(PhaseMechanic.Kind.CRYSTAL, plain.get(1).kind());
-        // 終局以上什麼都沒寫：只有第一個階段配破綻（回血 15%、30 秒、3 層），其他不鎖
+        // 終局以上什麼都沒寫：2026-11-06 照站長每個階段都配破綻（回血 15%、30 秒、1 層、破綻裡 ×1）；這次之前只有第一個（3 層、×1.5）
         final List<MapConfig.Phase> only = List.of(phase(0.5, null, null), phase(0.25, null, null), phase(0.1, null, null));
         final List<PhaseMechanic.Spec> auto = PhaseMechanic.resolve("k", only, true, true);
-        assertEquals(PhaseMechanic.Kind.OPENING, auto.get(0).kind());
-        assertNull(auto.get(1));
-        assertNull(auto.get(2));
+        for (final PhaseMechanic.Spec spec : auto) {
+            assertEquals(PhaseMechanic.Kind.OPENING, spec.kind());
+            assertEquals(1, spec.opening().layers(), "躲 1 招就破");
+            assertEquals(1.0, spec.opening().openTaken(), 1e-9, "破綻裡不再 ×1.5");
+        }
+        // 有破綻的 Boss：寫 none 的階段也照第一個破綻配
+        final PhaseMechanic.Spec opening = PhaseMechanic.Spec.opening(PhaseMechanic.defaultOpening(15));
+        final List<PhaseMechanic.Spec> filled = PhaseMechanic.resolve("k", List.of(phase(0.75, null, opening), phase(0.5, null, PhaseMechanic.Spec.NONE)), false, false);
+        assertSame(opening, filled.get(1));
         assertEquals(PhaseMechanic.OPENING_DURATION, auto.get(0).seconds(), 1e-9);
         assertEquals(PhaseMechanic.OPENING_HEAL, auto.get(0).heal(), 1e-9); // 2026-11-04 照站長：破綻沒剝完回 15%；這次之前照 DEFAULT_HEAL（30%）
-        assertEquals(3, auto.get(0).opening().layers());
+        assertEquals(1, auto.get(0).opening().layers()); // 2026-11-06：1 層；這次之前 3
         assertFalse(auto.get(0).invulnerable(), "破綻：Boss 不無敵、照常出招");
-        // 寫了 shield 的階段還是結晶（寫死的照寫），沒寫的就不再配
+        // 寫了 shield 的階段還是結晶（寫死的照寫）；2026-11-06：沒寫的照樣配破綻（這次之前不再配）
         final List<PhaseMechanic.Spec> withShield = PhaseMechanic.resolve("k", List.of(phase(0.6, null, null), phase(0.3, SHIELD, null)), true, false);
-        assertNull(withShield.get(0));
+        assertEquals(PhaseMechanic.Kind.OPENING, withShield.get(0).kind());
         assertEquals(PhaseMechanic.Kind.CRYSTAL, withShield.get(1).kind());
     }
 

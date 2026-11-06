@@ -876,6 +876,8 @@ advanced:
     - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 放出時用掉的每一顆銳星各自擲（ChargeService.SUP_KEEP）
   cold_night_howl:   # Arctic Howl：(0—20)% 機率不算強化次數（2026-10-28 照 PoE2：這次之前是一般品質效果）
     - { stat: warcry.endless_howl, type: FLAT, per: 1.0 }   # x% 機率不算強化次數（跟不竭嘯同一條）
+  crescent_claw:   # Lunar Assault：穿透 (0—20)% 冰冷抗性（2026-11-06 照站長＋PoB2 altQualityStats base_reduce_enemy_cold_resistance_% 1、poe2db 寶石頁第二條；這次之前沒寫，進階奇術把一般品質再算一次）
+    - { stat: penetration, type: FLAT, per: 1.0, tags: [cold] }   # 穿透冰冷抗性（DamageCalculator）
   silver_moon_shelter:   # Lunar Blessing：(0—40)% 增加冷卻回復速度（2026-10-28 照 PoE2：這次之前是一般品質效果）
     - { stat: cooldown.recovery, type: INCREASED, per: 2.0 }   # 冷卻回復速度
   cripple_purge:   # Cull The Weak：(0—20)% 機率多獲得一顆隨機種類的戰星（2026-10-28 照 PoE2：這次之前寫在 SkillService，算一般品質效果）

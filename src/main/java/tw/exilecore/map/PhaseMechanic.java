@@ -223,7 +223,8 @@ public final class PhaseMechanic {
     static final double OPENING_DURATION = 30;
 
     static Opening defaultOpening(final double heal) {
-        return new Opening(OPENING_DURATION, OPENING_HEAL, 0.3, 3, 3, 30, 1.5); // 2026-11-04 照站長「破綻沒解除改成回 15% 生命」；這次之前照 heal（各 Boss 30～45%）
+        // 2026-11-06 照站長「破綻改成每階段 1 個，傷害不用 1.5 倍」：1 層（躲 1 招就破）、破綻裡 ×1；這次之前 3 層、×1.5
+        return new Opening(OPENING_DURATION, OPENING_HEAL, 0.3, 1, 3, 30, 1.0); // 2026-11-04 照站長「破綻沒解除改成回 15% 生命」；這次之前照 heal（各 Boss 30～45%）
     }
 
     /** 2026-11-04 照站長：破綻沒剝完 Boss 回 15% 生命（yml 寫了 heal 照寫的）；這次之前照各 Boss 的 30～45%。 */
@@ -389,21 +390,17 @@ public final class PhaseMechanic {
         final double heal = reference == null ? DEFAULT_HEAL : reference.heal();
         final List<Kind> kinds = rotation(key, fixed);
         final List<Spec> specs = new ArrayList<>();
-        boolean filled = false; // 2026-11-04 照站長：一隻 Boss 最多一個鎖血——沒寫的只配第一個
-        for (final Kind kind : fixed) {
-            filled |= kind != null && kind != Kind.NONE;
-        }
+        // 2026-11-06 照站長「破綻改成每階段 1 個」：沒寫的階段都配（autoFill 時）；這次之前（11-04）一隻 Boss 最多一個鎖血，沒寫的只配第一個
         for (int i = 0; i < phases.size(); i++) {
             final Spec explicit = explicit(phases.get(i));
             if (explicit != null) {
                 specs.add(explicit.kind() == Kind.NONE ? null : explicit);
                 continue;
             }
-            if (filled) {
+            if (!autoFill) {
                 specs.add(null);
                 continue;
             }
-            filled = true;
             specs.add(switch (kinds.get(i)) {
                 case ZONES -> Spec.zones(defaultZones(duration, heal));
                 case COUNTDOWN -> Spec.countdown(defaultCountdown(heavy));
@@ -411,6 +408,21 @@ public final class PhaseMechanic {
                 case OPENING -> Spec.opening(defaultOpening(heal));
                 default -> null;
             });
+        }
+        // 2026-11-06 照站長「破綻改成每階段 1 個」：有破綻的 Boss，每個階段都有（寫 none、沒寫的照第一個破綻）
+        Spec first = null;
+        for (final Spec spec : specs) {
+            if (spec != null && spec.kind() == Kind.OPENING) {
+                first = spec;
+                break;
+            }
+        }
+        if (first != null) {
+            for (int i = 0; i < specs.size(); i++) {
+                if (specs.get(i) == null) {
+                    specs.set(i, first);
+                }
+            }
         }
         return specs;
     }

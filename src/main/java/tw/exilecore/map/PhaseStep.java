@@ -8,13 +8,13 @@ package tw.exilecore.map;
  */
 final class PhaseStep {
 
-    /** 兩個階段之間至少隔幾 tick（3 秒）。 */
-    static final long GAP_TICKS = 3 * 20;
+    /** 兩個階段之間至少隔幾 tick（2026-11-06 照站長：1.5 秒＝換階段的無敵；門檻卡血已經一次只能過一個階段，不用多等；這次之前 3 秒）。 */
+    static final long GAP_TICKS = 30;
     /**
      * 2026-10-29 照站長：進入新階段後 Boss 無敵幾 tick（2.5 秒的換階段）：撞到門檻那一下多出來的傷害作廢（鎖血），
      * 換階段這段時間也打不動——一下打很痛照算，但一刀最多打掉一個階段。這次之前進了新階段馬上就能打。
      */
-    static final long TRANSITION_TICKS = 50;
+    static final long TRANSITION_TICKS = 30; // 2026-11-06 照站長：1.5 秒（跟 Boss 換階段停手一樣長）；這次之前 2.5 秒
 
     /** 剛進新階段、還在換階段（無敵）。 */
     static boolean transitioning(final long now, final long lastPhaseTick) {

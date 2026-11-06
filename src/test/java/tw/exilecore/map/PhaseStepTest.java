@@ -49,7 +49,8 @@ class PhaseStepTest {
             }
         }
         assertEquals(List.of(0L, PhaseStep.GAP_TICKS), entered);
-        assertEquals(List.of(10L, 20L, 30L, 40L, 50L), held, "等第二個階段的這 3 秒 Boss 打不動");
+        // 2026-11-06 照站長：隔 1.5 秒（＝換階段的無敵）；這次之前 3 秒
+        assertEquals(List.of(10L, 20L), held, "等第二個階段的這 1.5 秒 Boss 打不動");
     }
 
     @Test

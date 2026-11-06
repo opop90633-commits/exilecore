@@ -192,7 +192,7 @@ first_kill:                      # 首殺獎勵（存在角色資料裡）：天
 #       mechanic: { type: element, duration: 25, heal: 30, share: 0.3, rotate: 12, warn: 3, other: 0.1 }
 #             → 元素弱點：Boss 不無敵，只吃火、冰、電其中一種（排除 Boss 抗性最高的那種），其他傷害只打 other 成；
 #               每 rotate 秒換一種（換之前 warn 秒提示）；duration 秒內打掉這個階段（這個門檻到下一個門檻）share 成的血就破盾，不然回 heal%
-#       mechanic: none        → 這個階段不鎖血
+#       mechanic: none        → 這個階段不鎖血（2026-11-06 照站長「破綻改成每階段 1 個」：這隻 Boss 有破綻的話 none 也照第一個破綻配）
 #       沒寫 mechanic：有 shield 是結晶；終局、極境、巔峰、金庫之主（heist.yml）、星骸之海的淵鯨與鯊王（life.yml）其他沒寫的階段照預設輪流配站位圈、倒數大招其中一種（2026-11-02 照站長：元素弱點不再輪到——不是每個人都有元素傷害；寫死 type: element 還是可以用）
 #         （同一隻 Boss 盡量不重複，起點照終局代號的雜湊；限時、回血照這隻 Boss 第一個 shield；倒數大招在極境、巔峰打 85%，其他 60%）
 #     enrage: { after: 300, damage: 100, speed: 0.3, message: "…" }
@@ -244,14 +244,14 @@ event_bosses:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 35 }
-        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 35 }
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 35 }）
       - at: 0.15
         name: 霧要散了
         message: "「在那之前，你得留下來。」"
         speed: 0.2
         stats:
           - { stat: damage, type: MORE, value: 50 }
-        mechanic: none
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none
     hazards:
       - { skill: hazard_fog_pools, every: 8, phase: 1 }
     enrage: { after: 240, damage: 120, speed: 0.4, message: "「霧要散了。」" }
@@ -305,14 +305,14 @@ event_bosses:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 35 }
-        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 終審, delay: 8, safe: 2, safe_radius: 3, damage: 0.6 }
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 終審, delay: 8, safe: 2, safe_radius: 3, damage: 0.6 }）
       - at: 0.15
         name: 裁決
         message: "「秤歪了。那就砍掉多的那一邊。」"
         speed: 0.2
         stats:
           - { stat: damage, type: MORE, value: 50 }
-        mechanic: none
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none
     hazards:
       - { skill: hazard_judge_weights, every: 8, phase: 1 }
     enrage: { after: 240, damage: 120, speed: 0.4, message: "「時間到了。」" }
@@ -365,14 +365,14 @@ event_bosses:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 35 }
-        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: element, duration: 25, heal: 30, share: 0.3, rotate: 12, warn: 3, other: 0.1 }
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: element, duration: 25, heal: 30, share: 0.3, rotate: 12, warn: 3, other: 0.1 }）
       - at: 0.15
         name: 最後一陣
         message: "「那就一起沉回時間裡。」"
         speed: 0.2
         stats:
           - { stat: damage, type: MORE, value: 50 }
-        mechanic: none
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none
     hazards:
       - { skill: hazard_legion_arrows, every: 8, phase: 1 }
     enrage: { after: 240, damage: 120, speed: 0.4, message: "「號角——吹到底。」" }
@@ -878,7 +878,7 @@ final:
         speed: 0.15
         stats:
           - { stat: damage, type: MORE, value: 30 }
-        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 熔爐爆燃, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 熔爐爆燃, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }）
     hazards:
       - { skill: hazard_star_orbs, every: 14, phase: 1 }
     enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。熔爐要吞掉你。」" }
@@ -991,7 +991,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 40, vuln: 6, vuln_max: 60, vuln_decay: 4 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 40, vuln: 6, vuln_max: 60, vuln_decay: 4 }）
       hazards:
         - { skill: hazard_ice_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。永遠留在這裡吧。」" }
@@ -1099,7 +1099,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 25, heal: 40 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 25, heal: 40 }）
       hazards:
         - { skill: hazard_grave_hands, every: 6, phase: 0 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。河底很安靜。」" }
@@ -1207,7 +1207,7 @@ finals:
           speed: 0.15
           stats:
             - { stat: damage, type: MORE, value: 30 }
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 焚城烈焰, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 焚城烈焰, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }）
       hazards:
         - { skill: hazard_ember_orbs, every: 12, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。命令就是命令。」" }
@@ -1303,7 +1303,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 40 }
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 35, vuln: 6, vuln_max: 60, vuln_decay: 4 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 25, heal: 35, vuln: 6, vuln_max: 60, vuln_decay: 4 }）
       hazards:
         - { skill: hazard_awakener_storm, every: 9, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。這個世界，不需要你。」" }   # 本體約 3 分半＋換階段、護盾
@@ -1404,7 +1404,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }）
       hazards:
         - { skill: hazard_shrine_ray, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。全部，燒乾淨。」" }
@@ -1479,7 +1479,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 寶庫崩落, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 寶庫崩落, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }）
       hazards:
         - { skill: hazard_box_coins, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到。這座寶庫，連你一起鎖起來。」" }
@@ -1554,7 +1554,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }）
       hazards:
         - { skill: hazard_breach_rift, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠久了。整片空間，一起撕開。」" }
@@ -1630,7 +1630,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 無名一擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: countdown, name: 無名一擊, delay: 8, safe: 2, safe_radius: 3, damage: 0.85 }）
       hazards:
         - { skill: hazard_exile_knives, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「拖太久了。結束吧。」" }
@@ -1705,7 +1705,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, radius: 2.5, charge: 5, drain: 0.25, duration: 20, heal: 45, vuln: 6, vuln_max: 60, vuln_decay: 4 }）
       hazards:
         - { skill: hazard_ritual_blood, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「祭壇等不下去了。全部，燒。」" }
@@ -1780,7 +1780,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }）
       hazards:
         - { skill: hazard_mist_orb, every: 7, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「霧要散了。在那之前，你得留下來。」" }
@@ -1855,7 +1855,7 @@ finals:
           speed: 0.2
           stats:
             - { stat: damage, type: MORE, value: 55 }   # 2026-10-18：40 → 55
-          mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }
+          mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前 { type: zones, duration: 20, heal: 45 }）
       hazards:
         - { skill: hazard_abyssal_spike, every: 6, phase: 1 }
       enrage: { after: 300, damage: 150, speed: 0.4, message: "「夠了。骨潮，滅頂。」" }

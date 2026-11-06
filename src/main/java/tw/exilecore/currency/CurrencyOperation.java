@@ -284,6 +284,9 @@ public enum CurrencyOperation {
                     if (base.hasTag("caster")) {
                         // 法杖、長杖（PoE2：品質增加，最多 23%）
                         data.setCorruptedQuality(data.quality() + 1 + random.nextInt(5));
+                    } else if (noCorruptSocket(base)) {
+                        // 2026-11-06 照站長＋PoE2（Vaal Orb 的 +1 Socket 只出在頭、手、腳、胸、盾、法器、武器）：戒指、項鍊、腰帶一律沒有變化，
+                        //   本身帶孔的傳奇（淵座束帶的 2 孔）也一樣；這次之前看「這件有沒有孔」，淵座束帶會腐化出第 3 孔
                     } else if (tw.exilecore.item.Runes.slots(base) > 0 || tw.exilecore.item.Runes.slots(generator.repository(), base, data) > 0) {
                         // 2026-10-26：看基底能不能有孔（符文孔照基底全開，見 Runes.slots；基底沒有孔的不加）。
                         // 2026-10-27 修註解：之前寫「工匠石之後新裝備從 0 孔開始」——Runes.slots 不看 runeSockets，裝備一律照基底全開
@@ -814,5 +817,11 @@ public enum CurrencyOperation {
     /** 偶爾也需要知道某個型態還有沒有空位（給 GUI 提示用）。 */
     public static boolean hasRoom(final ItemData data, final ItemGenerator generator, final AffixType type) {
         return generator.canAddAffix(data, type);
+    }
+
+    /** 2026-11-06 照 PoE2：腐化「多一個孔」不會出在戒指、項鍊、腰帶（就算這件本身有孔）。 */
+    static boolean noCorruptSocket(final tw.exilecore.item.ItemBase base) {
+        return base.isJewellery() || base.slot() == tw.exilecore.item.ItemSlot.RING || base.slot() == tw.exilecore.item.ItemSlot.AMULET
+                || base.slot() == tw.exilecore.item.ItemSlot.BELT;
     }
 }

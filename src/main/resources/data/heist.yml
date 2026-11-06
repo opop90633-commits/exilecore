@@ -202,7 +202,7 @@ finale:
         speed: 0.05            # 2026-10：0.2 → 0.05（不要那麼衝）
         stats:
           - { stat: damage, type: MORE, value: 30 }   # 2026-10：30 → 20 → 30
-        mechanic: none   # 2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前結晶
+        mechanic: { type: opening, heal: 15 }   # 2026-11-06 照站長「破綻改成每階段 1 個」；這次之前 none（2026-11-04 照站長：一隻 Boss 只留一個鎖血；這次之前結晶）
     hazards:
       - { skill: hazard_vault_coins, every: 12, phase: 1 }   # 2026-10：9 → 12 → 15 → 12
     enrage: { after: 300, damage: 150, speed: 0.4, message: "「時間到了。你們永遠是這座金庫的一部分。」" }

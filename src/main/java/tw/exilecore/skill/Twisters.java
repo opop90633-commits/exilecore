@@ -284,6 +284,11 @@ final class Twisters {
         }
     }
 
+    /**
+     * 2026-11-06 照站長「旋風矛特效改明顯一點，比較能知道有幾顆投射物」：每個旋風畫成一根漏斗（兩股螺旋、5 層、下窄上寬，高 1.7 格），
+     * 頂端一顆大的彩色光點（一個旋風一顆，數光點就知道有幾個），每個旋風的轉向起點錯開（擠在一起也分得出來）；
+     * 這次之前每 2 tick 4 顆小粒子斜斜一排，很淡，幾個疊在一起看不出幾個。
+     */
     private static void draw(final Twister twister, final double radius, final long now) {
         if (now % 2 != 0) {
             return;
@@ -292,12 +297,20 @@ final class Twisters {
         final Particle particle = twister.element == DamageType.FIRE ? Particle.FLAME
                 : twister.element == DamageType.COLD ? Particle.SNOWFLAKE
                 : twister.element == DamageType.LIGHTNING ? Particle.ELECTRIC_SPARK : Particle.CLOUD;
-        final double spin = now * 0.9;
-        for (int i = 0; i < 4; i++) {
-            final double angle = spin + i * Math.PI / 2;
-            final double r = radius * (0.5 + 0.25 * i);
-            Fx.spawn(world, particle, twister.at.clone().add(Math.cos(angle) * r, 0.2 + 0.45 * i, Math.sin(angle) * r), 1, 0.02, 0.02, 0.02);
+        final int rgb = twister.element == DamageType.FIRE ? 0xFF7A2A
+                : twister.element == DamageType.COLD ? 0x9FE3FF
+                : twister.element == DamageType.LIGHTNING ? 0xFFE066 : 0xE8F6FF;
+        final double spin = now * 0.9 + (System.identityHashCode(twister) % 628) / 100.0;
+        for (int layer = 0; layer < 5; layer++) {
+            final double r = radius * (0.45 + 0.2 * layer);
+            final double y = 0.1 + 0.4 * layer;
+            for (int strand = 0; strand < 2; strand++) {
+                final double angle = spin + layer * 0.7 + strand * Math.PI;
+                Fx.spawn(world, particle, twister.at.clone().add(Math.cos(angle) * r, y, Math.sin(angle) * r), 1, 0.0, 0.0, 0.0, 0.0);
+            }
         }
+        Fx.spawn(world, Particle.DUST, twister.at.clone().add(0, 1.9, 0), 1, 0.0, 0.0, 0.0, 0.0,
+                new Particle.DustOptions(org.bukkit.Color.fromRGB(rgb), 1.8f));
     }
 
     /** 登出、換角色：清掉這個人的旋風。 */

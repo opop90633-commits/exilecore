@@ -381,6 +381,36 @@ public final class SummerService {
         return world == null ? null : SummerArenaBuilder.center(world, config);
     }
 
+    /**
+     * 2026-11-06 照站長「深潮海妖把招式放在入口，玩家進入會死」：南邊棧道的入口（{@link #travel} 傳送進來的地方）是安全區，
+     * 半徑 {@link #SHELTER_RADIUS} 格：海妖的招打不到、不會被盯上、隨機落點不挑；站在裡面打海妖不算傷害（MapService.capBossDamage），
+     * 不能躲在裡面輸出。這次之前入口跟海灘其他地方一樣，剛進來就踩在還沒散的招式上。
+     */
+    static final double SHELTER_RADIUS = 9;
+
+    /** 南邊入口安全區的中心（傳送點的中心：離中央 radius − 5 格、正南）。 */
+    private double[] shelterCenter() {
+        return new double[] {config.arena().x() + 0.5, config.arena().z() + 0.5 + config.arena().radius() - 5};
+    }
+
+    /** 這個位置在入口的安全區裡（海妖在場時才有意義）。 */
+    public boolean inShelter(final Location location) {
+        final World world = eventWorld();
+        if (world == null || location == null || !world.equals(location.getWorld())) {
+            return false;
+        }
+        final double[] c = shelterCenter();
+        final double dx = location.getX() - c[0];
+        final double dz = location.getZ() - c[1];
+        return dx * dx + dz * dz <= SHELTER_RADIUS * SHELTER_RADIUS;
+    }
+
+    /** 2026-11-06：打海妖的人站在入口安全區裡（那一下不算）。 */
+    public boolean shelteredAttacker(final UUID source) {
+        final Player player = source == null ? null : plugin.getServer().getPlayer(source);
+        return player != null && kraken != null && inShelter(player.getLocation());
+    }
+
     /** 在星潮海灘裡（多算牆外幾格）。 */
     public boolean inArena(final Location location) {
         final World world = eventWorld();
@@ -425,6 +455,9 @@ public final class SummerService {
             return "現在不能傳送";
         }
         player.sendMessage(plugin.text().prefixed("<" + config.color() + ">星潮海灘<gray>：拿著武器<white>右鍵沙子</white>挖寶（動作條會說熱不熱；海妖、大亂鬥進行中右鍵照常放技能）；回營地：<white>/town"));
+        if (kraken != null) { // 2026-11-06
+            player.sendMessage(plugin.text().prefixed("<#9fe8c8>入口的綠圈是安全區<gray>：海妖的招打不到你，但站在裡面打海妖也不算傷害"));
+        }
         return null;
     }
 
@@ -1315,6 +1348,7 @@ public final class SummerService {
             }
             if (tickCount % 2 == 0) {
                 tw.exilecore.skill.Fx.spawn(boss.getWorld(), Particle.BUBBLE_POP, boss.getLocation().add(0, 2.4, 0), 8, 0.5, 0.3, 0.5, 0.02);
+                drawShelter(boss.getWorld()); // 2026-11-06：入口安全區的邊（綠色一圈）
             }
         }
         final long left = Math.max(0, (event.endMillis - now) / 1000);
@@ -1339,6 +1373,21 @@ public final class SummerService {
         }
     }
 
+    private static final Particle.DustOptions SHELTER_DUST = new Particle.DustOptions(org.bukkit.Color.fromRGB(0x9FE8C8), 1.4f);
+
+    /** 入口安全區的邊：地上一圈綠點（海妖在場時）。 */
+    private void drawShelter(final World world) {
+        final double[] c = shelterCenter();
+        final double y = center() == null ? 64 : center().getY() + 0.2;
+        for (int i = 0; i < 36; i++) {
+            final double angle = Math.PI * 2 * i / 36;
+            final double x = c[0] + Math.cos(angle) * SHELTER_RADIUS;
+            final double z = c[1] + Math.sin(angle) * SHELTER_RADIUS;
+            final double top = world.getHighestBlockYAt((int) Math.floor(x), (int) Math.floor(z)) + 1.15;
+            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, x, Math.max(y, top), z, 1, 0, 0, 0, 0, SHELTER_DUST);
+        }
+    }
+
     private void attachSkills(final LivingEntity boss) {
         final SummerConfig.Boss def = config.boss();
         if (plugin.skills() == null || def.skills().isEmpty()) {
@@ -1358,6 +1407,11 @@ public final class SummerService {
             @Override
             public String tempoKind() {
                 return "festival"; // 跟南瓜王同一個節奏（不普攻，出招比較快；boss_skills.yml 的 tempo.festival）
+            }
+
+            @Override
+            public boolean sheltered(final Player player) {
+                return inShelter(player.getLocation()); // 2026-11-06：南邊棧道入口的安全區
             }
 
             @Override

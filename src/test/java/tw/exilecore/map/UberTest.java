@@ -286,12 +286,13 @@ class UberTest {
                 assertTrue(use.fromPhase() <= merged.phases().size(), map.id() + "：極境的 " + use.id() + " 要等第 " + use.fromPhase()
                         + " 階段，但只有 " + merged.phases().size() + " 個階段（永遠用不到）");
             }
-            // 2026-11-04 照站長：鎖血只剩一個破綻（結晶退役）；極境的階段裡也要有一個
-            assertEquals(1, merged.phases().stream().filter(phase -> phase.mechanic() != null && phase.mechanic().kind() == PhaseMechanic.Kind.OPENING).count(),
-                    map.id() + "：極境剛好一個破綻鎖血");
+            // 2026-11-04 照站長：鎖血只剩破綻（結晶退役）；2026-11-06 照站長「破綻改成每階段 1 個」：極境的階段裡至少寫了一個
+            assertTrue(merged.phases().stream().anyMatch(phase -> phase.mechanic() != null && phase.mechanic().kind() == PhaseMechanic.Kind.OPENING),
+                    map.id() + "：極境有破綻鎖血");
             assertTrue(merged.phases().stream().noneMatch(phase -> phase.shield() != null), map.id() + "：極境沒有結晶");
             final List<PhaseMechanic.Spec> locks = PhaseMechanic.resolve(PhaseMechanic.key(map.id(), true), merged.phases(), true, true);
-            assertEquals(1, locks.stream().filter(java.util.Objects::nonNull).count(), map.id() + "：極境只鎖一次血（2026-11-04 照站長）");
+            assertEquals(merged.phases().size(), locks.stream().filter(java.util.Objects::nonNull).count(),
+                    map.id() + "：極境每個階段一個破綻（2026-11-06 照站長；這次之前只鎖一次）");
             assertTrue(merged.enrage().after() <= boss.enrage().after(), map.id() + "：極境的狂暴不會比較晚（2026-10-21：都是 5 分鐘）");
             final CurrencyType key = currencies.get(uber.key());
             assertNotNull(key, map.id() + "：開門的通貨要存在");

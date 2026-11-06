@@ -1449,6 +1449,10 @@ public final class MapService {
             if (defender.getTicksLived() < OPENING_INVULNERABLE_TICKS) {
                 return 0;
             }
+            // 2026-11-06：站在星潮海灘入口安全區裡打海妖不算（安全區裡海妖打不到你）
+            if (plugin.summer() != null && plugin.summer().isKraken(defender) && plugin.summer().shelteredAttacker(source)) {
+                return 0;
+            }
             return amount;
         }
         if (amount > 0 && source != null && plugin.life() != null && plugin.life().isWhale(defender)) {

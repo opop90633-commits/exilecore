@@ -151,5 +151,12 @@ boss_titles:
                      stats: [ { stat: life.max, type: INCREASED, value: 3 } ] }
   delirium_mirror: { id: kill_delirium_mirror, boss_name: 幻霧之鏡・妄念,   name: 破鏡之人,   kills: 50, color: "#d0d0e0",
                      stats: [ { stat: crit.chance, type: INCREASED, value: 5 } ] }
+  # 2026-11-06 照站長：三個新玩法的事件 Boss（迷霧回廊第 15 波、絕境打完挑戰、時沉領域；一場打一次，所以 50 次）
+  fog_trial:       { id: kill_fog_trial,       boss_name: 迷霧之主・無面,   name: 拂霧見面者, kills: 50, color: "#a8b8d8",
+                     stats: [ { stat: evasion, type: INCREASED, value: 8 } ] }
+  ultimatum:       { id: kill_ultimatum,       boss_name: 審判者・衡,       name: 逆審之人,   kills: 50, color: "#c77dff",
+                     stats: [ { stat: damage, type: INCREASED, value: 4 } ] }
+  legion:          { id: kill_legion,          boss_name: 不朽統帥・磐,     name: 破陣之將,   kills: 50, color: "#d9a066",
+                     stats: [ { stat: armour, type: INCREASED, value: 8 } ] }
   abyss_lich:      { id: kill_abyss_lich,      boss_name: 淵底之王・骨潮,   name: 淵底歸來者, kills: 50, color: "#5ec4ff",
                      stats: [ { stat: resist.cold, value: 5 }, { stat: resist.chaos, value: 3 } ] }

@@ -135,6 +135,14 @@ public final class BossSkills implements Listener {
             return false;
         }
 
+        /**
+         * 2026-11-06 照站長「海妖把招放在入口，玩家一進來就死」：站在場地的安全區（星潮海灘南邊棧道的入口）裡的人
+         * 不是目標、隨機落點不挑他、招式打不到他（{@link #hurt}）；預設沒有安全區。
+         */
+        default boolean sheltered(final Player player) {
+            return false;
+        }
+
         /** 2026-11-04 照站長（破綻）：放完一招（真的放出去的）：這招的名字、被打到的人。 */
         default void skillDone(final BossSkill skill, final java.util.Set<UUID> victims) {
         }
@@ -1127,13 +1135,14 @@ public final class BossSkills implements Listener {
             }
         }
         if (boss instanceof Mob mob && mob.getTarget() instanceof Player current && validPlayer(current, boss.getWorld())
+                && !brain.host.sheltered(current) // 2026-11-06：安全區裡的不盯
                 && current.getLocation().distanceSquared(boss.getLocation()) <= search * search) {
             return current;
         }
         Player best = null;
         double bestDistance = search * search;
         for (final Player player : boss.getWorld().getPlayers()) {
-            if (!validPlayer(player, boss.getWorld())) {
+            if (!validPlayer(player, boss.getWorld()) || brain.host.sheltered(player)) { // 2026-11-06：安全區裡的不盯
                 continue;
             }
             final double distance = player.getLocation().distanceSquared(boss.getLocation());
@@ -1204,7 +1213,7 @@ public final class BossSkills implements Listener {
         double most = 0;
         for (final Map.Entry<UUID, Double> entry : brain.threat.entrySet()) {
             final Player player = plugin.getServer().getPlayer(entry.getKey());
-            if (player == null || !validPlayer(player, boss.getWorld())
+            if (player == null || !validPlayer(player, boss.getWorld()) || brain.host.sheltered(player) // 2026-11-06：安全區裡的不盯
                     || player.getLocation().distanceSquared(boss.getLocation()) > SEARCH * SEARCH) {
                 continue;
             }
@@ -1445,7 +1454,10 @@ public final class BossSkills implements Listener {
             }
             return points;
         }
-        final List<Player> players = skill.at() == BossSkill.Target.RANDOM ? playersNear(brain.boss.getLocation(), skill.range() + 4) : List.of();
+        final List<Player> players = skill.at() == BossSkill.Target.RANDOM ? new ArrayList<>(playersNear(brain.boss.getLocation(), skill.range() + 4)) : List.of();
+        if (skill.at() == BossSkill.Target.RANDOM) {
+            players.removeIf(brain.host::sheltered); // 2026-11-06：隨機落點不挑安全區裡的人
+        }
         for (int i = 0; i < skill.count(); i++) {
             Location base = switch (skill.at()) {
                 case SELF -> brain.boss.getLocation();
@@ -2532,6 +2544,9 @@ public final class BossSkills implements Listener {
             if (plugin.skills() != null && plugin.skills().isTotem(victim)) {
                 continue; // 2026-10-26：圖騰拉不動
             }
+            if (victim instanceof Player sheltered && brain.host.sheltered(sheltered)) {
+                continue; // 2026-11-06：安全區（入口）裡的不會被拉走
+            }
             final Location at = victim.getLocation();
             final double[] step = BossGeometry.pullStep(feet.getX(), feet.getZ(), at.getX(), at.getZ(), skill.speed());
             if (step[0] == 0 && step[1] == 0) {
@@ -3372,6 +3387,9 @@ public final class BossSkills implements Listener {
     private void hurt(final Brain brain, final BossSkill skill, final LivingEntity victim, final String shapeTag) {
         if (!skill.dealsDamage()) {
             return;
+        }
+        if (victim instanceof Player sheltered && brain.host.sheltered(sheltered)) {
+            return; // 2026-11-06：安全區（入口）裡打不到
         }
         if (!brain.gate.allow(skill.id(), victim.getUniqueId(), skill.hitGapTicks(), now())) {
             return; // 同一招剛打過這個人（齊射的另一發、另一顆光球、疊在一起的地面效果）：只算一下

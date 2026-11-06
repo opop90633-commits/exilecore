@@ -537,7 +537,7 @@ public final class AilmentService {
                 igniteFeedback(defender, chaosIgnite);
                 if (attacker instanceof Player self && self != defender && StatKeys.flag(attack, tw.exilecore.stats.KeystoneKeys.IGNITE_REFLECT)) {
                     // 2026-10-26 照 PoE2 天賦樹：你造成的點燃會反射到自己身上（照沒吃目標抗性的點燃傷害，再吃你自己的火焰抗性）
-                    igniteSelf(self, config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
+                    reflectIgniteSelf(self, config.igniteDps(igniteBase, attack.increased(StatKeys.IGNITE_MAGNITUDE, context),
                             attack.more(StatKeys.IGNITE_MAGNITUDE, context)), seconds, chaosIgnite);
                 }
                 if (attacker instanceof Player triggerer && plugin.skills() != null) {
@@ -2576,6 +2576,27 @@ public final class AilmentService {
     /** 自己著火（煉獄使者的獰笑焚身）：每秒 dps 火焰傷害，持續 seconds 秒；已經在燒更強的就不換。 */
     public void igniteSelf(final Player player, final double rawDps, final double rawSeconds) {
         igniteSelf(player, rawDps, rawSeconds, false);
+    }
+
+    /**
+     * 2026-11-06 照站長「點了免疫點燃會被反射嗎」：自焚（Self Immolation）反射回來的點燃也是「你被點燃」——
+     * 免疫點燃、免疫元素異常、避免點燃照擲（同 {@link #shockSelf} 的超載反射），再乘身上的點燃幅度（自焚自己的 -40% 就在這）；
+     * 這次之前直接 {@link #igniteSelf}：免疫擋不掉、避免不擲、身上的點燃幅度沒乘（自焚的 -40% 對反射的點燃沒用）。
+     */
+    void reflectIgniteSelf(final Player player, final double rawDps, final double rawSeconds, final boolean chaos) {
+        if (rawDps <= 0 || !canBeAilmented(player)) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        if (avoided(sheet, StatKeys.AVOID_IGNITE, plugin.items().random())) {
+            return;
+        }
+        igniteSelf(player, rawDps * selfIgniteEffect(sheet), rawSeconds, chaos);
+    }
+
+    /** 2026-11-06：身上的點燃幅度（ignite.effect_on_self；自焚 -40%）。 */
+    static double selfIgniteEffect(final StatSheet sheet) {
+        return Math.max(0, tw.exilecore.stats.TreeKeys.selfEffect(sheet, tw.exilecore.stats.TreeKeys.IGNITE_EFFECT_ON_SELF));
     }
 
     /** 2026-10-28：chaos＝反射回來的是混沌點燃（黯炎），吃自己的混沌抗性。 */
