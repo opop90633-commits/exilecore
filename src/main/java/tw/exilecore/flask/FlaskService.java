@@ -68,8 +68,10 @@ public final class FlaskService {
         final FlaskKind kind;
         final double perTick;
         int ticksLeft;
-        /** 2026-11-04（融解漩渦）：魔力滿了也不移除。 */
+        /** 2026-11-04（融解漩渦）：魔力滿了也不移除。2026-11-06：生命藥劑也用（戰魄之血：未保留生命已滿時不移除）。 */
         boolean sticky;
+        /** 2026-11-06 照站長（poe2db Blood of the Warrior）：這瓶效果期間的增益代號（回復結束就拿掉）；沒有 null。 */
+        String buffId;
 
         Recovery(final FlaskKind kind, final double perTick, final int ticksLeft) {
             this.kind = kind;
@@ -122,6 +124,38 @@ public final class FlaskService {
             }
         }
         return total;
+    }
+
+    /**
+     * 2026-11-06 照站長（poe2db Blood of the Warrior）：這瓶的「效果期間」詞綴（flask.during.*）變成增益，跟回復一樣長；回復提早結束時拿掉（tick 的 removeIf）。
+     * 回傳增益代號；這瓶沒有這種詞綴回傳 null。
+     */
+    private String duringEffect(final Player player, final ItemStack item, final FlaskBase base, final int ticks) {
+        if (plugin.skills() == null) {
+            return null;
+        }
+        final double recoup = localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_DURING_RECOUP, tw.exilecore.stats.ModType.FLAT);
+        final double rage = localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_DURING_RAGE_WHEN_HIT, tw.exilecore.stats.ModType.FLAT);
+        final boolean noLoss = localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_DURING_NO_RAGE_LOSS, tw.exilecore.stats.ModType.FLAT) > 0;
+        final List<tw.exilecore.stats.Modifier> mods = new ArrayList<>();
+        final String name = base.name() + "（效果期間）";
+        if (recoup > 0) {
+            mods.add(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.LIFE_RECOUP, recoup, name));
+        }
+        if (rage > 0) {
+            mods.add(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.RAGE_WHEN_HIT, rage, name));
+        }
+        if (noLoss) {
+            mods.add(tw.exilecore.stats.Modifier.increased("rage.decay", -1.0, name));
+        }
+        if (mods.isEmpty()) {
+            return null;
+        }
+        final ItemData data = itemData(item, base);
+        final String id = "flask.during." + (data == null ? base.name() : data.name());
+        final String shown = data == null ? base.name() : data.name();
+        plugin.skills().buff(player, id, shown, ticks + 2, mods);
+        return id;
     }
 
     private void tickMaelstroms() {
@@ -713,7 +747,11 @@ public final class FlaskService {
         if (gradual > 0) {
             final List<Recovery> list = active.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayList<>());
             if ((life || both) && !noLife) {
-                list.add(new Recovery(FlaskKind.LIFE, gradual / lifeTicks, lifeTicks));
+                final Recovery lifeRecovery = new Recovery(FlaskKind.LIFE, gradual / lifeTicks, lifeTicks);
+                // 2026-11-06 照站長（poe2db Blood of the Warrior）：未保留生命已滿時不移除；效果期間的增益（補償、受擊得怒氣、怒氣不流失）
+                lifeRecovery.sticky = life && localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_LOCAL_KEEP_AT_FULL, tw.exilecore.stats.ModType.FLAT) > 0;
+                lifeRecovery.buffId = life ? duringEffect(player, item, base, lifeTicks) : null;
+                list.add(lifeRecovery);
             }
             if (!life || both) {
                 final Recovery mana = new Recovery(FlaskKind.MANA, gradual / manaTicks, manaTicks);
@@ -1011,8 +1049,15 @@ public final class FlaskService {
             final boolean manaFull = state.mana() >= state.maxMana() - 1e-6;
             // 2026-10-26（昇華・耐久靈藥）：生命全滿時不移除生命藥劑效果
             final boolean enduring = tw.exilecore.ascendancy.AscendancyEffects.enduringElixirs(player);
-            entry.getValue().removeIf(recovery -> recovery.ticksLeft <= 0
-                    || (recovery.kind == FlaskKind.LIFE && lifeFull && !enduring) || (recovery.kind == FlaskKind.MANA && manaFull && !recovery.sticky));
+            entry.getValue().removeIf(recovery -> {
+                final boolean done = recovery.ticksLeft <= 0
+                        || (recovery.kind == FlaskKind.LIFE && lifeFull && !enduring && !recovery.sticky) // 2026-11-06：戰魄之血滿血也不移除
+                        || (recovery.kind == FlaskKind.MANA && manaFull && !recovery.sticky);
+                if (done && recovery.buffId != null && plugin.skills() != null) {
+                    plugin.skills().removeBuff(player, recovery.buffId); // 2026-11-06：效果期間的增益跟著結束
+                }
+                return done;
+            });
             if (life > 0 || mana > 0) {
                 plugin.players().display(player, state);
             }

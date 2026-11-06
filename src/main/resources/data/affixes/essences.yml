@@ -385,3 +385,48 @@ ess_hys_bow:
     - { tier: 1, ilvl: 65, weight: 1, value: [43, 50] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, bow] }
+
+# 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：完美火抗、冰抗、電抗、混抗星魄
+ess_recoup_fire:
+  type: suffix
+  group: fire_damage_taken_recouped_as_life
+  spawn_tags: [essence, belt]
+  names: [之星魄]
+  text: "承受的 {value}% 火焰傷害補償為生命"
+  tiers:
+    - { tier: 1, ilvl: 57, weight: 1, value: [26, 30] }
+  mods:
+    - { stat: life.recoup_fire, type: FLAT, value: "{value}" }
+
+ess_recoup_cold:
+  type: suffix
+  group: cold_damage_taken_recouped_as_life
+  spawn_tags: [essence, helmet]
+  names: [之星魄]
+  text: "承受的 {value}% 冰冷傷害補償為生命"
+  tiers:
+    - { tier: 1, ilvl: 57, weight: 1, value: [26, 30] }
+  mods:
+    - { stat: life.recoup_cold, type: FLAT, value: "{value}" }
+
+ess_recoup_lightning:
+  type: suffix
+  group: lightning_damage_taken_recouped_as_life
+  spawn_tags: [essence, leggings]   # PoE2 是手套；我們沒有手套，照狂亂星魄一樣換成褲子
+  names: [之星魄]
+  text: "承受的 {value}% 閃電傷害補償為生命"
+  tiers:
+    - { tier: 1, ilvl: 57, weight: 1, value: [26, 30] }
+  mods:
+    - { stat: life.recoup_lightning, type: FLAT, value: "{value}" }
+
+ess_phys_as_chaos:
+  type: prefix
+  group: physical_damage_taken_as_chaos
+  spawn_tags: [essence, body]
+  names: [星魄的]
+  text: "承受的擊中物理傷害有 {value}% 視為混沌傷害"
+  tiers:
+    - { tier: 1, ilvl: 57, weight: 1, value: [10, 15] }
+  mods:
+    - { stat: taken.physical_as_chaos, type: FLAT, value: "{value}" }

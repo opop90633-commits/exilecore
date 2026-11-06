@@ -670,7 +670,9 @@ public final class GemService {
             }
         }
         if (Math.abs(support.manaMultiplier() - 1.0) > 1e-9) {
-            lines.add(String.format(Locale.ROOT, "<gray>魔力消耗 <white>×%s", ModifierText.number(support.manaMultiplier())));
+            // 2026-11-06 照站長截圖：倍率到小數第二位（湧能 II 是 ×1.15）；這次之前只留一位，×1.15 顯示成 ×1.2
+            final String mana = java.math.BigDecimal.valueOf(Math.round(support.manaMultiplier() * 100) / 100.0).stripTrailingZeros().toPlainString();
+            lines.add(String.format(Locale.ROOT, "<gray>魔力消耗 <white>×%s", mana));
         }
         if (support.modifiers().stream().anyMatch(m -> m.stat().startsWith("trigger."))) {
             lines.add("<#f5b942>被輔助的法術要綁在上方按鍵格才會被觸發（不用按）");

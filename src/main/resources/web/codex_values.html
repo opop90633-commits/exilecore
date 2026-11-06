@@ -180,7 +180,8 @@ const CATS = {
   affixes: {
     title: "詞綴", items: () => DATA.affixes,
     chips: () => [["", "全部"], ...AFFIX_CATS.filter(c => DATA.affixes.some(a => a.cat === c[0]))],
-    match: (a, c) => !c || a.cat === c,
+    multi: true,
+    match: (a, c) => affixMatch(a, c),
     head: a => `<span class="name" style="color:${a.cat === "corrupted" ? "#d20000" : a.cat === "unveiled" ? "#c48bff" : a.type === "前綴" ? "#8888ff" : "#ffd27f"}">${esc(a.name)}</span>
       <span class="sub">${esc((AFFIX_CATS.find(c => c[0] === a.cat) || ["", a.cat])[1])}・${esc(a.type)}・${esc(a.slots.join("、"))}</span>
       <span class="kv"><b>${a.tiers.length}</b> 階・總權重 <b>${a.weight}</b></span>`,
@@ -351,6 +352,20 @@ function textOf(item) {
   if (!t) { t = JSON.stringify(item).toLowerCase(); searchText.set(item, t); }
   return t;
 }
+// 2026-11-06 照站長「點隱匿＋前綴就篩隱匿的前綴、隱匿＋後綴同上、要能複選、只點隱匿就全部」：詞綴分頁的標籤可以複選。
+//   前綴／後綴是「型別」，其餘（珠寶、藥劑、護符、地圖、腐化、揭露）是「分類」：
+//   有選分類 → 分類符合任一個，再有選前綴／後綴就只留那個型別；只選前綴／後綴 → 跟以前一樣是一般裝備的前綴／後綴。
+//   這次之前一次只能選一個標籤。
+const AFFIX_TYPES = {prefix: "前綴", suffix: "後綴"};
+function chipSet(c) { return c ? c.split(",") : []; }
+function affixMatch(a, c) {
+  const picked = chipSet(c);
+  if (!picked.length) return true;
+  const types = picked.filter(k => AFFIX_TYPES[k]);
+  const cats = picked.filter(k => !AFFIX_TYPES[k]);
+  if (!cats.length) return types.includes(a.cat);
+  return cats.includes(a.cat) && (!types.length || types.some(k => AFFIX_TYPES[k] === a.type));
+}
 function itemsOf(key) {
   const cat = CATS[key];
   if (!cat.items) return null;
@@ -367,7 +382,7 @@ function drawTabs() {
 function drawChips() {
   const cat = CATS[tab];
   const list = cat.chips ? cat.chips() : [];
-  $("#chips").innerHTML = list.map(([k, n]) => `<button class="chip" data-chip="${esc(k)}" aria-pressed="${k === chip}">${CHIP_ICON[k] || ""}${esc(n)}</button>`).join("");
+  $("#chips").innerHTML = list.map(([k, n]) => `<button class="chip" data-chip="${esc(k)}" aria-pressed="${cat.multi ? (k ? chipSet(chip).includes(k) : !chip) : k === chip}">${CHIP_ICON[k] || ""}${esc(n)}</button>`).join("");
 }
 function draw() {
   const cat = CATS[tab];
@@ -399,7 +414,14 @@ document.addEventListener("click", ev => {
   const t = ev.target.closest("button");
   if (!t) return;
   if (t.dataset.tab) { tab = t.dataset.tab; chip = ""; shown = PAGE; save(); drawTabs(); drawChips(); draw(); }
-  else if (t.dataset.chip !== undefined) { chip = t.dataset.chip; shown = PAGE; save(); drawChips(); draw(); }
+  else if (t.dataset.chip !== undefined) {
+    const k = t.dataset.chip;
+    if (CATS[tab].multi && k) { // 2026-11-06：複選，再點一次取消；「全部」清空
+      const set = chipSet(chip);
+      chip = (set.includes(k) ? set.filter(x => x !== k) : [...set, k]).join(",");
+    } else chip = k;
+    shown = PAGE; save(); drawChips(); draw();
+  }
   else if (t.id === "more") { shown += PAGE; draw(); }
   else if (t.dataset.range) {
     const seg = t.parentElement;

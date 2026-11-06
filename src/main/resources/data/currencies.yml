@@ -1494,6 +1494,18 @@ greater_essence_ruin:
   drop_level: 60
   description: "魔法 → 稀有，一定加「+% 混沌抗性」（需求等級 56 以下最好的那一階；防具、腰帶、飾品）"
   flavor: "從裂隙那一邊漏過來的。"
+perfect_essence_ruin:   # 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）
+  name: 完美混抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_phys_as_chaos
+  essence_tier: perfect
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 72
+  description: "稀有物品：隨機移除一條詞綴，再加「身體護甲：承受的擊中物理傷害有 10～15% 視為混沌傷害」"
+  flavor: "從裂隙那一邊漏過來的。"
 # 火抗星魄（2026-10-26 分階；這次之前只有一種、普通→魔法也能用）
 lesser_essence_flame:
   name: 次級火抗星魄
@@ -1533,6 +1545,18 @@ greater_essence_flame:
   drop_weight: 0
   drop_level: 60
   description: "魔法 → 稀有，一定加「+% 火焰抗性」（需求等級 60 以下最好的那一階；防具、腰帶、飾品）"
+  flavor: "燒了很久，還沒燒完。"
+perfect_essence_flame:   # 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）
+  name: 完美火抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_recoup_fire
+  essence_tier: perfect
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 72
+  description: "稀有物品：隨機移除一條詞綴，再加「腰帶：承受的 26～30% 火焰傷害補償為生命」"
   flavor: "燒了很久，還沒燒完。"
 # 冰抗星魄（2026-10-26 分階；這次之前只有一種、普通→魔法也能用）
 lesser_essence_frost:
@@ -1574,6 +1598,18 @@ greater_essence_frost:
   drop_level: 60
   description: "魔法 → 稀有，一定加「+% 冰冷抗性」（需求等級 60 以下最好的那一階；防具、腰帶、飾品）"
   flavor: "星光冷下來之後剩下的東西。"
+perfect_essence_frost:   # 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）
+  name: 完美冰抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_recoup_cold
+  essence_tier: perfect
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 72
+  description: "稀有物品：隨機移除一條詞綴，再加「頭盔：承受的 26～30% 冰冷傷害補償為生命」"
+  flavor: "星光冷下來之後剩下的東西。"
 # 電抗星魄（2026-10-26 分階；這次之前只有一種、普通→魔法也能用）
 lesser_essence_storm:
   name: 次級電抗星魄
@@ -1613,6 +1649,18 @@ greater_essence_storm:
   drop_weight: 0
   drop_level: 60
   description: "魔法 → 稀有，一定加「+% 閃電抗性」（需求等級 60 以下最好的那一階；防具、腰帶、飾品）"
+  flavor: "一道閃電被折起來放好了。"
+perfect_essence_storm:   # 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）
+  name: 完美電抗星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_recoup_lightning
+  essence_tier: perfect
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 72
+  description: "稀有物品：隨機移除一條詞綴，再加「褲子：承受的 26～30% 閃電傷害補償為生命」（原作是手套）"
   flavor: "一道閃電被折起來放好了。"
 # 屬性星魄（2026-10-26 分階；這次之前只有一種、普通→魔法也能用）
 lesser_essence_infinite:
@@ -2274,7 +2322,7 @@ perfect_essence_command:
   drop_level: 72
   description: "稀有物品：隨機移除一條詞綴，再加「權杖：增加 15～20% 光環效果」"
   flavor: "舉起來的時候，身後的影子都站直了。"
-# 腐化星魄（2026-10-26，照 PoE2 的 Essence of Hysteria；Delirium、Horror、Insanity、Abyss、Breach 要的機制我們還沒有，先不做）
+# 腐化星魄（2026-10-26，照 PoE2 的 Essence of Hysteria；Delirium、Horror、Insanity、Abyss、Breach 要的機制我們還沒有，先不做；2026-11-06 補上完美火抗、冰抗、電抗、混抗）
 essence_hysteria:
   name: 狂亂星魄
   material: GLOW_INK_SAC

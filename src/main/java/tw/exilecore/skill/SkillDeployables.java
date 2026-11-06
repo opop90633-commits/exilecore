@@ -65,6 +65,8 @@ final class SkillDeployables implements Listener {
         /** 名字上現在寫的秒數（變了才改名字）。 */
         int shownSeconds = -1;
         long nextTick;
+        /** 2026-11-06 照站長（選 2）：圖騰的間隔照小數算、零頭累積到下一次：上一次間隔沒用完的零頭（tick 的小數）。 */
+        double tickCarry;
         int ringsLeft;
         boolean armed;
         // 2026-10：圖騰的生命（替身圖騰引來的怪會打它）、特殊圖騰（替身、焚鏈、引爆）、怨燼
@@ -163,8 +165,44 @@ final class SkillDeployables implements Listener {
      * 英靈圖騰另外算（{@link #ancestorTicks}，2026-10-21）。
      */
     static long totemTicks(final double intervalSeconds, final double speedMultiplier) {
+        return Math.max(TOTEM_MIN_TICKS, Math.round(exactTicks(intervalSeconds, speedMultiplier)));
+    }
+
+    /**
+     * 2026-11-06 照站長（選 2）：圖騰的間隔照小數算、零頭累積到下一次（例如平均 5.6 tick：有時隔 6、有時隔 5），
+     * 每多 1% 速度都真的變快、面板也照小數寫（3.57 次）；這次之前四捨五入成整數 tick，速度一階一階跳（3.33 → 4 → 5 次）。
+     * 下限照舊 {@link #TOTEM_MIN_TICKS}。
+     */
+    static double exactTicks(final double intervalSeconds, final double speedMultiplier) {
         final double speed = Math.max(0.1, speedMultiplier);
-        return Math.max(TOTEM_MIN_TICKS, Math.round(intervalSeconds * 20 / speed));
+        return Math.max(TOTEM_MIN_TICKS, intervalSeconds * 20 / speed);
+    }
+
+    /** 同上：一般圖騰（含星咒圖騰、崩震圖騰）每次的間隔（小數 tick）。 */
+    static double exactTotemTicks(final SkillBuild build, final tw.exilecore.stats.StatSheet sheet, final int totemsUp) {
+        final DeploySpec spec = build.deploy();
+        final double speed = totemSpeed(build, sheet, false, totemsUp);
+        if (spec.weaponSpeed() && build.isAttack()) {
+            final double weaponAps = build.profile().effective(sheet).flat(tw.exilecore.stats.StatKeys.WEAPON_APS, build.profile().tags());
+            final double aps = (weaponAps <= 0 ? 1.0 : weaponAps) * Math.max(0.05, build.definition().attackSpeed());
+            return exactTicks(1.0 / aps, speed);
+        }
+        return exactTicks(spec.interval(), speed);
+    }
+
+    /** 同上：英靈圖騰叫英靈的間隔（小數 tick）。 */
+    static double exactAncestorTicks(final SkillBuild totem, final SkillBuild linked, final tw.exilecore.stats.StatSheet sheet) {
+        final double weaponAps = linked.profile().effective(sheet).flat(tw.exilecore.stats.StatKeys.WEAPON_APS, linked.profile().tags());
+        final double aps = (weaponAps <= 0 ? 1.0 : weaponAps) * Math.max(0.05, linked.definition().attackSpeed());
+        return exactTicks(ANCESTOR_ATTACK_TIMES / aps, totemSpeed(totem, sheet, true));
+    }
+
+    /** 同上：照小數的間隔排下一次（零頭留到下一次），回傳這次要隔幾 tick。 */
+    static long schedule(final Deployed item, final double exact) {
+        final double wanted = exact + item.tickCarry;
+        final long whole = Math.max(1, (long) Math.floor(wanted));
+        item.tickCarry = Math.max(0, wanted - whole);
+        return whole;
     }
 
     /**
@@ -1084,7 +1122,7 @@ final class SkillDeployables implements Listener {
         if (item.linked != null) {
             // 英靈圖騰：在敵人旁邊（往圖騰那邊 1.5 格）叫出英靈，用連著的錘子技能打一下
             final SkillBuild call = rotate(item.linked, item.moreLinked, item.turn++); // 2026-10-27：輪流用孔裡的錘子技能
-            item.nextTick = now + ancestorTicks(item.build, call, plugin.players().sheet(owner)); // 2026-10-21：錘子技能攻擊時間 ×1.5 ÷ 攻速
+            item.nextTick = now + schedule(item, exactAncestorTicks(item.build, call, plugin.players().sheet(owner))); // 2026-10-21：錘子技能攻擊時間 ×1.5 ÷ 攻速；2026-11-06：小數
             final org.bukkit.util.Vector back = item.feet.toVector().subtract(target.getLocation().toVector()).setY(0);
             final Location spot = target.getLocation().clone();
             if (back.lengthSquared() > 1e-4) {
@@ -1121,7 +1159,7 @@ final class SkillDeployables implements Listener {
         }
         final SkillBuild cast = rotate(item.build, item.moreCasts, item.turn + skip);
         item.turn += skip + 1;
-        item.nextTick = now + totemTicks(cast, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()));
+        item.nextTick = now + schedule(item, exactTotemTicks(cast, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()))); // 2026-11-06：小數
         item.usedFire = fired;
         final SkillBuild lineaged = plugin.skills() == null ? cast
                 : plugin.skills().supportMechanics().lineage().totemCast(owner, item.feet, cast); // 2026-10-27 照 PoE2：林樁
@@ -1161,7 +1199,7 @@ final class SkillDeployables implements Listener {
             item.nextTick = now + 5; // 沒有帶混沌持續傷害的敵人：等一下再看
             return;
         }
-        item.nextTick = now + totemTicks(item.build, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()));
+        item.nextTick = now + schedule(item, exactTotemTicks(item.build, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()))); // 2026-11-06：小數
         item.usedFire = fired;
         final SkillBuild cast = plugin.skills() == null ? item.build
                 : plugin.skills().supportMechanics().lineage().totemCast(owner, item.feet, item.build); // 林樁

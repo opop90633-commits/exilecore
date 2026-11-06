@@ -85,6 +85,10 @@ public final class KeystoneKeys {
     public static final int BLOCK_STACK_CAP = 20;
     /** FLAT %：受到的元素傷害有 x% 補償為生命（4 秒）。 */
     public static final String RECOUP_ELEMENTAL = "life.recoup_elemental";
+    /** 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：承受的火焰／冰冷／閃電傷害 x% 補償為生命（完美火抗、冰抗、電抗星魄）。 */
+    public static final String RECOUP_FIRE = "life.recoup_fire";
+    public static final String RECOUP_COLD = "life.recoup_cold";
+    public static final String RECOUP_LIGHTNING = "life.recoup_lightning";
     /** FLAT %：抵銷的物理傷害（護甲擋掉的）有 x% 補償為生命。 */
     public static final String RECOUP_PREVENTED = "life.recoup_prevented_physical";
     /** FLAT %：被偏斜的擊中受到的傷害有 x% 補償為生命。 */

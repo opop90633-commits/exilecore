@@ -73,7 +73,7 @@ class CraftingTest {
                     || type.operation() == CurrencyOperation.OMEN ? type.dropWeight() : 0, "機制的通貨怪物不掉");
         }
         // 2026-10-26 照 PoE2 0.5：19 種精髓各分次級、一般、高階（57），15 種有完美、狂亂星魄 1、我們自己的移速與能盾 2 = 75；這次之前 16
-        assertEquals(75, essences); // 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
+        assertEquals(79, essences); // 2026-11-06：＋4 顆完美精髓（混／火／冰／電抗），這次之前 75； 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
         assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆（13 種 PoE2 的＋4 種舊的）");
         assertEquals(26, omens); // 2026-10-26 照 PoE2 每種通貨分開、補上改造裝備用的星籤；這次之前 6
     }

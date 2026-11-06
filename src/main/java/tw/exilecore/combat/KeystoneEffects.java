@@ -363,6 +363,10 @@ public final class KeystoneEffects implements Listener {
             life += (result.dealt().get(DamageType.FIRE) + result.dealt().get(DamageType.COLD) + result.dealt().get(DamageType.LIGHTNING))
                     * elemental / 100.0;
         }
+        // 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：火焰、冰冷、閃電各自的補償
+        life += result.dealt().get(DamageType.FIRE) * Math.max(0, sheet.flat(KeystoneKeys.RECOUP_FIRE, Set.of())) / 100.0
+                + result.dealt().get(DamageType.COLD) * Math.max(0, sheet.flat(KeystoneKeys.RECOUP_COLD, Set.of())) / 100.0
+                + result.dealt().get(DamageType.LIGHTNING) * Math.max(0, sheet.flat(KeystoneKeys.RECOUP_LIGHTNING, Set.of())) / 100.0;
         final double prevented = Math.max(0, result.outgoing().get(DamageType.PHYSICAL) - result.dealt().get(DamageType.PHYSICAL));
         final double preventedLife = sheet.flat(KeystoneKeys.RECOUP_PREVENTED, Set.of());
         if (preventedLife > 0) {

@@ -24,15 +24,20 @@ public final class UniqueDefence {
 
     /** 受到的物理傷害有一部分視為火焰傷害；沒有這個效果回傳同一個封包。 */
     public static DamagePacket reroute(final DamagePacket incoming, final StatSheet defender) {
-        final double percent = Math.min(100, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_FIRE, Set.of()));
+        final double fire = Math.max(0, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_FIRE, Set.of()));
+        // 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：也可以視為混沌（完美混抗星魄）；兩種加起來最多 100%
+        final double chaos = Math.max(0, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_CHAOS, Set.of()));
         final double physical = incoming.get(DamageType.PHYSICAL);
-        if (percent <= 0 || physical <= 0) {
+        if (fire + chaos <= 0 || physical <= 0) {
             return incoming;
         }
+        final double scale = fire + chaos > 100 ? 100 / (fire + chaos) : 1;
         final DamagePacket copy = new DamagePacket(incoming);
-        final double moved = physical * percent / 100.0;
-        copy.set(DamageType.PHYSICAL, physical - moved);
-        copy.add(DamageType.FIRE, moved);
+        final double toFire = physical * fire * scale / 100.0;
+        final double toChaos = physical * chaos * scale / 100.0;
+        copy.set(DamageType.PHYSICAL, physical - toFire - toChaos);
+        copy.add(DamageType.FIRE, toFire);
+        copy.add(DamageType.CHAOS, toChaos);
         return copy;
     }
 

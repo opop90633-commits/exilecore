@@ -138,6 +138,25 @@ items:
   raft_slab: { name: 筏屋頂, block: BAMBOO_MOSAIC_SLAB, place: above, description: "半格，蓋屋頂、桌子" }
   raft_stairs: { name: 筏樓梯, block: BAMBOO_STAIRS, place: above, description: "上二樓" }
   raft_fence: { name: 筏欄杆, block: BAMBOO_FENCE, place: above, description: "圍在邊上，不會掉下去" }
+  # 2026-11-06 照站長「新增更多種料理跟建材」：裝潢用的建材（沒有設施效果；方塊不能跟別的重複，拆下來才分得出是哪一樣）
+  raft_half_plank: { name: 筏木板半磚, block: BAMBOO_SLAB, place: above, description: "半格的木板，做桌面、窗台、矮牆" }
+  raft_beam: { name: 竹樑柱, block: BAMBOO_BLOCK, place: above, description: "整根的竹子，做柱子、橫樑" }
+  raft_mosaic_stairs: { name: 筏地板樓梯, block: BAMBOO_MOSAIC_STAIRS, place: above, description: "跟地板同一種花紋的樓梯、斜屋頂" }
+  raft_door: { name: 筏門, block: BAMBOO_DOOR, place: above, description: "兩格高的門，右鍵開關" }
+  raft_trapdoor: { name: 筏活板門, block: BAMBOO_TRAPDOOR, place: above, description: "可以開關的活板門：窗板、櫃門、樓梯口" }
+  raft_gate: { name: 筏柵門, block: BAMBOO_FENCE_GATE, place: above, description: "接在欄杆中間的門" }
+  bleached_plank: { name: 漂白木板, block: BIRCH_PLANKS, place: above, description: "泡過海水曬白的浮木，顏色比較淺的牆" }
+  charred_plank: { name: 焦木板, block: SPRUCE_PLANKS, place: above, description: "烤過的浮木，顏色比較深的牆" }
+  canvas_carpet: { name: 帆布地毯, block: LIGHT_BLUE_CARPET, place: above, description: "鋪在地板上" }
+  shark_rug: { name: 鯊皮地毯, block: GRAY_CARPET, place: above, description: "鯊魚皮鞣過的地毯" }
+  glass_pane: { name: 星砂玻璃窗, block: GLASS_PANE, place: above, description: "星骸碎片燒成的玻璃，做窗戶" }
+  scrap_bars: { name: 廢鐵欄杆, block: IRON_BARS, place: above, description: "廢鐵打成的欄杆、窗格" }
+  sea_flag: { name: 航海旗, block: BLUE_BANNER, place: above, description: "插在筏上（也能掛在牆上）；只是好看，航行要的是船帆" }
+  prismarine_brick: { name: 海晶磚, block: PRISMARINE_BRICKS, place: above, description: "珊瑚和星骸壓成的磚" }
+  dark_prismarine: { name: 深海晶磚, block: DARK_PRISMARINE, place: above, description: "顏色更深的海晶磚" }
+  relic_brick: { name: 遺跡石磚, block: STONE_BRICKS, place: above, description: "從小島遺跡搬回來的石磚" }
+  sea_lantern: { name: 海晶燈, block: SEA_LANTERN, place: above, description: "整塊會發光（裝潢用，不算筏燈）" }
+  abyss_lantern: { name: 深海燈籠, block: SOUL_LANTERN, place: above, description: "燈籠魚的藍光（裝潢用，不算筏燈）" }
   raft_lamp: { name: 筏燈, block: LANTERN, place: above, station: lamp, description: "晚上漂流物多 5%（最多 4 盞）、晚上的魚更好釣" }   # 2026-10-23：有作用了
   raft_bed: { name: 吊床, block: WHITE_CARPET, place: above, station: bed, description: "右鍵：每天在吊床躺一下回 20 點精力" }   # 2026-10-23
   fish_trap: { name: 魚籠, block: BARREL, place: above, station: fish_trap, description: "每 20 分鐘自己抓一條魚（最多存 6 條；下線也算；一筏最多 4 個），右鍵收" }   # 2026-10-23
@@ -162,6 +181,25 @@ recipes:
   - { id: raft_slab,   item: raft_slab,   amount: 4, cost: { driftwood: 1, canvas: 1 }, level: 2, xp: 2 }
   - { id: raft_stairs, item: raft_stairs, amount: 2, cost: { driftwood: 2 }, level: 2, xp: 2 }
   - { id: raft_fence,  item: raft_fence,  amount: 4, cost: { driftwood: 1, rope: 1 }, level: 2, xp: 2 }
+  # 2026-11-06 照站長：裝潢建材（跟筏的方塊一樣不花精力）
+  - { id: raft_half_plank, item: raft_half_plank, amount: 4, cost: { driftwood: 1 }, level: 2, xp: 1 }
+  - { id: raft_beam,   item: raft_beam,   amount: 2, cost: { driftwood: 3 }, level: 2, xp: 2 }
+  - { id: raft_mosaic_stairs, item: raft_mosaic_stairs, amount: 2, cost: { driftwood: 2, rope: 1 }, level: 3, xp: 2 }
+  - { id: raft_door,   item: raft_door,   amount: 1, cost: { driftwood: 3, rope: 1 }, level: 3, xp: 3 }
+  - { id: raft_trapdoor, item: raft_trapdoor, amount: 2, cost: { driftwood: 2 }, level: 3, xp: 2 }
+  - { id: raft_gate,   item: raft_gate,   amount: 1, cost: { driftwood: 2, rope: 1 }, level: 3, xp: 2 }
+  - { id: canvas_carpet, item: canvas_carpet, amount: 2, cost: { canvas: 1 }, level: 4, xp: 1 }
+  - { id: sea_flag,    item: sea_flag,    amount: 1, cost: { canvas: 2, rope: 1 }, level: 5, xp: 3 }
+  - { id: bleached_plank, item: bleached_plank, amount: 2, cost: { driftwood: 2, fresh_water: 1 }, level: 6, xp: 2 }
+  - { id: charred_plank, item: charred_plank, amount: 2, cost: { driftwood: 3 }, level: 6, xp: 2 }
+  - { id: scrap_bars,  item: scrap_bars,  amount: 4, cost: { scrap: 2 }, level: 8, xp: 3 }
+  - { id: glass_pane,  item: glass_pane,  amount: 4, cost: { star_shard: 1, plastic: 2 }, level: 10, xp: 4 }
+  - { id: shark_rug,   item: shark_rug,   amount: 2, cost: { shark_skin: 1 }, level: 12, xp: 3 }
+  - { id: prismarine_brick, item: prismarine_brick, amount: 4, cost: { coral: 2, star_shard: 1 }, level: 20, xp: 5 }
+  - { id: relic_brick, item: relic_brick, amount: 4, cost: { relic: 1 }, level: 25, xp: 5 }
+  - { id: sea_lantern, item: sea_lantern, amount: 1, cost: { sponge: 1, star_shard: 2 }, level: 25, xp: 5 }
+  - { id: abyss_lantern, item: abyss_lantern, amount: 1, cost: { lantern_fish: 1, scrap: 1 }, level: 25, xp: 4 }
+  - { id: dark_prismarine, item: dark_prismarine, amount: 4, cost: { coral: 2, sponge: 1 }, level: 30, xp: 6 }
   - { id: raft_net,    item: raft_net,    amount: 1, cost: { canvas: 2, rope: 3, driftwood: 2 }, level: 3, stamina: 2, xp: 10 }
   - { id: raft_lamp,   item: raft_lamp,   amount: 1, cost: { scrap: 1, plastic: 1, rope: 1 }, level: 5, xp: 4 }
   - { id: hook_iron,   hook: 1, cost: { scrap: 5, rope: 3, driftwood: 2 }, level: 8, stamina: 3, xp: 30 }
@@ -187,6 +225,21 @@ recipes:
   - { id: food_steak,    food: shark_steak,     station: grill,   cost: { shark_meat: 2, star_algae: 1 }, level: 12, stamina: 1, xp: 12, research: shark }
   - { id: food_pie,      food: sunberry_pie,    station: kitchen, cost: { sunberry: 4, taro: 1, fresh_water: 1 }, level: 18, stamina: 1, xp: 14, research: pie }
   - { id: food_sashimi,  food: lantern_sashimi, station: kitchen, cost: { lantern_fish: 2, star_algae: 1 }, level: 25, stamina: 1, xp: 16, research: deep }
+  # 2026-11-06 照站長「新增更多種料理」：用上圖鑑的新魚（藍紋鯖、珊瑚蝶魚、月影鰻、霧幽魚、雷鰩、星鯉、夜光水母、淵口鮟鱇、墜星鱒、古腔棘魚）
+  - { id: food_algae_chips, food: algae_chips,     station: grill,   cost: { star_algae: 2 }, level: 6, stamina: 1, xp: 4, research: cooking }
+  - { id: food_baked_taro,  food: baked_taro,      station: grill,   cost: { taro: 2 }, level: 8, stamina: 1, xp: 6, research: cooking }
+  - { id: food_mackerel,    food: salted_mackerel, station: grill,   cost: { blue_mackerel: 2, driftwood: 1 }, level: 8, stamina: 1, xp: 8, research: cooking }
+  - { id: food_juice,       food: sunberry_juice,  station: kitchen, cost: { sunberry: 2, fresh_water: 2 }, level: 16, stamina: 1, xp: 10, research: pie }
+  - { id: food_coral_soup,  food: coral_soup,      station: kitchen, cost: { coral_fish: 2, star_algae: 1, fresh_water: 1 }, level: 16, stamina: 1, xp: 12, research: stew }
+  - { id: food_eel,         food: kabayaki_eel,    station: grill,   cost: { moon_eel: 2, sunberry: 1 }, level: 22, stamina: 1, xp: 14, research: cooking }
+  - { id: food_fog_broth,   food: fog_broth,       station: kitchen, cost: { fog_ghost: 2, taro: 1, fresh_water: 2 }, level: 30, stamina: 1, xp: 18, research: deep }
+  - { id: food_fin_soup,    food: shark_fin_soup,  station: kitchen, cost: { shark_meat: 2, shark_tooth: 1, fresh_water: 2 }, level: 30, stamina: 1, xp: 18, research: shark }
+  - { id: food_ray,         food: seared_ray,      station: grill,   cost: { storm_ray: 2, star_shard: 1 }, level: 35, stamina: 1, xp: 20, research: deep }
+  - { id: food_koi,         food: koi_dessert,     station: kitchen, cost: { star_koi: 2, sunberry: 2, fresh_water: 1 }, level: 40, stamina: 2, xp: 26, research: feast }
+  - { id: food_jelly,       food: jelly_salad,     station: kitchen, cost: { glow_jelly: 2, star_algae: 2 }, level: 45, stamina: 1, xp: 24, research: deep }
+  - { id: food_hotpot,      food: angler_hotpot,   station: kitchen, cost: { abyss_angler: 2, taro: 2, shark_meat: 1, fresh_water: 2 }, level: 50, stamina: 2, xp: 32, research: feast }
+  - { id: food_trout,       food: seared_trout,    station: grill,   cost: { starfall_trout: 2, star_shard: 2, sunberry: 1 }, level: 60, stamina: 2, xp: 36, research: feast }
+  - { id: food_banquet,     food: ancient_banquet, station: kitchen, cost: { coelacanth: 1, abyss_pearl: 1, star_koi: 1, sunberry: 2, fresh_water: 2 }, level: 70, stamina: 3, xp: 60, research: ancient_cuisine }
   - { id: food_feast,    food: star_feast,      station: kitchen, cost: { abyss_pearl: 1, sunberry: 3, lantern_fish: 1, taro: 2, fresh_water: 2 }, level: 40, stamina: 2, xp: 40, research: feast }
   # 航行（研究「航海」）
   - { id: helm,         item: helm,         cost: { driftwood: 8, scrap: 4, canvas: 2 }, level: 5, stamina: 2, xp: 20, research: navigation }
@@ -209,6 +262,7 @@ research:
   # 2026-10-23
   trapping: { name: 設籠, level: 15, needs: { rope: 4, silver_fish: 2 }, description: "魚會自己游進去的籠子" }
   glasswork: { name: 星砂煉琉, level: 35, needs: { star_shard: 3, coral: 2 }, description: "星骸碎片燒熔之後，像露水一樣透" }
+  ancient_cuisine: { name: 古法料理, level: 70, needs: { coelacanth: 1, abyss_pearl: 1 }, description: "比星骸還老的魚，要用比星骸還老的做法" }   # 2026-11-06
   shark_king: { name: 鯊王的氣味, level: 50, needs: { shark_tooth: 3, shark_meat: 3 }, description: "牠們的王，聞到同族的血會浮上來" }
 
 # 料理：吃了 minutes 分鐘的加成（同時只有一種，吃新的蓋掉舊的；跟藥劑、光環分開算），另外回 stamina 點精力
@@ -266,6 +320,116 @@ foods:
       - { stat: damage, type: MORE, value: 10 }
       - { stat: drop.quantity, type: INCREASED, value: 15 }
       - { stat: drop.rarity, type: INCREASED, value: 20 }
+
+  # 2026-11-06 照站長「新增更多種料理」：一次只能有一種料理（吃新的蓋掉舊的），所以每種偏一個方向
+  algae_chips:
+    name: 星藻脆片
+    icon: DRIED_KELP
+    minutes: 20
+    stamina: 8
+    stats: [ { stat: life.regen_percent, value: 0.5 } ]
+  baked_taro:
+    name: 烤海芋
+    icon: BAKED_POTATO
+    minutes: 30
+    stamina: 12
+    stats: [ { stat: armour, type: INCREASED, value: 20 } ]
+  salted_mackerel:
+    name: 鹽烤藍紋鯖
+    icon: COOKED_SALMON
+    minutes: 30
+    stamina: 12
+    stats:
+      - { stat: accuracy, type: INCREASED, value: 20 }
+      - { stat: attack.speed, type: INCREASED, value: 5 }
+  sunberry_juice:
+    name: 日光莓汁
+    icon: HONEY_BOTTLE
+    minutes: 30
+    stamina: 10
+    stats:
+      - { stat: movement.speed, type: INCREASED, value: 6 }
+      - { stat: skill.cooldown, type: INCREASED, value: -8 }
+  coral_soup:
+    name: 珊瑚蝶魚湯
+    icon: MUSHROOM_STEW
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: mana.regen, type: INCREASED, value: 30 }
+      - { stat: mana.max, type: INCREASED, value: 10 }
+  kabayaki_eel:
+    name: 蒲燒月影鰻
+    icon: COOKED_COD
+    minutes: 45
+    stamina: 15
+    stats: [ { stat: crit.chance, type: INCREASED, value: 25 } ]
+  fog_broth:
+    name: 霧幽魚清湯
+    icon: SUSPICIOUS_STEW
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: evasion, type: INCREASED, value: 30 }
+      - { stat: movement.speed, type: INCREASED, value: 5 }
+  shark_fin_soup:
+    name: 鯊鰭湯
+    icon: RABBIT_STEW
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: life.max, type: INCREASED, value: 10 }
+      - { stat: resist.chaos, value: 15 }
+  seared_ray:
+    name: 炙烤雷鰩
+    icon: COOKED_MUTTON
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: damage, type: INCREASED, value: 20, tags: [lightning] }
+      - { stat: resist.lightning, value: 20 }
+  koi_dessert:
+    name: 星鯉甜湯
+    icon: BEETROOT_SOUP
+    minutes: 60
+    stamina: 20
+    stats:
+      - { stat: drop.rarity, type: INCREASED, value: 20 }
+      - { stat: gold.find, type: INCREASED, value: 15 }
+  jelly_salad:
+    name: 夜光水母涼拌
+    icon: GLOW_BERRIES
+    minutes: 45
+    stamina: 15
+    stats:
+      - { stat: es.max, type: INCREASED, value: 20 }
+      - { stat: es.recharge, type: INCREASED, value: 20 }
+  angler_hotpot:
+    name: 鮟鱇火鍋
+    icon: CAULDRON
+    minutes: 60
+    stamina: 25
+    stats:
+      - { stat: life.max, type: INCREASED, value: 20 }
+      - { stat: armour, type: INCREASED, value: 30 }
+      - { stat: stun.threshold, type: INCREASED, value: 20 }
+  seared_trout:
+    name: 炙燒墜星鱒
+    icon: COOKED_PORKCHOP
+    minutes: 60
+    stamina: 20
+    stats:
+      - { stat: crit.chance, type: INCREASED, value: 30 }
+      - { stat: crit.bonus, type: INCREASED, value: 20 }
+  ancient_banquet:
+    name: 古魚御膳
+    icon: GOLDEN_CARROT
+    minutes: 90
+    stamina: 30
+    stats:
+      - { stat: damage, type: MORE, value: 12 }
+      - { stat: drop.quantity, type: INCREASED, value: 15 }
+      - { stat: drop.rarity, type: INCREASED, value: 25 }
 
 # 作物：planter sea（海水盆）／soil（菜圃）；water 種的時候用掉幾份淡水；sprinkler 旁邊要有灑水器；
 #   harvest 收成給什麼、seeds_back 還給幾顆種子；sprout／ripe 長大前後的樣子
@@ -520,6 +684,11 @@ orders:
     - { id: coral, kind: material, need: coral, amount: [4, 6], level: 25, xp: 90, gold: 420 }
     - { id: relic, kind: material, need: relic, amount: [2, 4], level: 30, xp: 110, gold: 520 }
     - { id: feast, kind: food, need: star_feast, amount: [1, 1], level: 40, xp: 220, gold: 1200 }
+    # 2026-11-06：新料理的委託
+    - { id: mackerel, kind: food, need: salted_mackerel, amount: [2, 4], level: 8, xp: 55, gold: 280 }
+    - { id: coral_soup, kind: food, need: coral_soup, amount: [2, 3], level: 16, xp: 85, gold: 420 }
+    - { id: fin_soup, kind: food, need: shark_fin_soup, amount: [1, 2], level: 30, xp: 120, gold: 600 }
+    - { id: hotpot, kind: food, need: angler_hotpot, amount: [1, 1], level: 50, xp: 240, gold: 1300 }
     - { id: pearl, kind: material, need: abyss_pearl, amount: [1, 2], level: 45, xp: 200, gold: 1000 }
 
 # 魚圖鑑：第一次釣到一種魚的生活經驗（圖鑑的紀錄記在帳號裡）；全部釣過 → 稱號 angler

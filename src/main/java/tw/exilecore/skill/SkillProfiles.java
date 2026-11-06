@@ -73,6 +73,9 @@ public final class SkillProfiles {
         if (tags.contains(Tags.SPELL) && !tags.contains(tw.exilecore.stats.TreeConditions.CHANNELLING)) {
             tags.add(Tags.NON_CHANNELLING); // 2026-11-01 照 PoE2：非引導法術（獻祭之心）
         }
+        if (definition.summon() != null && !definition.summon().permanent()) {
+            tags.add(Tags.TEMPORARY_MINION); // 2026-11-06 照站長：臨時召喚物技能（有持續時間；消耗軍團、眾所周知）
+        }
         return new SkillProfile(definition.id(), tags, definition.effectiveness().at(level), min, max, definition.conversion(), local);
     }
 

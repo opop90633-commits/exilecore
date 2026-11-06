@@ -57,7 +57,9 @@ class StonefistTest {
             "unveiled_d_ailment_effect", "unveiled_d_gloves_extra_frenzy",
             // 2026-11-03 照站長＋PoB2：補的手套→護腿褻瀆詞綴
             "unveiled_d_leggings_immobilise", "unveiled_d_leggings_cast_full_life", "unveiled_d_leggings_incision",
-            "unveiled_d_leggings_arcane_surge_crit");
+            "unveiled_d_leggings_arcane_surge_crit",
+            // 2026-11-06 照站長：完美電抗精髓（原作手套）放護腿，石拳那邊沒有對應的
+            "ess_recoup_lightning");
 
     static ItemRepository repository;
 

@@ -11419,3 +11419,37 @@ item tide_pearl_heart
   .....bccccb.....
   ......bccb......
   .......bb.......
+
+# ---- 2026-10 自動產生（tools/gen_unique_art.py）----（2026-11-06）
+
+item warrior_soul_blood
+  a=15070a
+  b=36151a
+  c=5e212c
+  d=973243
+  e=d44d65
+  f=ff7c92
+  g=fecdd5
+  h=7c1124
+  i=d81f3f
+  j=ffb8c4
+  Z=ff183f
+  Y=ffb2bf
+  X=f32424
+  W=fbb6b6
+  ................
+  ......aaaa......
+  ....aabccbaa....
+  ...abcdeedcba...
+  ..abcdefgfedba..
+  ..abdefWjgfdba..
+  .abcdefXXhfedba.
+  .abcdehijihedba.
+  .abcdehiiihedba.
+  .abcddehhhedcba.
+  ..abcddeeedcba..
+  ..abbccdddccba..
+  ...abbcccccba...
+  ....aabbbbaa....
+  ......aaaa......
+  ................

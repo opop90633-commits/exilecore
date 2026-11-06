@@ -20,6 +20,8 @@ public final class UniqueStats {
     public static final String TAKEN_ATTACK_PHYSICAL = "taken.attack_physical";
     /** 受到的物理傷害有 x% 視為火焰傷害（焚衣）。 */
     public static final String TAKEN_PHYSICAL_AS_FIRE = "taken.physical_as_fire";
+    /** 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：承受的擊中物理傷害有 x% 視為混沌傷害（完美混抗星魄，PoE2 Perfect Essence of Ruin）。 */
+    public static final String TAKEN_PHYSICAL_AS_CHAOS = "taken.physical_as_chaos";
     /** 防禦時護甲多 x%（鐵律腰帶：防禦時護甲視為 200% = 100）。 */
     public static final String ARMOUR_DEFEND = "armour.defend";
     /** 物理傷害減免上限 x%（鐵律腰帶）。 */
@@ -227,6 +229,14 @@ public final class UniqueStats {
     public static final String FLASK_MAELSTROM = "flask.local.maelstrom";
     /** 2026-11-04（融解漩渦）：INCREASED：這瓶的效果持續時間（回復量不變，攤得更久）。 */
     public static final String FLASK_LOCAL_DURATION = "flask.local.duration";
+    /** 2026-11-06 照站長（poe2db Blood of the Warrior）：FLAT 1：未保留生命已滿時不移除這瓶的效果（FlaskService）。 */
+    public static final String FLASK_LOCAL_KEEP_AT_FULL = "flask.local.keep_at_full";
+    /** 2026-11-06 照站長（poe2db Blood of the Warrior）：這瓶的效果期間（回復還在的時候）才有的效果：受到的傷害 x% 補償為生命（life.recoup）。 */
+    public static final String FLASK_DURING_RECOUP = "flask.during.life_recoup";
+    /** 同上：效果期間被敵人擊中時獲得 x 怒氣（rage.when_hit）。 */
+    public static final String FLASK_DURING_RAGE_WHEN_HIT = "flask.during.rage_when_hit";
+    /** 同上：FLAT 1：效果期間怒氣不會自己流失（rage.decay 減少 100%）。 */
+    public static final String FLASK_DURING_NO_RAGE_LOSS = "flask.during.no_rage_loss";
     /** 2026-11-04（不敗亡者，PoE2 Morior Invictus）：FLAT n：這件有 n 種隨機插槽詞綴（UniquePicks.socketMods），每個嵌著東西的孔各給一份。本地的。 */
     public static final String LOCAL_SOCKET_MODS = "local.socket_mods";
     /** 2026-11-04（澤佛伊的創世紀）：INCREASED：已腐化的技能寶石的消耗效率（SkillService 建技能時加；寫 @anyflask＝任何藥劑效果期間）。 */

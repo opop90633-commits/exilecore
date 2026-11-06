@@ -928,7 +928,7 @@ public final class MetaGems {
             if (build.deploy() == null || build.deploy().interval() <= 0) {
                 return 0;
             }
-            total += SkillDeployables.totemTicks(build, sheet, build.totems());
+            total += SkillDeployables.exactTotemTicks(build, sheet, build.totems()); // 2026-11-06：小數
         }
         return builds.isEmpty() ? 0 : total / builds.size();
     }

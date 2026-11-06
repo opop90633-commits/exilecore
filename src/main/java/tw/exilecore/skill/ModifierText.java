@@ -314,8 +314,10 @@ public final class ModifierText {
             case StatKeys.FLAG_SPELL_TOTEM -> "法術改由圖騰施放（放下圖騰，它每隔一段時間對附近的敵人放一次）";
             case StatKeys.FLAG_TRAP -> "法術改成丟出去的陷阱（敵人靠近才觸發）";
             case StatKeys.SKILL_TOTEMS -> "同時最多多 " + number(value) + " 個圖騰";
-            case StatKeys.META_ENERGY_GAIN -> "主要寶石的能量獲得增加 " + number(value) + "%"; // 2026-10-25
-            case StatKeys.META_ENERGY_MAX -> "主要寶石的能量上限增加 " + number(value) + "%";
+            // 2026-11-06 照站長截圖（湧能 II 寫 45%、這行卻顯示 0.5%）：INCREASED 存的是小數（0.45），要 ×100；
+            //   這次之前直接印 value，45% 變成「0.5%」、擴能的 80% 變成「0.8%」
+            case StatKeys.META_ENERGY_GAIN -> "主要寶石的能量獲得增加 " + (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? percent : number(value)) + "%"; // 2026-10-25
+            case StatKeys.META_ENERGY_MAX -> "主要寶石的能量上限增加 " + (modifier.type() == tw.exilecore.stats.ModType.INCREASED ? percent : number(value)) + "%";
             case StatKeys.META_ENERGY_REFUND -> "觸發時 " + number(value) + "% 機率退還一半能量";
             case StatKeys.SKILL_MINIONS -> "同時最多多 " + number(value) + " 隻召喚物";
             case StatKeys.AURA_EFFECT -> scaled(modifier, "光環效果", percent);
@@ -351,7 +353,10 @@ public final class ModifierText {
             case StatKeys.FLAG_ALWAYS_HIT -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_DAZED)
                     ? "被眩暈的敵人閃避不了這個技能的擊中" : "攻擊必定命中"; // 2026-11-01 照 PoE2 Dazzle（穩擊）
             case StatKeys.FLAG_CULLING -> "擊中後敵人生命低於一定比例直接倒下（普通 35%、魔法 20%、稀有 10%、傳奇與 Boss 5%）";
-            case StatKeys.LIFE_REGEN -> "每秒回復 " + number(value) + " 生命";
+            // 2026-11-06：INCREASED 的是「生命再生速度」（PoE2 Life Regeneration Rate；腐化、珠寶、揭露、昇華、傳奇都有）；
+            //   這次之前一律寫成「每秒回復 0.5 生命」
+            case StatKeys.LIFE_REGEN -> modifier.type() == tw.exilecore.stats.ModType.INCREASED ? scaled(modifier, "生命再生速度", percent)
+                    : "每秒回復 " + number(value) + " 生命";
             case StatKeys.ACCURACY -> scaled(modifier, "命中", percent);
             case StatKeys.RESIST_FIRE -> plus(value) + "% 火焰抗性";
             case StatKeys.RESIST_COLD -> plus(value) + "% 冰冷抗性";

@@ -89,13 +89,20 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
 
     /** 從修飾器算（測試、說明用）。 */
     public static FlaskMods of(final List<Modifier> modifiers) {
+        double recoveryMore = 1; // 2026-11-06 照站長（poe2db Blood of the Warrior）：「恢復量更少 90%」（MORE）另外乘
         double lowMore = 1; // 2026-10-26 照 PoE2：低生命／低魔力的藥劑前綴是「更多」回復（MORE，各自相乘）；這次之前寫成 INCREASED 但也是另外乘
         double recovery = 0, recoveryLow = 0, speed = 0, instant = 0, minionHeal = 0, gained = 0, used = 0, max = 0, onKill = 0, perMinute = 0,
                 costOther = 0, duration = 0, guard = 0, life = 0, mana = 0;
         for (final Modifier m : modifiers) {
             final double v = m.value();
             switch (m.stat()) {
-                case StatKeys.FLASK_LOCAL_RECOVERY -> recovery += pct(m);
+                case StatKeys.FLASK_LOCAL_RECOVERY -> {
+                    if (m.type() == ModType.MORE) {
+                        recoveryMore *= Math.max(0, 1 + v); // 2026-11-06
+                    } else {
+                        recovery += pct(m);
+                    }
+                }
                 case StatKeys.FLASK_LOCAL_RECOVERY_LOW -> {
                     if (m.type() == ModType.MORE) {
                         lowMore *= Math.max(0, 1 + v);
@@ -120,7 +127,7 @@ public record FlaskMods(double recovery, double recoveryLow, double speed, doubl
                 }
             }
         }
-        return new FlaskMods(Math.max(0, 1 + recovery), Math.max(0, (1 + recoveryLow) * lowMore), Math.max(0.1, 1 + speed),
+        return new FlaskMods(Math.max(0, (1 + recovery) * recoveryMore), Math.max(0, (1 + recoveryLow) * lowMore), Math.max(0.1, 1 + speed),
                 Math.max(0, Math.min(1, instant / 100.0)), Math.max(0, Math.min(1, minionHeal / 100.0)),
                 Math.max(0, 1 + gained), Math.max(0, 1 + used), Math.max(0.1, 1 + max), Math.max(0, Math.min(1, onKill / 100.0)),
                 Math.max(0, perMinute), Math.max(0, Math.min(1, costOther / 100.0)), Math.max(0.1, 1 + duration),

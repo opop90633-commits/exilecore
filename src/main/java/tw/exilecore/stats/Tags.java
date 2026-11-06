@@ -13,6 +13,12 @@ public final class Tags {
      * 只對非引導法術有效的修飾器寫 tags: [spell, non_channelling]。
      */
     public static final String NON_CHANNELLING = "non_channelling";
+    /**
+     * 2026-11-06 照站長（消耗軍團、眾所周知「臨時召喚物技能 +2 召喚物數量上限」）：叫出有持續時間的召喚物的技能
+     * （喚屍、骨構體、蟲噬群、召喚焚魂、幻身…；summon.duration &gt; 0）——情境標籤（SkillProfiles 加，寶石上看不到），
+     * 只對臨時召喚物技能有效的修飾器寫 tags: [temporary_minion]。這次之前那兩個天賦沒有標籤，永久的灰狼隨、獵狼、野獸馴化也吃到。
+     */
+    public static final String TEMPORARY_MINION = "temporary_minion";
     public static final String MELEE = "melee";
     public static final String PROJECTILE = "projectile";
     public static final String AREA = "area";

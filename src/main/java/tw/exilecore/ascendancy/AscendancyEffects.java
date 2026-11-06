@@ -663,6 +663,10 @@ public final class AscendancyEffects implements Listener {
         final double share = dealt.total() <= 0 ? 0 : elemental / dealt.total();
         double life = taken * Math.max(0, Math.min(100, sheet.flat(StatKeys.LIFE_RECOUP, none))) / 100.0;
         life += elemental * Math.max(0, sheet.flat(tw.exilecore.stats.KeystoneKeys.RECOUP_ELEMENTAL, none)) / 100.0;
+        // 2026-11-06：火焰、冰冷、閃電各自的補償（完美火抗、冰抗、電抗星魄）
+        life += dealt.get(DamageType.FIRE) * Math.max(0, sheet.flat(tw.exilecore.stats.KeystoneKeys.RECOUP_FIRE, none)) / 100.0
+                + dealt.get(DamageType.COLD) * Math.max(0, sheet.flat(tw.exilecore.stats.KeystoneKeys.RECOUP_COLD, none)) / 100.0
+                + dealt.get(DamageType.LIGHTNING) * Math.max(0, sheet.flat(tw.exilecore.stats.KeystoneKeys.RECOUP_LIGHTNING, none)) / 100.0;
         if (life > 0 && !state.ruined(now())) {
             state.recoup().add(tw.exilecore.character.Recoup.LIFE, life, lifeRate);
         }

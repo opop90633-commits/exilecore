@@ -9702,6 +9702,37 @@ lavian_spring:        # 2026-10-30 照 PoE2 0.3 的「Lavianga's Spirits」（po
       stats:
         - { stat: flask.local.always, type: FLAT, value: 1 }
 
+warrior_soul_blood:        # 2026-11-06 照站長：PoE2 0.5「Blood of the Warrior」（poe2db.tw/tw/Blood_of_the_Warrior；原作有、我們以前沒有的），要改名
+  name: 戰魄之血
+  base: starlit_life_flask        # 原作基底 Gargantuan Life Flask（5 秒內恢復 710 生命，跟星輝生命藥劑一樣）
+  drop_level: 40
+  sources: [map_boss]   # 藥劑不進商人賭博（跟拉薇安之泉一樣）
+  rarity: uncommon
+  flavour:
+    - "「傷口越多，血就燒得越旺。」"
+  mods:
+    - text: "恢復量更少 90%"
+      stats:
+        - { stat: flask.local.recovery, type: MORE, value: -90 }
+    - text: "未保留生命已滿時不移除效果"
+      stats:
+        - { stat: flask.local.keep_at_full, type: FLAT, value: 1 }
+    - text: "效果期間，受到的傷害 {value}% 補償為生命"
+      value: [15, 30]
+      stats:
+        - { stat: flask.during.life_recoup, type: FLAT, value: "{value}" }
+    - text: "效果期間被敵人擊中時，獲得 {value} 怒氣"
+      value: [3, 5]
+      stats:
+        - { stat: flask.during.rage_when_hit, type: FLAT, value: "{value}" }
+    - text: "效果期間怒氣不會自己流失"
+      stats:
+        - { stat: flask.during.no_rage_loss, type: FLAT, value: 1 }
+    - text: "增加 {value}% 持續時間"
+      value: [25, 50]
+      stats:
+        - { stat: flask.local.duration, type: INCREASED, value: "{value}" }
+
 # =====================================================================================================
 # 2026-11-04 照站長：三隻事件 Boss（maps.yml 的 event_bosses）的專屬傳奇，每一件各自 1%（drops.unique_chance）。
 #   審判者・衡（ultimatum）＝ poe2db「The Trialmaster 傳奇」；迷霧之主・無面（fog_trial）＝「Kosis, The Revelation」與「譫妄異域」的傳奇；

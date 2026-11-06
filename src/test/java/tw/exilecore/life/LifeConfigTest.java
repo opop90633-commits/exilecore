@@ -51,7 +51,7 @@ class LifeConfigTest {
             assertEquals(item, config.itemByBlock(item.block()));
         }
         // 第二階段：料理、研究、作物、釣魚、鯊魚
-        assertEquals(7, config.foods().size());
+        assertEquals(21, config.foods().size()); // 2026-11-06：＋14 種料理（新魚、作物）；這次之前 7
         for (final LifeConfig.Food food : config.foods().values()) {
             assertTrue(!food.stats().isEmpty(), food.id());
         }

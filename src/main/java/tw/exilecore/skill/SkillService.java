@@ -4753,7 +4753,7 @@ public final class SkillService {
             if (totem.deploy() == null || totem.deploy().interval() <= 0) {
                 continue;
             }
-            final double ticks = SkillDeployables.totemTicks(totem, sheet, totem.totems()); // 2026-10-26：含品質的每根圖騰施法速度（照滿圖騰算）
+            final double ticks = SkillDeployables.exactTotemTicks(totem, sheet, totem.totems()); // 2026-10-26：含品質的每根圖騰施法速度（照滿圖騰算）；2026-11-06：小數
             final double perTotem = 20.0 / ticks;
             final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, totem.profile());
             final double c = DamageCalculator.critChance(sheet, totem.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
@@ -4788,7 +4788,7 @@ public final class SkillService {
 
     /** 一根英靈圖騰每秒叫幾次英靈（2026-10-21，跟 {@link SkillDeployables#ancestorTicks} 一樣：錘子技能攻擊時間 ×1.5 ÷ 攻速）。 */
     static double ancestorCallsPerSecond(final SkillBuild totem, final SkillBuild linked, final StatSheet sheet) {
-        return 20.0 / SkillDeployables.ancestorTicks(totem, linked, sheet);
+        return 20.0 / SkillDeployables.exactAncestorTicks(totem, linked, sheet); // 2026-11-06：小數
     }
 
     /** 2026-10-18：同時立著幾根圖騰：上限與「持續時間 ÷ 放一根要多久（施放間隔與冷卻較長的）」比較小的那個，至少 1。 */
@@ -6856,8 +6856,8 @@ public final class SkillService {
                 if (deploy.interval() > 0) {
                     final boolean linked = SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED);
                     final SkillBuild ancestor = linked && linkedMace(state, sheet, definition) instanceof SkillBuild found ? found : null;
-                    final double rate = ancestor != null ? 20.0 / SkillDeployables.ancestorTicks(build, ancestor, sheet)
-                            : 20.0 / SkillDeployables.totemTicks(build, sheet, build.totems()); // 2026-10-26：崩震圖騰照武器攻速的一半
+                    final double rate = ancestor != null ? 20.0 / SkillDeployables.exactAncestorTicks(build, ancestor, sheet)
+                            : 20.0 / SkillDeployables.exactTotemTicks(build, sheet, build.totems()); // 2026-10-26：崩震圖騰照武器攻速的一半；2026-11-06：小數
                     lines.add(String.format(Locale.ROOT, "<gray>每個圖騰每秒 <white>%.2f<gray> 次（滿 %d 個合計 <white>%.2f<gray> 次）%s",
                             rate, build.totems(), build.totems() * rate,
                             linked ? "　<dark_gray>（" + (ancestor == null ? "孔裡沒有放能用的錘子技能" : ItemRenderer.escape(ancestor.definition().name())
@@ -7636,7 +7636,7 @@ public final class SkillService {
         if (StatKeys.flag(local, StatKeys.FLAG_TOTEM_TAUNT) || StatKeys.flag(local, StatKeys.FLAG_SEARING_BOND)) {
             return 0;
         }
-        return 20.0 / SkillDeployables.totemTicks(build, sheet, build.totems()); // 2026-10-26：崩震圖騰照武器攻速的一半
+        return 20.0 / SkillDeployables.exactTotemTicks(build, sheet, build.totems()); // 2026-10-26：崩震圖騰照武器攻速的一半；2026-11-06：小數
     }
 
     /** 圖騰、陷阱、鐘的說明。 */

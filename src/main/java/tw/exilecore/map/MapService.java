@@ -718,7 +718,9 @@ public final class MapService {
         instance.setCorruptedArea(true); // 2026-11-02 照 PoE2 腐化怪物：稀有怪各多一條腐化詞綴（MapSpawner）
         final double more = 1 + instance.atlas().increased("atlas.corrupt.bonus");
         instance.twist().monsterPower += 0.08 * corruption.monsterLevel();
-        instance.twist().packSize += corruption.pack() / 100.0 * more;
+        // 2026-11-06 照站長：怪物群大小是百分比點數（MapSpawner 再 ÷100，血路也是直接 +50），所以不除 100；
+        //   這次之前 ÷100，設定的 30% 只加到 0.3%
+        instance.twist().packSize += corruption.pack() * more;
         instance.twist().quantity += corruption.quantity() / 100.0 * more; // 2026-10-27 照 PoE2 出貨是 0（這次之前 20%）
         instance.twist().rarity += corruption.monsterRarity() / 100.0 * more; // 2026-10-27：路上的怪改加稀有度 40%（取代數量 20%）
         // 2026-10-27 照 PoE2：腐化區的「物品稀有度」只加 Boss 的稀有度；這次之前加進 bossLoot（Boss 的數量和稀有度都加）

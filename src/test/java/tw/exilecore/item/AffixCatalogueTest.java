@@ -119,6 +119,9 @@ class AffixCatalogueTest {
                 tw.exilecore.item.unique.UniqueStats.SPELL_DAMAGE_PER_100_LIFE, tw.exilecore.stats.AttributeScalingKeys.SPELL_DAMAGE_PER_100_MANA,
                 tw.exilecore.stats.KeystoneKeys.LIFE_COST_SPELL_DAMAGE, tw.exilecore.stats.KeystoneOriginKeys.EXTRA_FISSURE_CHANCE,
                 tw.exilecore.ascendancy.AscKeys.TAKEN_AS + "physical.lightning")); // 2026-11-03：舉盾時物理視為閃電（AscendancyEffects.reroute）
+        // 2026-11-06 照站長＋poe2db：完美火／冰／電抗精髓的分屬性回復（KeystoneEffects 讀）、完美混抗精髓的物理轉混沌承受（UniqueDefence.reroute 讀）
+        stats.addAll(List.of(tw.exilecore.stats.KeystoneKeys.RECOUP_FIRE, tw.exilecore.stats.KeystoneKeys.RECOUP_COLD,
+                tw.exilecore.stats.KeystoneKeys.RECOUP_LIGHTNING, tw.exilecore.item.unique.UniqueStats.TAKEN_PHYSICAL_AS_CHAOS));
         tags = constants(Tags.class);
         // 2026-10-30：天賦樹也用的標籤（暴擊造成的、對完全破甲、強化攻擊、祭品、觸發、招架、夥伴、危害、旗幟、植物）
         tags.addAll(List.of("crit_hit", tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR, "empowered", "offering", "triggered", "parry",
