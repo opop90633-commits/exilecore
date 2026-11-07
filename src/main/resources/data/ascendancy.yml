@@ -1082,7 +1082,7 @@ ascendancies:
         lines:
           - 更少 50% 持續增益的保留
         stats:
-          - { stat: aura.reservation, type: INCREASED, value: -100, tags: [persistent] }
+          - { stat: aura.reservation, type: MORE, value: -50, tags: [persistent, buff] }   # 2026-11-08 照站長「照原作改」（PoB2：Persistent Buffs have 50% less Reservation，要同時是 Persistent 與 Buff；更少 50% 另外乘）：精魂召喚（骷髏、附魂、狼、夥伴，不是增益）吃不到；這次之前寫成保留效率 +100%、只看 persistent，召喚物也減半
       presence_area:
         name: 存在範圍          # Presence Area
         requires: solid_plan

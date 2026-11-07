@@ -77,7 +77,7 @@ public final class StatLines {
         put(StatKeys.FLASK_MANA_RECOVERY, "魔力藥劑回復", INCREASED, false);
         put(StatKeys.SKILL_AREA, "範圍效果", SCALED, true);
         put(StatKeys.AURA_EFFECT, "光環效果", SCALED, false);
-        put(StatKeys.AURA_RESERVATION, "光環的魔力保留", INCREASED, true); // 2026-10-26：可以加標籤（元技能 meta、常駐 persistent；PoE2 祈願者、戰術家）
+        put(StatKeys.AURA_RESERVATION, "光環的魔力保留", SCALED, true); // 2026-10-26：可以加標籤（元技能 meta、常駐 persistent；PoE2 祈願者、戰術家） // 2026-11-08：也可以寫 MORE（萬全之策照 PoE2 是更少 50%，SkillBuild 本來就讀 MORE）；這次之前只能 INCREASED
         put(StatKeys.TOTEM_LIFE, "圖騰生命", INCREASED, false);
         put(StatKeys.SPIRIT_MAX, "最大精魂", FLAT_OR_INCREASED, false); // 2026-10：昇華改成 +x 最大精魂（固定值）
         // 2026-10-26 照 PoE2：殘骸撿取距離（星焰術士）、元素湧動（林嵐獵姬）
@@ -217,6 +217,7 @@ public final class StatLines {
         TAG_NAMES.put(Tags.HERALD, "捷光環");
         TAG_NAMES.put(Tags.WARCRY, "戰吼");
         TAG_NAMES.put(Tags.PERSISTENT, "常駐");
+        TAG_NAMES.put(Tags.BUFF, "增益"); // 2026-11-08：萬全之策照 PoE2 只給常駐增益（persistent＋buff）
         TAG_NAMES.put(Tags.META, "主要寶石"); // 2026-10-22
         TAG_NAMES.put(Tags.MARK, "印記");
         TAG_NAMES.put("curse", "詛咒"); // 2026-10-26：詛咒技能的標籤（skills.yml 的 tags: [curse]；PoE2 骸主的詛咒範圍）
