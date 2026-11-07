@@ -108,7 +108,8 @@ public enum Catalyst {
             case ATTACK -> damage(mod) && (tags.contains("attack") || tags.contains("trap") || tags.contains("grenade"))
                     || leech(mod) && tags.contains("attack") || stat.equals(StatKeys.ACCURACY);
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
-            case CASTER -> damage(mod) && spell && !minion;
+            // 2026-11-08 照站長（照 PoE2：「+x 全部法術技能等級」帶 caster 標籤，法術催化劑也加；乘完捨去，見 ItemStats.catalysed）；這次之前只算法術傷害
+            case CASTER -> damage(mod) && spell && !minion || stat.equals(StatKeys.SKILL_LEVEL) && spell && !minion;
             // 2026-10-16：「增加 x% 暴擊傷害加成」（crit.bonus，飾品上的暴傷詞綴都是這個）也算——以前只認 crit.multi，暴傷詞綴吃不到
             case CRIT -> stat.equals(StatKeys.CRIT_CHANCE) || stat.equals(StatKeys.CRIT_MULTI) || stat.equals(StatKeys.CRIT_BONUS);
             // 元素、物理與混沌：看傷害種類（攻擊、法術都算）；「額外火焰傷害」（damage.gain.火焰）也算

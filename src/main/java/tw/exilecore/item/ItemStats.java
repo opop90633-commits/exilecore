@@ -549,7 +549,10 @@ public final class ItemStats {
         if (mod.stat().startsWith("flag.")) {
             return mod;
         }
-        return new Modifier(mod.stat(), mod.type(), mod.value() * (1 + quality / 100.0), mod.tags(), mod.source() + "（催化 +" + quality + "%）");
+        // 2026-11-08 照站長（照 PoE2：數值無條件捨去）：技能等級乘完催化劑後捨去（+3 × 1.2 = 3.6 → +3，+5 × 1.2 → +6）；
+        //   這次之前不捨去，技能等級加總後四捨五入，+3 召喚物等級配 20% 召喚物催化劑變成 +4
+        final double value = mod.stat().equals(StatKeys.SKILL_LEVEL) ? floorLevel(mod.value() * (1 + quality / 100.0)) : mod.value() * (1 + quality / 100.0);
+        return new Modifier(mod.stat(), mod.type(), value, mod.tags(), mod.source() + "（催化 +" + quality + "%）");
     }
 
     /**
@@ -695,8 +698,10 @@ public final class ItemStats {
             final boolean boosted = catalyst != null && catalysed(affix, rolled.vars(), catalyst);
             final boolean veiledBoost = unveiled > 1e-9 && Veiled.isUnveiled(rolled.id());
             final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1) * VIEW_BOOST.get(); // 2026-11-04：角色面板的戒指、項鍊加成
-            final Map<String, Integer> vars = scale != 1 ? scaled(rolled.vars(), scale) : rolled.vars();
-            final Map<String, int[]> ranges = scale != 1 ? scaledRanges(affix.ranges(rolled.tier()), scale) : affix.ranges(rolled.tier());
+            // 2026-11-08：技能等級的詞綴乘完捨去（跟屬性表一樣，照 PoE2）
+            final boolean floor = boosted && levelOnly(affix);
+            final Map<String, Integer> vars = scale != 1 ? (floor ? floored(rolled.vars(), scale) : scaled(rolled.vars(), scale)) : rolled.vars();
+            final Map<String, int[]> ranges = scale != 1 ? (floor ? flooredRanges(affix.ranges(rolled.tier()), scale) : scaledRanges(affix.ranges(rolled.tier()), scale)) : affix.ranges(rolled.tier());
             final AffixLine line = new AffixLine(affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示
                     Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges, rolled.fixedScale()), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0, // 2026-11-04：腐化的寫骰出的數值×倍率
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
@@ -713,6 +718,16 @@ public final class ItemStats {
         return prefixes;
     }
 
+    /** 2026-11-08：技能等級捨去成整數（往 0 捨，負的也一樣；浮點誤差 1e-9 以內當整數）。 */
+    static double floorLevel(final double value) {
+        return value >= 0 ? Math.floor(value + 1e-9) : Math.ceil(value - 1e-9);
+    }
+
+    /** 2026-11-08：整條詞綴都是技能等級（顯示時乘完催化劑要捨去，跟屬性表一樣）。 */
+    private static boolean levelOnly(final Affix affix) {
+        return !affix.mods().isEmpty() && affix.mods().stream().allMatch(mod -> mod.stat().equals(StatKeys.SKILL_LEVEL));
+    }
+
     /** 這條詞綴有沒有修飾器吃這種催化劑（跟 {@link #catalysed(Modifier, int)} 的判斷一樣）。 */
     private static boolean catalysed(final Affix affix, final Map<String, Integer> vars, final Catalyst catalyst) {
         for (final AffixMod mod : affix.mods()) {
@@ -727,6 +742,26 @@ public final class ItemStats {
         final Map<String, Integer> out = new java.util.LinkedHashMap<>();
         for (final Map.Entry<String, Integer> entry : vars.entrySet()) {
             out.put(entry.getKey(), (int) Math.round(entry.getValue() * factor));
+        }
+        return out;
+    }
+
+    /** 2026-11-08：同 {@link #scaled}，捨去（技能等級）。 */
+    private static Map<String, Integer> floored(final Map<String, Integer> vars, final double factor) {
+        final Map<String, Integer> out = new java.util.LinkedHashMap<>();
+        for (final Map.Entry<String, Integer> entry : vars.entrySet()) {
+            out.put(entry.getKey(), (int) floorLevel(entry.getValue() * factor));
+        }
+        return out;
+    }
+
+    /** 2026-11-08：同 {@link #scaledRanges}，捨去（技能等級）。 */
+    private static Map<String, int[]> flooredRanges(final Map<String, int[]> ranges, final double factor) {
+        final Map<String, int[]> out = new java.util.LinkedHashMap<>();
+        for (final Map.Entry<String, int[]> entry : ranges.entrySet()) {
+            final int[] range = entry.getValue();
+            out.put(entry.getKey(), range == null || range.length != 2 ? range
+                    : new int[] {(int) floorLevel(range[0] * factor), (int) floorLevel(range[1] * factor)});
         }
         return out;
     }
