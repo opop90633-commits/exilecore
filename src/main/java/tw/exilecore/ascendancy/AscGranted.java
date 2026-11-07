@@ -1053,13 +1053,19 @@ final class AscGranted implements Listener {
         }
         if (best != null) {
             rares.remove(best);
+            final List<String> got = new ArrayList<>();
             for (final String modId : best.mods()) {
-                grantMod(player, modId, "儀典獻祭", "ritual." + modId, ticks);
+                final String line = grantMod(player, modId, "儀典獻祭", "ritual." + modId, ticks);
+                if (line != null) {
+                    got.add(line);
+                }
             }
+            tellSacrifice(player, got, ticks);
             return;
         }
         state.setLife(Math.max(1, state.life() - state.maxLife() * 0.20));
         final List<tw.exilecore.monster.MonsterConfig.MonsterMod> all = new ArrayList<>(plugin.monsters().config().mods());
+        all.removeIf(candidate -> modModifiers(candidate, "").isEmpty()); // 2026-11-07：只抽對玩家有效果的（會召喚、會傳送這種行為詞綴給玩家沒用）
         if (all.isEmpty()) {
             return;
         }
@@ -1068,16 +1074,46 @@ final class AscGranted implements Listener {
         }
         final tw.exilecore.monster.MonsterConfig.MonsterMod mod = all.get(plugin.random().nextInt(all.size()));
         own.sacrificeMod = mod.id();
-        grantMod(player, mod.id(), "儀典獻祭", "ritual.self", ticks);
+        final String line = grantMod(player, mod.id(), "儀典獻祭", "ritual.self", ticks);
+        tellSacrifice(player, line == null ? List.of() : List.of(line), ticks);
         plugin.players().display(player, state);
     }
 
-    private void grantMod(final Player player, final String modId, final String sourceName, final String buffId, final int ticks) {
-        final tw.exilecore.monster.MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(modId);
-        if (mod == null) {
+    /**
+     * 2026-11-07 照站長「儀典獻祭沒顯示拿到什麼增益」：放完在聊天室列出拿到哪些詞綴、各給什麼、幾秒
+     * （增益欄也看得到名字與倒數）；這次之前什麼都沒說，詞綴對玩家沒效果時連增益都沒有。
+     */
+    private void tellSacrifice(final Player player, final List<String> lines, final int ticks) {
+        if (lines.isEmpty()) {
+            player.sendMessage(plugin.text().parse("<#c48bff>儀典獻祭<gray>：這具屍體的詞綴對你沒有效果"));
             return;
         }
-        final String source = sourceName + "：" + mod.name();
+        player.sendMessage(plugin.text().parse("<#c48bff>儀典獻祭<gray>：獲得 " + lines.size() + " 個詞綴，持續 <white>" + Math.round(ticks / 20.0) + "<gray> 秒"));
+        for (final String line : lines) {
+            player.sendMessage(plugin.text().parse("<dark_gray>・" + line));
+        }
+    }
+
+    /** 拿到一個怪物詞綴（增益）；回傳要列給玩家看的一行（「名字：效果、效果」），對玩家沒效果的回傳 null。 */
+    private String grantMod(final Player player, final String modId, final String sourceName, final String buffId, final int ticks) {
+        final tw.exilecore.monster.MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(modId);
+        if (mod == null) {
+            return null;
+        }
+        final List<Modifier> modifiers = modModifiers(mod, sourceName + "：" + mod.name());
+        if (modifiers.isEmpty()) {
+            return null;
+        }
+        plugin.skills().buff(player, buffId, mod.name() + "（" + sourceName + "）", ticks, modifiers);
+        final List<String> effects = new ArrayList<>();
+        for (final Modifier modifier : modifiers) {
+            effects.add(tw.exilecore.skill.ModifierText.describe(modifier));
+        }
+        return "<#ffb347>" + tw.exilecore.item.ItemRenderer.escape(mod.name()) + "<gray>：" + tw.exilecore.item.ItemRenderer.escape(String.join("、", effects));
+    }
+
+    /** 怪物詞綴換成給玩家的修飾器（屬性、物理轉元素、移動速度、光環的屬性）；行為詞綴（召喚、傳送…）是空的。 */
+    private static List<Modifier> modModifiers(final tw.exilecore.monster.MonsterConfig.MonsterMod mod, final String source) {
         final List<Modifier> modifiers = new ArrayList<>();
         for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
             modifiers.add(affixMod.toModifier(Map.of(), source));
@@ -1093,9 +1129,7 @@ final class AscGranted implements Listener {
                 modifiers.add(affixMod.toModifier(Map.of(), source));
             }
         }
-        if (!modifiers.isEmpty()) {
-            plugin.skills().buff(player, buffId, mod.name() + "（" + sourceName + "）", ticks, modifiers);
-        }
+        return modifiers;
     }
 
     // =====================================================================

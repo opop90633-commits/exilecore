@@ -70,9 +70,20 @@ final class TabList {
         }
         final tw.exilecore.skill.SkillService.HudBuffs hud = plugin.skills().hudBuffs(player, false);
         final java.util.List<tw.exilecore.skill.SkillService.BuffTimer> all = new java.util.ArrayList<>(hud.others());
+        final java.util.Set<String> names = new java.util.HashSet<>();
+        for (final tw.exilecore.skill.SkillService.BuffTimer buff : hud.others()) {
+            names.add(buff.name());
+        }
         for (final tw.exilecore.skill.SkillService.SlotTimer slot : hud.slots()) {
-            if (!slot.missing() && slot.label() == null) { // 2026-10-31：榮耀不是增益，不列
+            if (!slot.missing() && slot.label() == null && names.add(slot.name())) { // 2026-10-31：榮耀不是增益，不列
                 all.add(new tw.exilecore.skill.SkillService.BuffTimer(slot.name(), slot.ticks()));
+            }
+        }
+        // 2026-11-07 照站長「儀典獻祭拿到的增益會顯示在 TAB 嗎」：算在技能格上的增益也各自列名字（例如「幻雷的（儀典獻祭）」），
+        //   跟技能格同名的不重複；這次之前只列那一格的技能名字（「儀典獻祭」），看不出拿到哪些詞綴
+        for (final tw.exilecore.skill.SkillService.BuffTimer buff : plugin.skills().activeBuffTimers(player)) {
+            if (names.add(buff.name())) {
+                all.add(buff);
             }
         }
         if (all.isEmpty()) {

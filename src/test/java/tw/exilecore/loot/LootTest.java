@@ -127,6 +127,10 @@ class LootTest {
         assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("shrine_warden")));
         assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("awakener")));
         assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("abyss_whale")), "淵鯨也算巔峰");
+        // 2026-11-06 照站長：三隻災厄級 Boss 的專屬傳奇也算巔峰專屬（這次之前被當成一般傳奇，關掉一般傳奇就一起不撿）
+        for (final String boss : new String[]{"fog_trial", "ultimatum", "legion"}) {
+            assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of(boss)), boss);
+        }
         assertEquals(LootFilter.UniqueGroup.PINNACLE, of.apply(Set.of("world_boss")));
         assertEquals(LootFilter.UniqueGroup.ENDGAME, of.apply(Set.of("final")));
         assertEquals(LootFilter.UniqueGroup.ENDGAME, of.apply(Set.of("frost_throne")));

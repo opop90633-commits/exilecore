@@ -694,7 +694,9 @@ public final class FlaskService {
         final boolean full = life ? state.isFullLife() : state.mana() >= state.maxMana() - 1e-6; // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
         // 2026-11-04（融解漩渦）：魔力滿了也能喝（效果不會因為滿了就結束）
         final boolean maelstrom = !life && localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_MAELSTROM, tw.exilecore.stats.ModType.FLAT) > 0;
-        if (full && !maelstrom) {
+        // 2026-11-07 照站長「戰魄之血滿血的時候能喝嗎」：未保留生命已滿時不移除效果的生命藥劑，滿血也能喝（同融解漩渦）；這次之前喝不了
+        final boolean keepAtFull = life && localSum(item, base, tw.exilecore.item.unique.UniqueStats.FLASK_LOCAL_KEEP_AT_FULL, tw.exilecore.stats.ModType.FLAT) > 0;
+        if (full && !maelstrom && !keepAtFull) {
             fail(player, state, base.kind().displayName() + "已經是滿的");
             return true;
         }

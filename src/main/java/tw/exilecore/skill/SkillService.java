@@ -1583,6 +1583,21 @@ public final class SkillService {
      * 快捷欄的增益倒數（2026-10-20）：技能格上的技能自己給的增益（戰吼、舉盾、連發）畫在那一格上方；
      * 戰吼沒了而且在戰鬥中，那一格畫提醒。其他的增益照快結束的排前面。
      */
+    /**
+     * 2026-11-07 照站長「儀典獻祭拿到的增益會顯示在 TAB 嗎」：身上每一個有時間的增益（各自的名字與剩幾 tick），
+     * 包括算在技能格上的（{@link #hudBuffs} 把它們併成那一格的技能名字）。給 TAB 列出「幻雷的（儀典獻祭）」這種實際拿到的增益。
+     */
+    public List<BuffTimer> activeBuffTimers(final Player player) {
+        final long now = now();
+        final List<BuffTimer> out = new ArrayList<>();
+        for (final SkillBuffs.Buff buff : buffs.active(player.getUniqueId())) {
+            if (!UNTIMED_BUFFS.contains(buff.id()) && buff.untilTick() > now) {
+                out.add(new BuffTimer(buff.name(), buff.untilTick() - now, importantBuff(buff.id())));
+            }
+        }
+        return out;
+    }
+
     public HudBuffs hudBuffs(final Player player, final boolean fighting) {
         final long now = now();
         final java.util.Map<String, SkillBuffs.Buff> active = new java.util.LinkedHashMap<>();

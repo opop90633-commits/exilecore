@@ -531,6 +531,7 @@ final class MapBosses {
             escaped.add("<white>" + ItemRenderer.escape(note));
         }
         final int lockTicks = (int) Math.round(BossMechanicText.mechanicSeconds(mechanic) * 20);
+        phaseAlerts.put(instance.id(), new PhaseAlert(phaseLines[0], List.copyOf(escaped))); // 2026-11-06：鎖血結束時把倒數收掉要用
         broadcastAlert(instance, phaseLines, player -> tw.exilecore.clientmod.AlertFeed.phase(plugin, player, "phase:" + instance.id(),
                 phaseLines, escaped, lockTicks));
         broadcast(instance, BossMechanicText.phaseChat(number, phase, notes));
@@ -786,12 +787,39 @@ final class MapBosses {
                 PhaseMechanic.requiredFraction(instance.bossDef().phases(), index, PhaseMechanic.shareOf(spec))); // 2026-11-04：破綻也有 share
     }
 
+    /** 2026-11-06：這個實例目前的階段側欄（標題、這個階段的變化），鎖血結束時重送一次、不帶倒數。 */
+    private record PhaseAlert(String title, List<String> notes) {
+    }
+
+    private final Map<Integer, PhaseAlert> phaseAlerts = new java.util.concurrent.ConcurrentHashMap<>();
+
     /** 每 10 tick：站位圈、倒數大招、元素弱點、易傷的消退。 */
     private void updateLock(final MapInstance instance, final LivingEntity boss, final long now) {
         final PhaseMechanic.Kind kind = instance.lockState().kind();
         final PhaseLocks.Outcome outcome = service.locks().update(arena(instance, boss), instance.lockState());
         if (outcome != PhaseLocks.Outcome.NONE && kind != null) {
             service.bossLog().note(boss, kind.label() + (outcome == PhaseLocks.Outcome.PASSED ? "完成" : "沒完成，回血"));
+            stopPhaseCountdown(instance, outcome == PhaseLocks.Outcome.PASSED ? "<green>✔ " + kind.label() + "完成" : "<red>✘ " + kind.label() + "沒完成，牠回血了");
+        }
+    }
+
+    /**
+     * 2026-11-06 照站長「破綻 1/1 滿了之後，上面的計時條還在跑」：鎖血結束（破了或沒破）就把側欄的倒數停掉——重送同一則、倒數 0、多一行結果；
+     * 這次之前側欄的倒數是換階段時一次送 30 秒，破綻提早破掉也照跑到 0。
+     */
+    private void stopPhaseCountdown(final MapInstance instance, final String result) {
+        final PhaseAlert alert = phaseAlerts.get(instance.id());
+        if (alert == null) {
+            return;
+        }
+        final List<String> notes = new java.util.ArrayList<>(alert.notes());
+        notes.add(result);
+        for (final UUID uuid : instance.inside()) {
+            final Player player = plugin.getServer().getPlayer(uuid);
+            if (player != null) {
+                tw.exilecore.clientmod.AlertFeed.show(plugin, player,
+                        tw.exilecore.clientmod.FeedProtocol.Alert.side("phase:" + instance.id(), alert.title(), notes, 0));
+            }
         }
     }
 
@@ -930,6 +958,7 @@ final class MapBosses {
         instance.setPhaseHold(false);
         clearShield(instance, boss); // 也把無敵拿掉（護盾、換階段的等待）
         instance.setFightStartTick(-1);
+        phaseAlerts.remove(instance.id()); // 2026-11-06
         instance.clearRoster();
         instance.setEnraged(false);
         service.events().twists().onBossReset(instance); // 地圖變化：分身、援軍收掉，下次開打再來
@@ -1376,6 +1405,7 @@ final class MapBosses {
         // 擊殺稱號（2026-10）：極境 Boss（照終局代號）與金庫之主，倒下時在 Boss 32 格內、活著、不是觀戰的人各記一次
         // 2026-10-27：還要對 Boss 打到傷害門檻（跟掉落、星圖一樣）；這次之前站在旁邊沒打也拿得到稱號與永久加成
         // 2026-11-06 照站長：迷霧之主（fog_trial）、審判者（ultimatum）、不朽統帥（legion）也記（代號＝事件 Boss 的代號）；這次之前只有極境、巔峰、金庫之主
+        phaseAlerts.remove(instance.id()); // 2026-11-06：Boss 倒了，階段側欄不用再改
         final String killKey = instance.special() != null && "heist_finale".equals(instance.special().kind()) ? "heist_finale"
                 : instance.isUber() || instance.isPinnacle() ? instance.map().id()
                 : instance.special() != null && service.config().eventBoss(instance.map().id()) != null ? instance.map().id() : null;
