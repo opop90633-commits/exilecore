@@ -107,6 +107,11 @@ final class SkillTargets {
         if (!(entity instanceof LivingEntity living) || !living.isValid() || living.isDead()) {
             return false;
         }
+        if (entity instanceof org.bukkit.entity.ArmorStand stand && stand.isMarker()) {
+            // 2026-11-07 照站長「瞬影擊會閃到怪物掉出來的爆炸上」：怪物死掉時的爆炸用一個看不見的分身（MonsterService.spawnGhost，
+            //   抄了怪物的標記）出手——那不是敵人，任何技能都不該把它當目標；這次之前瞬影擊、衝刺會瞬移到爆炸中心
+            return false;
+        }
         if (entity instanceof Player target) {
             return owner != null && pvp(owner, target);
         }
