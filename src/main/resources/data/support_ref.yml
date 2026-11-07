@@ -108,8 +108,6 @@ blocked:
   final_form:
     "代放技能不行": [collapse_quake_totem]
     "有使用條件的技能不行": [heaven_punish_maul, snake_squall_thrust]
-  army_order:
-    "要可以下指令的召喚物技能": [dig_remains]
   shared_ailment:
     "代放技能不行": [nailfall_crossbow_turret, nether_puppet, collapse_quake_totem, skyward_crossbow_turret]
     "常駐技能不行": [ember_envoy, blood_proclaim, frost_envoy, plague_envoy, thunder_envoy]

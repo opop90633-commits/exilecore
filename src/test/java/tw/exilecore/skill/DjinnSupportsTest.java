@@ -67,7 +67,6 @@ class DjinnSupportsTest {
             assertNull(support("condense_power").refusal(skill(id)), "凝聚 → " + id);
             assertNull(support("zone_expand").refusal(skill(id)), "擴域 → " + id);
             assertNull(support("bloodthirst_summon").refusal(skill(id)), "嗜殺召喚 → " + id);
-            assertNull(support("army_order").refusal(skill(id)), "軍令 → " + id);
             // 2026-11-01 照 PoE2：巨靈接到指令後用自己的施法速度放招式（DjinnCommands.djinnCastTicks）：疾詠掛在巨靈身上讓牠出手更快
             //   （這次之前指令整個照你的施法速度，疾詠掛不上）
             assertNull(support("quick_chant").refusal(skill(id)), "疾詠 → " + id);

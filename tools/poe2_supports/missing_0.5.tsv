@@ -18,7 +18,7 @@ Charged Shots	Charged Shots II	T5	g	charged_shots_ii	充射 II	3	exact
 Cold Exposure	Cold Exposure	T4	b	cold_exposure	霜曝	3	exact	
 Fire Exposure	Fire Exposure	T4	r	fire_exposure	焰曝	3	exact	
 Lightning Exposure	Lightning Exposure	T4	g	lightning_exposure	雷曝	3	exact	
-Commandment	Commandment	T0	b	commandment	號令	2	exact	2026-10-27 改成原作：召喚物自己的指令冷卻（這次之前給你的指令技能、召喚物所有傷害更少 100%）
+Commandment	Commandment	T0	b	commandment	號令	2	removed	2026-11-08 照站長拿掉（原作已移除；玩家身上的直接刪掉，不給未切割輔助寶石）；2026-10-27 改成原作：召喚物自己的指令冷卻（這次之前給你的指令技能、召喚物所有傷害更少 100%）
 Commiserate	Commiserate	T2	g	commiserate	同病	2	exact	
 Concoct	Concoct II	T4	r	concoct_ii	調劑 II	3	exact	
 Concussive Spells	Concussive Spells	T4	b	concussive_spells	震法	3	exact	

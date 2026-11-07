@@ -68,7 +68,7 @@ class RefApproxSupportsTest {
         // 2026-10-27 照站長「放技能減速全部移除」：輕身（原作只有減少移動懲罰）沒有原作效果可以做，平衡等效成攻擊／施法速度
         // 2026-10-29 照站長加回衝勢（Momentum），照原作（exact），不再是 removed
         assertEquals(List.of("light_body"), approx);
-        assertEquals(List.of("magnetic_remnants", "fusillade", "hobble", "living_lightning_ii"), removed); // 2026-10-31：＋磁骸
+        assertEquals(List.of("commandment", "magnetic_remnants", "fusillade", "hobble", "living_lightning_ii"), removed); // 2026-11-08：＋軍令 // 2026-10-31：＋磁骸
     }
 
     @Test
@@ -157,11 +157,6 @@ class RefApproxSupportsTest {
         assertTrue(MinionService.commandProfile("summon_bone_thundermage.death_storm"));
         assertFalse(MinionService.commandProfile("summon_bone_heavy.bonebreaker"));
         assertFalse(MinionService.commandProfile("summon_bone_heavy"));
-        assertNull(support("army_order").refusal(skill(MinionAbilities.BRUTE)));
-        assertEquals("要有指令的召喚物", support("army_order").refusal(skill("corpse_summon")));
-        for (final Modifier modifier : support("army_order").modifiers()) {
-            assertFalse(modifier.stat().equals(StatKeys.DAMAGE), "更少傷害只給指令以外的招式（MinionService），不是整個召喚物");
-        }
     }
 
     @Test

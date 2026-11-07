@@ -96,6 +96,8 @@ public final class MinionService implements Listener, MinionHooks {
         /** 頭上的名字（技能名與主人；血不滿時後面加百分比）。 */
         final String name;
         final long bornTick;
+        /** 2026-11-08：已經站到自己的站位、停下來了（不用每次重送停止找路）。 */
+        boolean standing;
         /** 到哪個 tick 消失（0 = 永久）。 */
         long untilTick;
         /** 上一次重算屬性表用的材料（2026-10）：都沒變就不重算、不重送血量與速度。 */
@@ -1762,10 +1764,18 @@ public final class MinionService implements Listener, MinionHooks {
         } else if (now >= minion.nextPath) {
             minion.nextPath = now + 10;
             // 碰得到但看不到（隔著柱子）：繼續走過去，不然會站在柱子後面發呆（2026-10）
-            if (!inReach || !seesTarget) {
+            // 2026-11-08 照站長「讓我們的召喚物也比較散」：每隻照自己的角度站到目標周圍（standSpot）——遠程的站在射程七成的一圈上、
+            //   面向主人那一側左右散開，近戰的平均圍一圈；站位找不到路（牆、懸崖）就照舊直接走向目標。
+            //   這次之前全部直接走向目標、碰得到就停，從同一個方向擠成一團（冰甲的爆裂全部疊在王身上）
+            final Location spot = standSpot(target, owner, minion.bornTick, minion.spec.isRanged(), reach);
+            final double off = spot == null ? 0 : mob.getLocation().distanceSquared(spot);
+            if (spot != null && off > STAND_SLACK * STAND_SLACK && mob.getPathfinder().moveTo(spot, pathSpeed(mob, 1.2))) {
+                minion.standing = false;
+            } else if (!inReach || !seesTarget) {
                 mob.getPathfinder().moveTo(target, pathSpeed(mob, 1.2)); // 2026-11-05：太快的照上限（pathSpeed）
-            } else {
+            } else if (!minion.standing) {
                 mob.getPathfinder().stopPathfinding();
+                minion.standing = true;
             }
         }
         if (!minion.spec.flying()) {
@@ -1996,6 +2006,45 @@ public final class MinionService implements Listener, MinionHooks {
         if (now % 40 == minion.bornTick % 40) {
             mob.lookAt(owner);
         }
+    }
+
+    /** 2026-11-08：離自己的站位多遠以內就不用再走（格）。 */
+    static final double STAND_SLACK = 1.5;
+    /** 2026-11-08：遠程召喚物站在射程的幾成。 */
+    static final double RANGED_STAND = 0.7;
+    /** 2026-11-08：遠程召喚物在「目標 → 主人」兩側最多散開幾度。 */
+    static final double RANGED_FAN = 70;
+
+    /**
+     * 2026-11-08 照站長「讓我們的召喚物也比較散」：這隻召喚物在目標周圍的站位（照出生的 tick 用黃金角排，每隻不一樣）。
+     * 遠程：目標往主人那一側、左右 ±70° 扇形裡，離目標射程的七成；近戰：繞目標一整圈，站在碰得到的距離裡（碰撞箱邊緣 ＋ 打擊距離的六成）。
+     */
+    private static Location standSpot(final LivingEntity target, final Player owner, final long bornTick, final boolean ranged, final double reach) {
+        if (target.getWorld() != owner.getWorld()) {
+            return null;
+        }
+        final Location centre = target.getLocation();
+        final Vector toOwner = owner.getLocation().toVector().subtract(centre.toVector()).setY(0);
+        final double halfWidth = target.getBoundingBox().getWidthX() / 2;
+        final Vector offset = standOffset(bornTick, ranged, reach, halfWidth, toOwner.getX(), toOwner.getZ());
+        return centre.clone().add(offset);
+    }
+
+    /** 2026-11-08：{@link #standSpot} 的計算（不碰伺服器，測試用）：回傳相對目標腳下的水平位移。 */
+    static Vector standOffset(final long bornTick, final boolean ranged, final double reach, final double halfWidth,
+                              final double towardsX, final double towardsZ) {
+        final double golden = (bornTick * 137.508) % 360;
+        final double base = towardsX * towardsX + towardsZ * towardsZ < 1e-6 ? 0 : Math.atan2(towardsZ, towardsX);
+        final double angle;
+        final double distance;
+        if (ranged) {
+            angle = base + Math.toRadians((golden / 360.0 * 2 - 1) * RANGED_FAN);
+            distance = Math.max(halfWidth + 2, reach * RANGED_STAND);
+        } else {
+            angle = base + Math.toRadians(golden);
+            distance = halfWidth + Math.max(0.6, reach * 0.6);
+        }
+        return new Vector(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
     }
 
     /** 會飛的：直接往目標飄（速度照倍率；靠近了就慢下來）。 */
@@ -2442,14 +2491,20 @@ public final class MinionService implements Listener, MinionHooks {
     /** 召喚物的攻擊技能：普攻的描述乘 factor（碎骨 180%、毒氣箭 80%…），加幾個標籤；conversion 不是 null 就換掉物理轉換。 */
     private static SkillProfile attackProfile(final Minion minion, final String id, final double factor, final Set<String> extraTags,
                                               final Map<tw.exilecore.stats.DamageType, Double> conversion, final List<Modifier> extra) {
-        final SkillProfile base = minion.profile;
+        return attackProfile(minion.profile, musterModifiers(minion), id, factor, extraTags, conversion, extra);
+    }
+
+    /** 2026-11-08：同上，不用召喚物實體（/stats、網頁估算指令傷害用）；muster = 群鋒的修飾器。 */
+    static SkillProfile attackProfile(final SkillProfile base, final List<Modifier> muster, final String id, final double factor,
+                                      final Set<String> extraTags, final Map<tw.exilecore.stats.DamageType, Double> conversion,
+                                      final List<Modifier> extra) {
         final Set<String> tags = new HashSet<>(base.tags());
         tags.addAll(extraTags);
         if (COMMAND_PROFILES.contains(id)) {
             tags.add(Commandables.TAG); // 2026-11-01 照 PoE2：指令放的招式（毒氣箭、從天而降…）是 command 情境（骸令只算這些）
         }
         final List<Modifier> local = new ArrayList<>(base.local());
-        local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
+        local.addAll(muster); // 2026-10-30：群鋒
         if (Math.abs(factor - 1) > 1e-9) {
             local.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, factor - 1, id));
         }
@@ -2464,7 +2519,13 @@ public final class MinionService implements Listener, MinionHooks {
      */
     private static SkillProfile spellProfile(final Minion minion, final String id, final tw.exilecore.stats.DamageType type,
                                              final double[] ref, final double crit, final Set<String> extraTags, final List<Modifier> extra) {
-        final SkillProfile base = minion.profile;
+        return spellProfile(minion.profile, minion.factors[0], musterModifiers(minion), id, type, ref, crit, extraTags, extra);
+    }
+
+    /** 2026-11-08：同上，不用召喚物實體（/stats、網頁估算指令傷害用）；factor = 召喚物表換算的傷害係數（Minion.factors[0]）。 */
+    static SkillProfile spellProfile(final SkillProfile base, final double factor, final List<Modifier> muster, final String id,
+                                     final tw.exilecore.stats.DamageType type, final double[] ref, final double crit,
+                                     final Set<String> extraTags, final List<Modifier> extra) {
         final Set<String> tags = new HashSet<>(base.tags());
         tags.remove(tw.exilecore.stats.Tags.ATTACK);
         tags.remove(tw.exilecore.stats.Tags.MELEE);
@@ -2475,14 +2536,53 @@ public final class MinionService implements Listener, MinionHooks {
         if (COMMAND_PROFILES.contains(id)) {
             tags.add(Commandables.TAG); // 2026-11-01 照 PoE2：指令放的招式（震地咆哮的冰爆、死亡風暴、爆裂殉身…）是 command 情境（骸令只算這些）
         }
-        final double factor = minion.factors[0];
         final tw.exilecore.stats.DamagePacket min = new tw.exilecore.stats.DamagePacket().set(type, ref[0] * factor);
         final tw.exilecore.stats.DamagePacket max = new tw.exilecore.stats.DamagePacket().set(type, Math.max(ref[0], ref[1]) * factor);
         final List<Modifier> local = new ArrayList<>(base.local());
-        local.addAll(musterModifiers(minion)); // 2026-10-30：群鋒
+        local.addAll(muster); // 2026-10-30：群鋒
         local.add(Modifier.flat(tw.exilecore.stats.StatKeys.SPELL_BASE_CRIT, crit, id));
         local.addAll(extra);
         return new SkillProfile(base.id() + "." + id, tags, 1.0, min, max, Map.of(), local);
+    }
+
+    /**
+     * 2026-11-08 照站長「網頁估算算進指令技能」：一次指令對同一隻敵人打出的招式（估算用）。profile 是那一下、hits 是一次指令打到同一隻幾下。
+     */
+    record CommandStrike(String name, SkillProfile profile, double hits, double cooldown) {
+    }
+
+    /**
+     * 2026-11-08：/stats、網頁的每秒傷害估算——會造成擊中傷害的指令（震地咆哮的冰爆、死亡風暴、從天而降、毒氣箭的落地）；
+     * 其他（冰甲、激怒、爆裂殉身要有低血的召喚物、毒雲的持續傷害）不算，回傳 null。
+     *
+     * @param base       召喚物普攻的描述（MinionSheets.profile）
+     * @param factor     召喚物表換算的傷害係數（refFactors[0]）
+     * @param level      技能等級
+     * @param ownerStr   主人的力量（從天而降：每 1 點增加 1% 傷害）
+     * @param roarBursts 震地咆哮估幾個爆裂點（冰甲的召喚物＋凍結的敵人；每個爆裂點各打一下）
+     */
+    static CommandStrike commandStrike(final String skillId, final SkillProfile base, final double factor, final int level,
+                                       final double ownerStr, final int roarBursts) {
+        final MinionAbilities.Command command = MinionAbilities.command(skillId);
+        if (command == null || base == null) {
+            return null;
+        }
+        return switch (skillId) {
+            case MinionAbilities.BRUTE -> new CommandStrike(command.name(), spellProfile(base, factor, List.of(), "shattering_roar",
+                    tw.exilecore.stats.DamageType.COLD, MinionAbilities.range(MinionAbilities.ROAR_COLD, level), MinionAbilities.ROAR_CRIT,
+                    Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.WARCRY), List.of()),
+                    Math.max(1, roarBursts), command.cooldown());
+            case MinionAbilities.STORM -> new CommandStrike(command.name(), spellProfile(base, factor, List.of(), "death_storm",
+                    tw.exilecore.stats.DamageType.LIGHTNING, MinionAbilities.range(MinionAbilities.STORM_LIGHTNING, level), MinionAbilities.STORM_CRIT,
+                    Set.of(tw.exilecore.stats.Tags.AREA), List.of()), 1, command.cooldown());
+            case MinionAbilities.ARTILLERY -> new CommandStrike(command.name(), attackProfile(base, List.of(), "death_from_above",
+                    MinionAbilities.VOLLEY_DAMAGE, Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.PROJECTILE), null,
+                    List.of(Modifier.increased(tw.exilecore.stats.StatKeys.DAMAGE, Math.max(0, ownerStr) / MinionAbilities.STR_PER_DAMAGE / 100.0,
+                            "掩護火力：力量"))), MinionAbilities.VOLLEYS, command.cooldown());
+            case MinionAbilities.SNIPER -> new CommandStrike(command.name(), attackProfile(base, List.of(), "gas_arrow", MinionAbilities.GAS_IMPACT,
+                    Set.of(tw.exilecore.stats.Tags.AREA), null, List.of()), 1, command.cooldown());
+            default -> null;
+        };
     }
 
     /** 2026-11-01 照 PoE2 Ruthless（無情）：召喚物 → 這一輪用了幾次普攻。 */

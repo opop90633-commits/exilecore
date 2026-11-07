@@ -100,7 +100,7 @@ public final class SupportColours {
                     + "power_return power_expand "
                     + "hasten_bloom marching_gale sweeping_gale "
                     // 2026-10-27 照 PoE2 0.5 補上的一般輔助（照 RePoE 的顏色）
-                    + "grudge_corrode jade_nectar_ii star_cast gnaw_cold_ii cleanse_rite muddled_freeze frost_reveal army_order "
+                    + "grudge_corrode jade_nectar_ii star_cast gnaw_cold_ii cleanse_rite muddled_freeze frost_reveal "
                     + "quake_magic spare_corpse volt_screen mad_servant rising_swell_iii hex_field mad_chaos "
                     + "draw_blight spread_field power_ward mana_spring ring_wall_ii wager_shot corpse_glutton "
                     + "harmony_bones_ii curse_blossom certain_fate_ii final_breath faithful_servant "

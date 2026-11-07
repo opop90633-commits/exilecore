@@ -32,37 +32,34 @@ class CommandablesTest {
         config.load(Path.of("src/main/resources/data"));
     }
 
-    private static SupportDefinition armyOrder() {
-        final SupportDefinition support = config.support("army_order");
-        assertNotNull(support);
-        return support;
-    }
-
-    private static SkillDefinition skill(final String id) {
-        final SkillDefinition skill = config.skill(id);
-        assertNotNull(skill, id);
-        return skill;
-    }
-
     @Test
-    void armyOrderFitsEveryCommandableMinion() {
+    void armyOrderIsRetired() {
+        // 2026-11-08 照站長：照 PoE2 拿掉軍令（玩家身上的直接刪掉，不給未切割輔助寶石）；引擎的 minion.army_order 還在；這次之前測掛得上哪些召喚物
+        assertNull(config.support("army_order"));
+        assertTrue(config.deletedSupport("army_order"));
         for (final String id : List.of(MinionAbilities.BRUTE, MinionAbilities.SNIPER, MinionAbilities.ARSONIST, MinionAbilities.STORM,
                 MinionAbilities.FROST, MinionAbilities.REAVER, MinionAbilities.ARTILLERY, MinionAbilities.RAVENS,
                 MinionAbilities.KELARI, MinionAbilities.NAVIRA, MinionAbilities.RUZHAN)) {
             assertTrue(Commandables.commandable(id), id);
-            assertNull(armyOrder().refusal(skill(id)), id);
+        }
+        for (final String id : List.of(MinionAbilities.WARRIOR, MinionAbilities.CLERIC, MinionAbilities.WOLVES, MinionAbilities.SPIRITS,
+                MinionAbilities.SWARM, MinionAbilities.SPECTRE, MinionAbilities.MANIFEST, "sand_spirit_venom_word", "corpse_summon")) {
+            assertTrue(!Commandables.commandable(id), id);
         }
     }
 
     @Test
-    void armyOrderRefusesMinionsWithoutCommands() {
-        // 骸骨戰士、祭司、狼群、焚魂、蟲群、附魂、幻化武器、珂芮絲的惡言（屍甲蟲：原作不是 CommandableMinion）沒有可以下的指令
-        for (final String id : List.of(MinionAbilities.WARRIOR, MinionAbilities.CLERIC, MinionAbilities.WOLVES, MinionAbilities.SPIRITS,
-                MinionAbilities.SWARM, MinionAbilities.SPECTRE, MinionAbilities.MANIFEST, "sand_spirit_venom_word", "corpse_summon")) {
-            assertTrue(!Commandables.commandable(id), id);
-            assertNotNull(armyOrder().refusal(skill(id)), id);
-        }
-        assertEquals("要有指令的召喚物", armyOrder().refusal(skill("corpse_summon")));
+    void commandStrikesForTheEstimate() {
+        final tw.exilecore.stats.SkillProfile base = new tw.exilecore.stats.SkillProfile("summon_bone_heavy", Set.of(Tags.ATTACK, Tags.MELEE),
+                1.0, null, null, java.util.Map.of(), List.of());
+        final MinionService.CommandStrike roar = MinionService.commandStrike(MinionAbilities.BRUTE, base, 1.0, 20, 0, 40);
+        assertEquals(40, roar.hits(), 1e-9, "40 個冰甲爆裂點：每個各打一下");
+        assertTrue(roar.profile().tags().contains(Commandables.TAG));
+        assertTrue(!roar.profile().tags().contains(Tags.ATTACK), "冰爆是法術");
+        assertEquals(1, MinionService.commandStrike(MinionAbilities.BRUTE, base, 1.0, 20, 0, 1).hits(), 1e-9);
+        assertEquals(MinionAbilities.VOLLEYS, MinionService.commandStrike(MinionAbilities.ARTILLERY, base, 1.0, 20, 100, 1).hits(), 1e-9);
+        assertNull(MinionService.commandStrike(MinionAbilities.FROST, base, 1.0, 20, 0, 1), "冰甲不造成傷害");
+        assertNull(MinionService.commandStrike(MinionAbilities.WARRIOR, base, 1.0, 20, 0, 1));
     }
 
     @Test

@@ -102,6 +102,7 @@ retired:
   blazing_brand: 3   # 2026-11-01 照站長刪掉熾烙（原作的代價是符文守護，我們沒有；玩家身上的換成第 3 階未切割輔助寶石）
   oath_drive: 3   # 2026-11-01 照站長刪掉誓驅（血脈；原作的代價是符文守護）
   proud_frost: 3   # 2026-11-01 照站長刪掉傲寒（血脈；原作花的是符文守護）
+  army_order: 0   # 2026-11-08 照站長：照 PoE2 拿掉軍令（原作 Commandment 是舊版遺留、現行掉落已拿掉；指令冷卻回復 +100% 讓震地咆哮整串爆裂打兩倍，太強）；寫 0 = 玩家身上的直接刪掉，不給未切割輔助寶石；這次之前有這顆
   magnet_bones: 2   # 2026-10-31 照站長：殘骸直接生效，只有撿取距離的磁骸拿掉（玩家身上的換成第 2 階未切割輔助寶石）
   multistrike: 3
   multiple_totems: 3
@@ -4334,20 +4335,6 @@ supports:
     # 2026-10-27 照 PoE2 Lightning Exposure（第 4 階；poe2db／RePoE；照原作）；這次之前沒有這顆
     modifiers:
       - { stat: exposure.on_shock, type: FLAT, value: 8 }
-
-  army_order:             # Commandment
-    name: 軍令
-    description: 被輔助的召喚物用指令以外的技能（普攻、自己的招式）不造成傷害；牠們的指令冷卻回復速度增加 100%（跟其他冷卻回復速度相加），指令本身的傷害不受影響。只能掛在有指令的召喚物上：骸骨重卒、射手、焰術士、雷術士、霜術士、狂卒、掩護火力、鴉群密謀、污沙．珂芮絲、終幻．娜瑟菈、炎刃．羅贊。
-    icon: GOLD_INGOT
-    tier: 2   # PoE2 第 0 階（不從未切割寶石切；我們放第 2 階）
-    requires: [minion]
-    mana_multiplier: 1.0
-    # 2026-10-27 照 PoE2 Commandment（第 0 階；poe2db／RePoE；照原作；2026-10-27 改成原作：召喚物自己的指令冷卻（這次之前給你的指令技能、召喚物所有傷害更少 100%））；這次之前沒有這顆
-    # 2026-11-01 照 PoE2 Commandment（PoB2 SupportCommandment：minion_command_skill_cooldown_speed_+% 100、support_minion_damage_with_non_command_skills_+%_final -100、
-    #   要 CommandableMinion）：掛得上鴉群密謀（亂鴉狂舞的冷卻、振翅熵流不打）、三位巨靈（指令技能的冷卻、娜瑟菈的擁抱的冷卻、羅贊的狂熱斬擊不打）；
-    #   這次之前只有六種骸骨召喚與掩護火力（Commandables）
-    modifiers:
-      - { stat: minion.army_order, type: FLAT, value: 1 }
 
   shared_ailment:             # Commiserate
     name: 同病

@@ -57,7 +57,7 @@ class RefMissingSupportsTest {
 
     @Test
     void everyAddedSupportLoadsWithColourAndCanBeCut() {
-        assertEquals(120 - 3 - 1, added.size(), "2026-10-31 照站長刪掉磁骸；清單上加了 120 顆（2026-10-27 照站長刪掉箭幕、跛行、活雷 II，tsv 標 removed；2026-10-29 衝勢加回來：剩 117 顆）");
+        assertEquals(120 - 3 - 1 - 1, added.size(), "2026-11-08 照站長拿掉軍令；2026-10-31 照站長刪掉磁骸；清單上加了 120 顆（2026-10-27 照站長刪掉箭幕、跛行、活雷 II，tsv 標 removed；2026-10-29 衝勢加回來：剩 117 顆）");
         final List<String> untexted = new ArrayList<>();
         for (final String id : added) {
             for (final Modifier modifier : support(id).modifiers()) {

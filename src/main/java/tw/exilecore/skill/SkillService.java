@@ -4511,16 +4511,24 @@ public final class SkillService {
             if (definition.mechanic() == Mechanic.AURA && !view.active(definition.id())) {
                 return null;
             }
-            final double[] each = minionDps(state.level(), view.minionEffects(), build, sheet);
             final int cap = view.minionCap(definition.id()); // 2026-10：照隻數算精魂的，只算養得起的隻數
             final int count = Math.max(1, cap > 0 ? Math.min(build.minions(), cap) : build.minions());
-            if (each[0] <= 0) {
+            // 2026-11-08 照站長「網頁估算算進指令技能」：會造成擊中傷害的指令（震地咆哮、死亡風暴、從天而降、毒氣箭）照冷卻好就下估進去；
+            //   震地咆哮的爆裂點照技能欄上有冰甲（霜術士）時「你全部的召喚物都有冰甲」估，沒有就當一隻凍結的敵人；
+            //   這次之前只算召喚物自己的普攻、招式（燒紙的重卒面板遠低於實際）
+            final double[] each = minionDps(state.level(), view.minionEffects(), build, sheet, roarBursts(state, sheet, view));
+            final double eachDps = each[0] + each[5];
+            if (eachDps <= 0) {
                 return null;
             }
+            final boolean commandOnly = each[0] <= 0;
+            final String name = each[5] <= 0 ? definition.name() : definition.name() + "（含指令" + MinionAbilities.command(definition.id()).name()
+                    + (each[6] > 1 ? " ×" + ModifierText.number(each[6]) + " 下" : "") + "）";
             // 全開：召喚物吃不到你的戰吼增益（只吃「召喚物…」的加成），只算敵人受到的傷害增加
-            final double fullEach = each[0] * (1 + full.taken());
-            return new DpsRow(slot, position, definition.id(), definition.name(), each[0] * count, Math.max(each[0], fullEach) * count, count,
-                    each[1], each[2], each[3], each[4]);
+            final double fullEach = eachDps * (1 + full.taken());
+            return new DpsRow(slot, position, definition.id(), name, eachDps * count, Math.max(eachDps, fullEach) * count, count,
+                    commandOnly ? each[7] : each[1], commandOnly ? each[8] : each[2], commandOnly ? each[9] : each[3],
+                    commandOnly ? each[10] : each[4]);
         }
         if (!resolved.isDefault() && SkillExecutor.hasFlag(definition, StatKeys.FLAG_TOTEM_LINKED)) {
             // 2026-10-18：英靈圖騰自己不打，算英靈用下一格錘子技能打的（以前只算圖騰本身那一下，面板低了好幾百倍）
@@ -4907,9 +4915,20 @@ public final class SkillService {
      * @param auraEffects 召喚物吃到的光環效果
      */
     double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet) {
+        return java.util.Arrays.copyOf(minionDps(ownerLevel, auraEffects, build, ownerSheet, 1), 5);
+    }
+
+    /**
+     * 2026-11-08：同上，另外算指令：{普攻每秒傷害, 平均一下, 每秒幾下, 暴擊率, 暴擊傷害 %, 指令每秒傷害, 指令一次打幾下,
+     * 指令平均一下, 指令每秒幾下, 指令暴擊率, 指令暴擊傷害 %}。
+     *
+     * @param roarBursts 震地咆哮估幾個爆裂點
+     */
+    double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet,
+                       final int roarBursts) {
         final SummonSpec spec = build.definition().summon();
         if (spec == null || plugin.monsters() == null) {
-            return new double[5];
+            return new double[11];
         }
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
         final MinionSheets.Base base = MinionSheets.base(config, spec, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt,
@@ -4923,15 +4942,70 @@ public final class SkillService {
         final StatSheet minionSheet = MinionSheets.build(spec, base, ownerModifiers);
         final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);
         final StatSheet effective = profile.effective(minionSheet);
+        final double[] out = new double[11];
         final DamagePacket expected = DamageCalculator.expectedOutgoing(minionSheet, profile);
-        if (expected.isEmpty()) {
-            return new double[5];
+        if (!expected.isEmpty()) {
+            final double crit = DamageCalculator.critChance(minionSheet, profile);
+            final double multi = DamageCalculator.critMultiplier(effective, profile.tags(), null) * 100; // 2026-10：含召喚物的「增加暴擊加成」
+            final double hit = expected.total() * (1 + crit * (multi / 100.0 - 1));
+            final double rate = MinionSheets.attacksPerSecond(effective, profile);
+            out[0] = hit * rate;
+            out[1] = hit;
+            out[2] = rate;
+            out[3] = crit;
+            out[4] = multi;
         }
-        final double crit = DamageCalculator.critChance(minionSheet, profile);
-        final double multi = DamageCalculator.critMultiplier(effective, profile.tags(), null) * 100; // 2026-10：含召喚物的「增加暴擊加成」
-        final double hit = expected.total() * (1 + crit * (multi / 100.0 - 1));
-        final double rate = MinionSheets.attacksPerSecond(effective, profile);
-        return new double[] {hit * rate, hit, rate, crit, multi};
+        // 2026-11-08 照站長「網頁估算算進指令技能」：指令照冷卻好就下（冷卻吃召喚物的指令冷卻回復速度，同 Minion.startCooldown）
+        final double factor = MinionSheets.refFactors(config, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt)[0];
+        final MinionService.CommandStrike strike = MinionService.commandStrike(build.definition().id(), profile, factor, build.level(),
+                ownerSheet == null ? 0 : ownerSheet.get(StatKeys.STR), roarBursts);
+        if (strike != null) {
+            final StatSheet commandEffective = strike.profile().effective(minionSheet);
+            final DamagePacket each = DamageCalculator.expectedOutgoing(minionSheet, strike.profile());
+            if (!each.isEmpty()) {
+                final double crit = DamageCalculator.critChance(minionSheet, strike.profile());
+                final double multi = DamageCalculator.critMultiplier(commandEffective, strike.profile().tags(), null) * 100;
+                final double hit = each.total() * (1 + crit * (multi / 100.0 - 1));
+                final double ticks = Commandables.readyTicks(strike.cooldown(),
+                        commandEffective.apply(StatKeys.SKILL_COOLDOWN, 1.0, Commandables.CONTEXT), Commandables.rate(commandEffective));
+                final double uses = 20.0 / Math.max(1, ticks);
+                out[5] = hit * strike.hits() * uses;
+                out[6] = strike.hits();
+                out[7] = hit;
+                out[8] = strike.hits() * uses;
+                out[9] = crit;
+                out[10] = multi;
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-08：/stats、網頁估震地咆哮一次有幾個爆裂點——技能欄上有霜術士（冰甲）就當你近戰的召喚物都有冰甲、圍在目標旁邊
+     * （每個爆裂點各打一下；遠程、會飛的站在射程外圍，爆裂打不到目標，不算），沒有就當一隻凍結的敵人。
+     */
+    private int roarBursts(final PlayerState state, final StatSheet sheet, final AuraView view) {
+        boolean frost = false;
+        int total = 0;
+        final java.util.Set<String> seen = new java.util.HashSet<>(); // 同一個召喚技能綁在好幾個鍵只算一次
+        for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
+            final Resolved resolved = resolve(state, slot);
+            if (resolved.isDefault() || resolved.definition().summon() == null || !seen.add(resolved.definition().id())) {
+                continue;
+            }
+            final SkillDefinition definition = resolved.definition();
+            if (definition.mechanic() == Mechanic.AURA && !view.active(definition.id())) {
+                continue;
+            }
+            frost |= MinionAbilities.FROST.equals(definition.id());
+            if (definition.summon().isRanged() || definition.summon().flying()) {
+                continue;
+            }
+            final int cap = view.minionCap(definition.id());
+            final int built = build(state, sheet, resolved).minions();
+            total += Math.max(1, cap > 0 ? Math.min(built, cap) : built);
+        }
+        return frost ? total : 1;
     }
 
     /** 這個按鍵這次會放出的數值（含輔助寶石、角色等級的限制）。 */

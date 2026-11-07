@@ -131,7 +131,7 @@ final class MinionAbilities {
     static final double VOLLEY_DAMAGE = 7.63;
     static final int VOLLEYS = 6;
     static final long VOLLEY_TICKS = 15;
-    static final double VOLLEY_RADIUS = tw.exilecore.core.Units.metres(7.9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double VOLLEY_RADIUS = tw.exilecore.core.Units.metres(7.9); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     /** 2026-10-30：信號彈落點幾格內有敵人就黏在牠身上（箭雨跟著牠）。 */
     static final double FLARE_ATTACH = 1.5;
     /** 每一輪箭落地前的延遲（explosion_delay_ms 250）。 */
@@ -245,11 +245,11 @@ final class MinionAbilities {
     static final double BONEBREAKER_SPEED = 1.2;
     static final double BONEBREAKER_DAMAGE = 1.8;
     static final double SHOCKWAVE_DAMAGE = 4.8;
-    static final double SHOCKWAVE_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double SHOCKWAVE_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     /** 震地咆哮（Shattering Roar，指令）：4 格內的敵人恫嚇 4 秒；消耗範圍內敵人與友軍的凍結，各炸 2.4 格的冰冷傷害，暴擊率 12%。 */
-    static final double ROAR_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ROAR_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double ROAR_SECONDS = 4.0;
-    static final double ROAR_EXPLOSION = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ROAR_EXPLOSION = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double ROAR_CRIT = 12;
     // 2026-11-01 照 PoE2（ShatteringRoarSkeletalBruteMinion 1–40 級）；這次之前只寫到 20 級
     static final int[][] ROAR_COLD = {
@@ -290,7 +290,7 @@ final class MinionAbilities {
     /** 毒氣箭（Gas Arrow，指令）：冷卻 6 秒、攻擊速度 120%；落點 1.4 格 80% 傷害，留下 8 秒的毒雲。 */
     static final double GAS_SPEED = 1.2;
     static final double GAS_IMPACT = 0.8;
-    static final double GAS_RADIUS = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double GAS_RADIUS = tw.exilecore.core.Units.metres(1.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double GAS_SECONDS = 8;
     /** 毒雲每秒半徑更多 20%，最多更多 80%。 */
     static final double GAS_GROWTH = 0.2;
@@ -303,13 +303,13 @@ final class MinionAbilities {
     // ---- 骸骨焰術士（Skeletal Arsonist）----
 
     /** 火彈（Fire Bomb，自動）：1.6 格、物理 70% 轉火焰，會引爆毒雲。 */
-    static final double FIRE_BOMB_RADIUS = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double FIRE_BOMB_RADIUS = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     /** 2026-10-28 照 PoE2 Skeletal Arsonist 的品質（多丟幾顆火彈）：多的火彈落在主要目標幾格內的其他敵人身上。 */
     static final double EXTRA_BOMB_SPREAD = 4.0;
     /** 爆裂殉身（Explosive Demise，指令）：冷卻 3 秒；引爆目標 3 格內生命低於門檻的自己的召喚物，2.4 格、300% 傷害全轉火焰，加上牠最大生命 8% 的火焰傷害。 */
     static final double DEMISE_DAMAGE = 3.0;
-    static final double DEMISE_RADIUS = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final double DEMISE_SEARCH = tw.exilecore.core.Units.metres(3.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double DEMISE_RADIUS = tw.exilecore.core.Units.metres(2.4); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
+    static final double DEMISE_SEARCH = tw.exilecore.core.Units.metres(3.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double DEMISE_LIFE_PERCENT = 8;
     /** 指令：目標召喚物目前生命低於這個（PoE2 的生命單位，寶石 1～40 級；用 {@link #row40}）。
      *  2026-10-28 照 PoE2（RePoE CommandSkeletalArsonistPlayer 1–40 級）；這次之前只寫到 20 級，21 級以上停在 1379 */
@@ -322,12 +322,12 @@ final class MinionAbilities {
     static final double ARC_CAST = 1.25;
     static final double ARC_CRIT = 9;
     static final int ARC_CHAINS = 2;
-    static final double ARC_CHAIN_RANGE = tw.exilecore.core.Units.metres(3.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ARC_CHAIN_RANGE = tw.exilecore.core.Units.metres(3.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final SpellDamage ARC_LIGHTNING = new SpellDamage(1.2000000476837, 0.25, 0.037999998778105, 0.10000000149012, 1.8999999761581);
     /** 死亡風暴（Death Storm，指令）：施放 2 秒、冷卻 5 秒、暴擊率 10%；目標區域裡每一具倒下的骷髏、屍體落雷（2 格）並留下 6 秒的感電地面。 */
     static final double STORM_CAST = 2.0;
     static final double STORM_CRIT = 10;
-    static final double STORM_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double STORM_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     /** 目標區域多大：2026-11-01 照 PoE2（active_skill_base_area_of_effect_radius 20 = 2 公尺）；這次之前原作資料沒找到、取 4 格。 */
     static final double STORM_AREA = tw.exilecore.core.Units.metres(2.0);
     static final SpellDamage STORM_LIGHTNING = new SpellDamage(9, 0.25, 0.041499998420477, 0.30000001192093, 1.7000000476837);
@@ -339,11 +339,11 @@ final class MinionAbilities {
     static final double SHARD_CAST = 1.25;
     static final double SHARD_CRIT = 11;
     static final double SHARD_EXPLOSION_CRIT = 23;
-    static final double SHARD_RADIUS = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double SHARD_RADIUS = tw.exilecore.core.Units.metres(0.8); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final SpellDamage SHARD_COLD = new SpellDamage(1.0499999523163, 0.25, 0.034499999135733, 0.80000001192093, 1.2000000476837);
     static final SpellDamage SHARD_EXPLOSION_COLD = new SpellDamage(0.85000002384186, 0.25, 0.034499999135733, 0.80000001192093, 1.2000000476837);
     /** 冰甲（Ice Armour，指令）：冷卻 12 秒；目標 4 格內自己的召喚物 6 秒內受到的擊中傷害更少 40%，打牠們的敵人受到冰冷傷害，算凍結中。 */
-    static final double ARMOUR_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ARMOUR_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double ARMOUR_SECONDS = 6.0;
     static final double ARMOUR_LESS = 40;
     // 2026-11-01 照 PoE2（IceArmourSkeletonMageMinion 1–40 級）；這次之前只寫到 20 級
@@ -392,7 +392,7 @@ final class MinionAbilities {
     /** 躍擊（Leap Slam）：冷卻 7 秒、攻擊速度 125%、落地 1 格範圍、擊退；依跳的距離最多多 0.25 秒。 */
     static final double LEAP_COOLDOWN = 7;
     static final double LEAP_SPEED = 1.25;
-    static final double LEAP_RADIUS = tw.exilecore.core.Units.metres(1.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double LEAP_RADIUS = tw.exilecore.core.Units.metres(1.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double LEAP_MAX_EXTRA = 0.25;
     /** 太近就不跳（照躍擊的最短距離，取 2 格）。 */
     static final double LEAP_MIN = 2.0;
@@ -401,12 +401,12 @@ final class MinionAbilities {
     // ---- 蟲噬群 ----
 
     /** 蟲群只打你身邊 4 格內的敵人。 */
-    static final double SWARM_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（品質 +x 公尺是資料檔 stat，這一輪沒換）
+    static final double SWARM_RADIUS = tw.exilecore.core.Units.metres(4.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）（品質 +x 公尺是資料檔 stat，這一輪沒換）
 
     // ---- 鴉群密謀 ----
 
     /** 振翅熵流（Winged Entropy）：你身邊 2 格的持續傷害，每一隻烏鴉持續傷害更多 5%、範圍更多 5%。 */
-    static final double ENTROPY_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double ENTROPY_RADIUS = tw.exilecore.core.Units.metres(2.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double ENTROPY_PER_RAVEN = 0.05;
     /** 每分鐘的混沌（min）、物理（max 欄位）傷害（0 隻烏鴉，PoE2 單位；ApplyTangmazuSwarmAuraPlayer，效用公式、L = 寶石等級 × 2）。
      *  2026-11-01 照 PoE2 公式（任何等級）；這次之前是 1～20 級每秒的表、超過 20 級照召喚物傷害表推算 */
@@ -421,8 +421,8 @@ final class MinionAbilities {
     static final int FLIGHT_RAVENS = 10;
     static final double FLIGHT_DAMAGE = 5.5;
     static final double FLIGHT_CHAOS = 0.7;
-    static final double FLIGHT_WIDTH = tw.exilecore.core.Units.metres(2.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
-    static final double FLIGHT_LENGTH = tw.exilecore.core.Units.metres(7.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double FLIGHT_WIDTH = tw.exilecore.core.Units.metres(2.2); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
+    static final double FLIGHT_LENGTH = tw.exilecore.core.Units.metres(7.0); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（2026-10-30 照站長改回 1 公尺 = 1 格）
     static final double FLIGHT_SECONDS = 5.0;
     static final double FLIGHT_TICK = 0.12;
     /** 烏鴉（Raven Conspiracy）的傷害倍率與浮動。 */
