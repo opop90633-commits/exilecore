@@ -601,7 +601,7 @@ final class Warcries {
             if (shockwave && target.isValid() && !target.isDead()) {
                 plugin.combat().skillDamage().hit(player, target, build.profile(), push);
             } else if (push != null && target.isValid() && !tw.exilecore.combat.Knockbacks.immune(target)) {
-                target.setVelocity(target.getVelocity().add(push));
+                tw.exilecore.combat.Knockbacks.add(target, push); // 2026-11-08：在空中不再往上疊
             }
             // 2026-10-27 照 PoE2（寒夜嗥 Arctic Howl）：蓄勢待凍的敵人直接凍結（吼的擊中本身不累積凍結）；這次之前沒有
             if (freezesPrimed(spec) && plugin.ailments() != null && target.isValid() && !target.isDead()) {

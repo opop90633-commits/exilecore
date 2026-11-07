@@ -408,6 +408,9 @@ final class GrantedAuras implements Listener {
                 elapsed++;
             }
         }.runTaskTimer(plugin, 0L, 1L);
+        if (service.treeMechanics() != null) {
+            service.treeMechanics().commandUsed(player); // 2026-11-08：亂鴉狂舞是指令：不死統治者、傀儡大師、群集復甦（這次之前擲不到）
+        }
         return "<#c7a6ff>亂鴉狂舞：用掉 " + MinionAbilities.FLIGHT_RAVENS + " 隻烏鴉";
     }
 

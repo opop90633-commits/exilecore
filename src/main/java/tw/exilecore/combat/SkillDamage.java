@@ -123,7 +123,7 @@ public final class SkillDamage implements Listener {
         if (scale <= 0) {
             event.setCancelled(true);
         } else {
-            event.setKnockback(context.knockback().clone().multiply(scale));
+            event.setKnockback(Knockbacks.grounded(context.target(), context.knockback().clone().multiply(scale))); // 2026-11-08：在空中不再往上推
         }
     }
 }

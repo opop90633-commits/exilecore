@@ -484,6 +484,14 @@
       d.appendChild(ul);
       box.appendChild(d);
     });
+    if (ui.vaal && ui.vaal.length) { // 2026-11-08：瓦爾詞綴（蝕培石）
+      var vd = el('details', 'veil');
+      vd.appendChild(el('summary', null, '瓦爾詞綴：已腐化後用蝕培石，隨機 1～2 條換成下面 ' + ui.vaal.length + ' 種之一'));
+      var vl = el('ul');
+      ui.vaal.forEach(function (t) { vl.appendChild(el('li', null, t)); });
+      vd.appendChild(vl);
+      box.appendChild(vd);
+    }
     if (ui.chase) {
       box.appendChild(el('div', 'chase', '✦ 追逐級：極稀有，掉落全服廣播'));
       box.appendChild(el('div', 'src', '所有地圖 Boss 都有很小的機率；怪物等級 75 以上的一般怪物（約百萬分之一）；僥倖石用在它的基底上（物品等級 75 以上）'));

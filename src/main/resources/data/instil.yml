@@ -554,7 +554,7 @@ recipes:
   p42347: [distilled_despair, distilled_despair, distilled_disgust]   # 視野脈輪
   p42354: [distilled_ire, distilled_guilt, distilled_ire]   # 致盲閃光
   p42390: [distilled_disgust, distilled_suffering, distilled_guilt]   # 過熱一擊
-  p42660: [distilled_disgust, distilled_guilt, distilled_suffering]   # 號令怒火
+  p42660: [distilled_disgust, distilled_guilt, distilled_suffering]   # 指令怒火
   p42714: [distilled_envy, distilled_fear, distilled_despair]   # 千刀萬剮
   p42760: [distilled_greed, distilled_fear, distilled_paranoia]   # 穩定脈輪
   p42813: [distilled_paranoia, distilled_suffering, distilled_fear]   # 變革浪潮

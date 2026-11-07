@@ -1260,7 +1260,7 @@ runes:
       - { text: "減少 30% 最大魔力", stat: mana.max, type: INCREASED, value: -30 }
     slots:
       sceptre:
-        - { text: "號令技能減少 30% 消耗、召喚物的號令技能增加 60% 傷害", mods: [ { stat: skill.cost, type: INCREASED, value: -30, tags: [command] }, { stat: damage, type: INCREASED, value: 60, tags: [minion, command] } ] }
+        - { text: "指令技能減少 30% 消耗、召喚物的指令技能增加 60% 傷害", mods: [ { stat: skill.cost, type: INCREASED, value: -30, tags: [command] }, { stat: damage, type: INCREASED, value: 60, tags: [minion, command] } ] }
     bonded:
       weapon:
         - { text: "減少 30% 消耗效率", stat: skill.cost_efficiency, type: INCREASED, value: -30 }
@@ -1455,7 +1455,7 @@ runes:
         chest:
           - { text: "增加 10% 殺死敵人時掉落的金幣數量", stat: gold.find, type: INCREASED, value: 10 }
         sceptre:
-          - { text: "召喚物的號令技能增加 30% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 30, tags: [minion, command] }
+          - { text: "召喚物的指令技能增加 30% 冷卻時間恢復率", stat: cooldown.recovery, type: INCREASED, value: 30, tags: [minion, command] }
   idol_fox:   # Fox Idol（胸甲「嵌在這件上的魔偶獲得羈絆加成」：local.rune_bonded，這件上所有符文、魔偶的羈絆都生效，不用聖賢智慧）
     name: 魔偶符文・狐狸
     level: 50

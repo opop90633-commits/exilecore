@@ -356,7 +356,8 @@ public final class Runes {
             out.addAll(UniquePicks.picks(data, UniquePicks.CORE_SLOT, 1));
         }
         for (final String[] pair : new String[][] {{tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_HEAD, "head"},
-                {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_LEGS, "legs"}, {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_FEET, "feet"}}) {
+                {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_LEGS, "legs"}, {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_FEET, "feet"},
+                {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_SHIELD, "shield"}}) { // 2026-11-08：＋盾
             if (!out.contains(pair[1]) && localFlat(repository, data, pair[0]) > 0) {
                 out.add(pair[1]);
             }

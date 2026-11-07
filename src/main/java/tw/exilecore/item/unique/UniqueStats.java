@@ -157,6 +157,28 @@ public final class UniqueStats {
         return copies;
     }
 
+    /**
+     * 2026-11-08 照站長「召喚物傷害的增加、減少也套用在你身上 補上」（PoE2 Chober Chaber，信徒之錘）：你身上寫明召喚物的傷害增加／減少
+     * （[minion] 標籤的 damage INCREASED），拿掉召喚物標籤再給你一份。在重算屬性表時加（跟百目冠一樣），面板、技能說明、/stats、網頁都看得到；
+     * 這次之前只在實戰擊中時另外加（CombatListener），面板與估算都沒算。更多（MORE）不算（原作只寫增加、減少）。
+     */
+    public static java.util.List<tw.exilecore.stats.Modifier> minionDamageToYou(final tw.exilecore.stats.StatSheet sheet) {
+        if (sheet.flat(tw.exilecore.stats.StatKeys.MINION_DAMAGE_AFFECTS_YOU, java.util.Set.of()) <= 0) {
+            return java.util.List.of();
+        }
+        final java.util.List<tw.exilecore.stats.Modifier> copies = new java.util.ArrayList<>();
+        for (final tw.exilecore.stats.Modifier modifier : sheet.modifiersOf(tw.exilecore.stats.StatKeys.DAMAGE)) {
+            if (modifier.type() != tw.exilecore.stats.ModType.INCREASED || !modifier.tags().contains(tw.exilecore.stats.Tags.MINION)) {
+                continue;
+            }
+            final Set<String> tags = new HashSet<>(modifier.tags());
+            tags.remove(tw.exilecore.stats.Tags.MINION);
+            copies.add(new tw.exilecore.stats.Modifier(modifier.stat(), modifier.type(), modifier.value(), Set.copyOf(tags),
+                    modifier.source() + "（召喚物傷害套用在你身上）"));
+        }
+        return copies;
+    }
+
     /** 每移動 x/10 格（格）觸發一次潰骸（踏骸之履）。 */
     public static final String TRIGGER_DECOMPOSE_METRES = "trigger.decompose_metres";
     /** 武器以外的裝備賦予技能（grant_skill.技能代號，FLAT 1；等級照物品等級，跟法杖賦予的一樣）。 */

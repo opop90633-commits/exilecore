@@ -3101,13 +3101,15 @@ public final class AilmentService {
      * 不然暫停後還會照原本的方向滑一段。
      */
     private void setAware(final Mob mob, final Tracked entry, final boolean aware) {
-        if (!aware && !entry.madeUnaware && !entry.unawarePending && mob.isAware()) {
+        // 2026-11-08 照站長「怪物被冰凍時會飛起來」：暫停 AI 的怪也不跑物理（不會掉下來），被打飛、跳起來的那一刻凍住就掛在半空；
+        //   等落地才暫停（還在空中時速度已經壓到 0、跳不起來，落地前照常掉下來）。這次之前不管在不在地上都馬上暫停
+        if (!aware && !entry.madeUnaware && !entry.unawarePending && mob.isAware() && mob.isOnGround()) {
             entry.unawarePending = true;
             mob.getPathfinder().stopPathfinding();
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 entry.unawarePending = false;
                 if (tracked.get(mob.getUniqueId()) == entry && mob.isValid() && !mob.isDead()
-                        && entry.state.incapacitated(now()) && mob.isAware() && !lockHeld(mob)) { // 2026-11-07：鎖血中不停
+                        && entry.state.incapacitated(now()) && mob.isAware() && !lockHeld(mob) && mob.isOnGround()) { // 2026-11-07：鎖血中不停；2026-11-08：落地才停
                     mob.setAware(false);
                     mob.getPersistentDataContainer().set(unawareKey, PersistentDataType.BYTE, (byte) 1);
                     entry.madeUnaware = true;

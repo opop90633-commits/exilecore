@@ -293,8 +293,8 @@ public final class TreeConditions {
     public static final String VS_ENTERED_PRESENCE = "vs_enteredpresence";
     public static final String VS_EXITED_PRESENCE = "vs_exitedpresence";
 
-    /** 被包圍：幾格內（PoE2 是 1.5 格內；方塊世界的怪有身體寬度，放寬到 2.5 格）。 */
-    public static final double SURROUNDED_RADIUS = 2.5;
+    /** 被包圍：幾格內（PoE2 是 3 公尺內；1 公尺 = 1 格）。 */
+    public static final double SURROUNDED_RADIUS = 3.0; // 2026-11-08 照站長「照原作的 3 格」（PoB2：at least 5 Enemies within 3 metres；1 公尺 = 1 格）；這次之前 2.5
     /** 被包圍：至少幾隻敵人（PoE2：5 隻）。 */
     public static final int SURROUNDED_COUNT = 5;
     /** 「遠處」：超過 6 格（＝6 格）。 */

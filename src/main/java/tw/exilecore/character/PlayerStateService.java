@@ -785,6 +785,7 @@ public final class PlayerStateService {
         // 2026-10-27：夥伴傷害的增加也給你（天賦樹）——只看屬性表，比對用的表、網頁的虛擬角色也算；這次之前是暫時增益（網頁沒算）
         sheet.addAll(tw.exilecore.skill.TreeMechanics.companionDamageModifiers(sheet));
         sheet.addAll(tw.exilecore.item.unique.UniqueStats.spellDamageToAttacks(sheet)); // 2026-10-29 照 PoE2 Crown of Eyes（百目冠）
+        sheet.addAll(tw.exilecore.item.unique.UniqueStats.minionDamageToYou(sheet)); // 2026-11-08 照 PoE2 Chober Chaber（信徒之錘）：這次之前只在實戰擊中時加
         if (!live) {
             return; // 比對用的表：到這裡就算完了，下面都是更新玩家狀態
         }

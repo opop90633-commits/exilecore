@@ -99,6 +99,10 @@ public final class GemQualityKeys {
     public static final String SHOCKED_GROUND_CHANCE = "detonate.shocked_ground_chance";
     /** FLAT（%）：使用時 x% 機率只用掉 60% 榮耀（熾陽之矛：保留 40%）。 */
     public static final String GLORY_RETAIN_CHANCE = "glory.retain_chance";
+    /** FLAT（%）：x% 機率不消耗榮耀（天罰巨鎚的額外品質效果；2026-11-08）。 */
+    public static final String GLORY_NOT_CONSUME_CHANCE = "glory.not_consume_chance";
+    /** INCREASED：引爆時間增減（子母榴彈的額外品質效果；2026-11-08，ProjectileEngine.detonationScale）。 */
+    public static final String DETONATION_TIME = "skill.detonation_time";
     /** FLAT：疫潮施放時另外感染的敵人數 +x（無條件捨去）。 */
     public static final String EXTRA_TARGETS = "skill.extra_targets";
     /** FLAT：噬屍宴吃的屍體 +x（無條件捨去）。 */

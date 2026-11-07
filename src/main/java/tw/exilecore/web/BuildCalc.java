@@ -60,7 +60,8 @@ public final class BuildCalc {
 
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     /** 進度只收這些開頭的鍵（算加成用得到的）。 */
-    static final List<String> PROGRESS_PREFIXES = List.of("q.", "boss.", "trial.", "asc", "attr.");
+    static final List<String> PROGRESS_PREFIXES = List.of("q.", "boss.", "trial.", "asc", "attr.",
+            "minion_count."); // 2026-11-08：每個召喚技能帶幾隻（技能面板「設定召喚物數量」）；這次之前沒帶，網頁每個召喚技能都當 1 隻、精魂少算
     static final int MAX_EXTRA = 400;
     static final int MAX_PROGRESS = 400;
     static final int MAX_JEWELS = 40;

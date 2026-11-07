@@ -225,11 +225,15 @@ public final class PhaseLocks {
         lock.lockedHealth = boss.getHealth();
         lock.required = required;
         state.lock = lock;
+        // 2026-11-08：破綻開到剝滿一層（這次之前 window 秒）；1 層、×1 時不寫層數與倍率（2026-11-06 起每階段 1 層、×1）
+        final String layersText = opening.layers() > 1 ? "（" + opening.layers() + " 層）" : "";
+        final String takenText = Math.abs(opening.openTaken() - 1) > 1e-9 ? "（破綻裡打牠的傷害 ×" + trim(opening.openTaken()) + "）" : "";
+        final String peelText = opening.layers() > 1 ? "一個破綻剝滿一層才結束；" + Math.round(opening.duration()) + " 秒內剝完 " + opening.layers() + " 層才破盾"
+                : "破綻一直開到破盾；" + Math.round(opening.duration()) + " 秒內破盾";
         broadcast(arena, String.format(Locale.ROOT,
-                "<#ffb347>✦ %s 鎖血了（%d 層）：牠照常出招——每躲開一招，你身上就開 %s 秒的破綻（這段時間打牠的傷害 ×%s），"
-                        + "只有破綻裡打的才算，一個破綻最多剝一層；%d 秒內剝完 %d 層才破盾，沒剝完牠回復 %d%% 生命。鎖血時凍結、電擊、暈眩照上（加傷害照算），但牠不會被控住", // 2026-11-07 照站長「上狀態不控場」；這次之前「免疫控場」
-                ItemRenderer.escape(arena.bossName()), opening.layers(), trim(opening.window()), trim(opening.openTaken()),
-                Math.round(opening.duration()), opening.layers(), Math.round(opening.heal())));
+                "<#ffb347>✦ %s 鎖血了%s：牠照常出招——躲開一招，你身上就開破綻%s，只有破綻裡打的才算，"
+                        + "%s，沒破盾牠回復 %d%% 生命。鎖血時凍結、電擊、暈眩照上（加傷害照算），但牠不會被控住", // 2026-11-07 照站長「上狀態不控場」
+                ItemRenderer.escape(arena.bossName()), layersText, takenText, peelText, Math.round(opening.heal())));
         boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.2f, 0.6f);
         Fx.important(() -> Fx.spawn(boss.getWorld(), Particle.ENCHANTED_HIT, boss.getLocation().add(0, boss.getHeight() / 2, 0), 40, 0.8, 1, 0.8, 0.2));
     }
@@ -265,12 +269,17 @@ public final class PhaseLocks {
             if (boss == null || player.getLocation().distanceSquared(boss.getLocation()) > opening.reach() * opening.reach()) {
                 continue; // 站太遠沒有躲招
             }
-            lock.openUntil.put(uuid, new long[] {now + Math.round(opening.window() * 20)});
+            // 2026-11-08 照站長「破綻時間延長到剝滿一層為主」：破綻不再 3 秒就關，一直開到這個破綻剝滿一層（adjust 剝滿時關掉）；
+            //   已經開著、還沒剝滿的不重來。這次之前開 window（3）秒，傷害不夠的人常常一層剝不完
+            if (lock.openUntil.containsKey(uuid)) {
+                continue;
+            }
+            lock.openUntil.put(uuid, new long[] {Long.MAX_VALUE});
             lock.openUsed.put(uuid, 0.0);
             player.showTitle(Title.title(plugin.text().parse("<#ffb347>破綻！"),
-                    plugin.text().parse("<gray>躲開了「" + ItemRenderer.escape(skillName) + "」：" + trim(opening.window()) + " 秒內打牠（第 "
-                            + Math.min(opening.layers(), lock.layersDone + 1) + "／" + opening.layers() + " 層）"),
-                    Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(Math.round(opening.window() * 1000) - 300), Duration.ofMillis(200))));
+                    plugin.text().parse("<gray>躲開了「" + ItemRenderer.escape(skillName) + "」：" + (opening.layers() > 1
+                            ? "打牠剝滿這一層（第 " + Math.min(opening.layers(), lock.layersDone + 1) + "／" + opening.layers() + " 層）" : "打牠直到破盾")),
+                    Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2700), Duration.ofMillis(200))));
             player.playSound(player.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.2f, 1.4f);
         }
         if (boss != null) {
@@ -303,13 +312,18 @@ public final class PhaseLocks {
         }
         final double applied = Math.min(amount * opening.openTaken(), allowed);
         lock.openUsed.put(source, used + applied);
+        final boolean full = used + applied >= layer - 1e-6;
+        if (full) {
+            lock.openUntil.remove(source); // 2026-11-08：這個破綻剝滿一層就關（要再躲一招才有下一個）
+        }
         lock.peeled += applied;
         final int before = lock.layersDone;
         lock.layersDone = (int) Math.floor((lock.peeled + 1e-6) / Math.max(1e-9, layer));
         if (lock.layersDone > before && lock.layersDone < opening.layers()) {
             final Player player = plugin.getServer().getPlayer(source);
             if (player != null) {
-                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>剝掉第 " + lock.layersDone + " 層（剩 " + (opening.layers() - lock.layersDone) + " 層）"));
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffb347>剝掉第 " + lock.layersDone + " 層（剩 " + (opening.layers() - lock.layersDone) + " 層）"
+                        + (full ? "<gray>：破綻結束，再躲一招" : "")));
                 player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 1.3f);
             }
         } else if (lock.layersDone == before && applied > 0) {

@@ -91,6 +91,8 @@ class GemQualityRefTest {
             {"cripple_purge", tw.exilecore.charge.ChargeService.EXTRA_RANDOM, 20.0},
             {"star_reign_art", StatKeys.GRANT_PREFIX + StatKeys.DAMAGE_PER_CHARGE, 2.0},
             {"soul_sever_palm", StatKeys.LIFE_ON_CULL_OVER_TIME, 10.0}, // 2026-10-28 照 PoE2：4 秒內回復（這次之前 LIFE_ON_CULL 一次回）
+            {"heaven_punish_maul", tw.exilecore.stats.GemQualityKeys.GLORY_NOT_CONSUME_CHANCE, 50.0}, // 2026-11-08 照站長：天罰巨鎚 50% 不消耗榮耀
+            {"mother_child_grenade", tw.exilecore.stats.GemQualityKeys.DETONATION_TIME, -0.4}, // 2026-11-08：子母榴彈減少 40% 引爆時間
         };
         for (final Object[] row : moved) {
             final String id = (String) row[0];

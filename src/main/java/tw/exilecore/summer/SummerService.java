@@ -1854,6 +1854,14 @@ public final class SummerService {
 
     /** 兌換；成功 null。 */
     String buy(final Player player, final SummerConfig.ShopItem item) {
+        return buy(player, item, 1);
+    }
+
+    /** 2026-11-08 照站長「星潮祭的 Boss 入場兌換新增右鍵買 10 個」：一次換 times 份（只有通貨類，素材 × times；不夠就一個都不換）。 */
+    static final int BULK = 10;
+
+    String buy(final Player player, final SummerConfig.ShopItem item, final int requested) {
+        final int times = item.kind() == SummerConfig.Kind.CURRENCY ? Math.max(1, requested) : 1;
         if (!shopOpen()) {
             return config.name() + "的兌換已經結束了";
         }
@@ -1868,18 +1876,18 @@ public final class SummerService {
         }
         final tw.exilecore.economy.Wallet wallet = plugin.economy().wallet();
         for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {
-            if (wallet.available(player, cost.getKey()) < cost.getValue()) {
-                return "素材不夠：" + currencyName(cost.getKey()) + " 要 " + cost.getValue() + "，你有 " + wallet.available(player, cost.getKey());
+            if (wallet.available(player, cost.getKey()) < (long) cost.getValue() * times) {
+                return "素材不夠：" + currencyName(cost.getKey()) + " 要 " + (long) cost.getValue() * times + "，你有 " + wallet.available(player, cost.getKey());
             }
         }
         // 中途扣不到、或後面給不出去：已經扣的退回去（照萬燈夜 2026-10-17 的做法）
         final Map<String, Integer> taken = new java.util.LinkedHashMap<>();
         for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {
-            if (!wallet.take(player, cost.getKey(), cost.getValue())) {
+            if (!wallet.take(player, cost.getKey(), cost.getValue() * times)) {
                 refundCosts(player, taken);
                 return "素材不夠";
             }
-            taken.put(cost.getKey(), cost.getValue());
+            taken.put(cost.getKey(), cost.getValue() * times);
         }
         switch (item.kind()) {
             case COSMETIC -> {
@@ -1897,7 +1905,7 @@ public final class SummerService {
                     return problem + "（素材退回了）";
                 }
             }
-            case CURRENCY -> giveCurrency(player, item.currency(), item.amount());
+            case CURRENCY -> giveCurrency(player, item.currency(), item.amount() * times);
             case UNIQUE -> { // 2026-11-05 照站長「夏日活動補上各 Boss 的入場券，並且新增兩件專屬的傳奇」
                 if (giveUnique(player, item.unique(), item.itemLevel()) == null) {
                     plugin.getSLF4JLogger().warn("{}：{} 換傳奇 {} 失敗（沒有這件；素材退回）", config.name(), player.getName(), item.unique());
@@ -1912,7 +1920,7 @@ public final class SummerService {
         }
         plugin.players().markDirty(player);
         plugin.characters().save(player);
-        plugin.getSLF4JLogger().info("[{}] {} 兌換 {}", config.name(), player.getName(), item.id());
+        plugin.getSLF4JLogger().info("[{}] {} 兌換 {} ×{}", config.name(), player.getName(), item.id(), times);
         return null;
     }
 

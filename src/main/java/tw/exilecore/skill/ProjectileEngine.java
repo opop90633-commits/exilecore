@@ -44,6 +44,20 @@ import java.util.random.RandomGenerator;
  */
 final class ProjectileEngine implements Listener {
 
+    /** 2026-11-08 照 PoE2（子母榴彈的額外品質效果 skill_detonation_time_+%）：引爆時間增減（減少 40% = ×0.6）。 */
+    static final String DETONATION_TIME = tw.exilecore.stats.GemQualityKeys.DETONATION_TIME;
+
+    /** 2026-11-08：這一發的引爆時間倍率（技能自己的增減，品質寫在 local），最少 ×0.1。 */
+    static double detonationScale(final SkillBuild build) {
+        double inc = 0;
+        for (final tw.exilecore.stats.Modifier modifier : build.profile().local()) {
+            if (DETONATION_TIME.equals(modifier.stat()) && modifier.type() == tw.exilecore.stats.ModType.INCREASED) {
+                inc += modifier.value();
+            }
+        }
+        return Math.max(0.1, 1 + inc);
+    }
+
     /** 2026-10-26：碎片可以疊加的技能標籤（PoE2 的 Merging）。 */
     static final String MERGING = "merging";
     /** 2026-10-26：引導累積、放開一起射出的骨刺（Bonestorm）：每一支都可以打中同一個敵人。 */
@@ -203,7 +217,7 @@ final class ProjectileEngine implements Listener {
             this.hit = hit;
             this.secondary = secondary;
             this.ticksLeft = (int) Math.ceil(range / Math.max(0.1, speed));
-            this.fuseLeft = build.params().fuse() > 0 ? (int) Math.max(1, Math.round(build.params().fuse() * 20)) : -1;
+            this.fuseLeft = build.params().fuse() > 0 ? (int) Math.max(1, Math.round(build.params().fuse() * detonationScale(build) * 20)) : -1;
             this.pierceLeft = build.pierce();
             this.chainsLeft = build.chains();
             this.forksLeft = secondary ? 0 : build.forks();
@@ -2223,7 +2237,7 @@ final class ProjectileEngine implements Listener {
         final int count = CrossbowParity.bombletCount(bomblet, shot.build.level());
         final List<double[]> directions = SkillMath.fan(base.getX(), 0, base.getZ(), count, scatter.spread());
         final double radius = SkillStages.radius(shot.build, CrossbowParity.BOMBLET, shot.explode);
-        final int fuse = CrossbowParity.bombletFuseTicks(bomblet, shot.build.params().fuse());
+        final int fuse = (int) Math.max(1, Math.round(CrossbowParity.bombletFuseTicks(bomblet, shot.build.params().fuse()) * detonationScale(shot.build))); // 2026-11-08：子榴彈也吃引爆時間
         final Vector start = at.toVector().add(new Vector(0, 0.3, 0));
         for (final double[] d : directions) {
             // 原作 projectile_distance_variance、projectile_angle_variance：每顆飛的遠近、角度各有亂數

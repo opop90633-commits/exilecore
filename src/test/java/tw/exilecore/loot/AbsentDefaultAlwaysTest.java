@@ -21,4 +21,12 @@ class AbsentDefaultAlwaysTest {
         assertEquals(LootFilter.BaseRule.ALWAYS, filter.baseRule("jamulet_absent"));
         assertEquals(LootFilter.BaseRule.SHOW, filter.baseRule("iron_ring"), "其他基底照舊預設顯示");
     }
+
+    @Test
+    void graspingRingAndDelveRobeAreAlwaysByDefault() {
+        // 2026-11-08 照站長「這兩個預設必撿」：攫握指環（劫盜）、祭紋華袍（星脈深坑）
+        final LootFilter filter = new LootFilter();
+        assertEquals(LootFilter.BaseRule.ALWAYS, filter.baseRule("jring_grasping"));
+        assertEquals(LootFilter.BaseRule.ALWAYS, filter.baseRule("body_str_dex_int_01"));
+    }
 }

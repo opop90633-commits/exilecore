@@ -656,8 +656,8 @@ final class Signatures {
         for (final LivingEntity target : service.targets().around(whirl.center, radius, player)) {
             final Vector push = target.getLocation().toVector().subtract(whirl.center.toVector()).setY(0);
             if (push.lengthSquared() > 1e-4 && !tw.exilecore.combat.Knockbacks.immune(target)) {
-                target.setVelocity(target.getVelocity().add(push.normalize()
-                        .multiply(WHIRL_KNOCKBACK * (1 + WHIRL_KNOCKBACK_PER_STAGE * (whirl.stage - 1))).setY(0.25)));
+                tw.exilecore.combat.Knockbacks.add(target, push.normalize() // 2026-11-08：在空中不再往上疊
+                        .multiply(WHIRL_KNOCKBACK * (1 + WHIRL_KNOCKBACK_PER_STAGE * (whirl.stage - 1))).setY(0.25));
             }
         }
         tw.exilecore.skill.Fx.disk(whirl.center.getWorld(), Particle.SWEEP_ATTACK, whirl.center.clone().add(0, 1, 0), 6 * whirl.stage, radius, 0.4, 0);

@@ -95,6 +95,9 @@ class VaalCurrencyTest {
         assertEquals(vaal, data.cultivatedOut().size());
         assertEquals(greed.affixIds().size(), data.affixes().size(), "條數不變");
         assertFalse(UniqueUpgrade.outdated(items, data), "讀物品時不會被當成舊版補回去");
+        // 2026-11-08 照站長：瓦爾詞綴在說明裡標出來（紅色、✦瓦爾）
+        assertEquals(vaal, tw.exilecore.item.ItemStats.affixLines(items, data).stream()
+                .filter(line -> tw.exilecore.item.ItemStats.AffixLine.VAAL.equals(line.mark())).count());
         // 沒腐化的瓦爾傳奇、或別的傳奇：變成同種類的隨機已腐化傳奇
         final ItemData other = generator.generateUnique(greed, 80, random);
         final String uuid = other.uuid();

@@ -632,15 +632,8 @@ public final class CombatListener implements Listener {
                 final double current = plugin.players().get((Player) attacker).life();
                 conditional.add(Modifier.increased(StatKeys.CRIT_BONUS, Math.floor(current / 50) * perLife / 100.0, "血鋒"));
             }
-            // 2026-10-31 照 PoE2 Chober Chaber（忠誠之錘）：召喚物傷害的增加、減少也套用在你身上（只算寫明召喚物的那幾條）
-            if (attackerSheet.flat(StatKeys.MINION_DAMAGE_AFFECTS_YOU, java.util.Set.of()) > 0) {
-                final java.util.Set<String> asMinion = new java.util.HashSet<>(hitTagSet);
-                asMinion.add(tw.exilecore.stats.Tags.MINION);
-                final double minionOnly = skillSheet.increased(StatKeys.DAMAGE, asMinion) - skillSheet.increased(StatKeys.DAMAGE, hitTagSet);
-                if (minionOnly != 0) {
-                    conditional.add(Modifier.increased(StatKeys.DAMAGE, minionOnly, "召喚物傷害"));
-                }
-            }
+            // 2026-10-31 照 PoE2 Chober Chaber（忠誠之錘）：召喚物傷害的增加、減少也套用在你身上
+            //   2026-11-08：改在重算屬性表時加（UniqueStats.minionDamageToYou），面板、估算都看得到；這裡不再另外加（不然會算兩次）
             // 2026-10：對稀有、傳奇怪物（含 Boss、訓練假人・首領）增加傷害
             if (defenderMonster != null) {
                 final boolean unique = defenderMonster.boss() || defenderMonster.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE;

@@ -160,6 +160,25 @@ final class MinionAbilities {
         int manaAt(final int level) {
             return mana.length == 0 ? 0 : mana[Math.max(1, Math.min(mana.length, level)) - 1];
         }
+
+        /**
+         * 2026-11-08 照站長「指令技能減少 30% 消耗有吃到嗎」：主人實際要付的魔力——表上的魔力 × 你的消耗倍率（command 情境：
+         * 魔偶符文的「指令技能減少 30% 消耗」、一般的消耗增減）× 全服的魔力消耗倍率（mana_cost_scale）÷ 魔力消耗效率，跟一般技能同一套
+         * （CostKeys）；召喚技能上的輔助的魔力倍率不算（那是召喚物的技能）。這次之前直接照表扣，什麼都吃不到（也沒吃全服砍半）
+         */
+        int manaCost(final int level, final tw.exilecore.stats.StatSheet owner) {
+            return commandCost(manaAt(level), owner);
+        }
+
+        static int commandCost(final int base, final tw.exilecore.stats.StatSheet owner) {
+            if (base <= 0 || owner == null) {
+                return Math.max(0, base);
+            }
+            final java.util.Set<String> context = java.util.Set.of(Commandables.TAG);
+            return tw.exilecore.stats.CostKeys.manaCost(base,
+                    owner.apply(tw.exilecore.stats.StatKeys.SKILL_COST, 1.0, context) * SkillConfig.manaCostScale(),
+                    tw.exilecore.stats.CostKeys.manaEfficiency(owner, context));
+        }
     }
 
     // 2026-10-28 照 PoE2（poe2db／RePoE Command 技能 1–40 級的魔力）；這次之前只寫到 20 級，21 級以上停在 20 級的值

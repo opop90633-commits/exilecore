@@ -618,6 +618,8 @@ public final class ItemStats {
         /** 2026-10-21：mark 是 {@link #FRACTURED}（定星石）、{@link #ENCHANT}（蝕變石的腐化詞綴）或 null。 */
         public static final String FRACTURED = "fractured";
         public static final String ENCHANT = "enchant";
+        /** 2026-11-08 照站長：蝕培石換上去的瓦爾詞綴（傳奇說明用醒目的紅色）。 */
+        public static final String VAAL = "vaal";
 
         /** 2026-11-03：corrupt = 蝕變石（傳奇）／聖化抽到的倍率（百分比，例如 112）；0 = 沒有。 */
         public AffixLine(final String text, final int tier, final AffixType type, final String ranged, final boolean catalysed,
@@ -706,7 +708,8 @@ public final class ItemStats {
                     Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges, rolled.fixedScale()), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0, // 2026-11-04：腐化的寫骰出的數值×倍率
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
-                            : data.isFractured(rolled) ? AffixLine.FRACTURED : null, // 2026-10-21
+                            : data.isFractured(rolled) ? AffixLine.FRACTURED
+                            : UniqueItem.isVaalAffix(rolled.id()) ? AffixLine.VAAL : null, // 2026-10-21；2026-11-08：瓦爾詞綴
                     rolled.corrupt() == null || affix.mods().stream().noneMatch(AffixMod::corruptScales) ? 0 : rolled.corrupt()); // 2026-11-03 照站長：蝕變石的倍數；2026-11-04：數值不會變的（你沒有元素抗性）不標
             if (affix.type() == AffixType.PREFIX) {
                 prefixes.add(line);

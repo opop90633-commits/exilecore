@@ -27,6 +27,9 @@ import java.util.Map;
  */
 public final class ItemRenderer {
 
+    /** 2026-11-08：傳奇說明最多列幾種瓦爾詞綴。 */
+    static final int VAAL_LINES = 6;
+
     private static final MiniMessage MINI = MiniMessage.miniMessage();
 
     /**
@@ -280,7 +283,9 @@ public final class ItemRenderer {
         if (!data.affixes().isEmpty()) {
             lore.add(line(SEPARATOR));
             final List<ItemStats.AffixLine> affixLines = ItemStats.affixLines(repository, data);
-            lore.add(line(affixSlots(data, affixLines)));
+            if (data.rarity() != Rarity.UNIQUE) { // 2026-11-08：傳奇藥劑、護符沒有詞綴格（這次之前顯示「前綴 0/0・後綴 2/0」）
+                lore.add(line(affixSlots(data, affixLines)));
+            }
             for (final ItemStats.AffixLine affixLine : affixLines) {
                 // 2026-10-24：藥劑、護符的詞綴也標階級 (T1…)，跟裝備一樣；破裂的標起來
                 final boolean fractured = ItemStats.AffixLine.FRACTURED.equals(affixLine.mark());
@@ -458,12 +463,15 @@ public final class ItemRenderer {
                     // 被催化劑加強的詞綴：數值已經是加成後的，用亮藍色、後面標「催化」
                     // 被「增加 x% 已揭露詞綴的幅度」加強的揭露詞綴（2026-10）：數值已經是加成後的，用紫色、後面標「揭露 +x%」
                     final boolean fractured = ItemStats.AffixLine.FRACTURED.equals(affixLine.mark()); // 2026-10-21：定星石
+                    // 2026-11-08 照站長「蝕培石點出來的詞綴要用看得清楚的紅色」：瓦爾詞綴亮紅色、後面標「✦瓦爾」
+                    final boolean vaal = ItemStats.AffixLine.VAAL.equals(affixLine.mark());
                     final String catalysedMark = (affixLine.catalysed() ? " <#7fd4ff>✦催化" : "")
                             + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "")
                             + (fractured ? " <#c9a66b>✦破裂" : "")
+                            + (vaal ? " <#ff4040>✦瓦爾" : "")
                             // 2026-11-03 照站長：蝕變石（傳奇重骰再乘倍率）／聖化變動了數值的詞綴，標這條的倍數；這次之前看不出來
                             + (affixLine.corrupt() > 0 ? " " + corruptColor(affixLine.corrupt()) + "✦" + affixLine.corruptMark() : "");
-                    final String boostColor = affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : fractured ? "#c9a66b" : null;
+                    final String boostColor = vaal ? "#ff4040" : affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : fractured ? "#c9a66b" : null;
                     final String chips = AffixChips.miniMessage(affixLine.chips()); // 2026-10：詞綴標籤（傷害、火焰、攻擊…）
                     lore.add(line(unique ? "<" + (boostColor != null ? boostColor : "#8888ff") + ">" + affixLine.ranged() + catalysedMark + chips
                             : affixTag(affixLine.type()) + "<" + (boostColor != null ? boostColor
@@ -510,6 +518,24 @@ public final class ItemRenderer {
             }
         }
         final UniqueItem unique = repository.unique(data.unique());
+        // 2026-11-08 照站長「有顯示哪些傳奇可以用蝕培石瓦出特殊的詞綴嗎」：瓦爾傳奇列出能換到的瓦爾詞綴（太多的只列前 6 種，全部看網頁圖鑑）
+        final List<String> vaal = unique == null ? List.of() : repository.vaalMods(unique.id());
+        if (!vaal.isEmpty()) {
+            lore.add(line(SEPARATOR));
+            lore.add(line("<#d20000>瓦爾詞綴<gray>（已腐化後用蝕培石，隨機 1～2 條換成其中之一）"));
+            int shown = 0;
+            for (final String id : vaal) {
+                final Affix affix = repository.affix(id);
+                if (affix == null || affix.tiers().isEmpty()) {
+                    continue;
+                }
+                if (shown++ >= VAAL_LINES) {
+                    lore.add(line("<dark_gray>　…等 " + vaal.size() + " 種（全部看網頁圖鑑）"));
+                    break;
+                }
+                lore.add(line("<#a04040>　" + affix.rangeText(affix.tiers().getFirst().tier())));
+            }
+        }
         if (unique != null && !unique.flavour().isEmpty()) {
             lore.add(line(SEPARATOR));
             for (final String flavour : unique.flavour()) {

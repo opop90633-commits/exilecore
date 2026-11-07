@@ -36,6 +36,8 @@ public final class SummerMenu extends Menu {
     private int page;
     private static final int PER_PAGE = 45 - FIRST_ITEM;
     private long confirmUntil;
+    /** 2026-11-08：確認中的是不是右鍵的「換 10 個」。 */
+    private boolean confirmBulk;
 
     public SummerMenu(final ExileCore plugin, final Player player, final SummerService service) {
         super(plugin, player, 6, "<dark_gray>" + ItemRenderer.escape(service.config().name()));
@@ -308,8 +310,17 @@ public final class SummerMenu extends Menu {
                         + cost.getValue() + " <dark_gray>（有 " + have + "）");
             }
             lore.add("");
-            lore.add(confirmSlot == slot && System.currentTimeMillis() < confirmUntil ? "<#ffd27f>▶ 再點一次確認兌換"
+            final boolean confirming = confirmSlot == slot && System.currentTimeMillis() < confirmUntil;
+            lore.add(confirming ? (confirmBulk ? "<#ffd27f>▶ 再右鍵一次確認兌換 " + SummerService.BULK + " 個" : "<#ffd27f>▶ 再點一次確認兌換")
                     : !service.shopOpen() ? "<dark_gray>兌換已經結束" : enough ? "<yellow>左鍵：兌換" : "<dark_gray>素材不夠");
+            if (item.kind() == SummerConfig.Kind.CURRENCY && service.shopOpen() && !confirming) {
+                // 2026-11-08 照站長：右鍵一次換 10 個（素材 ×10）
+                boolean bulk = true;
+                for (final Map.Entry<String, Integer> cost : item.cost().entrySet()) {
+                    bulk &= wallet.available(player, cost.getKey()) >= (long) cost.getValue() * SummerService.BULK;
+                }
+                lore.add(bulk ? "<yellow>右鍵：兌換 " + SummerService.BULK + " 個" : "<dark_gray>右鍵：兌換 " + SummerService.BULK + " 個（素材不夠）");
+            }
             if (item.kind() == SummerConfig.Kind.COSMETIC && plugin.sponsors() != null) {
                 // 2026-11-03 照站長：動作右鍵是做一次看看；這次之前一律寫「試穿」（動作按了只會說不能試穿）
                 lore.add(tw.exilecore.sponsor.CosmeticPreview.isEmote(plugin.sponsors(), item.cosmetic()) ? "<yellow>右鍵：做一次看看"
@@ -357,19 +368,21 @@ public final class SummerMenu extends Menu {
             }
             return;
         }
-        if (item == null || click != ClickType.LEFT || service.owned(player, item)) {
+        final boolean bulk = item != null && click == ClickType.RIGHT && item.kind() == SummerConfig.Kind.CURRENCY; // 2026-11-08：右鍵換 10 個
+        if (item == null || click != ClickType.LEFT && !bulk || service.owned(player, item)) {
             return;
         }
         final long now = System.currentTimeMillis();
-        if (confirmSlot != slot || now > confirmUntil) {
+        if (confirmSlot != slot || now > confirmUntil || confirmBulk != bulk) {
             confirmSlot = slot;
             confirmUntil = now + 5000;
+            confirmBulk = bulk;
             player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 0.8f);
             redraw();
             return;
         }
         confirmSlot = -1;
-        final String problem = service.buy(player, item);
+        final String problem = service.buy(player, item, bulk ? SummerService.BULK : 1);
         if (problem != null) {
             player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.6f, 0.8f);

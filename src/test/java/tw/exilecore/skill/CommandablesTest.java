@@ -63,6 +63,18 @@ class CommandablesTest {
     }
 
     @Test
+    void commandCostTakesYourCostModifiers() {
+        // 2026-11-08 照站長：魔偶符文「指令技能減少 30% 消耗」（skill.cost INCREASED -30% [command]）、全服魔力消耗倍率都吃得到；
+        //   只給召喚物的（[minion]）不算你的
+        final StatSheet owner = new StatSheet();
+        owner.add(new Modifier(StatKeys.SKILL_COST, ModType.INCREASED, -0.30, Set.of(Commandables.TAG), "魔偶符文"));
+        owner.add(new Modifier(StatKeys.SKILL_COST, ModType.INCREASED, -0.50, Set.of(Tags.MINION), "給召喚物的"));
+        assertEquals((int) Math.round(360 * 0.7 * SkillConfig.manaCostScale()), MinionAbilities.Command.commandCost(360, owner));
+        assertEquals((int) Math.round(360 * SkillConfig.manaCostScale()), MinionAbilities.Command.commandCost(360, new StatSheet()));
+        assertEquals(360, MinionAbilities.Command.commandCost(360, null));
+    }
+
+    @Test
     void commandRecoveryAddsAndOnlyCommandsGetIt() {
         final StatSheet minion = new StatSheet();
         minion.add(Modifier.increased(StatKeys.COOLDOWN_RECOVERY, 0.20, "召喚物的冷卻回復速度"));

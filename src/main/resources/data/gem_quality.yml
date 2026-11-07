@@ -253,8 +253,9 @@ remains_banquet:   # Grim Feast（2026-10-28 照 PoE2：殘骸另外存召喚物
   - { stat: grim.share, type: FLAT, per: 0.25 }   # OriginalSkills.onMinionDeath
 freezing_rain_shell:   # Hailstorm Rounds（2026-10-28 照 PoE2：可以存放 +(0—5) 支弩矢；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: crossbow.clip, type: FLAT, per: 0.25 }   # 彈匣（SkillService 小數捨去）
-heaven_punish_maul:   # Hammer of the Gods
-  - { stat: skill.area, type: INCREASED, per: 2.0 }   # 範圍（半徑 +0.1 格 ≈ +10% 範圍）
+heaven_punish_maul:   # Hammer of the Gods（2026-11-08 照站長「品質跟原作一樣」：PoB2 active_skill_base_area_of_effect_radius 0.2/1%（poe2db：落點半徑 +(0—0.4) 公尺），
+  #   基礎 2.4 公尺 → 20% 品質 2.8 公尺（半徑 ×1.167、範圍 ×1.361），換成增加範圍每 1% 1.8%；這次之前每 1% 2%（20% 時半徑 ×1.18））
+  - { stat: skill.area, type: INCREASED, per: 1.8 }
 cold_heart:   # Heart of Ice（2026-10-28 照 PoE2：(0—20)% 更多冰緩效果；這次之前照通用規則）
   - { stat: chill.effect, type: MORE, per: 1.0 }   # 冰緩效果（更多）
 ember_envoy:   # Herald of Ash（2026-10-28 照 PoE2：另外 (0—5)% 過量擊殺傷害算進點燃（每秒）；這次之前照通用規則）
@@ -703,6 +704,10 @@ blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2)
   - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
+  heaven_punish_maul:   # Hammer of the Gods：(0—50)% 機率不消耗榮耀（2026-11-08 照站長：PoB2 altQualityStats chance_to_not_consume_glory_% 2.5；這次之前沒寫，一般的品質效果再算一次）
+    - { stat: glory.not_consume_chance, type: FLAT, per: 2.5 }   # SupportMechanics.used
+  mother_child_grenade:   # Cluster Grenade：(0—40)% 減少引爆時間（2026-11-08 照站長：PoB2 altQualityStats skill_detonation_time_+% -2；這次之前沒寫）
+    - { stat: skill.detonation_time, type: INCREASED, per: -2.0 }   # ProjectileEngine.detonationScale
   frost_rampart:   # Frost Wall：冰晶最大生命增加 (0—400)%（2026-11-04 照站長「冰牆照原作」：poe2db 寶石頁第二條；這次之前沒寫）
     - { stat: crystal.hits, type: INCREASED, per: 20.0 }   # 冰晶的生命照「要打的下數」的比例算（IceCrystals.place），跟厚晶的增加 100% 相加
   earth_spike_eruption:   # Earthshatter：(0—20)% 機率多一次餘震（2026-11-02 照 PoB2 altQualityStats slam_aftershock_chance_% 1；整道裂縫 0.5 秒後再打一次）

@@ -169,6 +169,10 @@ final class ShockingRifts {
         }
         final Vector velocity = to.multiply(Math.min(strength, distance) / distance * scale);
         velocity.setY(0.05);
-        target.setVelocity(target.getVelocity().multiply(0.3).add(velocity));
+        final Vector pulled = target.getVelocity().multiply(0.3).add(velocity);
+        if (!target.isOnGround()) {
+            pulled.setY(target.getVelocity().getY()); // 2026-11-08 照站長「怪物飛起來」：在空中不再每 tick 往上加
+        }
+        target.setVelocity(pulled);
     }
 }

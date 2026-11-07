@@ -2967,7 +2967,7 @@ ascendancies:
         stats:
           - { stat: skill.cooldown, type: INCREASED, value: -6 }
       ultimate_command:
-        name: 最終號令          # Ultimate Command
+        name: 最終指令          # Ultimate Command
         requires: cooldown_recovery_2
         notable: true
         icon: ENCHANTED_BOOK

@@ -427,7 +427,11 @@ public final class MinionSheets {
     public static double energyShield(final StatSheet effective) {
         // 2026-10-26 照 PoE2 天賦樹：「召喚物獲得最大生命的 x% 為額外最大能量護盾」
         final double fromLife = effective.flat(tw.exilecore.stats.KeystoneKeys.MINION_LIFE_AS_ES, CONTEXT);
-        return Math.max(0, effective.get(StatKeys.ES_MAX, CONTEXT) + (fromLife > 0 ? life(effective) * fromLife / 100.0 : 0));
+        // 2026-11-08 照 PoE2（PoB2 CalcDefence：LifeGainAsEnergyShield 跟 es 轉換一樣照「基礎生命」算，再吃召喚物的能量護盾增加／更多）：
+        //   基礎生命 = 生命的固定值 ＋ 轉成護盾的那份；這次之前照加成後的最大生命直接加、不吃護盾加成（生命加成越多越偏高）
+        final double baseLife = Math.max(0, effective.flat(StatKeys.LIFE_MAX, CONTEXT) + effective.base(StatKeys.ES_MAX));
+        return Math.max(0, effective.get(StatKeys.ES_MAX, CONTEXT)
+                + (fromLife > 0 ? effective.apply(StatKeys.ES_MAX, baseLife * fromLife / 100.0, CONTEXT) : 0));
     }
 
     /** 移動速度倍率（1 = 原版該生物的速度 × summon.speed）。 */

@@ -327,6 +327,28 @@ public final class TreeMechanics implements Listener {
     // =====================================================================
 
     /**
+     * 2026-11-08 照站長「使用指令技能時有 15% 機率獲得不死統治者，其他的指令技能有作用嗎」：下了一次指令（骷髏的指令、亂鴉狂舞從
+     * 精魂召喚的鍵直接下，不經過 {@link #onUse}，也從這裡進來）：不死統治者、群集復甦、傀儡大師。這次之前只有當成一般技能放的指令有擲。
+     */
+    public void commandUsed(final Player player) {
+        commandUsed(player, plugin.players().sheet(player), state(player.getUniqueId()), now());
+    }
+
+    private void commandUsed(final Player player, final StatSheet sheet, final State state, final long now) {
+        if (roll(sheet.flat(TreeNewMechanicKeys.ARCHON_UNDEATH_ON_COMMAND, Set.of()))) {
+            gainArchon(player, Archon.UNDEATH);
+        }
+        // 2026-10-27 照 PoE2（塗油限定 群集復甦）：x% 機率讓一種等著復活的常駐召喚物馬上復活
+        if (service.auras() != null && roll(sheet.flat(tw.exilecore.stats.AnointKeys.COMMAND_REVIVE_CHANCE, Set.of()))) {
+            service.auras().reviveRandom(player.getUniqueId(), now, random());
+        }
+        final int stacks = surpassing(sheet.flat(TreeNewMechanicKeys.PUPPET_CHANCE, Set.of()), random().nextDouble());
+        if (stacks > 0) {
+            addPuppet(player, state, sheet, stacks, now);
+        }
+    }
+
+    /**
      * 技能真的放了（扣完消耗之後，所有技能都會到這裡）：累計魔力消耗（元素統治者、秘術增強）、指令技能（傀儡大師、不死統治者）、
      * 攻擊讓元素統治者消失、放圖騰（最近放過圖騰）、記下這次用掉幾點連擊。
      */
@@ -379,17 +401,7 @@ public final class TreeMechanics implements Listener {
             state.fireSpellAncestral = true; // 2026-10-27 照 PoE2（塗油限定 岡姆之祝）：下一個火焰法術先祖強化
         }
         if (tags.contains("command") || build.definition().tags().contains("command")) {
-            if (roll(sheet.flat(TreeNewMechanicKeys.ARCHON_UNDEATH_ON_COMMAND, Set.of()))) {
-                gainArchon(player, Archon.UNDEATH);
-            }
-            // 2026-10-27 照 PoE2（塗油限定 群集復甦）：x% 機率讓一種等著復活的常駐召喚物馬上復活
-            if (service.auras() != null && roll(sheet.flat(tw.exilecore.stats.AnointKeys.COMMAND_REVIVE_CHANCE, Set.of()))) {
-                service.auras().reviveRandom(player.getUniqueId(), now, random());
-            }
-            final int stacks = surpassing(sheet.flat(TreeNewMechanicKeys.PUPPET_CHANCE, Set.of()), random().nextDouble());
-            if (stacks > 0) {
-                addPuppet(player, state, sheet, stacks, now);
-            }
+            commandUsed(player, sheet, state, now);
         }
         if (build.deploy() != null && build.deploy().kind() == DeploySpec.Kind.TOTEM) {
             final double speed = sheet.flat(TreeNewMechanicKeys.TOTEM_RECENT_SPEED, Set.of());

@@ -1197,6 +1197,7 @@ public final class SkillService {
             state.notice(infusionText, now + 40);
         }
         build = chargeEffects().onTriggered(player, build, sheet); // 2026-11-03 照站長：觸發的詛咒掛久咒也用掉銳星
+        build = supportMechanics().elementSurge(player, build); // 2026-11-08 照站長「引星放的能吃得到嗎」：元湧（吃得到，也記成最近用過的元素）
         // 2026-11-03 照站長＋PoE2：引星觸發的技能也用技能自己的灌注（skills.yml 的 resource.infusion：鏈雷的電灌注、隕星的火灌注…），
         //   跟手動施放一樣；這次之前只有輔助的 infusion.consume 有用，技能自己寫的灌注在引星裡完全不吃
         final ResourceSpec triggeredSpec = config.resource(definition.id());
@@ -1730,8 +1731,20 @@ public final class SkillService {
      * 2026-10-26 照 PoE2 的引導：扣一次引導的消耗（開始時、之後每秒）。血魔法、「x% 魔力消耗改成生命」照放技能的算法；
      * 扣不起回傳原因（不扣），扣了回傳 null。
      */
-    String payChannel(final Player player, final PlayerState state, final SkillBuild build, final int cost) {
+    String payChannel(final Player player, final PlayerState state, final SkillBuild build, final int owed) {
+        if (owed <= 0) {
+            return null;
+        }
+        // 2026-11-08 照站長「點火祭協議（焰契）的時候不能用碎骨飛矢」：引導的逐秒消耗也照昇華的消耗規則——火祭協議改成獲得煉獄之炎、
+        //   晶化護符的更多魔力消耗；這次之前直接扣魔力（火祭協議最大魔力是 0，一按就「魔力不足」）。怒氣、藥劑充能這種一次性的不在這裡扣
+        final tw.exilecore.ascendancy.AscendancyEffects.Cost asc = tw.exilecore.ascendancy.AscendancyEffects.cost(player, state, build.definition(), owed);
+        final int cost = asc.problem() == null ? asc.mana() : owed;
+        final double flame = asc.problem() == null ? asc.flame() : 0;
+        if (flame > 0) {
+            tw.exilecore.ascendancy.AscendancyEffects.paid(player, state, new tw.exilecore.ascendancy.AscendancyEffects.Cost(0, flame, 0, 0, null));
+        }
         if (cost <= 0) {
+            plugin.players().display(player, state);
             return null;
         }
         final boolean bloodMagic = StatKeys.flag(state.sheet(), StatKeys.FLAG_BLOOD_MAGIC)
@@ -4516,8 +4529,17 @@ public final class SkillService {
             // 2026-11-08 照站長「網頁估算算進指令技能」：會造成擊中傷害的指令（震地咆哮、死亡風暴、從天而降、毒氣箭）照冷卻好就下估進去；
             //   震地咆哮的爆裂點照技能欄上有冰甲（霜術士）時「你全部的召喚物都有冰甲」估，沒有就當一隻凍結的敵人；
             //   這次之前只算召喚物自己的普攻、招式（燒紙的重卒面板遠低於實際）
-            final double[] each = minionDps(state.level(), view.minionEffects(), build, sheet, roarBursts(state, sheet, view));
-            final double eachDps = each[0] + each[5];
+            final int[] roar = roarBursts(state, sheet, view);
+            final double[] each = minionDps(state.level(), view.minionEffects(), build, sheet, roar[0], state);
+            // 2026-11-08 照站長「18 億，估得不太準」：震地咆哮會用掉凍結與冰甲（先吼的那隻吃掉，同時吼的其他重卒沒得炸），
+            //   所以一輪冰甲只炸一份；冰甲的補充速度是 霜術士隻數 ÷ 冰甲冷卻（12 秒），重卒錯開冷卻輪流吼最多就這麼快。
+            //   整體 = 一隻重卒的指令每秒傷害 × min(重卒隻數, 霜術士隻數 × 咆哮冷卻 ÷ 冰甲冷卻)；沒有霜術士當一隻重卒的量。
+            //   其他指令（死亡風暴、毒氣箭、從天而降）每隻各打各的照乘隻數。這次之前直接乘重卒隻數（9 隻重卒估成 9 倍）
+            final double commandPer = MinionAbilities.BRUTE.equals(definition.id())
+                    ? each[5] * Math.min(count, roar[1] > 0 ? roar[1] * MinionAbilities.command(MinionAbilities.BRUTE).cooldown()
+                            / MinionAbilities.command(MinionAbilities.FROST).cooldown() : 1) / count
+                    : each[5];
+            final double eachDps = each[0] + commandPer;
             if (eachDps <= 0) {
                 return null;
             }
@@ -4915,7 +4937,7 @@ public final class SkillService {
      * @param auraEffects 召喚物吃到的光環效果
      */
     double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet) {
-        return java.util.Arrays.copyOf(minionDps(ownerLevel, auraEffects, build, ownerSheet, 1), 5);
+        return java.util.Arrays.copyOf(minionDps(ownerLevel, auraEffects, build, ownerSheet, 1, null), 5);
     }
 
     /**
@@ -4925,17 +4947,20 @@ public final class SkillService {
      * @param roarBursts 震地咆哮估幾個爆裂點
      */
     double[] minionDps(final int ownerLevel, final List<tw.exilecore.stats.Modifier> auraEffects, final SkillBuild build, final StatSheet ownerSheet,
-                       final int roarBursts) {
-        final SummonSpec spec = build.definition().summon();
-        if (spec == null || plugin.monsters() == null) {
+                       final int roarBursts, final PlayerState state) {
+        final SummonSpec skillSpec = build.definition().summon();
+        if (skillSpec == null || plugin.monsters() == null) {
             return new double[11];
         }
+        // 2026-11-08：附魂術、野獸馴化照附身／收服的那種怪的倍率（跟真的叫出來的一樣）；這次之前照技能寫的
+        final SummonSpec spec = MinionService.ownSpec(skillSpec, build.definition().id(), state, plugin.monsters().config());
         final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
         final MinionSheets.Base base = MinionSheets.base(config, spec, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt,
                 monsters::accuracyAt, monsters::evasionAt, monsters::armourAt, monsters.critChance()); // 2026-10-26 照 PoE2 的召喚物表
         final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.forMinion(MinionSheets.ownerModifiers(ownerSheet),
                 MinionSheets.conditions(build.definition(), true))); // 2026-10-26：估計時當作在存在範圍內（夥伴照技能）
         ownerModifiers.addAll(auraEffects);
+        ownerModifiers.addAll(AuraService.presenceAllyEffects(ownerSheet)); // 2026-11-08：存在範圍內友方的效果（跟真的一樣）；這次之前估算沒算
         // 2026-10-27：看看我怎麼辦事的、巨伴、夥伴獲得你的力量（照主人屬性表，當作在存在範圍內；跟戰鬥同一套）；這次之前 /stats、網頁沒算
         ownerModifiers.addAll(MinionEstimates.estimate(build, ownerSheet,
                 MinionSheets.refFactors(config, build.level(), ownerLevel, monsters::lifeAt, monsters::damageAt)[1]));
@@ -4984,8 +5009,9 @@ public final class SkillService {
      * 2026-11-08：/stats、網頁估震地咆哮一次有幾個爆裂點——技能欄上有霜術士（冰甲）就當你近戰的召喚物都有冰甲、圍在目標旁邊
      * （每個爆裂點各打一下；遠程、會飛的站在射程外圍，爆裂打不到目標，不算），沒有就當一隻凍結的敵人。
      */
-    private int roarBursts(final PlayerState state, final StatSheet sheet, final AuraView view) {
+    private int[] roarBursts(final PlayerState state, final StatSheet sheet, final AuraView view) {
         boolean frost = false;
+        int mages = 0;
         int total = 0;
         final java.util.Set<String> seen = new java.util.HashSet<>(); // 同一個召喚技能綁在好幾個鍵只算一次
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
@@ -4997,15 +5023,19 @@ public final class SkillService {
             if (definition.mechanic() == Mechanic.AURA && !view.active(definition.id())) {
                 continue;
             }
-            frost |= MinionAbilities.FROST.equals(definition.id());
+            final int cap = view.minionCap(definition.id());
+            final int built = build(state, sheet, resolved).minions();
+            final int have = Math.max(1, cap > 0 ? Math.min(built, cap) : built);
+            if (MinionAbilities.FROST.equals(definition.id())) {
+                frost = true;
+                mages = have;
+            }
             if (definition.summon().isRanged() || definition.summon().flying()) {
                 continue;
             }
-            final int cap = view.minionCap(definition.id());
-            final int built = build(state, sheet, resolved).minions();
-            total += Math.max(1, cap > 0 ? Math.min(built, cap) : built);
+            total += have;
         }
-        return frost ? total : 1;
+        return new int[] {frost ? total : 1, mages}; // 2026-11-08：多回傳霜術士隻數（冰甲的補充速度）
     }
 
     /** 這個按鍵這次會放出的數值（含輔助寶石、角色等級的限制）。 */
@@ -7870,16 +7900,19 @@ public final class SkillService {
             final tw.exilecore.monster.MonsterConfig monsters = plugin.monsters().config();
             final int ownerLevelNow = plugin.players().get(player).level();
             final int level = MinionSheets.displayLevel(spec, build.level(), MinionSheets.monsterLevel(config, build.level(), ownerLevelNow));
-            final MinionSheets.Base base = MinionSheets.base(config, spec, build.level(), ownerLevelNow, monsters::lifeAt, monsters::damageAt,
+            // 2026-11-08：附魂術、野獸馴化照附身／收服的那種怪的倍率（跟真的叫出來的一樣）；這次之前照技能寫的
+            final SummonSpec own = MinionService.ownSpec(spec, build.definition().id(), plugin.players().get(player), monsters);
+            final MinionSheets.Base base = MinionSheets.base(config, own, build.level(), ownerLevelNow, monsters::lifeAt, monsters::damageAt,
                     monsters::accuracyAt, monsters::evasionAt, monsters::armourAt, monsters.critChance()); // 2026-10-26 照 PoE2 的召喚物表
             final List<Modifier> ownerModifiers = new ArrayList<>(MinionSheets.forMinion(MinionSheets.ownerModifiers(ownerSheet),
                 MinionSheets.conditions(build.definition(), true))); // 2026-10-26：估計時當作在存在範圍內（夥伴照技能）
             ownerModifiers.addAll(auras.effectsFor(player.getUniqueId()));
+            ownerModifiers.addAll(AuraService.presenceAllyEffects(ownerSheet)); // 2026-11-08：存在範圍內友方的效果（攫命之環、神聖烈焰），跟真的一樣；這次之前說明沒算
             // 2026-10-27 照 PoE2：看看我怎麼辦事的（估計時當作在存在範圍內）、巨伴的閃避與偏斜、夥伴獲得你的力量的生命（跟戰鬥、召喚物每秒傷害同一套）
             final List<Modifier> derived = MinionEstimates.estimate(build, ownerSheet,
                     MinionSheets.refFactors(config, build.level(), ownerLevelNow, monsters::lifeAt, monsters::damageAt)[1]);
             ownerModifiers.addAll(derived);
-            final StatSheet minionSheet = MinionSheets.build(spec, base, ownerModifiers);
+            final StatSheet minionSheet = MinionSheets.build(own, base, ownerModifiers);
             final tw.exilecore.stats.SkillProfile profile = MinionSheets.profile(build);
             final StatSheet effective = profile.effective(minionSheet);
             final DamagePacket expected = DamageCalculator.expectedOutgoing(minionSheet, profile);
@@ -7920,7 +7953,7 @@ public final class SkillService {
         // 2026-10-26：精魂召喚開著的時候按這個鍵 = 下指令（PoE2 的 Command）
         final MinionAbilities.Command command = MinionAbilities.command(build.definition().id());
         if (command != null && build.definition().mechanic() == Mechanic.AURA) {
-            final int mana = command.manaAt(build.level());
+            final int mana = command.manaCost(build.level(), ownerSheet); // 2026-11-08：照你實際要付的（消耗倍率、效率）；這次之前照表
             lines.add(String.format(Locale.ROOT, "<#8fd3ff>指令<gray>：開著的時候按這個鍵 = <white>%s</white>（每隻冷卻 %s 秒%s）",
                     ItemRenderer.escape(command.name()), ModifierText.number(command.cooldown()), mana > 0 ? "，花 " + mana + " 魔力" : ""));
         } else if (MinionAbilities.SPECTRE.equals(build.definition().id())) {
@@ -8043,6 +8076,10 @@ public final class SkillService {
             if (enemy.witheredEvery() != null) { // 2026-10-26：凋息
                 lines.add(String.format(Locale.ROOT, "<#8fd3ff>　每 <white>%.2f</white> 秒受到 1 層凋零<gray>（每層受到的混沌傷害增加 5%%，最多 10 層，6 秒）",
                         enemy.witheredEvery().at(build.level()) / Math.max(0.1, scale)));
+            }
+            if (enemy.weaknessEvery() != null) { // 2026-11-08：惡念（這次之前沒寫，說明只有標題）
+                lines.add(String.format(Locale.ROOT, "<#8fd3ff>　每 <white>%.2f</white> 秒受到 1 層暴擊弱點<gray>（每層擊中牠的暴擊率 +0.5%%，最多 20 層）",
+                        enemy.weaknessEvery().at(build.level()) / Math.max(0.1, scale)));
             }
             if (enemy.rampSeconds() > 0 && enemy.rampTaken() != null && enemy.rampTaken().at(build.level()) > 0) {
                 lines.add(String.format(Locale.ROOT, "<#8fd3ff>　在光環裡待滿 %s 秒：改成增加 <white>%.0f%%</white>",

@@ -127,6 +127,10 @@ class VaalItemKeysTest {
         vaal.affixes().add(vaal(chest.unique(), VaalKeys.LOCAL_CORE_AS_HEAD));
         vaal.affixes().add(vaal(chest.unique(), VaalKeys.LOCAL_CORE_AS_LEGS));
         assertTrue(Runes.coreExtraSlots(repository, vaal).containsAll(List.of("head", "legs", "feet")));
+        // 2026-11-08 照 poe2db：也照盾（這次之前漏了這條瓦爾詞綴）
+        final ItemData shield = chest.copy();
+        shield.affixes().add(vaal(chest.unique(), VaalKeys.LOCAL_CORE_AS_SHIELD));
+        assertTrue(Runes.coreExtraSlots(repository, shield).contains("shield"));
         assertEquals(3, Runes.linesOn(repository, base, vaal, thesis).size());
         assertNull(Runes.socketProblem(repository, base, vaal, thesis));
         vaal.addRune("thesis_jiquani");

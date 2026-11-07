@@ -519,7 +519,7 @@ public final class TreeLeftovers implements Listener {
         if (roll(effective.flat(TreeLastKeys.KNOCKBACK_CHANCE, skill.tags()))) {
             final Vector push = defender.getLocation().toVector().subtract(player.getLocation().toVector()).setY(0);
             if (push.lengthSquared() > 1e-6 && !tw.exilecore.combat.Knockbacks.immune(defender)) {
-                defender.setVelocity(defender.getVelocity().add(push.normalize().multiply(0.6).setY(0.25)));
+                tw.exilecore.combat.Knockbacks.add(defender, push.normalize().multiply(0.6).setY(0.25)); // 2026-11-08：在空中不再往上疊
             }
         }
     }

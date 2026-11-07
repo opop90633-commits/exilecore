@@ -57,6 +57,8 @@ public final class VaalKeys {
     public static final String LOCAL_CORE_AS_FEET = "local.core_as.feet";
     public static final String LOCAL_CORE_AS_HEAD = "local.core_as.head";
     public static final String LOCAL_CORE_AS_LEGS = "local.core_as.legs";
+    /** 2026-11-08 照站長（poe2db 的栽培詞綴）：艾瑟琳的華儀「也照盾的效果算」（這次之前漏了這條）。 */
+    public static final String LOCAL_CORE_AS_SHIELD = "local.core_as.shield";
     public static final String LOCAL_CORE_EXTRA_SLOT = "local.core_extra_slot";
     /** 2026-11-07：武器本地的（LocalMods.KNOWN，不在 {@link #LOCAL}）；ItemStats 換成 weapon.crit_override。 */
     public static final String LOCAL_CRIT_OVERRIDE = tw.exilecore.item.LocalMods.CRIT_OVERRIDE;
@@ -93,7 +95,8 @@ public final class VaalKeys {
      * 這件物品自己的（local.）屬性。2026-11-07：local.crit_override、local.no_crit_bonus 拿出去了（武器本地的，LocalMods.KNOWN：
      * 資料檢查照武器本身的屬性擋、只算用那把武器的攻擊）；這次之前寄在這裡只為了載入過得了，沒人讀。
      */
-    public static final Set<String> LOCAL = Set.of(LOCAL_CORE_AS_FEET, LOCAL_CORE_AS_HEAD, LOCAL_CORE_AS_LEGS, LOCAL_CORE_EXTRA_SLOT, LOCAL_ONLY_SOUL_CORES);
+    public static final Set<String> LOCAL = Set.of(LOCAL_CORE_AS_FEET, LOCAL_CORE_AS_HEAD, LOCAL_CORE_AS_LEGS, LOCAL_CORE_AS_SHIELD, LOCAL_CORE_EXTRA_SLOT,
+            LOCAL_ONLY_SOUL_CORES);
 
     /** 其他（進角色屬性表的）屬性。 */
     public static final Set<String> STATS = Set.of(AILMENT_MAGNITUDE_SPELL_PER_100_LIFE, AILMENT_SELF_DURATION_POISON, ARMOUR_CHAOS, ARMOUR_FROM_LIFE_LOST_8S,

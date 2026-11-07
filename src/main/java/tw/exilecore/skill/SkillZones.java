@@ -890,7 +890,7 @@ final class SkillZones implements SkillTargets.Strikeable {
                 continue;
             }
             final Vector velocity = to.multiply(step / distance);
-            velocity.setY(Math.max(target.getVelocity().getY(), 0));
+            velocity.setY(Math.min(target.getVelocity().getY(), tw.exilecore.combat.Knockbacks.MAX_LIFT)); // 2026-11-08 照站長「怪物飛起來」：垂直照目前的（會往下掉）；這次之前 max(目前, 0)，在空中被拉就停在半空
             target.setVelocity(velocity);
             zone.pullLast.put(id, distance);
         }
@@ -2159,7 +2159,11 @@ final class SkillZones implements SkillTargets.Strikeable {
         }
         final Vector velocity = to.multiply(Math.min(strength, distance) / distance * scale);
         velocity.setY(0.08);
-        target.setVelocity(target.getVelocity().multiply(0.3).add(velocity));
+        final Vector pulled = target.getVelocity().multiply(0.3).add(velocity);
+        if (!target.isOnGround()) {
+            pulled.setY(target.getVelocity().getY()); // 2026-11-08 照站長「怪物飛起來」：在空中不再每 tick 往上加（這次之前一直加 0.08，會浮著）
+        }
+        target.setVelocity(pulled);
     }
 
     /** 2026-10-26 照 PoE2（火油榴彈）：火油讓敵人緩速 40%。 */

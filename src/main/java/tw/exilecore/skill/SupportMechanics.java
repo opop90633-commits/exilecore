@@ -437,7 +437,10 @@ public final class SupportMechanics implements Listener {
         }
         extras.used(player, build); // 2026-10-27：放技能的那段時間的增益、用掉藥劑充能與戰星…
         // 2026-10-26 照 PoE2 天賦：x% 機率不消耗榮耀；戰旗用掉榮耀後回復需要的 x%（我們的戰旗是立即的增益：放下時就回）
-        final boolean consumed = required > 0 && !(plugin.random().nextDouble() * 100 < sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.GLORY_KEEP, Set.of()));
+        // 2026-11-08 照 PoE2 天罰巨鎚的額外品質效果：(0—50)% 機率不消耗榮耀（跟天賦的相加）
+        final double keep = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.GLORY_KEEP, Set.of())
+                + build.qualityFlat(tw.exilecore.stats.GemQualityKeys.GLORY_NOT_CONSUME_CHANCE);
+        final boolean consumed = required > 0 && !(plugin.random().nextDouble() * 100 < keep);
         if (required > 0 && service.treeLeftovers() != null) {
             service.treeLeftovers().gloryUsed(player, consumed ? required : 0); // 2026-10-27 照 PoE2 天賦樹：用了需要榮耀的技能、用掉榮耀
         }
@@ -488,6 +491,40 @@ public final class SupportMechanics implements Listener {
     /** 「最近」= 4 秒。 */
     static final long RECENT_TICKS = 80;
 
+    /**
+     * 元湧（PoE2 Rising Tempest）：最近用過的技能裡，每有一種跟這個技能不同的元素，元素傷害更多 x%；並把這個技能的元素記成「最近用過」。
+     * 2026-11-08 照站長「引星放的能吃得到嗎」：抽出來給主要寶石觸發的法術（SkillService.metaCast）也用——觸發的也算你用過的技能
+     * （PoE2 觸發的技能也是你使用的），吃得到也記得到；這次之前只有手動施放的走這裡。
+     */
+    Modifier elementSurge(final Player player, final StatSheet effective, final Set<String> tags, final long now) {
+        final long[] used = elementsUsed.computeIfAbsent(player.getUniqueId(), uuid -> new long[] {-1000, -1000, -1000});
+        final double perType = effective.flat(SupportKeys.ELEMENTAL_PER_RECENT_TYPE, tags);
+        Modifier out = null;
+        if (perType > 0) {
+            int kinds = 0;
+            for (int i = 0; i < ELEMENTS.length; i++) {
+                if (now - used[i] <= RECENT_TICKS && !tags.contains(ELEMENTS[i].tag())) {
+                    kinds++;
+                }
+            }
+            if (kinds > 0) {
+                out = new Modifier(StatKeys.DAMAGE, ModType.MORE, perType * kinds / 100.0, Set.of(Tags.ELEMENTAL), "元湧");
+            }
+        }
+        for (int i = 0; i < ELEMENTS.length; i++) {
+            if (tags.contains(ELEMENTS[i].tag())) {
+                used[i] = now;
+            }
+        }
+        return out;
+    }
+
+    /** 給主要寶石觸發的法術：只算元湧（其他放下去之前的機制是手動施放的）。 */
+    SkillBuild elementSurge(final Player player, final SkillBuild build) {
+        final Modifier surge = elementSurge(player, build.profile().effective(plugin.players().sheet(player)), build.profile().tags(), now());
+        return surge == null ? build : build.withProfile(build.profile().withLocal(List.of(surge)));
+    }
+
     /** 放下去之前（強化之後）：引雷的電荷、元湧的元素數。 */
     SkillBuild beforeUse(final Player player, final SkillBuild build) {
         final long now = now();
@@ -505,24 +542,9 @@ public final class SupportMechanics implements Listener {
                 extra.add(Modifier.flat(StatKeys.damageExtra(DamageType.LIGHTNING), charge, "引雷電荷"));
             }
         }
-        // 元湧（PoE2 Rising Tempest）：最近用過的技能裡，每有一種跟這個技能不同的元素，元素傷害更多 x%
-        final long[] used = elementsUsed.computeIfAbsent(player.getUniqueId(), uuid -> new long[] {-1000, -1000, -1000});
-        final double perType = effective.flat(SupportKeys.ELEMENTAL_PER_RECENT_TYPE, tags);
-        if (perType > 0) {
-            int kinds = 0;
-            for (int i = 0; i < ELEMENTS.length; i++) {
-                if (now - used[i] <= RECENT_TICKS && !tags.contains(ELEMENTS[i].tag())) {
-                    kinds++;
-                }
-            }
-            if (kinds > 0) {
-                extra.add(new Modifier(StatKeys.DAMAGE, ModType.MORE, perType * kinds / 100.0, Set.of(Tags.ELEMENTAL), "元湧"));
-            }
-        }
-        for (int i = 0; i < ELEMENTS.length; i++) {
-            if (tags.contains(ELEMENTS[i].tag())) {
-                used[i] = now;
-            }
+        final Modifier surge = elementSurge(player, effective, tags, now);
+        if (surge != null) {
+            extra.add(surge);
         }
         if (hitRunShort(player, build, effective)) {
             extra.add(Modifier.more(StatKeys.DAMAGE, -HIT_AND_RUN_LESS, "迅鋒（還沒移動 5 格）")); // 2026-11-01 照站長

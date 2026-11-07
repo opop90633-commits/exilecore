@@ -197,7 +197,7 @@ public final class MinionService implements Listener, MinionHooks {
 
         void startCooldown(final String ability, final long now, final double seconds) {
             // 2026-10-26 照 PoE2：召喚物的冷卻回復速度（主人的「召喚物的冷卻回復速度」）；這次之前不吃
-            // 2026-10-27 照 PoE2 Commandment：掛了號令的召喚物，指令的冷卻回復速度另外增加 100%
+            // 2026-10-27 照 PoE2 Commandment：掛了軍令的召喚物，指令的冷卻回復速度另外增加 100%
             // 2026-10-29 照 PoE2 的 Minion Types（Cooldown）：從召喚物這邊掛的迅返、爆發這類（skill.cooldown、cooldown.recovery）也算；
             // 這次之前只看主人給的召喚物冷卻回復速度
             // 2026-11-01 照 PoE2（Condition: CommandableSkill）：指令的冷卻用 command 情境查——軍令（Commandables.minionModifiers 放進屬性表）、
@@ -240,7 +240,7 @@ public final class MinionService implements Listener, MinionHooks {
     private record Focus(UUID target, long tick) {
     }
 
-    /** 2026-10-27 照 PoE2 Commandment：這隻召喚物掛了號令（指令以外的技能不造成傷害、指令冷卻回復快 100%）。 */
+    /** 2026-10-27 照 PoE2 Commandment：這隻召喚物掛了軍令（指令以外的技能不造成傷害、指令冷卻回復快 100%）。 */
     static boolean commandment(final Minion minion) {
         return Commandables.commandment(minion.build.supports());
     }
@@ -260,7 +260,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (profile == null || commandProfile(profile.id()) || !commandment(minion)) {
             return profile;
         }
-        return profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, -1.0, "號令")));
+        return profile.withLocal(List.of(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, -1.0, "軍令")));
     }
 
     private final ExileCore plugin;
@@ -1897,7 +1897,7 @@ public final class MinionService implements Listener, MinionHooks {
                     if (push.lengthSquared() < 1e-6) {
                         push.setX(1);
                     }
-                    hit.setVelocity(push.normalize().multiply(knockback).setY(0.3)); // 跟技能的擊退一樣（SkillExecutor.knockback）
+                    tw.exilecore.combat.Knockbacks.set(hit, push.normalize().multiply(knockback).setY(0.3)); // 跟技能的擊退一樣（SkillExecutor.knockback）；2026-11-08：在空中不再往上
                 }
             }
         }
@@ -2485,7 +2485,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (push.lengthSquared() < 1e-6) {
             push.setX(1);
         }
-        target.setVelocity(push.normalize().multiply(knockback).setY(0.3)); // 跟普攻的擊退一樣（impact）
+        tw.exilecore.combat.Knockbacks.set(target, push.normalize().multiply(knockback).setY(0.3)); // 跟普攻的擊退一樣（impact）；2026-11-08：在空中不再往上
     }
 
     /** 召喚物的攻擊技能：普攻的描述乘 factor（碎骨 180%、毒氣箭 80%…），加幾個標籤；conversion 不是 null 就換掉物理轉換。 */
@@ -2925,7 +2925,7 @@ public final class MinionService implements Listener, MinionHooks {
         final boolean boss = plugin.monsters().data(target).map(tw.exilecore.monster.MonsterData::boss).orElse(false)
                 || tw.exilecore.combat.Knockbacks.immune(target); // 2026-11-03：不可動搖也推不動
         if (target.isValid() && !target.isDead() && !boss && direction.lengthSquared() > 1e-4) {
-            target.setVelocity(direction.multiply(0.8).setY(0.3));
+            tw.exilecore.combat.Knockbacks.set(target, direction.multiply(0.8).setY(0.3)); // 2026-11-08：在空中不再往上
         }
     }
 
@@ -3237,7 +3237,7 @@ public final class MinionService implements Listener, MinionHooks {
                     && !tw.exilecore.combat.Knockbacks.immune(near)) { // 2026-11-03：不可動搖也推不動
                 final Vector push = near.getLocation().toVector().subtract(at.toVector()).setY(0);
                 if (push.lengthSquared() > 1e-4) {
-                    near.setVelocity(push.normalize().multiply(0.5).setY(0.2)); // 擊退、推出落點
+                    tw.exilecore.combat.Knockbacks.set(near, push.normalize().multiply(0.5).setY(0.2)); // 擊退、推出落點；2026-11-08：在空中不再往上
                 }
             }
         }
@@ -3425,7 +3425,7 @@ public final class MinionService implements Listener, MinionHooks {
             return String.format(java.util.Locale.ROOT, "<gray>%s冷卻中（%.1f 秒）", name, left / 20.0);
         }
         final tw.exilecore.character.PlayerState state = plugin.players().get(player);
-        final int mana = command.manaAt(build.level());
+        final int mana = command.manaCost(build.level(), plugin.players().sheet(player)); // 2026-11-08：吃你的消耗倍率與效率（這次之前照表）
         if (state.mana() < mana) {
             return "<red>魔力不夠（" + name + "要 " + mana + " 點）";
         }
@@ -3445,6 +3445,9 @@ public final class MinionService implements Listener, MinionHooks {
         }
         if (mana > 0) {
             state.setMana(state.mana() - mana);
+        }
+        if (plugin.skills() != null && plugin.skills().treeMechanics() != null) {
+            plugin.skills().treeMechanics().commandUsed(player); // 2026-11-08：不死統治者、傀儡大師、群集復甦（這次之前骷髏的指令擲不到）
         }
         long until = now;
         for (final Minion minion : mine) {
@@ -3924,8 +3927,32 @@ public final class MinionService implements Listener, MinionHooks {
     }
 
     private SummonSpec spectreSpec(final SummonSpec spec, final String kind) {
-        final MonsterConfig.TypeSettings type = plugin.monsters().config().type(kind);
+        return spectreSpec(spec, kind, plugin.monsters().config());
+    }
+
+    static SummonSpec spectreSpec(final SummonSpec spec, final String kind, final MonsterConfig monsters) {
+        final MonsterConfig.TypeSettings type = monsters == null ? null : monsters.type(kind);
         return type == null ? spec : spec.withMultipliers(spec.life() * type.lifeMultiplier(), spec.damage() * type.damageMultiplier());
+    }
+
+    /**
+     * 2026-11-08 照站長「檢查他身上是不是還有一些隱藏的 BUG」：技能說明、/stats、網頁估算用的召喚物倍率——附魂術照附身的那種怪、
+     * 野獸馴化照收服的野獸（跟真的叫出來的一樣，{@link #spectreSpec}、{@link #tamedSpec}）。這次之前估算都照技能寫的（殭屍 1.0、傷害 1.25；狼），
+     * 附身洞穴蜘蛛（生命 0.6、傷害 0.7）的說明生命、傷害都偏高。
+     */
+    static SummonSpec ownSpec(final SummonSpec spec, final String skillId, final tw.exilecore.character.PlayerState state, final MonsterConfig monsters) {
+        if (spec == null || state == null || monsters == null) {
+            return spec;
+        }
+        if (spec.spectre()) {
+            final String kind = boundSpectre(state);
+            return kind == null ? spec : spectreSpec(spec, kind, monsters);
+        }
+        if (MinionAbilities.BEAST.equals(skillId)) {
+            final String kind = tamedKind(state);
+            return kind == null ? spec : tamedSpec(spec, kind, monsters);
+        }
+        return spec;
     }
 
     /** 按附魂術的鍵：附身附近一具屍體（之後一直叫那種怪，每隻精魂照牠的強度）。 */
@@ -4045,7 +4072,11 @@ public final class MinionService implements Listener, MinionHooks {
 
     /** 收服的野獸用那種怪的倍率（生命；傷害跟附魂術一樣再乘隱藏等級補正）。 */
     private SummonSpec tamedSpec(final SummonSpec spec, final String kind) {
-        final MonsterConfig.TypeSettings type = plugin.monsters().config().type(kind);
+        return tamedSpec(spec, kind, plugin.monsters().config());
+    }
+
+    static SummonSpec tamedSpec(final SummonSpec spec, final String kind, final MonsterConfig monsters) {
+        final MonsterConfig.TypeSettings type = monsters == null ? null : monsters.type(kind);
         return type == null ? spec : spec.withMultipliers(type.lifeMultiplier(), type.damageMultiplier() * MinionAbilities.SPECTRE_BEAST_FIXUP);
     }
 
@@ -4509,7 +4540,7 @@ public final class MinionService implements Listener, MinionHooks {
         if (owner != null && minion.override != null) {
             return minion.override; // 2026-10-26：召喚物自己的技能（碎骨、電弧、冰箭…）這一下的屬性表與技能描述
         }
-        return owner == null ? null : new Attack(owner, minion.sheet, commanded(minion, musterProfile(minion))); // 2026-10-26：群鋒；2026-10-27：號令
+        return owner == null ? null : new Attack(owner, minion.sheet, commanded(minion, musterProfile(minion))); // 2026-10-26：群鋒；2026-10-27：軍令
     }
 
     @Override

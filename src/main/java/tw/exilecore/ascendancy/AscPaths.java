@@ -1047,7 +1047,7 @@ final class AscPaths implements Listener {
             enemy.damage(1.0, bear); // 數字由 CombatListener 換成熊靈這一下的傷害
             final Vector push = enemy.getLocation().toVector().subtract(at.toVector()).setY(0);
             if (push.lengthSquared() > 1e-6 && !tw.exilecore.combat.Knockbacks.immune(enemy)) {
-                enemy.setVelocity(enemy.getVelocity().add(push.normalize().multiply(0.4).setY(0.15)));
+                tw.exilecore.combat.Knockbacks.add(enemy, push.normalize().multiply(0.4).setY(0.15)); // 2026-11-08：在空中不再往上疊
             }
             if (maim) {
                 plugin.combat().debuffs().apply(enemy.getUniqueId(), new Debuffs.Debuff("maim", owner.getUniqueId(), now + 80, 0, false, null,

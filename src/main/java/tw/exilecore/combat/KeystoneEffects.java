@@ -437,7 +437,7 @@ public final class KeystoneEffects implements Listener {
         if (push.lengthSquared() < 1e-6 || Knockbacks.immune(target)) {
             return;
         }
-        target.setVelocity(target.getVelocity().add(push.normalize().multiply(0.6).setY(0.25)));
+        Knockbacks.add(target, push.normalize().multiply(0.6).setY(0.25)); // 2026-11-08：在空中不再往上疊
     }
 
     /** 這一下讓目標感電了：機率讓 1.5 公尺（2.25 格）內的其他敵人也感電（同樣的效果、4 秒）。 */

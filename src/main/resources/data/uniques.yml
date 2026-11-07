@@ -2630,29 +2630,32 @@ coral_throat_spear:
   rarity: common
   flavour:
     - "「海妖的喉嚨裡長滿了珊瑚，每一根都是一道浪。」"
+  # 2026-11-08 照站長「這把的傷害好像有點低」：物理 130~170% → 180~220%、附加冰冷 (24~32)~(44~58) → (40~55)~(75~95)、攻速 10~15% → 12~18%，
+  #   冰冷抗性換成「對凍結的敵人造成更多傷害」；這次之前骰中間約 336 DPS，打不贏中等稀有長矛（約 450），改完約 430~460
+  version: 2
   mods:
     - text: "增加 {value}% 物理傷害"
-      value: [130, 170]
+      value: [180, 220]
       stats:
         - { stat: damage, type: INCREASED, value: "{value}", tags: [physical] }
     - text: "附加 {min} 到 {max} 冰冷傷害"
-      min: [24, 32]
-      max: [44, 58]
+      min: [40, 55]
+      max: [75, 95]
       stats:
         - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, cold] }
         - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, cold] }
     - text: "增加 {value}% 攻擊速度"
-      value: [10, 15]
+      value: [12, 18]
       stats:
         - { stat: attack.speed, type: INCREASED, value: "{value}" }
     - text: "增加 {value}% 凍結累積"
       value: [40, 60]
       stats:
         - { stat: freeze.buildup, type: INCREASED, value: "{value}" }
-    - text: "+{value}% 冰冷抗性"
+    - text: "對凍結的敵人造成更多 {value}% 傷害"
       value: [25, 35]
       stats:
-        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: damage.vs_frozen, type: MORE, value: "{value}" }
 
 tide_pearl_heart:
   name: 潮心珍珠
@@ -11294,6 +11297,9 @@ empress_splendour:        # 2026-11-07 照 PoE2 0.5 的「Atziri's Splendour」�
     - text: "嵌在這件上的魂核符文也照頭盔的效果算"   # This item gains bonuses from Socketed Soul Cores as though it was also a Helmet
       stats:
         - { stat: local.core_as.head, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）
+    - text: "嵌在這件上的魂核符文也照盾的效果算"   # This item gains bonuses from Socketed Soul Cores as though it was also a Shield（2026-11-08 照 poe2db 補上，這次之前漏了）
+      stats:
+        - { stat: local.core_as.shield, type: FLAT, value: 1 }
 
 empress_rule:        # 2026-11-07 照 PoE2 0.5 的「Atziri's Rule」（poe2db：阿茲里的統御）
   name: 艾瑟琳的御令

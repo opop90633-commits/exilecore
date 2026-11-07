@@ -368,6 +368,17 @@ public final class CodexData {
             if (!veiled.isEmpty()) {
                 u.add("veiled", veiled);
             }
+            // 2026-11-08 照站長「有顯示哪些傳奇可以用蝕培石瓦出特殊的詞綴嗎」：瓦爾詞綴（已腐化後用蝕培石換 1～2 條）
+            final JsonArray vaal = new JsonArray();
+            for (final String id : repository.vaalMods(unique.id())) {
+                final tw.exilecore.item.Affix affix = repository.affix(id);
+                if (affix != null && !affix.tiers().isEmpty()) {
+                    vaal.add(plain(affix.rangeText(affix.tiers().getFirst().tier())));
+                }
+            }
+            if (!vaal.isEmpty()) {
+                u.add("vaal", vaal);
+            }
             info.add(unique.id(), u);
         }
         root.add("uniqueInfo", info);

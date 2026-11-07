@@ -82,8 +82,11 @@ final class BossMechanicText {
                     mechanic.countdown().name());
             case ELEMENT -> String.format(Locale.ROOT, "✦ 元素弱點：只吃一種元素傷害（看血條），%d 秒內打掉一段血",
                     Math.round(mechanic.element().duration()));
-            case OPENING -> String.format(Locale.ROOT, "✦ 破綻：牠照常出招，躲開一招就開 %s 秒破綻、破綻裡打牠；%d 秒內剝完 %d 層（異常照上、但牠不會被控住）" /* 2026-11-07 照站長「上狀態不控場」；這次之前「牠免疫控場」 */,
-                    String.valueOf(mechanic.opening().window() == Math.rint(mechanic.opening().window()) ? (long) mechanic.opening().window() : mechanic.opening().window()), Math.round(mechanic.opening().duration()), mechanic.opening().layers());
+            case OPENING -> mechanic.opening().layers() > 1
+                    ? String.format(Locale.ROOT, "✦ 破綻：牠照常出招，躲開一招就開破綻、破綻裡打牠剝滿一層；%d 秒內剝完 %d 層（異常照上、但牠不會被控住）" /* 2026-11-07 照站長「上狀態不控場」；2026-11-08：破綻開到剝滿一層（這次之前寫 window 秒） */,
+                            Math.round(mechanic.opening().duration()), mechanic.opening().layers())
+                    : String.format(Locale.ROOT, "✦ 破綻：牠照常出招，躲開一招就開破綻、破綻裡打牠直到破盾；%d 秒內破盾（異常照上、但牠不會被控住）",
+                            Math.round(mechanic.opening().duration()));
             case NONE -> null;
         };
     }

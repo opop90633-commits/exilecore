@@ -424,7 +424,7 @@ public final class StatLines {
         }
         if (stat.startsWith(StatKeys.DAMAGE_GAIN)) {
             final String type = GAINS.getOrDefault(stat.substring(StatKeys.DAMAGE_GAIN.length()), stat);
-            return "物理傷害的 " + number(value) + "% 額外附加為" + type + "傷害";
+            return minionWord(modifier) + "物理傷害的 " + number(value) + "% 額外附加為" + type + "傷害";
         }
         if (stat.equals(StatKeys.DAMAGE_VS_LOW_LIFE)) {
             // 2026-10-21：以前寫死「增加 35%」，兩個節點（補刀、斬首）加起來 70% 也只顯示 35%
@@ -433,7 +433,7 @@ public final class StatLines {
         if (stat.startsWith(StatKeys.DAMAGE_EXTRA) && !stat.startsWith(StatKeys.DAMAGE_EXTRA_PER_MANA)) {
             final String type = elementWord(stat.substring(StatKeys.DAMAGE_EXTRA.length()));
             if (type != null) {
-                return "獲得 " + number(value) + "% 傷害為額外的" + type + "傷害";
+                return minionWord(modifier) + "獲得 " + number(value) + "% 傷害為額外的" + type + "傷害";
             }
         }
         if (stat.startsWith(StatKeys.RESIST_MAX + ".")) {
@@ -585,6 +585,11 @@ public final class StatLines {
     }
 
     /** 不是武器的標籤：寫在屬性名字前面（「近戰物理傷害」）。 */
+    /** 2026-11-08：只給召喚物的「額外傷害」寫「召喚物」開頭（這次之前跟你自己的一模一樣，看起來像是你的）。 */
+    private static String minionWord(final Modifier modifier) {
+        return modifier.tags().contains(Tags.MINION) ? "召喚物" : "";
+    }
+
     private static String prefix(final Modifier modifier) {
         final StringBuilder text = new StringBuilder();
         for (final Map.Entry<String, String> tag : TAG_NAMES.entrySet()) {

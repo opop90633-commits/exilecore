@@ -1362,7 +1362,7 @@ public final class SupportExtras implements Listener {
         if (strength <= 0 || push.lengthSquared() < 1e-6) {
             return;
         }
-        defender.setVelocity(defender.getVelocity().add(push.normalize().multiply(strength).setY(0.3)));
+        tw.exilecore.combat.Knockbacks.add(defender, push.normalize().multiply(strength).setY(0.3)); // 2026-11-08：在空中不再往上疊
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
