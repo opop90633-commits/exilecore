@@ -332,7 +332,15 @@ public final class StatsReport {
         if (state.maxEnergyShield() > 0) {
             lines.add(String.format(Locale.ROOT, "<dark_gray>　護盾被打後 %.1f 秒開始回充，每秒回 %,d",
                     PlayerStateService.esRechargeDelay(sheet) / 20.0,
-                    Math.round(Formulas.esRechargePerSecond(state.maxEnergyShield(), PlayerStateService.esRechargeSpeed(sheet)))));
+                    Math.round(Formulas.esRechargePerSecond(state.maxEnergyShield(), PlayerStateService.esRechargeSpeed(sheet))
+                            * PlayerStateService.esRecoveryRate(sheet)))); // 2026-11-07：含能量護盾回復速度
+        }
+        // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：符文保護（PoE2 Runic Ward）；有才寫
+        final double maxWard = RunicWard.max(sheet);
+        if (maxWard > 0) {
+            lines.add(String.format(Locale.ROOT, "<#ffff77>✧ 符文保護 <white>%d <dark_gray>每秒回 %,d%s",
+                    Math.round(maxWard), Math.round(RunicWard.regen(maxWard, 1)),
+                    chat ? "" : "（致死的一下讓你剩 1 點生命、多的由它吃；吃不下照樣死）"));
         }
         final long armour = Math.round(sheet.get(StatKeys.ARMOUR));
         final long evasion = Math.round(sheet.get(StatKeys.EVASION));

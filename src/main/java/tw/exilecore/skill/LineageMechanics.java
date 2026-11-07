@@ -338,6 +338,18 @@ public final class LineageMechanics implements Listener {
         }
         final List<SupportDefinition> supports = build.supports();
         final Integer sealed = pendingEchoes.remove(player.getUniqueId());
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：災變之種「法術技能有 x% 機率往四周一圈多射 8 發投射物」——跟碎星同一個環射（傷害照原本這一下）；
+        //   環射出來的那一次不再擲（不會一直連下去）。這次之前只有碎星有
+        if (!build.definition().isAttack() && supports.stream().noneMatch(support -> support != null && RING_ID.equals(support.id()))) {
+            final double nova = build.profile().effective(plugin.players().sheet(player))
+                    .flat(tw.exilecore.item.unique.VaalKeys.UNIQUE_SPELL_NOVA_CHANCE, build.profile().tags());
+            if (nova > 0 && plugin.random().nextDouble() * 100 < nova) {
+                final SkillBuild ring = ring(player, build);
+                if (ring != null) {
+                    service.procCast(new Origin(player, origin.feet(), origin.eye(), origin.direction(), false), ring, null);
+                }
+            }
+        }
         if (!hasLineage(supports)) {
             return;
         }
@@ -414,6 +426,9 @@ public final class LineageMechanics implements Listener {
         }, Math.max(1, delay));
     }
 
+    /** 2026-11-07：碎星環射用的那顆隱藏輔助的代號（環射出來的那一次認得出來）。 */
+    static final String RING_ID = "lineage.ring";
+
     /** 碎星的環射：同一個法術往四周一圈射 8 發（傷害照原本這一下）。 */
     private SkillBuild ring(final Player player, final SkillBuild build) {
         if (build.definition().mechanic() != Mechanic.PROJECTILE) {
@@ -421,7 +436,7 @@ public final class LineageMechanics implements Listener {
         }
         final PlayerState state = plugin.players().get(player);
         final int base = build.definition().params().projectiles().intAt(build.level());
-        final SupportDefinition carrier = new SupportDefinition("lineage.ring", "碎星", "", "PAPER", 1, Set.of(), Set.of(), 1.0,
+        final SupportDefinition carrier = new SupportDefinition(RING_ID, "碎星", "", "PAPER", 1, Set.of(), Set.of(), 1.0,
                 List.of(Modifier.flat(StatKeys.SKILL_PROJECTILES, 8 - base, "碎星"), Modifier.flat(StatKeys.FLAG_PROJECTILE_NOVA, 1, "碎星")), List.of());
         final SkillBuild nova = SkillBuild.of(service.config(), build.definition(), build.level(), state.level(), false, List.of(carrier),
                 state.weaponTags(), plugin.players().sheet(player));

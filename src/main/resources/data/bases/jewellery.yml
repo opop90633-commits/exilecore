@@ -650,6 +650,28 @@ jamulet_corona:
   drop_level: 40
   requirements: { level: 40 }
 
+jamulet_veridical:
+  # PoE2 Veridical Chain（poe2db.tw/tw/Veridical_Chain：幻象鎖鏈；PoB2 Data/Bases/amulet.lua 標 hidden）：固有 +(30—40) 最大符文保護。
+  # 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：原作只有傳奇暮色瓣落用的基底（我們也一樣：retired，不掉落、商人不賣，跟素面指環一樣）。
+  #   掉落等級 52（poe2db；PoB2 寫需求 18 是舊資料）。等級需求寫 55：我們的傳奇沒有自己的等級需求，原作暮色瓣落 0.5.4 起需求 55（之前 69），
+  #   用這個基底的只有它，直接寫在基底上（poe2db 基底本身需求 52）。符文保護是新機制（stats ward.max，character/RunicWard）
+  name: 幻象鎖鏈
+  fixed: true
+  retired: true
+  family: jamulet_special
+  drop_weight: 0
+  material: PINK_PETALS
+  model: exilecore:jewellery/amber_amulet
+  slot: AMULET
+  tags: [jewellery, amulet]
+  drop_level: 52
+  requirements: { level: 55 }
+  implicit:
+    text: "+{value} 最大符文保護"
+    value: [30, 40]
+    mods:
+      - { stat: ward.max, type: FLAT, value: "{value}" }
+
 # ---- PoE2 分階基底（tools/gen_poe2_bases.py 產生；重跑會整段換掉）----
 jring_01:
   name: 鍛環指環

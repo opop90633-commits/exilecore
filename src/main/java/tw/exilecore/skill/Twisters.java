@@ -28,7 +28,7 @@ import java.util.random.RandomGenerator;
  * 2026-10-28 照 PoE2 0.5 Twister（旋風矛；poe2db／RePoE TwisterPlayer）：
  * <ul>
  *   <li>甩出旋風（投射物數量幾個就幾個，互相至少隔 15°；品質 x% 機率多一個），每秒 7.5 格、亂竄著往前，持續 3 秒（吃持續時間）；</li>
- *   <li>旋風半徑 0.5 格（吃範圍），穿過所有敵人，一路「重複」打中旋風裡的敵人並致盲——同一次放出去的旋風打同一個敵人至少隔 0.66 秒；</li>
+ *   <li>旋風半徑 0.5 格（吃範圍），穿過所有敵人，一路「重複」打中旋風裡的敵人並致盲——同一次放出去的旋風打同一個敵人至少隔 0.66 秒（2026-11-07：用掉旋風多出來的那道自己另外算）；</li>
  *   <li>碰到你其他技能的旋風（旋矛擊、颶風槍）就用掉它：多出一個旋風，而且每一階旋風更多 80% 傷害（多出來的那個也是）；</li>
  *   <li>飛過元素地面（點燃、冰緩、感電地面）或用掉元素旋風，就變成那種元素的旋風：獲得 50% 傷害為那種元素的額外傷害（剩下的時間都是）。</li>
  * </ul>
@@ -256,7 +256,9 @@ final class Twisters {
         if (stage > 0) {
             // 用掉一個旋風：多出一個旋風（同樣的階數加成與元素，持續時間重新算）
             final Vector direction = twister.direction.clone().rotateAroundY(Math.toRadians((plugin.random().nextDouble() * 2 - 1) * 45));
-            final Twister extra = new Twister(twister.build, twister.volley, false, twister.at.clone(), direction,
+            // 2026-11-07 照站長：多出來的那道是半路碰到旋風才生出來的，不算跟原本那道「同時放出」（PoE2：Twisters fired at the same time），
+            //   自己算 0.66 秒，可以跟原本那道一起打同一個敵人；這次之前跟原本那道共用同一個間隔
+            final Twister extra = new Twister(twister.build, new Volley(), false, twister.at.clone(), direction,
                     twister.build.durationTicks(DURATION));
             extra.stages = twister.stages;
             extra.element = twister.element;

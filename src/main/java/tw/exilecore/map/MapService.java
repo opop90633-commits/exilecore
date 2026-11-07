@@ -1229,8 +1229,11 @@ public final class MapService {
         for (final MapInstance instance : List.copyOf(instances.values())) {
             // 2026-10-17：重開時還沒打完的終局、極境、巔峰、金庫之主（花碎片、鑰匙開的）：退回開門用掉的東西
             // 2026-10-18：門用掉過（打輸過一門）就不退；也不退「進去過但已經沒人在裡面」的（以前打輸後遇到重開就全額退，等於免費重打）
-            if ((instance.usesAttempts() || instance.singleEntry() || FogTrial.is(instance) || Legion.isDomain(instance)) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING // 2026-11-04：迷霧回廊的碎片也退
-                    && instance.portalsUntouched() && (instance.visitors().isEmpty() || !instance.inside().isEmpty())) {
+            if ((instance.usesAttempts() || instance.singleEntry() || FogTrial.is(instance) || Legion.isDomain(instance) || Delve.is(instance) || Delve.isBossArena(instance)) && !instance.bossKilled() && instance.state() != MapInstance.State.CLOSING // 2026-11-07：深坑首領鑰匙也退；2026-11-04：迷霧回廊的碎片也退
+                    && instance.portalsUntouched() && (instance.visitors().isEmpty() || !instance.inside().isEmpty())
+                    // 2026-11-07 修正（檢查發現）：迷霧回廊第 1～14 波照一般地圖不扣門，打著打著遇到重開也會全退碎片、波次獎勵照拿；
+                    //   改成有人進去過就不退（還沒人進去才退）
+                    && !(FogTrial.is(instance) && !instance.visitors().isEmpty())) {
                 instance.refundPaid();
             }
             for (final UUID uuid : Set.copyOf(instance.inside())) {
@@ -1838,6 +1841,9 @@ public final class MapService {
         }
         if (instance.special() != null) {
             // 特別的實例（回響、試煉、劫盜）：只有掉落表（加上物品數量、稀有度），不掉地圖、傳奇、天穹碎片；劫盜另外改裝備
+            if (Delve.is(instance) && events != null) {
+                events.delve().loot(instance, entity, data, quantityBonus, drops); // 2026-11-07：星脈深坑掉瓦爾通貨
+            }
             if (instance.special().loot() != null) {
                 try {
                     instance.special().loot().accept(instance, drops);
@@ -2687,7 +2693,7 @@ public final class MapService {
 
     /** 只能進一次的實例叫什麼（訊息用）。 */
     private static String singleEntryName(final MapInstance instance) {
-        return instance.isUber() ? "極境" : instance.isPinnacle() ? "巔峰" : "金庫之主";
+        return instance.isUber() ? "極境" : instance.isPinnacle() ? "巔峰" : Delve.is(instance) ? "星脈深坑" : "金庫之主"; // 2026-11-07：深坑
     }
 
     /** 這個玩家能不能走進這張地圖的傳送門：自己開的，或隊友開的。 */

@@ -41,7 +41,7 @@ class UniqueDataTest {
     /** 地圖事件的來源（map_events.yml）。 */
     static final Set<String> EVENT_SOURCES = Set.of("shrine", "strongbox", "breach", "exile", "ritual", "delirium", "abyss"); // 2026-10-18：＋深淵裂縫
     /** 其他專屬的來源（2026-10）：劫盜的大金庫、開服活動的世界 Boss（world_events.yml 直接列傳奇代號）。 */
-    static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss", "abyss_whale");
+    static final Set<String> OTHER_SOURCES = Set.of("heist", "world_boss", "abyss_whale", "delve_guardian", "delve_boss"); // 2026-11-07：星脈深坑的深坑守衛；＋星脈深坑的首領（暮色瓣落）
     /** 地圖代號（具名 Boss 的來源）。 */
     static Set<String> maps;
     /** 引擎用空的情境查的屬性（寫標籤也不會生效）。 */
@@ -123,6 +123,7 @@ class UniqueDataTest {
         tags.addAll(tw.exilecore.charge.ChargeConfig.parse(YamlNode.load(DATA.resolve(tw.exilecore.charge.ChargeConfig.FILE))).keySet());
         tags.add(tw.exilecore.item.unique.UniqueStats.SKILL_TAG_PREFIX + "sluggish_curse"); // 2026-10-26：只對某個技能（SkillBuild 的 skill:技能 標籤）
         tags.add(tw.exilecore.passive.ConquestEffects.UNDEAD); // 2026-10-30（烏勒爾之骨）：叫不死召喚物的技能（SkillBuild 的保留另外看 undead）
+        tags.add(tw.exilecore.stats.TreeMechanicKeys.COMPANION); // 2026-11-07（遺忘看守）：「夥伴增加 x% 最大生命」（[minion, companion]，MinionSheets.CONDITIONAL）
         tags.add("curse"); // 2026-10：詛咒技能的標籤（SkillDefinition 給範圍印記加的，Tags 沒有常數）
         tags.addAll(tw.exilecore.stats.TreeConditions.ENEMY); // 2026-10-28（元素之章）：對敵人狀態的條件標籤（擊中時 TargetConditions 加進情境）
         final YamlNode mapsYml = YamlNode.load(DATA.resolve("maps.yml"));
@@ -147,7 +148,7 @@ class UniqueDataTest {
         assertTrue(repository.warnings().isEmpty(), String.join("\n", repository.warnings()));
         // 2026-10 PoE2 改版：舊的傳奇退役（retired，不算在 uniques() 裡），換成照 PoE2 的一批，加上劫盜、世界 Boss 的專屬
         // 2026-10-26 照 PoE2 0.5：＋30 件原作有、我們以前沒有的傳奇（淵握墜退役換成淵握戒，件數不變）
-        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 8 + 5 + 2 + 1, repository.uniques().size(), // 2026-11-06：＋戰魄之血；2026-11-05：＋星潮祭的兩件專屬傳奇（珊瑚喉裂浪、潮心珍珠，算世界 Boss）；2026-11-04：＋8 件事件 Boss 的傳奇（試煉大師 4、科西斯 1、灰燼仲裁者 3），再＋融解漩渦、妄想症、掙扎吶喊、嗓音、信仰稜鏡；2026-11-03：＋明誓聖幕
+        assertEquals(127 + 21 + 5 + 2 + 6 + 2 + 30 + 91 + 1 + 9 + 21 - 3 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 8 + 5 + 2 + 1 + 18 + 1 + 1, repository.uniques().size(), // 2026-11-07：＋遺忘看守；＋暮色瓣落（星脈深坑的首領）；＋18 件瓦爾傳奇（PoE2 0.5 原作有、我們沒有的）；2026-11-06：＋戰魄之血；2026-11-05：＋星潮祭的兩件專屬傳奇（珊瑚喉裂浪、潮心珍珠，算世界 Boss）；2026-11-04：＋8 件事件 Boss 的傳奇（試煉大師 4、科西斯 1、灰燼仲裁者 3），再＋融解漩渦、妄想症、掙扎吶喊、嗓音、信仰稜鏡；2026-11-03：＋明誓聖幕
                 // 2026-11-03：＋攫命之環（Evergrasping Ring）；2026-11-01：＋獻祭之心（Rathpith Globe）；2026-10-31：＋忠誠之錘（Chober Chaber）；2026-10-30：＋烏勒爾之骨（Bones of Ullr）；2026-10-30：＋拉維安加之泉（Lavianga's Spirits）；2026-10-29：＋鮮血屏障（Bloodbarrier）；＋百目冠（Crown of Eyes） // 2026-10-28 照站長刪掉焰扣束帶、奔雷皮靴、禁視鏈冠（－3）；2026-10-27：＋91 件照 PoE2 0.5 的第二批（84 件一般、7 件追逐級）；2026-10-28：＋黯炎；2026-10-28：＋9 件照 PoE2（綺夢、阿茲里的輕視、謎容、神聖烈焰、元素之章、貝雷克的兩枚、薛朗的背包、吉爾菲的聖殿）
                 // 2026-10-18：＋七隻事件巔峰 Boss 各 3 件、深淵裂縫事件 5 件、淵鯨再 2 件；2026-10-24：＋6 件戰星傳奇；2026-10-26：＋永恆珠寶 2 件（英雄悲劇、不朽恨意）
                 "（2026-10-27 第二批 ＋91）終局 2 + 追逐級 13 + 其他終局 3 + 具名 Boss 2 + 共通 41（2026-10：＋德魯伊的獸魂符 4 件；2026-10-15 ＋6 件、＋3 件圖騰；2026-10-17 ＋棘壘） + 地圖事件 30 + 極境 4 + 世界 Boss 2 + 劫盜 14 + 巔峰 11（2026-10-15 ＋1） + 四個終局共通 1（蛛巢壁壘） + 星骸之海的淵鯨 3 + 只能賭的 1（2026-10-17 踏骸之履）");

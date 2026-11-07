@@ -451,6 +451,8 @@ public final class OpsModule implements Module, Listener {
             case TradeLogRepository.MERITS -> "功勳兌換";
             case TradeLogRepository.ADMIN -> "管理員發放";
             case TradeLogRepository.RECIPE -> "傳奇換一";
+            case TradeLogRepository.FILTER -> "掉落過濾"; // 2026-11-07
+            case TradeLogRepository.SALVAGE -> "拆解"; // 2026-11-07
             default -> entry.kind();
         };
         return "<dark_gray>" + TIME.format(row.at()) + " <gray>" + kind + " <white>" + escape(entry.itemDesc())

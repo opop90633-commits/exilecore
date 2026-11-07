@@ -548,6 +548,10 @@ final class SkillDeployables implements Listener {
             return;
         }
         final boolean totem = spec.kind() == DeploySpec.Kind.TOTEM;
+        if (totem) {
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（魂鎧「若你最近召喚過圖騰」）：記「最近放過圖騰」（條件 @totemplaced）；這次之前只有「有圖騰在」
+            plugin.players().get(player).markRecent(tw.exilecore.stats.TreeConditions.TOTEM_PLACED, now);
+        }
         final Deployed item = new Deployed(player.getUniqueId(), totem ? totemHits(build) : build, spec, stand, at, now,
                 now + build.durationTicks(spec.duration()), label);
         item.linked = totem ? ancestorHits(linked) : linked;

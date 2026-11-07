@@ -47,7 +47,7 @@ final class MapSpawner {
     void tick() {
         final double radius = service.config().settings().packRadius();
         for (final MapInstance instance : service.instances()) {
-            if (instance.state() != MapInstance.State.OPEN || instance.inside().isEmpty() || instance.bossOnly() || FogTrial.is(instance) || Ultimatum.isBossArena(instance) || Legion.isDomain(instance)) { // 2026-11-04 照站長：迷霧回廊只刷波次的怪；審判者的試場只有牠
+            if (instance.state() != MapInstance.State.OPEN || instance.inside().isEmpty() || instance.bossOnly() || FogTrial.is(instance) || Ultimatum.isBossArena(instance) || Legion.isDomain(instance) || Delve.is(instance) || Delve.isBossArena(instance)) { // 2026-11-07：晶淵王座（深坑首領）只有牠；2026-11-07：星脈深坑只刷每一層的怪；2026-11-04 照站長：迷霧回廊只刷波次的怪；審判者的試場只有牠
                 continue; // 極境沒有路上的怪：只有 Boss（每個人只能進一次，不要死在路上）
             }
             final List<Player> players = new ArrayList<>();

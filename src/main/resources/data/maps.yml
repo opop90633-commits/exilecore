@@ -386,6 +386,63 @@ event_bosses:
         - { support: phalanx_maim, chance: 0.01 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 1%（2026-11-04 照站長；這次之前 5%，跟這隻的傳奇一樣 1%）
         - { support: war_horn, chance: 0.01 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 1%（2026-11-04 照站長；這次之前 5%，跟這隻的傳奇一樣 1%）
 
+  # 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS，把暮色瓣落、遺忘看守都放進這隻裡面」：星脈深坑的首領（第四隻災厄級）。
+  #   晶淵王座（地圖裝置用深坑首領鑰匙開；鑰匙從深坑守衛掉，map_events.yml 的 delve.boss_key）。代號 delve_boss 也是專屬傳奇的來源。
+  #   自己的招式（boss_skills.yml 的 delve_*）：晶刺迸裂、黯影齊射、掘穿、藍晶震環、碎晶追魂；第一階段黯蝕標記、晶脈裂線；
+  #   第二階段黑暗收攏（場地收縮）、深淵吸蝕、迷途礦工；第三階段藍晶光束、永夜（全場大招）
+  delve_boss:
+    name: 晶淵之王・黯冕
+    level: 94               # 2026-11-07：災厄級——怪物等級固定 94（同迷霧之主、審判者、不朽統帥），生命自動對準下面的 recommended_dps
+    recommended_dps: 4000000   # 2026-11-07：同其他三隻災厄級，單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    type: WARDEN
+    named: true
+    life: 6.5
+    damage: 3.0
+    scale: 1.1
+    mods: [armoured, blinding]   # 2026-11-07：鐵甲（藍晶外殼）、致盲（黑暗）
+    intro: "「你一路往下挖，挖到了我的心臟。那就——看看它還跳不跳。」"
+    defeat: "藍光一盞一盞熄掉。深坑最底下，只剩下礦工的燈還亮著。"
+    skills:
+      - delve_crystal_burst
+      - delve_dark_volley
+      - delve_burrow
+      - delve_azurite_rings
+      - delve_shard_seekers
+      - { id: delve_dark_mark, phase: 1 }
+      - { id: delve_vein_rupture, phase: 1 }
+      - { id: delve_closing_dark, phase: 2 }
+      - { id: delve_abyss_pull, phase: 2 }
+      - { id: delve_lost_miners, phase: 2 }
+      - { id: delve_azurite_beam, phase: 3 }
+      - { id: delve_eternal_night, phase: 3 }
+    phases:
+      - at: 0.7
+        name: 晶脈甦醒
+        message: "「聽見了嗎？整條星脈都在跟著我跳。」"
+        speed: 0.1
+        mechanic: { type: opening, heal: 15 }   # 2026-11-07：同其他災厄級，每階段一個破綻
+      - at: 0.4
+        name: 燈要熄了
+        message: "「你的燈還能撐多久？」"
+        speed: 0.15
+        stats:
+          - { stat: damage, type: MORE, value: 35 }
+        mechanic: { type: opening, heal: 15 }
+      - at: 0.15
+        name: 永夜
+        message: "「這裡從來就沒有天亮過。」"
+        speed: 0.2
+        stats:
+          - { stat: damage, type: MORE, value: 50 }
+        mechanic: { type: opening, heal: 15 }
+    hazards:
+      - { skill: hazard_delve_falling_crystals, every: 8, phase: 1 }
+    enrage: { after: 240, damage: 120, speed: 0.4, message: "「燈，熄了。」" }
+    drops:
+      unique_chance: 0.01   # 2026-11-07 照站長「把暮色瓣落、遺忘看守都放進這隻裡面」：uniques.yml 的 sources 寫 delve_boss 的每一件各自 1%
+      extra:
+        - { currency: azurite, amount: 40, chance: 1 }   # 打倒牠補 40 個藍晶（買深坑升級）
+
 maps:
   wreck_bay:
     base: map_wreck_bay

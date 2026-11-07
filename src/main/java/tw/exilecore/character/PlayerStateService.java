@@ -650,6 +650,9 @@ public final class PlayerStateService {
         // 2026-10-27（傳奇第二批）：生命／魔力換護盾、每顆戰星、照屬性點數、魔力換荊棘、格擋率換火焰
         sheet.addAll(tw.exilecore.item.unique.UniqueDerived.second(sheet, id -> player == null || plugin.combat() == null
                 || plugin.combat().charges() == null ? 0 : plugin.combat().charges().count(player, id)));
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：每 4 點力量的護盾回充速度、頭盔每 3 點護甲的最大魔力（在算魔力再生的基礎之前）
+        sheet.addAll(tw.exilecore.item.unique.UniqueDerived.vaalEarly(sheet, armourPieces.stream().filter(piece -> "HEAD".equals(piece.slot()))
+                .mapToDouble(tw.exilecore.stats.KeystoneKeys.Piece::armour).sum()));
         // 與死共舞（2026-10 PoE2 基石）：主手單手武器（魔杖、權杖除外）、副手空著：技能速度更多 25%
         if (StatKeys.flag(sheet, StatKeys.FLAG_DANCE_WITH_DEATH) && weaponTags.contains("one_hand")
                 && !weaponTags.contains("wand") && !weaponTags.contains("sceptre")
@@ -763,13 +766,21 @@ public final class PlayerStateService {
         tw.exilecore.stats.TreeEffectKeys.applyDerived(sheet); // 2026-10-26 照 PoE2 天賦樹：每點敏捷的暈眩門檻、等同智慧的命中、生命轉換成護盾
         // 2026-10-26 照 PoE2 天賦樹（一次性的特殊效果）：閃避→護甲、力量→命中、頭盔護盾、鞋子／頭盔門檻、巨人之血…（KeystoneKeys）
         final boolean spellsCostLife = StatKeys.flag(sheet, StatKeys.FLAG_BLOOD_MAGIC) || StatKeys.flag(sheet, StatKeys.FLAG_SANGUIMANCY)
-                || sheet.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, Set.of(Tags.SPELL)) > 0;
+                || sheet.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, Set.of(Tags.SPELL)) > 0
+                || sheet.flat(tw.exilecore.item.unique.VaalKeys.SKILL_EXTRA_LIFE_COST_OF_MANA, Set.of(Tags.SPELL)) > 0; // 2026-11-07 照站長「瓦爾傳奇照原作」：技能額外消耗魔力消耗 x% 的生命也算
         tw.exilecore.stats.KeystoneKeys.applyDerived(sheet, armourPieces, altStr ? 0 : Formulas.lifeFromStrength(finalStr), spellsCostLife);
         tw.exilecore.stats.AttributeScalingKeys.applyLate(sheet); // 2026-10-26 照 PoE2 天賦樹：每 400 命中的攻擊速度（命中都加完之後）
         // 荒野領主（PoE2）：持用獸魂符時可以再裝一把權杖——2026-10-27 照原作，副手真的裝權杖（精魂、詞綴、賦予的技能照權杖算）；
         // 這次之前副手放不了權杖，平衡等效直接給 100 精魂
         // 巨人之血：2026-10-27 起副手可以配盾、法器，或再拿一把雙手斧、錘、劍雙持（DualWield，照原作）；
         // 這次之前沒有雙持，副手空著時給「攻擊傷害更多 25%」當平衡等效（拿掉了）
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：每點最大護盾的生命再生、無法擁有能量護盾、移動速度套用在護盾回充、光照範圍套用在範圍、
+        //   過去 8 秒被擊中失去的生命換護甲（在護盾門檻之前：沒有護盾就沒有護盾給的門檻）
+        final double lifeLost = state.hitLifeLost(now, tw.exilecore.item.unique.UniqueDerived.LIFE_LOST_WINDOW_TICKS);
+        if (live) {
+            state.setHitLifeLostUsed(lifeLost);
+        }
+        sheet.addAll(tw.exilecore.item.unique.UniqueDerived.vaalLate(sheet, lifeLost));
         tw.exilecore.stats.TreeKeys.applyEsThresholds(sheet); // 2026-10-26 照 PoE2 天賦樹：等同最大護盾 x% 的暈眩／異常／凍結門檻
         // 2026-10-27：夥伴傷害的增加也給你（天賦樹）——只看屬性表，比對用的表、網頁的虛擬角色也算；這次之前是暫時增益（網頁沒算）
         sheet.addAll(tw.exilecore.skill.TreeMechanics.companionDamageModifiers(sheet));
@@ -870,9 +881,11 @@ public final class PlayerStateService {
         final Map<String, Integer> granted = new java.util.LinkedHashMap<>();
         for (final EquippedItem item : active) {
             // 2026-10-26（傳奇：司祭法衣、踏骸之履）：武器以外的裝備也可以賦予技能（grant_skill.代號）
-            for (final String own : tw.exilecore.item.unique.UniqueDerived.grantedSkills(item.modifiers())) {
-                if (plugin.skills().config().skill(own) != null) {
-                    granted.merge(own, plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（命契法袍「賦予技能：生命殘息（等級 10）」）：grant_skill 的值 ≥ 2 是固定等級，1 照舊照物品等級
+            for (final Map.Entry<String, Integer> own : tw.exilecore.item.unique.UniqueDerived.grantedSkillLevels(item.modifiers()).entrySet()) {
+                if (plugin.skills().config().skill(own.getKey()) != null) {
+                    granted.merge(own.getKey(), own.getValue() > 0 ? own.getValue()
+                            : plugin.skills().config().grantedLevelFor(Math.max(1, item.data().ilvl()), item.data().rarity() == tw.exilecore.item.Rarity.UNIQUE), Math::max);
                 }
             }
             // 2026-10-30 照 PoE2（RePoE base_items skills_granted）：盾牌賦予架盾（Raise Shield）、圓盾（敏捷盾）賦予招架（Parry），法器不賦予；
@@ -1249,7 +1262,7 @@ public final class PlayerStateService {
                 }
             }
             if (parsed.item() != null) {
-                list.add(withStonefist(state, withInstil(state, parsed.item())));
+                list.add(withRingHand(i, withStonefist(state, withInstil(state, parsed.item()))));
             }
         }
         return list;
@@ -1292,11 +1305,28 @@ public final class PlayerStateService {
         }
         for (int i = 0; i < PlayerState.GEAR_SLOTS.length && i < gear.size(); i++) {
             if (gear.get(i) != null && (i != PlayerState.RING3 || thirdRing)) {
-                collect(list, state, gear.get(i), PlayerState.GEAR_SLOTS[i]);
+                final List<EquippedItem> one = new ArrayList<>(1);
+                collect(one, state, gear.get(i), PlayerState.GEAR_SLOTS[i]);
+                for (final EquippedItem item : one) {
+                    list.add(withRingHand(i, item)); // 2026-11-07（蛇窟之環）：左手／右手的詞綴
+                }
             }
         }
         list.replaceAll(item -> withStonefist(state, item)); // 2026-10-28（昇華・石拳之道）
         return list;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（蛇窟之環，PoE2「Left ring slot:」「Right ring slot:」）：戒指上 {@code @ring_left}／{@code @ring_right}
+     * 的詞綴照戴在哪一格決定（{@link PlayerState#GEAR_SLOTS} 第 0 格左手、第 1 格右手；第三個戒指欄兩種都不算）。其他裝備原樣。
+     */
+    private static EquippedItem withRingHand(final int gearSlot, final EquippedItem item) {
+        if (item.base().slot() != ItemSlot.RING) {
+            return item;
+        }
+        final int hand = gearSlot == 0 ? 0 : gearSlot == 1 ? 1 : -1;
+        final List<Modifier> mods = tw.exilecore.item.unique.UniqueDerived.forRingSlot(item.modifiers(), hand);
+        return mods == item.modifiers() ? item : new EquippedItem(item.base(), item.data(), mods, item.requirements(), item.offHandWeapon());
     }
 
     private void collect(final List<EquippedItem> list, final PlayerState state, final ItemStack stack, final ItemSlot slot, final boolean instil) {
@@ -1832,6 +1862,7 @@ public final class PlayerStateService {
         // 2026-10-27：魔力回復速度（mana.recovery_rate）同理：魔力再生、偷取、回復都快 x%；魔力再生速度（mana.regen）只加再生。更多／更少也算
         final double lifeRate = tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE);
         final double manaRate = tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.MANA_RECOVERY_RATE);
+        final double esRate = esRecoveryRate(sheet); // 2026-11-07 照站長「瓦爾傳奇照原作」：能量護盾回復速度（回充、再生換護盾、回復成護盾都快 x%）
         final double regen = ruined ? 0
                 : (sheet.get(StatKeys.LIFE_REGEN) + state.maxLife() * sheet.get(StatKeys.LIFE_REGEN_PERCENT) / 100.0
                         + tw.exilecore.passive.ConquestEffects.bloodRegen(player.getUniqueId(), sheet, currentTick)) // 2026-10-26：鮮血獻祭
@@ -1842,14 +1873,14 @@ public final class PlayerStateService {
         if (scarred && StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.REGEN_TO_ES)) {
             // 再生改成回護盾的那部分沒了
         } else if (StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.REGEN_TO_ES)) {
-            state.setEnergyShield(state.energyShield() + regen); // 2026-10-26（空殼護符）：生命回復改成回復能量護盾
+            state.setEnergyShield(state.energyShield() + regen * esRate); // 2026-10-26（空殼護符）：生命回復改成回復能量護盾；2026-11-07：吃能量護盾回復速度
         } else {
             state.setLife(state.life() + regen);
         }
         final boolean zealot = StatKeys.flag(sheet, StatKeys.FLAG_ZEALOTS_OATH);
         final boolean youth = StatKeys.flag(sheet, StatKeys.FLAG_ETERNAL_YOUTH);
         if (zealot && !scarred && overflow > 0 && state.maxEnergyShield() > 0) {
-            state.setEnergyShield(state.energyShield() + Math.min(overflow, Math.max(0, regen))); // 狂熱誓言：溢出的生命回復變成護盾
+            state.setEnergyShield(state.energyShield() + Math.min(overflow, Math.max(0, regen)) * esRate); // 狂熱誓言：溢出的生命回復變成護盾（2026-11-07：吃能量護盾回復速度）
         }
         final double leechRate = sheet.apply(StatKeys.LEECH_RATE, 1.0, java.util.Set.of()); // 最大偷取速度（2026-10）
         if (!ruined) {
@@ -1869,17 +1900,29 @@ public final class PlayerStateService {
         } else {
             state.setMana(state.mana() + tw.exilecore.stats.TreeEffectKeys.manaRegen(sheet) * seconds);
         }
+        // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：符文保護每秒回復最大值的 5%（PoE2 預設；不是生命，禁療也照回）
+        if (state.maxWard() > 0 && state.ward() < state.maxWard()) {
+            state.setWard(state.ward() + RunicWard.regen(state.maxWard(), seconds));
+        }
         if (!ruined) {
             state.recoverManaLeech(seconds * manaRate, leechRate); // 2026-10-18：荒蕪禁療中魔力偷取也停（以前照回）；2026-10-27 照 PoE2 吃魔力回復速度
         }
-        if (youth && !ruined && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（flag.life_recharges「生命會回充」）：生命也像護盾一樣回充（同一個延遲、回充速度），護盾照常回充
+        if ((youth || StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.FLAG_LIFE_RECHARGES)) && !ruined
+                && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)) {
             // 永恆青春：生命像護盾一樣回充（護盾不回充）
             state.setLife(state.life() + Formulas.esRechargePerSecond(state.maxLife(), esRechargeSpeed(sheet)) * seconds);
         }
         if (!zealot && !youth && !scarred && !ruined && state.maxEnergyShield() > 0 && currentTick - state.lastDamageTick() >= esRechargeDelay(sheet)
                 && !tw.exilecore.skill.TreeLeftovers.esRechargeBlocked(plugin, player, currentTick)) { // 2026-10-27 照 PoE2 天賦樹：被詛咒的不能回充（PvP）
             // 延遲 4 秒過後每秒回充 12.5%（回充速度、延遲都吃詞綴）
-            state.setEnergyShield(state.energyShield() + Formulas.esRechargePerSecond(state.maxEnergyShield(), esRechargeSpeed(sheet)) * seconds);
+            state.setEnergyShield(state.energyShield() + Formulas.esRechargePerSecond(state.maxEnergyShield(), esRechargeSpeed(sheet)) * seconds
+                    * esRate); // 2026-11-07：吃能量護盾回復速度
+        }
+        // 2026-11-07（瓜特利斯的假說）：過去 8 秒被擊中失去的生命變了（被打、或舊的過了 8 秒）：重算屬性表（護甲跟著變）
+        if (sheet.flat(tw.exilecore.item.unique.VaalKeys.ARMOUR_FROM_LIFE_LOST_8S, Set.of()) > 0
+                && Math.abs(state.hitLifeLost(currentTick, tw.exilecore.item.unique.UniqueDerived.LIFE_LOST_WINDOW_TICKS) - state.hitLifeLostUsed()) > 1e-6) {
+            state.markDirty();
         }
         // 2026-11-04（瑪哈薩多的陰謀，PoE2 Everlasting Sacrifice 永恆奉獻）：能量護盾全滿時犧牲全部，獲得 +x% 全部抗性上限 4 秒
         final double sacrifice = sheet.flat(tw.exilecore.item.unique.UniqueStats.EVERLASTING_SACRIFICE, Set.of());
@@ -2142,6 +2185,11 @@ public final class PlayerStateService {
         return Math.max(0, sheet.apply(StatKeys.ES_RECHARGE, 1.0, Set.of()));
     }
 
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」：能量護盾回復速度的倍率（es.recovery_rate；回充、再生換護盾、回復成護盾都乘這個）。 */
+    public static double esRecoveryRate(final StatSheet sheet) {
+        return tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.item.unique.VaalKeys.ES_RECOVERY_RATE);
+    }
+
     /** 被打之後要等幾 tick 才開始回充（基礎 40，「延遲縮短」最多縮到兩成）。 */
     public static long esRechargeDelay(final StatSheet sheet) {
         return Formulas.esRechargeDelayTicks(sheet.apply(StatKeys.ES_DELAY, 1.0, Set.of()));
@@ -2192,6 +2240,29 @@ public final class PlayerStateService {
         }
         player.sendActionBar(actionBar(player, state));
         resourceBar.update(player, state);
+    }
+
+    /**
+     * 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：直接扣血的承受傷害（持續傷害、Boss 大招、自己打自己…）照符文保護保底
+     * （{@link PlayerState#wardLethal}）：回傳真的要扣的生命；有被符文保護救下來時冒一下特效。
+     */
+    public double wardLethal(final Player player, final PlayerState state, final double lifeDamage) {
+        final double before = state.ward();
+        final double rest = state.wardLethal(lifeDamage);
+        if (state.ward() < before) {
+            wardSaved(player);
+        }
+        return rest;
+    }
+
+    /** 2026-11-07：符文保護擋下致死的一下（特效、音效）。 */
+    public void wardSaved(final Player player) {
+        if (player == null || !player.isOnline()) {
+            return;
+        }
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), org.bukkit.Particle.ENCHANT, player.getLocation().add(0, 1, 0), 30, 0.5, 0.8, 0.5, 0.6);
+        player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_RESONATE,
+                org.bukkit.SoundCategory.PLAYERS, 1.0f, 1.4f);
     }
 
     /**
@@ -2284,6 +2355,11 @@ public final class PlayerStateService {
         if (guard >= 1 && !modStatus) {
             stat(stats, statsPlain, statsPlain.isEmpty() ? "" : " ", GUARD_COLOR, "+" + grouped(Math.round(guard)) + " 守護");
         }
+        // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：符文保護（PoE2 Runic Ward）寫在生命後面；球、模組都不畫，所以一律寫
+        if (state.maxWard() > 0) {
+            stat(stats, statsPlain, statsPlain.isEmpty() ? "" : " ", WARD_COLOR,
+                    "✧" + grouped(Math.round(state.ward())) + "/" + grouped(Math.round(state.maxWard())) + " 符文保護");
+        }
         if (!orbs && state.maxEnergyShield() > 0) {
             stat(stats, statsPlain, "  ", ES_COLOR, "⛨ " + grouped(Math.round(state.energyShield())) + " / " + grouped(Math.round(state.maxEnergyShield())));
         }
@@ -2369,6 +2445,8 @@ public final class PlayerStateService {
     private static final net.kyori.adventure.text.format.TextColor LIFE_COLOR = net.kyori.adventure.text.format.TextColor.color(0xff5555);
     /** 2026-10-28：守護的顏色。 */
     private static final net.kyori.adventure.text.format.TextColor GUARD_COLOR = net.kyori.adventure.text.format.TextColor.color(0xc8c8ff);
+    /** 2026-11-07：符文保護（PoE2 的 Runic Ward 是淡黃色）。 */
+    private static final net.kyori.adventure.text.format.TextColor WARD_COLOR = net.kyori.adventure.text.format.TextColor.color(0xffff77);
     private static final net.kyori.adventure.text.format.TextColor ES_COLOR = net.kyori.adventure.text.format.TextColor.color(0x77ccff);
     private static final net.kyori.adventure.text.format.TextColor MANA_COLOR = net.kyori.adventure.text.format.TextColor.color(0x5599ff);
     private static final net.kyori.adventure.text.format.TextColor LEVEL_COLOR = net.kyori.adventure.text.format.TextColor.color(0xf5b942);

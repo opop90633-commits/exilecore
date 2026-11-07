@@ -81,6 +81,8 @@ public final class IceCrystals implements Listener {
         SkillBuild wall;
         boolean volt;
         long born;
+        /** 2026-11-07：留下這顆冰晶的技能（午夜天頂照這個數自己的冰晶上限）。 */
+        String skill = "";
         long lastHit;
         Object lastSource;
 
@@ -205,6 +207,56 @@ public final class IceCrystals implements Listener {
     }
 
     private void place(final Player owner, final SkillBuild build, final List<Location> points, final boolean wall) {
+        place(owner, build, points, wall, BASE_SECONDS);
+    }
+
+    /**
+     * 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 Midnight Zenith）：在 center 周圍 radius 格的一圈平均放 count 顆冰晶，
+     * 持續 seconds 秒（吃技能持續時間）。
+     */
+    void spawnRing(final Player owner, final SkillBuild build, final Location center, final int count, final double radius, final double seconds) {
+        if (count <= 0 || center.getWorld() == null) {
+            return;
+        }
+        final List<Location> points = new ArrayList<>();
+        for (int i = 0; i < count; i++) {
+            final double angle = Math.PI * 2 * i / count;
+            final Location at = center.clone().add(Math.cos(angle) * radius, 0, Math.sin(angle) * radius);
+            at.setY(Math.floor(center.getY() + 0.01));
+            points.add(at);
+        }
+        place(owner, build, points, false, seconds);
+        center.getWorld().playSound(center, Sound.BLOCK_GLASS_PLACE, SoundCategory.PLAYERS, 0.8f, 1.6f);
+    }
+
+    /** 2026-11-07：這個玩家現在有幾顆某個技能留下的冰晶（午夜天頂的上限）。 */
+    int count(final UUID owner, final String skillId) {
+        final List<Crystal> mine = crystals.get(owner);
+        if (mine == null) {
+            return 0;
+        }
+        int count = 0;
+        for (final Crystal crystal : mine) {
+            if (skillId.equals(crystal.skill) && crystal.display.isValid()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 暮色瓣落「Ice Crystals have (-3—3)% reduced maximum Life per 5% Cold Resistance you have」，
+     * 屬性 ice_crystal_maximum_life_+%_per_5%_cold_resistance）：冰晶最大生命的倍率。perFive 是每 5% 冰冷抗性增加幾 %（物品減少寫負的），
+     * coldResist 是你現在的冰冷抗性（照上限；PoB2 PerStat ColdResist 是封頂後的、往下取整）。最低 0。純函式（測試用）。
+     */
+    static double coldLifeFactor(final double perFive, final double coldResist) {
+        if (perFive == 0) {
+            return 1;
+        }
+        return Math.max(0, 1 + perFive / 100.0 * Math.floor(coldResist / 5.0 + 1e-9));
+    }
+
+    private void place(final Player owner, final SkillBuild build, final List<Location> points, final boolean wall, final double seconds) {
         final int count = points.size();
         final StatSheet sheet = plugin.players().sheet(owner);
         final StatSheet effective = build.profile().effective(sheet);
@@ -216,10 +268,14 @@ public final class IceCrystals implements Listener {
         final boolean verglas = StatKeys.flag(effective, StatKeys.FLAG_VERGLAS);
         // 2026-10-28 照 PoE2：冰晶的生命（技能逐級表；厚晶、脆晶照要打幾下的比例）
         // 2026-11-01 照 PoE2 Icicle（脆晶）：冰晶最大生命更少 50%（crystal.life）；照「打幾下」算的冰晶下數照比例無條件進位（3 下 → 2 下）
-        final double lifeMore = Math.max(0, effective.more(tw.exilecore.stats.SupportParityKeys.CRYSTAL_LIFE, tags));
+        // 2026-11-07（暮色瓣落）：每 5% 冰冷抗性增加／減少冰晶的最大生命（照你身上的封頂冰冷抗性）
+        final double coldFactor = coldLifeFactor(sheet.flat(tw.exilecore.item.unique.UniqueStats.CRYSTAL_LIFE_PER_5_COLD, java.util.Set.of()),
+                Math.min(sheet.get(tw.exilecore.stats.DamageType.COLD.mitigationStat()),
+                        tw.exilecore.stats.DamageCalculator.resistCap(sheet, tw.exilecore.stats.DamageType.COLD)));
+        final double lifeMore = Math.max(0, effective.more(tw.exilecore.stats.SupportParityKeys.CRYSTAL_LIFE, tags)) * coldFactor;
         final double life = StageLeftovers.scaledLife(StageAttacks.limit(build.profile(), "crystal_life", 0), hits, BASE_HITS) * lifeMore;
         final int hitsLeft = tw.exilecore.stats.SupportParityKeys.crystalHits(hits, lifeMore);
-        final long until = now() + build.durationTicks(BASE_SECONDS);
+        final long until = now() + build.durationTicks(seconds);
         final List<Crystal> mine = crystals.computeIfAbsent(owner.getUniqueId(), key -> new ArrayList<>());
         final List<Location> spots = new ArrayList<>();
         final List<java.util.function.BooleanSupplier> alive = new ArrayList<>();
@@ -236,6 +292,7 @@ public final class IceCrystals implements Listener {
             crystal.burst = StageAttacks.CRYSTAL_BURST.getOrDefault(build.definition().id(), crystal.burst);
             crystal.life = life;
             crystal.maxLife = life;
+            crystal.skill = build.definition().id();
             if (wall) {
                 crystal.wall = build;
                 crystal.volt = volt;
@@ -503,7 +560,9 @@ public final class IceCrystals implements Listener {
         final double[] current = verglas.get(owner.getUniqueId());
         final double value = current != null && current[1] > now ? Math.max(current[0], percent) : percent;
         verglas.put(owner.getUniqueId(), new double[] {value, now + VERGLAS_TICKS});
-        service.buff(owner, "frost_shell", "冰淞", VERGLAS_TICKS, List.of(new tw.exilecore.stats.Modifier(StatKeys.DAMAGE_GAIN + "cold",
+        // 2026-11-07 修正（檢查發現）：「傷害的一部分為額外冰冷傷害」用 damage.extra.cold（所有傷害都吃）；這次之前用 damage.gain.cold，
+        //   DamageCalculator 只對物理來源算 gain，冰冷的霜壁完全沒加到
+        service.buff(owner, "frost_shell", "冰淞", VERGLAS_TICKS, List.of(new tw.exilecore.stats.Modifier(StatKeys.damageExtra(tw.exilecore.stats.DamageType.COLD),
                 tw.exilecore.stats.ModType.FLAT, value, java.util.Set.of(VERGLAS_TAG), "冰淞")));
     }
 
@@ -518,7 +577,10 @@ public final class IceCrystals implements Listener {
     private void wallBurst(final Player owner, final Crystal crystal, final boolean early) {
         final SkillBuild build = crystal.wall;
         final SkillConfig config = service.config();
-        SkillProfile cold = build.profile().derive(ColdSpells.WALL_BURST, java.util.Set.of(), java.util.Set.of());
+        // 2026-11-07 修正（檢查發現）：引星觸發的霜壁，冰晶爆炸也要帶著「觸發的」記號（MetaGems.TRIGGERED_SUFFIX）——
+        //   這次之前換成爆炸的代號時記號掉了，觸發出來的牆炸開又暴擊、又給暴擊引星充能，觸發的牆再觸發牆
+        final String triggered = build.profile().id().contains(MetaGems.TRIGGERED_SUFFIX) ? MetaGems.TRIGGERED_SUFFIX : "";
+        SkillProfile cold = build.profile().derive(ColdSpells.WALL_BURST + triggered, java.util.Set.of(), java.util.Set.of());
         if (crystal.shards) {
             cold = cold.withLocal(List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportRemakeKeys.CRYSTAL_IMPALE_MARK, 1, "晶刺"),
                     tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.SupportExtraKeys.FLAG_NO_EXTRACT, 1, "晶刺")));
@@ -529,8 +591,11 @@ public final class IceCrystals implements Listener {
         final double radius = ColdSpells.tableRadius(config, ColdSpells.WALL_BURST, build.level(), 2.0) * build.areaScale();
         service.executor().burst(owner, cold, crystal.at, radius, 0, ColdSpells.ICE_NOVA);
         if (crystal.volt) {
-            SkillProfile volt = ColdSpells.ownTable(config, build.profile(), ColdSpells.WALL_VOLT, build.level())
-                    .withLocal(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SPELL_BASE_CRIT, -2, "閃電爆炸")));
+            SkillProfile volt = ColdSpells.ownTable(config, build.profile(), ColdSpells.WALL_VOLT, build.level());
+            if (!triggered.isEmpty()) {
+                volt = volt.derive(ColdSpells.WALL_VOLT + triggered, java.util.Set.of(), java.util.Set.of()); // 2026-11-07 修正：同上
+            }
+            volt = volt.withLocal(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SPELL_BASE_CRIT, -2, "閃電爆炸")));
             if (early) {
                 volt = volt.scaled(1 - WALL_EARLY_LESS, "剛放下就被推碎");
             }

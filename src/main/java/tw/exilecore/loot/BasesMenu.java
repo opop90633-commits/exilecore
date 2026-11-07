@@ -236,7 +236,7 @@ final class BasesMenu extends Menu {
 
     /**
      * 2026-11-04：這種基底只在哪裡掉（一般掉落沒有的才寫）：地圖事件（map_events.yml 的 ring）→「裂隙」「深淵裂縫」，
-     * 事件巔峰的指定基底（maps.yml 的 extra base）→ 那張巔峰的名字，其他劫盜專屬的 →「劫盜」；一般掉落的回傳 null。
+     * 事件巔峰的指定基底（maps.yml 的 extra base）→ 那張巔峰的名字，星脈深坑的專屬基底（2026-11-07）→「星脈深坑」，其他劫盜專屬的 →「劫盜」；一般掉落的回傳 null。
      */
     private String onlySource(final ItemBase base) {
         final var repository = plugin.items().repository();
@@ -258,6 +258,9 @@ final class BasesMenu extends Menu {
                         case SAFE -> "保險箱";
                     });
                 }
+            }
+            if (base.id().equals(events.vaalDrops().baseId())) {
+                where.add("星脈深坑"); // 2026-11-07 照站長：祭紋華袍只在深坑小怪掉
             }
             final tw.exilecore.map.MapConfig maps = plugin.maps().config();
             for (final tw.exilecore.map.MapConfig.MapDef map : maps.pinnacles()) {

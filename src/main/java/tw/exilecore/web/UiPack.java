@@ -784,6 +784,45 @@ public final class UiPack {
             root.add("model", definition);
             files.put("assets/exilecore/items/mark/" + name + ".json", json(root));
         }
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：怪物詞綴的地上效果圖（同一片平面、同一個著色）
+        //   與立著的靈魂、晶體（一般的平面物品，exilecore:fx/圖名）；這次之前這些只有粒子
+        for (final String name : MonsterFx.MARKS) {
+            files.put("assets/exilecore/textures/item/mark/" + name + ".png", png(MonsterFx.image(name)));
+            final JsonObject model = new JsonObject();
+            model.addProperty("parent", "exilecore:item/mark/plane");
+            final JsonObject textures = new JsonObject();
+            textures.addProperty("t", "exilecore:item/mark/" + name);
+            model.add("textures", textures);
+            files.put("assets/exilecore/models/item/mark/" + name + ".json", json(model));
+            final JsonObject tint = new JsonObject();
+            tint.addProperty("type", "minecraft:custom_model_data");
+            tint.addProperty("index", 0);
+            tint.addProperty("default", 0xFFFFFF);
+            final JsonArray tints = new JsonArray();
+            tints.add(tint);
+            final JsonObject definition = new JsonObject();
+            definition.addProperty("type", "minecraft:model");
+            definition.addProperty("model", "exilecore:item/mark/" + name);
+            definition.add("tints", tints);
+            final JsonObject root = new JsonObject();
+            root.add("model", definition);
+            files.put("assets/exilecore/items/mark/" + name + ".json", json(root));
+        }
+        for (final String name : MonsterFx.SPRITES) {
+            files.put("assets/exilecore/textures/item/fx/" + name + ".png", png(MonsterFx.image(name)));
+            final JsonObject model = new JsonObject();
+            model.addProperty("parent", "minecraft:item/generated");
+            final JsonObject textures = new JsonObject();
+            textures.addProperty("layer0", "exilecore:item/fx/" + name);
+            model.add("textures", textures);
+            files.put("assets/exilecore/models/item/fx/" + name + ".json", json(model));
+            final JsonObject definition = new JsonObject();
+            definition.addProperty("type", "minecraft:model");
+            definition.addProperty("model", "exilecore:item/fx/" + name);
+            final JsonObject root = new JsonObject();
+            root.add("model", definition);
+            files.put("assets/exilecore/items/fx/" + name + ".json", json(root));
+        }
     }
 
     /**

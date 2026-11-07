@@ -55,6 +55,52 @@ public final class KillEffects implements Listener {
         this.charges = charges;
     }
 
+    /** 2026-11-07：蝕吸器還沒寫回物品的擊殺數（物品 UUID → 幾隻；每 25 隻寫回一次）。 */
+    private final Map<String, Integer> siphonPending = new HashMap<>();
+    /** 2026-11-07：蝕吸器的擊殺數每幾隻寫回物品一次。 */
+    private static final int SIPHON_FLUSH = 25;
+
+    /**
+     * 2026-11-07 照 PoE2 的瓦爾虹吸器（Vaal Siphoner）：戴著的戒指、項鍊有虹吸的，每殺一隻記一隻；到了門檻就虹吸
+     * （一條詞綴降一階、其他詞綴變強；ItemGenerator.siphonComplete）。
+     */
+    private void siphon(final Player killer, final PlayerState state) {
+        if (plugin.items() == null) {
+            return;
+        }
+        for (final int gear : new int[] {0, 1, 2, PlayerState.RING3}) {
+            final org.bukkit.inventory.ItemStack stack = state.jewellery(PlayerState.gearIndex(gear));
+            if (stack == null || stack.isEmpty()) {
+                continue;
+            }
+            final String raw = plugin.items().rawJson(stack);
+            if (raw == null || !raw.contains("siphonGoal")) {
+                continue; // 沒有虹吸的不用解
+            }
+            final tw.exilecore.item.ItemData data = plugin.items().read(stack).orElse(null);
+            if (data == null || data.siphonGoal() <= 0) {
+                continue;
+            }
+            final int pending = siphonPending.merge(data.uuid(), 1, Integer::sum);
+            final int kills = data.siphonKills() + pending;
+            if (kills >= data.siphonGoal()) {
+                siphonPending.remove(data.uuid());
+                final String result = plugin.items().generator().siphonComplete(data, plugin.items().random());
+                plugin.items().update(stack, data);
+                killer.sendMessage(plugin.text().prefixed("<#d27a5a>蝕吸完成：").append(stack.effectiveName())
+                        .append(plugin.text().parse("<gray> " + tw.exilecore.item.ItemRenderer.escape(result))));
+                killer.playSound(killer.getLocation(), Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 0.6f, 1.3f);
+                plugin.getSLF4JLogger().info("[siphon] {} 的 {}：{}", killer.getName(), data.uuid(), result);
+                plugin.players().markDirty(killer);
+            } else if (pending >= SIPHON_FLUSH) {
+                siphonPending.remove(data.uuid());
+                data.setSiphon(data.siphonGoal(), kills);
+                plugin.items().update(stack, data);
+                plugin.players().markDirty(killer);
+            }
+        }
+    }
+
     /** 屬性表的來源：疾速中增加 20% 攻擊、施法、移動速度。 */
     public List<Modifier> modifiers(final Player player) {
         final Long until = onslaught.get(player.getUniqueId());
@@ -100,6 +146,7 @@ public final class KillEffects implements Listener {
         if (!state.hasCharacter() || state.isDead()) {
             return;
         }
+        siphon(killer, state); // 2026-11-07 照 PoE2 的瓦爾虹吸器
         final StatSheet sheet = plugin.players().sheet(killer);
         if (charges != null) {
             charges.onKill(killer); // 怒星
@@ -163,6 +210,38 @@ public final class KillEffects implements Listener {
         if (steal > 0) {
             stealMods(killer, victim, steal);
         }
+        vaalKill(killer, state, sheet, victim, victimMaxLife);
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：瓦爾傳奇的擊殺效果。
+     * <ul>
+     *   <li>{@code kill.explode_crit}：用暴擊擊中殺死的敵人爆炸，造成牠最大生命 x% 的物理傷害（奎丘利）。</li>
+     *   <li>{@code unique.ignited_kill_explode}：殺死點燃中的敵人時 x% 機率爆炸，造成牠最大生命十分之一的火焰傷害（鳳凰之起）。</li>
+     *   <li>{@code life.per_poison_on_kill}：殺死敵人時，牠身上每一層中毒（不管誰上的）回復你 x% 最大生命（蛇咬）。</li>
+     * </ul>
+     * 異常在死亡事件最後（MONITOR）才清掉，這裡還看得到。
+     */
+    private void vaalKill(final Player killer, final PlayerState state, final StatSheet sheet, final LivingEntity victim, final double victimMaxLife) {
+        final double critExplode = sheet.flat(tw.exilecore.item.unique.VaalKeys.KILL_EXPLODE_CRIT, Set.of());
+        if (critExplode > 0 && victimMaxLife > 0 && plugin.combat() != null && plugin.combat().vaalOffence() != null
+                && plugin.combat().vaalOffence().critKill(killer, victim)) {
+            explode(killer.getUniqueId(), victim.getLocation().add(0, 0.5, 0), victimMaxLife * Math.min(100, critExplode) / 100.0, DamageType.PHYSICAL);
+        }
+        final double ignitedChance = sheet.flat(tw.exilecore.item.unique.VaalKeys.UNIQUE_IGNITED_KILL_EXPLODE, Set.of());
+        if (ignitedChance > 0 && victimMaxLife > 0 && plugin.ailments() != null
+                && plugin.ailments().has(victim, tw.exilecore.ailment.AilmentType.IGNITE)
+                && plugin.items().random().nextDouble() * 100 < ignitedChance) {
+            explode(killer.getUniqueId(), victim.getLocation().add(0, 0.5, 0), victimMaxLife / 10.0, DamageType.FIRE);
+        }
+        final double perPoison = sheet.flat(tw.exilecore.item.unique.VaalKeys.LIFE_PER_POISON_ON_KILL, Set.of());
+        if (perPoison > 0 && plugin.ailments() != null && !state.isFullLife()) {
+            final int poisons = plugin.ailments().poisonStacks(victim);
+            if (poisons > 0) {
+                state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * perPoison * poisons / 100.0));
+                plugin.players().display(killer, state);
+            }
+        }
     }
 
     /**
@@ -211,22 +290,7 @@ public final class KillEffects implements Listener {
             if (mod == null) {
                 continue;
             }
-            final String source = "斬獲腰環：" + mod.name();
-            final List<Modifier> modifiers = new java.util.ArrayList<>();
-            for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
-                modifiers.add(affixMod.toModifier(Map.of(), source));
-            }
-            for (final Map.Entry<DamageType, Double> entry : mod.addedFromPhysical().entrySet()) {
-                modifiers.add(Modifier.flat(StatKeys.damageGain(entry.getKey()), entry.getValue() * 100, source));
-            }
-            if (mod.vanillaSpeedBonus() > 0) {
-                modifiers.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, mod.vanillaSpeedBonus(), source));
-            }
-            if (mod.aura() != null) {
-                for (final tw.exilecore.item.AffixMod affixMod : mod.aura().stats()) {
-                    modifiers.add(affixMod.toModifier(Map.of(), source));
-                }
-            }
+            final List<Modifier> modifiers = stolenModifiers(mod, "斬獲腰環：" + mod.name());
             if (modifiers.isEmpty()) {
                 continue;
             }
@@ -239,6 +303,30 @@ public final class KillEffects implements Listener {
             final Location at = victim.getLocation().add(0, 1, 0);
             tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.END_ROD, at, 20, 0.5, 0.6, 0.5, 0.05);
         }
+    }
+
+    /**
+     * 怪物詞綴變成玩家身上的修飾器（斬獲腰環偷的、2026-11-07 皮囊偶符複製的共用）：詞綴的 stats 直接套，
+     * 「附加 X% 物理為火焰」變成你的額外獲得，極速的變成增加移動速度，光環的詞綴給光環裡的數值；只有招式的詞綴回傳空的。
+     * 2026-11-07 從 stealMods 抽出來，算法沒變。
+     */
+    public static List<Modifier> stolenModifiers(final tw.exilecore.monster.MonsterConfig.MonsterMod mod, final String source) {
+        final List<Modifier> modifiers = new java.util.ArrayList<>();
+        for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
+            modifiers.add(affixMod.toModifier(Map.of(), source));
+        }
+        for (final Map.Entry<DamageType, Double> entry : mod.addedFromPhysical().entrySet()) {
+            modifiers.add(Modifier.flat(StatKeys.damageGain(entry.getKey()), entry.getValue() * 100, source));
+        }
+        if (mod.vanillaSpeedBonus() > 0) {
+            modifiers.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, mod.vanillaSpeedBonus(), source));
+        }
+        if (mod.aura() != null) {
+            for (final tw.exilecore.item.AffixMod affixMod : mod.aura().stats()) {
+                modifiers.add(affixMod.toModifier(Map.of(), source));
+            }
+        }
+        return modifiers;
     }
 
     /** 2026-10-26：改成 public（天賦「用斧擊殺時疾速」TreeMechanics 也給）。 */

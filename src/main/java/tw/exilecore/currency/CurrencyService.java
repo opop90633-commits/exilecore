@@ -144,6 +144,30 @@ public final class CurrencyService {
         lines.add(ItemRenderer.line("<dark_gray>  " + where + "：" + ItemRenderer.escape(String.join("、", texts))));
     }
 
+    /**
+     * 2026-11-07 照站長「能直接顯示該階會給什麼詞綴嗎」：星魄給的那一條、那一階的數值範圍
+     * （次級、一般、高階：需求等級 ≤ essence_level 的最好那一階；完美、腐化：最好的那一階）。好幾個詞綴（武器、飾品分開的）各寫一行，一樣的只寫一次。
+     */
+    private List<Component> essenceLore(final CurrencyType type) {
+        final List<Component> lines = new ArrayList<>();
+        if (type.operation() != CurrencyOperation.ESSENCE || type.affix() == null || type.affix().isBlank() || type.essenceTier() == null) {
+            return lines;
+        }
+        final java.util.Set<String> seen = new java.util.LinkedHashSet<>();
+        for (final String id : type.affix().split(",")) {
+            final tw.exilecore.item.Affix affix = items.repository().affix(id.trim());
+            if (affix == null || affix.tiers().isEmpty()) {
+                continue;
+            }
+            final tw.exilecore.item.AffixTier tier = type.essenceTier().replaces() ? Crafting.bestTier(affix) : Crafting.fixedTier(affix, type.essenceLevel());
+            seen.add(affix.rangeText(tier.tier()) + "<dark_gray>（詞綴需求等級 " + tier.ilvl() + "）");
+        }
+        for (final String text : seen) {
+            lines.add(ItemRenderer.line("<#8888ff>給：<white>" + text));
+        }
+        return lines;
+    }
+
     /** 做出 amount 顆通貨（未切割寶石交給 skill 模組做成寶石）。 */
     public ItemStack create(final CurrencyType type, final int amount) {
         final ItemStack made = maker.make(type, amount);
@@ -165,6 +189,7 @@ public final class CurrencyService {
             }
             lore.add(ItemRenderer.line("<gray>" + ItemRenderer.escape(type.description())));
             lore.addAll(bondedLore(type)); // 2026-11-02：符文的羈絆詞綴（照 runes.yml 的 bonded）
+            lore.addAll(essenceLore(type)); // 2026-11-07 照站長：星魄直接寫出給的那一階的數值
             if (!type.flavor().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));
             }
@@ -176,6 +201,12 @@ public final class CurrencyService {
                         ? "<#c9a0ff>右鍵：打開一個　Shift＋右鍵：整疊打開"
                         : "<#c9a0ff>右鍵：兌換一套　Shift＋右鍵：這種卡全部兌換"));
                 lore.add(ItemRenderer.line("<dark_gray>撿起來直接進倉庫通貨頁的「星諭卡」；在那裡按 Q 可以花金幣賭卡"));
+            } else if (type.operation() == CurrencyOperation.CRYSTAL_CORRUPT) {
+                lore.add(ItemRenderer.line("<dark_gray>打開技能面板（/skills），拿在游標上點已腐化的技能")); // 2026-11-07
+            } else if (type.operation() == CurrencyOperation.DESTABILISE) {
+                lore.add(ItemRenderer.line("<dark_gray>拿在游標上點一顆魂核符文來使用（一疊只動一顆）")); // 2026-11-07
+            } else if (type.operation() == CurrencyOperation.ANCIENT_INFUSE) {
+                lore.add(ItemRenderer.line("<dark_gray>拿在游標上點一片先驅石板來使用（一疊只動一片）")); // 2026-11-07
             } else if (type.isSkillCurrency()) {
                 lore.add(ItemRenderer.line("<dark_gray>打開技能面板（/skills），拿在游標上點技能來使用"));
             } else if (type.operation() == CurrencyOperation.RESONANCE) {
@@ -408,6 +439,15 @@ public final class CurrencyService {
                 }
                 case CATALYST -> Crafting.applyCatalyst(type, data, Crafting.catalystMax(items.repository(), data)); // 2026-11-04：裂隙指環品質上限
                 case RUNE -> Crafting.applyRune(type, data);
+                case ARCHITECT -> {
+                    // 2026-11-07 照 PoE2 的策匠石：一半碎掉，一半雙重腐化（多一條腐化詞綴）
+                    if (random.nextDouble() < VaalCrafting.ARCHITECT_DESTROY) {
+                        result[0] = Result.DESTROYED;
+                    } else {
+                        items.generator().addSecondCorruptionEnchant(data, random);
+                        data.setDoubleCorrupted(true);
+                    }
+                }
                 case OMEN -> Crafting.attachOmen(type, data);
                 default -> {
                     if (omenFires) {

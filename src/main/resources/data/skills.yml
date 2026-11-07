@@ -1271,6 +1271,35 @@ skills:
     level_modifiers:   # 2026-10-26 照 PoE2 0.5：召喚物傷害更多 8 + 4 ×（寶石等級 − 1）%
       - { stat: damage, type: MORE, value: [8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 68, 72, 76, 80, 84, 88, 92, 96, 100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164], tags: [minion] }
 
+  # 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 Spirit Vessel（poe2db：靈魂容器；PoB2 SpiritVesselPlayer／SpiritVesselSupport）。
+  #   只有傳奇胸甲遺忘看守賦予（固定 16 級，沒有寶石：source weapon）。主要寶石（Companion、Minion、Persistent、Meta）：孔裡放巨熊、狼人、飛龍的變身技能，
+  #   叫出的靈魂容器夥伴用那些技能的複製打人（照召喚物算；程式 SoulVessel、MinionService.vesselAct）。孔裡每個不同的技能 20% 更多傷害。
+  #   召喚物等級 = 寶石等級 × 2（poe2db 的 Minion Level 2、4…40；ally: true 的召喚物表就是這樣）。
+  #   原作沒有寫精魂保留與靈魂容器本身的生命、傷害倍率（poe2db、PoB2 都沒有）：保留照我們夥伴的算法（per_minion 30 = 最大精魂的 floor(100 × √P) × 0.3 %，
+  #   P = 生命倍率 1.0 → 30%，SkillService.minionSpirit），生命、傷害倍率 1.0、基礎攻擊時間 1 秒（每個技能再乘它自己的攻擊速度倍率）。
+  soul_vessel:
+    name: 靈魂容器
+    description: 夥伴（主要寶石，常駐，綁在上方按鍵格）：孔裡放巨熊、狼人或飛龍的變身技能寶石（可放好幾個，不用拿獸魂符），叫出一隻會變形的靈魂容器跟著你打，輪流用孔裡攻擊技能的複製（照召喚物的傷害算，技能自己的傷害倍率、攻擊速度照放進去的那顆的等級）；孔裡每個不同的技能讓牠造成 20% 更多傷害。只有一隻，死了 12 秒後自己回來。保留最大精魂的 30%。
+    icon: GHAST_TEAR
+    type: spell
+    tier: 1
+    tags: [minion, companion, persistent, meta]   # 照 PoE2（Companion、Minion、Persistent、Meta）；meta＝主要寶石（孔裡放技能）
+    tags_remove: [melee, physical]
+    source: weapon   # 傳奇胸甲（遺忘看守）賦予，沒有寶石
+    mechanic: aura
+    aura:
+      reserve: 0
+      per_minion: 30       # 同野獸馴化：當作 30%（SkillService.minionSpirit：最大精魂的 floor(100 × √P) × 0.3 %）
+      radius: 8
+      allies: false
+      effects: []
+    summon: { minion_tags: [attack, melee, area], kind: HUSK, name: 靈魂容器, ally: true, count: 1, max: 1, fixed_max: true, duration: 0, life: 1.0, damage: 1.0,
+              attack_speed: 1.0, speed: 1.2, reach: 2.0 }
+    cast_time: 0.5
+    cooldown: 1.5
+    mana: 0
+    visual: summon_skeletons
+
   ember_envoy:
     name: 燼使
     description: 捷光環（不算光環：光環的輔助與光環效果不吃）：開著的時候，你用攻擊「過量擊殺」敵人（最後一擊多打出牠最大生命 20% 以上的傷害）時，點燃牠身邊 1.2 格內的敵人 3 秒，每秒燒過量傷害的 16.7%（1 級）～23%（20 級）～29.7%（40 級）。保留 30 精魂。
@@ -2913,7 +2942,7 @@ skills:
   cyclone_spear:
     name: 旋風矛
     # 2026-10-28 照 PoE2（poe2db Twister）改說明與機制（Twisters）；這次之前「擲出一團亂竄的旋風，慢慢往前一路打中敵人，打中的敵人致盲」
-    description: 甩出一道旋風（0.5 格），每秒 7.5 格亂竄著往前、持續 3 秒，穿過所有敵人，一路重複打中旋風裡的敵人並致盲（同一次放出去的旋風打同一個敵人至少隔 0.66 秒；投射物數量越多旋風越多）。碰到你旋矛擊、颶風槍的旋風就用掉它：多出一道旋風，而且每一階旋風更多 80% 傷害。飛過點燃、冰緩、感電地面或用掉元素旋風，就變成那種元素的旋風，獲得 50% 傷害為那種元素的額外傷害。
+    description: 甩出一道旋風（0.5 格），每秒 7.5 格亂竄著往前、持續 3 秒，穿過所有敵人，一路重複打中旋風裡的敵人並致盲（同一次放出去的旋風打同一個敵人至少隔 0.66 秒，用掉旋風多出來的那道另外算；投射物數量越多旋風越多）。碰到你旋矛擊、颶風槍的旋風就用掉它：多出一道旋風，而且每一階旋風更多 80% 傷害。飛過點燃、冰緩、感電地面或用掉元素旋風，就變成那種元素的旋風，獲得 50% 傷害為那種元素的額外傷害。
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 WIND_CHARGE（原版右鍵有動作：拉弓、投擲、舉盾、吃、穿戴、吹號角…會干擾施放）
     type: attack
     tier: 1   # 2026-10-27 照 PoE2（Twister 第 1 階）；這次之前 3
@@ -11155,3 +11184,43 @@ skills:
     level_modifiers:
       - { stat: asc.apparition_less, type: FLAT, value: [60, 60, 59, 59, 58, 58, 57, 57, 56, 56, 55, 55, 54, 54, 53, 53, 52, 52, 51, 50, 50, 49, 49, 48, 48, 47, 47, 46, 46, 45, 45, 44, 44, 43, 43, 42, 42, 41, 41, 40] }   # 2026-10-27 照 PoE2（poe2db Abyssal Apparition 1–40 級）
   # ==== END ascendancy3 ====
+
+  # ---- 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：傳奇項鍊暮色瓣落賦予的技能（PoE2 Midnight Zenith；PoB2 MidnightStarPlayer、poe2db Midnight_Zenith）----
+  #   常駐：用其他技能暴擊擊殺敵人時獲得等同牠強度的極地花瓣（普通 1、魔法 2、稀有 10、傳奇 20），暴擊擊中稀有或傳奇敵人時獲得 2～7 片（1～40 級）；
+  #   每次獲得花瓣時，有 10 片而且冰晶還沒到上限（10 顆，品質每 1% +0.1）就用掉 10 片，在最近那個目標周圍（0.8 格）放 5 顆冰晶（10 秒）。
+  #   冰晶照我們其他冰晶（IceCrystals）：有自己的生命（14 → 4768 → 12651），被你的擊中打碎時炸開 2.2 格的冰冷傷害（proc_crystal_midnight）。
+  #   這個技能自己的暴擊不給花瓣（base_skill_cannot_generate_midnight_star_petals）。PoB2 沒有精魂保留（只有 HasReservation 類型），不保留精魂。
+  midnight_zenith:
+    name: 午夜天頂
+    description: 常駐：用其他技能暴擊擊殺敵人時，獲得等同牠強度的極地花瓣（普通 1、魔法 2、稀有 10、傳奇 20）；暴擊擊中稀有或傳奇敵人時獲得 2～7 片花瓣（1～40 級）。每次獲得花瓣時，有 10 片而且冰晶還沒到上限（10 顆）就用掉 10 片，在最近的目標周圍放 5 顆冰晶（10 秒）。冰晶被你的擊中打碎時爆炸，對 2.2 格內的敵人造成冰冷傷害。這個技能自己的暴擊不會給花瓣。不保留精魂。
+    icon: PINK_PETALS
+    type: spell
+    tier: 1
+    tags: [persistent, buff, cold, area, duration, crystal]   # 照 PoE2 寶石類型（OngoingSkill、Buff、Persistent、Duration、Cold、IceCrystal、Area；Limit 照 SkillLimits 自動補）
+    keep_type_tags: true
+    source: weapon   # 傳奇項鍊（暮色瓣落）賦予，沒有寶石
+    mechanic: aura
+    aura: { reserve: 0, radius: 8, allies: false, effects: [] }
+    mana: 0
+    visual: aura_cold
+    level_modifiers:
+      - { stat: limit.zenith_rare_petals, type: FLAT, value: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 7] }   # midnight_star_gain_x_ice_seeds_when_you_critically_hit_a_rare_or_unique_enemy
+      - { stat: limit.crystal_life, type: FLAT, value: [14, 24, 41, 62, 90, 126, 173, 234, 312, 413, 540, 700, 903, 1158, 1478, 1881, 2386, 3012, 3795, 4768, 5007, 5257, 5520, 5796, 6085, 6390, 6709, 7044, 7397, 7767, 8155, 8563, 8991, 9440, 9912, 10408, 10928, 11475, 12048, 12651] }   # frost_wall_maximum_life（IceCrystals）
+
+  proc_crystal_midnight:   # 午夜天頂的冰晶碎掉時炸開（PoB2 MidnightStarPlayer 的 Crystal：secondary cold、2.2 公尺、暴擊 11%）
+    name: 午夜冰晶爆炸
+    icon: PINK_PETALS
+    hidden: true
+    type: spell
+    tags: [area, cold, crystal]
+    tags_remove: [spell]   # 原作是次要傷害（secondary damage），不是法術
+    mechanic: nova
+    nova: { radius: 2.2 }   # active_skill_base_area_of_effect_radius 22
+    damage: [[2, 3], [2, 4], [3, 5], [4, 6], [5, 8], [6, 10], [8, 12], [9, 14], [11, 16], [13, 19], [15, 22], [17, 25], [19, 29], [22, 33], [25, 38], [29, 43], [32, 49], [37, 55], [41, 62], [47, 70], [53, 79], [59, 89], [67, 100], [75, 112], [84, 126], [95, 142], [106, 159], [119, 179], [134, 201], [150, 225], [169, 253], [190, 285], [213, 320], [240, 360], [270, 405], [304, 455], [342, 513], [385, 578], [434, 651], [490, 735]]   # 照 PoE2（PoB2 secondary_minimum/maximum_base_cold_damage 1–40 級）
+    damage_types: { cold: 1.0 }
+    cast_time: 0.5
+    effectiveness: 1.0
+    mana: 0
+    visual: frost_star_blast
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 11 }   # critChance 11

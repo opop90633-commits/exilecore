@@ -264,6 +264,12 @@ public final class MapEventConfig {
     private Delirium delirium;
     /** 2026-11-04 照站長：迷霧回廊（照 PoE 的 Simulacrum：15 波的幻霧場地；map_events.yml 的 fog_trial）。 */
     private FogTrialSettings fogTrial = FogTrialSettings.DEFAULTS;
+    /** 2026-11-07 照站長「地心礦坑簡化版」：星脈深坑。 */
+    private DelveSettings delve = DelveSettings.DEFAULTS;
+    /** 2026-11-07 照站長「星脈深坑的怪物掉 PoE2 Fate of the Vaal 的通貨」。 */
+    private VaalDrops vaalDrops = VaalDrops.DEFAULTS;
+    /** 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：深坑首領鑰匙與晶淵王座。 */
+    private DelveBossSettings delveBoss = DelveBossSettings.DEFAULTS;
     /** 2026-11-04 照站長「先做絕境」：絕境（照 PoE 的 Ultimatum；map_events.yml 的 ultimatum）。 */
     private UltimatumSettings ultimatum = UltimatumSettings.DEFAULTS;
     /** 2026-11-04 照站長「軍團」：軍團（照 PoE 的 Legion；map_events.yml 的 legion）。 */
@@ -665,6 +671,9 @@ public final class MapEventConfig {
         ritualBankThreshold = other.ritualBankThreshold;
         delirium = other.delirium;
         fogTrial = other.fogTrial;
+        delve = other.delve;
+        vaalDrops = other.vaalDrops;
+        delveBoss = other.delveBoss;
         ultimatum = other.ultimatum;
         legion = other.legion;
         twists = other.twists;
@@ -897,6 +906,13 @@ public final class MapEventConfig {
         if (root.has("fog_trial")) {
             fogTrial = parseFogTrial(root.node("fog_trial"), fogTrial); // 2026-11-04：迷霧回廊
         }
+        if (root.has("delve")) {
+            delve = parseDelve(root.node("delve"), delve); // 2026-11-07：星脈深坑
+            if (root.node("delve").has("vaal_drops")) {
+                vaalDrops = parseVaalDrops(root.node("delve").node("vaal_drops"), vaalDrops);
+            }
+            delveBoss = parseDelveBoss(root.node("delve"), delveBoss); // 2026-11-07：深坑首領鑰匙、晶淵王座
+        }
         if (root.has("ultimatum")) {
             ultimatum = parseUltimatum(root.node("ultimatum"), ultimatum); // 2026-11-04：絕境
         }
@@ -941,6 +957,231 @@ public final class MapEventConfig {
                 eliteWaves, clamp(elite.decimal("life", base.eliteLife()), 1, 50),
                 (int) clamp(Math.min(perWave[0], perWave[1]), 0, 10), (int) clamp(Math.max(perWave[0], perWave[1]), 0, 10),
                 rewards.has("weights") ? rewardInts(rewards.node("weights")) : base.rewardWeights());
+    }
+
+    /**
+     * 2026-11-07 照站長「地心礦坑簡化版、新增深坑鑰匙、能組隊、排行不重置」：星脈深坑（map_events.yml 的 delve）。
+     * 一層一層往下打：每層怪物等級 +levelPerFloor（最多 +maxLevelBonus）、生命與傷害 +difficultyPerFloor；每 guardianEvery 層有深坑守衛。
+     * 黑暗每個人各自算：每秒漲 darkRise（每 10 層再多 darkRisePer10），在 lightRadius 格內殺怪回 lightPerKill（魔法 ×2、稀有 ×5、傳奇 ×10），
+     * 滿了每秒扣 darkDamage 的最大生命（每 25 層再多一倍）。
+     */
+    public record DelveSettings(String name, String key, int cost, String azurite, int levelBonus, int startGap, double floorSeconds,
+                                int monsters, double perFloor, double perPlayer, double spawnSeconds, int groupMin, int groupMax,
+                                double difficultyPerFloor, double levelPerFloor, int maxLevelBonus, int rampFloors, double magicStart,
+                                double magicEnd, double rareStart, double rareEnd, int guardianEvery, double guardianLife,
+                                double darkRise, double darkRisePer10, double lightPerKill, double lightRadius, double clearLight,
+                                double darkDamage, int rewardsMin, int rewardsMax, Map<Reward, Integer> rewardWeights,
+                                int azuriteBase, int azuritePer10, int guardianAzurite, double keyChance, int upgradeMax, int[] upgradeCosts) {
+        public static final DelveSettings DEFAULTS = new DelveSettings("星脈深坑", "delve_key", 1, "azurite", 0, 5, 150,
+                16, 0.6, 0.5, 0.5, 3, 5, 0.05, 1, 20, 50, 0.15, 0.55, 0.03, 0.18, 10, 8.0,
+                1.2, 0.4, 1.5, 20, 25, 0.05, 1, 4,
+                Map.of(Reward.CURRENCY, 35, Reward.ESSENCE, 15, Reward.JEWEL, 15, Reward.MAP, 15, Reward.CATALYST, 10, Reward.RARE, 10),
+                2, 1, 10, 0.15, 5, new int[] {20, 40, 80, 150, 250});
+
+        public DelveSettings {
+            rewardWeights = Map.copyOf(rewardWeights);
+            upgradeCosts = upgradeCosts.clone();
+        }
+
+        /** 第 floor 層在 0～1 之間的進度（第 1 層 0、第 1 + rampFloors 層以後 1）。 */
+        public double progress(final int floor) {
+            return rampFloors <= 0 ? 1 : Math.max(0, Math.min(1, (floor - 1) / (double) rampFloors));
+        }
+
+        /** 第 floor 層的怪物生命、傷害增加（給 MapInstance.setDelirium）。 */
+        public double difficulty(final int floor) {
+            return difficultyPerFloor * Math.max(0, floor - 1);
+        }
+
+        /** 第 floor 層怪物多幾級。 */
+        public int levelBonus(final int floor) {
+            return (int) Math.min(maxLevelBonus, Math.floor(levelPerFloor * Math.max(0, floor - 1)));
+        }
+
+        /** 第 floor 層總共幾隻（players 個人）。 */
+        public int count(final int floor, final int players) {
+            final double scale = 1 + perPlayer * Math.max(0, players - 1);
+            return Math.max(1, (int) Math.round((monsters + perFloor * (floor - 1)) * scale));
+        }
+
+        public double magicChance(final int floor) {
+            return magicStart + (magicEnd - magicStart) * progress(floor);
+        }
+
+        public double rareChance(final int floor) {
+            return rareStart + (rareEnd - rareStart) * progress(floor);
+        }
+
+        public boolean guardianFloor(final int floor) {
+            return guardianEvery > 0 && floor % guardianEvery == 0;
+        }
+
+        /** 第 floor 層過關每人幾份獎勵（守衛層兩倍）。 */
+        public int rewards(final int floor) {
+            final int base = (int) Math.round(rewardsMin + (rewardsMax - rewardsMin) * progress(floor));
+            return guardianFloor(floor) ? base * 2 : base;
+        }
+
+        /** 第 floor 層過關每人幾個藍晶（吃物品數量之前）。 */
+        public int azurite(final int floor) {
+            return azuriteBase + azuritePer10 * (floor / 10) + (guardianFloor(floor) ? guardianAzurite : 0);
+        }
+
+        /** 黑暗每秒漲多少（0～100；wick = 燈芯升級的等級，每級少 8%）。 */
+        public double darkRate(final int floor, final int wick) {
+            return (darkRise + darkRisePer10 * (floor / 10)) * Math.max(0.2, 1 - 0.08 * wick);
+        }
+
+        /** 黑暗滿了每秒扣最大生命的比例。 */
+        public double darkDamage(final int floor) {
+            return darkDamage * (1 + Math.max(0, floor - 1) / 25.0);
+        }
+
+        /** 下一級升級要幾個藍晶（已經是 level 級；滿了回傳 -1）。 */
+        public int upgradeCost(final int level) {
+            if (level >= upgradeMax || upgradeCosts.length == 0) {
+                return -1;
+            }
+            return upgradeCosts[Math.min(level, upgradeCosts.length - 1)];
+        }
+
+        /** 從第幾層開始：最深 best、深掘升級 deep 級（每級少退 1 層，最少退 1 層）。 */
+        public int startFloor(final int best, final int deep) {
+            return Math.max(1, best - Math.max(1, startGap - deep));
+        }
+
+        /**
+         * 2026-11-07 照站長「星坑能選層數嗎 → 選檢查點」：能選的起始層——第 1 層、每過一隻守衛的下一層（11、21、31…），
+         * 加上照最深算的那層（{@link #startFloor}，最深的選擇）；都不超過那層。由淺到深。這次之前只能從那層開始。
+         */
+        public List<Integer> checkpoints(final int best, final int deep) {
+            final int furthest = startFloor(best, deep);
+            final List<Integer> list = new java.util.ArrayList<>();
+            final int step = Math.max(1, guardianEvery);
+            for (int floor = 1; floor < furthest; floor += step) {
+                list.add(floor);
+            }
+            list.add(furthest);
+            return list;
+        }
+    }
+
+    /**
+     * 2026-11-07 照站長「星脈深坑裡的怪物要會掉 PoE2 Fate of the Vaal 的通貨，掉落率照原作的稀有度」（map_events.yml 的 delve.vaal_drops）：
+     * 每隻怪物照稀有度擲一次 chance（普通、魔法、稀有、傳奇；第 floor 層再乘 1 + floor／per_floor，吃物品數量），中了照 weights 挑一種。
+     * 原作沒有掉落權重（poe2db 沒寫），weights 是照原作的行情與成交量估的（灌注器最常見、雙蝕石最少；遠古魂核不會掉）。
+     * 守衛另外擲 guardian_unique 掉一件 sources 有 delve_guardian 的傳奇。
+     * 2026-11-07 照站長「祭紋華袍只在深坑小怪掉」：baseId／baseChance 是守衛以外的怪每隻擲的專屬基底（沒寫 base 就不掉）。
+     */
+    public record VaalDrops(double[] chance, double perFloor, Map<String, Integer> weights, double guardianUnique, int guardianRolls,
+                            String baseId, double baseChance) {
+        public static final VaalDrops DEFAULTS = new VaalDrops(new double[] {0.006, 0.015, 0.06, 1.0}, 50,
+                Map.ofEntries(Map.entry("vaal_infuser_armour", 100), Map.entry("vaal_infuser_weapon", 100), Map.entry("vaal_infuser_caster", 60),
+                        Map.entry("vaal_infuser_jewellery", 40), Map.entry("vaal_siphoner", 50), Map.entry("core_destabiliser", 35),
+                        Map.entry("extraction_orb", 35), Map.entry("ancient_infuser", 30), Map.entry("vaal_cultivation_orb", 30),
+                        Map.entry("crystal_corruption", 15), Map.entry("architect_orb", 8)), 0.05, 3, // 2026-11-07 照站長：守衛傳奇 5%（同日稍早 1%，再之前 15%）
+                "body_str_dex_int_01", 0.002);
+
+        public VaalDrops {
+            chance = chance.clone();
+            weights = Map.copyOf(weights);
+        }
+
+        /** 這隻（稀有度序號：0 普通、1 魔法、2 稀有、3 傳奇）在第 floor 層掉一顆的機率（不含物品數量）。 */
+        public double chanceAt(final int rarity, final int floor) {
+            final double base = chance[Math.max(0, Math.min(chance.length - 1, rarity))];
+            return base * (1 + Math.max(0, floor - 1) / Math.max(1.0, perFloor));
+        }
+    }
+
+    /**
+     * 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS，把暮色瓣落、遺忘看守都放進這隻裡面」：
+     * 星脈深坑的首領（map_events.yml 的 delve.boss_key 與 delve.boss）。深坑守衛每隻給每個有份的人各擲一次 keyChance 掉 1 把 key（不吃物品數量），
+     * cost 把在地圖裝置開「name」——只有一隻災厄級的首領（maps.yml 的 event_bosses.delve_boss）。這次之前深坑沒有首領。
+     */
+    public record DelveBossSettings(String key, double keyChance, String name, int cost) {
+        public static final DelveBossSettings DEFAULTS = new DelveBossSettings("delve_boss_key", 0.2, "晶淵王座", 1);
+
+        /** 一隻守衛給一個人的那份要不要掉鑰匙（roll 是 0～1 的亂數）。 */
+        public boolean dropsKey(final double roll) {
+            return keyChance > 0 && roll < keyChance;
+        }
+    }
+
+    /** 2026-11-07：map_events.yml 的 delve.boss_key（{ id, chance: % }）與 delve.boss（{ name, cost }）；沒寫的照預設。 */
+    static DelveBossSettings parseDelveBoss(final YamlNode delve, final DelveBossSettings base) {
+        final YamlNode key = delve.node("boss_key");
+        final YamlNode boss = delve.node("boss");
+        return new DelveBossSettings(key.string("id", base.key()), clamp(key.decimal("chance", base.keyChance() * 100), 0, 100) / 100.0,
+                boss.string("name", base.name()), (int) clamp(boss.integer("cost", base.cost()), 1, 100));
+    }
+
+    static VaalDrops parseVaalDrops(final YamlNode node, final VaalDrops base) {
+        final YamlNode chance = node.node("chance");
+        final double[] chances = {
+            clamp(chance.decimal("normal", base.chance()[0] * 100), 0, 100) / 100.0,
+            clamp(chance.decimal("magic", base.chance()[1] * 100), 0, 100) / 100.0,
+            clamp(chance.decimal("rare", base.chance()[2] * 100), 0, 100) / 100.0,
+            clamp(chance.decimal("unique", base.chance()[3] * 100), 0, 100) / 100.0};
+        Map<String, Integer> weights = base.weights();
+        if (node.has("weights")) {
+            final Map<String, Integer> parsed = new java.util.LinkedHashMap<>();
+            for (final String key : node.node("weights").keys()) {
+                parsed.put(key, (int) clamp(node.node("weights").integer(key, 0), 0, 100000));
+            }
+            weights = parsed;
+        }
+        return new VaalDrops(chances, clamp(node.decimal("per_floor", base.perFloor()), 1, 1000), weights,
+                clamp(node.decimal("guardian_unique", base.guardianUnique() * 100), 0, 100) / 100.0,
+                (int) clamp(node.integer("guardian_rolls", base.guardianRolls()), 0, 20),
+                node.has("base") ? node.node("base").string("id", base.baseId()) : base.baseId(),
+                node.has("base") ? clamp(node.node("base").decimal("chance", base.baseChance() * 100), 0, 100) / 100.0 : base.baseChance());
+    }
+
+    /** 2026-11-07：map_events.yml 的 delve（星脈深坑；沒寫的照預設）。 */
+    static DelveSettings parseDelve(final YamlNode node, final DelveSettings base) {
+        final YamlNode monsters = node.node("monsters");
+        final YamlNode spawn = node.node("spawn");
+        final int[] group = spawn.has("group") ? spawn.range("group") : new int[] {base.groupMin(), base.groupMax()};
+        final YamlNode magic = node.node("magic");
+        final YamlNode rare = node.node("rare");
+        final YamlNode guardian = node.node("guardian");
+        final YamlNode dark = node.node("darkness");
+        final YamlNode rewards = node.node("rewards");
+        final YamlNode azurite = node.node("azurite_drop");
+        final YamlNode upgrades = node.node("upgrades");
+        final int[] perFloor = rewards.has("per_floor") ? rewards.range("per_floor") : new int[] {base.rewardsMin(), base.rewardsMax()};
+        int[] costs = base.upgradeCosts();
+        if (upgrades.has("costs")) {
+            final List<String> texts = upgrades.strings("costs");
+            costs = new int[texts.size()];
+            for (int i = 0; i < costs.length; i++) {
+                costs[i] = (int) clamp(Integer.parseInt(texts.get(i).trim()), 1, 100000);
+            }
+        }
+        return new DelveSettings(node.string("name", base.name()), node.string("key", base.key()),
+                (int) clamp(node.integer("cost", base.cost()), 1, 100), node.string("azurite", base.azurite()),
+                (int) clamp(node.integer("level_bonus", base.levelBonus()), 0, 30), (int) clamp(node.integer("start_gap", base.startGap()), 1, 100),
+                clamp(node.decimal("floor_seconds", base.floorSeconds()), 30, 900),
+                (int) clamp(monsters.integer("base", base.monsters()), 1, 200), clamp(monsters.decimal("per_floor", base.perFloor()), 0, 20),
+                clamp(monsters.decimal("per_player", base.perPlayer()), 0, 2),
+                clamp(spawn.decimal("every", base.spawnSeconds()), 0.5, 10),
+                Math.max(1, Math.min(group[0], group[1])), Math.min(12, Math.max(group[0], group[1])),
+                clamp(node.decimal("difficulty_per_floor", base.difficultyPerFloor() * 100), 0, 100) / 100.0,
+                clamp(node.decimal("level_per_floor", base.levelPerFloor()), 0, 5), (int) clamp(node.integer("max_level_bonus", base.maxLevelBonus()), 0, 50),
+                (int) clamp(node.integer("ramp_floors", base.rampFloors()), 1, 500),
+                clamp(magic.decimal("start", base.magicStart()), 0, 1), clamp(magic.decimal("end", base.magicEnd()), 0, 1),
+                clamp(rare.decimal("start", base.rareStart()), 0, 1), clamp(rare.decimal("end", base.rareEnd()), 0, 1),
+                (int) clamp(guardian.integer("every", base.guardianEvery()), 0, 100), clamp(guardian.decimal("life", base.guardianLife()), 1, 100),
+                clamp(dark.decimal("rise", base.darkRise()), 0, 50), clamp(dark.decimal("rise_per_10", base.darkRisePer10()), 0, 50),
+                clamp(dark.decimal("light_per_kill", base.lightPerKill()), 0, 100), clamp(dark.decimal("light_radius", base.lightRadius()), 4, 64),
+                clamp(dark.decimal("clear_light", base.clearLight()), 0, 100), clamp(dark.decimal("damage", base.darkDamage() * 100), 0, 100) / 100.0,
+                (int) clamp(Math.min(perFloor[0], perFloor[1]), 0, 10), (int) clamp(Math.max(perFloor[0], perFloor[1]), 0, 10),
+                rewards.has("weights") ? rewardInts(rewards.node("weights")) : base.rewardWeights(),
+                (int) clamp(azurite.integer("base", base.azuriteBase()), 0, 1000), (int) clamp(azurite.integer("per_10", base.azuritePer10()), 0, 1000),
+                (int) clamp(azurite.integer("guardian", base.guardianAzurite()), 0, 1000),
+                clamp(node.decimal("key_chance", base.keyChance()), 0, 1),
+                (int) clamp(upgrades.integer("max", base.upgradeMax()), 0, 20), costs);
     }
 
     /** 2026-11-04：map_events.yml 的 ultimatum（絕境；沒寫的照預設）。 */
@@ -1339,6 +1580,21 @@ public final class MapEventConfig {
     /** 2026-11-04：迷霧回廊的設定。 */
     public FogTrialSettings fogTrial() {
         return fogTrial;
+    }
+
+    /** 2026-11-07：星脈深坑怪物的瓦爾通貨掉落。 */
+    public VaalDrops vaalDrops() {
+        return vaalDrops;
+    }
+
+    /** 2026-11-07：星脈深坑的設定。 */
+    public DelveSettings delve() {
+        return delve;
+    }
+
+    /** 2026-11-07：深坑首領鑰匙（守衛掉）與晶淵王座（首領場）。 */
+    public DelveBossSettings delveBoss() {
+        return delveBoss;
     }
 
     public UltimatumSettings ultimatum() {

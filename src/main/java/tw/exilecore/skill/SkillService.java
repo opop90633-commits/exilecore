@@ -961,6 +961,29 @@ public final class SkillService {
     }
 
     /**
+     * 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 Spirit Vessel）：靈魂容器孔裡放得對的變身技能（照孔的順序，含現在不會用的戰吼、增益），
+     * 已經套上靈魂容器其他孔的輔助、技能自己的等級與品質。原作 ignore_shapeshift_talisman_requirement：不看武器；屬性需求不足的略過。
+     * 面板上沒有靈魂容器（或孔是空的）回傳空的。MinionService 讓靈魂容器出手、算「每個不同的技能 20% 更多傷害」用。
+     */
+    public List<SkillBuild> vesselSocketed(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(SoulVessel.ID);
+        final SkillLoadout.Entry host = position < 0 ? null : state.skills().skill(position);
+        if (host == null || host.spells().isEmpty() || !SoulVessel.hosts(config.skill(SoulVessel.ID))) {
+            return List.of();
+        }
+        final StatSheet sheet = plugin.players().sheet(player);
+        final List<SkillBuild> list = new ArrayList<>();
+        for (final SkillLoadout.Entry inner : GemAttributes.usable(config, innerEntries(host), sheet)) {
+            final SkillDefinition definition = config.skill(inner.skillId());
+            if (definition != null && SoulVessel.problem(definition) == null) {
+                list.add(build(state, sheet, definition, inner));
+            }
+        }
+        return list;
+    }
+
+    /**
      * 2026-10-29：空無型態的孔裡放了技能、卻沒有一個現在能用的時候，每一顆為什麼不能用（「旋棍擊：要拿長棍」「破甲擊：力量不足…」）；
      * 孔是空的回傳 null。這次之前一律說「孔裡要放近戰攻擊」，放了武器不對、能力值不夠的技能看不出原因（放了也沒反應）。
      */
@@ -2012,6 +2035,7 @@ public final class SkillService {
         if (now % GroundDecals.FOLLOW_STEP == 0) {
             decals.follow(); // 常駐地面圈：跟著實體走的移過去
         }
+        decals.sprites(); // 2026-11-07：怪物詞綴的短暫的圖（開始動、時間到收掉；沒有的時候馬上回來）
         if (now % GroundDecals.SPIN_STEP == 0) {
             decals.spin(); // 光環的法陣與符文：送下一個角度（客戶端補成連續的轉動）
         }
@@ -2672,7 +2696,10 @@ public final class SkillService {
         final int costToLife = bloodMagic ? 0 : (int) Math.round(Math.min(split[1], tw.exilecore.item.unique.UniqueCosts.lifeShare(state.sheet(), split[1])));
         // 2026-11-01 照 PoE2 Rathpith Globe（獻祭之心）：非引導法術額外消耗 x% 最大生命
         final int extraLife = (int) Math.round(tw.exilecore.item.unique.UniqueCosts.extraLifeCost(state.sheet(), build.profile().tags(), state.maxLife()));
-        final int lifeCost = split[0] + costToLife + extraLife;
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：技能額外消耗等於魔力消耗 x% 的生命（魔力照付；付不起就放不出來）
+        final int extraOfMana = (int) Math.round(tw.exilecore.item.unique.UniqueCosts.extraLifeOfMana(build.profile().effective(state.sheet()),
+                build.profile().tags(), split[1] - costToLife));
+        final int lifeCost = split[0] + costToLife + extraLife + extraOfMana;
         final int manaCost = split[1] - costToLife;
         if (lifeCost > 0 && state.life() <= lifeCost) {
             fail(player, runtime, state, "生命不足（" + definition.name() + "要 " + lifeCost + " 生命）", now);
@@ -2895,7 +2922,10 @@ public final class SkillService {
             final String socketProblem = config.meta(definition.id()) == null
                     // 2026-10-29 照 PoE2 Blasphemy：咒環孔裡沒有能用的詛咒，按下去說清楚
                     ? (Blasphemy.hosts(definition) && blasphemyCurses(player).isEmpty()
-                    ? definition.name() + "：孔裡要放" + Blasphemy.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果" : null)
+                    ? definition.name() + "：孔裡要放" + Blasphemy.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果"
+                    // 2026-11-07 照 PoE2 Spirit Vessel：靈魂容器孔裡沒有變身技能，按下去說清楚（夥伴照樣在，只會普攻）
+                    : SoulVessel.hosts(definition) && vesselSocketed(player).isEmpty()
+                    ? definition.name() + "：孔裡要放" + SoulVessel.wants() + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放的話靈魂容器只會普攻" : null)
                     : metas().socketProblem(state, state.skills().find(definition.id()));
             state.notice(socketProblem != null ? "<red>" + ItemRenderer.escape(socketProblem) // 2026-10：主要寶石插槽放錯，按下去說清楚
                     : auras.isActive(player.getUniqueId(), definition.id())
@@ -3903,6 +3933,9 @@ public final class SkillService {
         buff(player, FORM_BUFF, name, FORM_TICKS, mods);
         plugin.players().conditions().onShapeshift(player, now()); // 2026-10-26：天賦樹「最近變成獸形」
         druidSupports().shapeshifted(player, definition, name, changed); // 2026-10-26 照 PoE2 Helbrym's Hide
+        if (plugin.combat() != null && plugin.combat().vaalOffence() != null) {
+            plugin.combat().vaalOffence().shapeshifted(player, changed); // 2026-11-07 照站長「瓦爾傳奇照原作」：皮囊偶符複製詞綴
+        }
     }
 
     /** 技能的 skill.recoil（FLAT，×0.01 = 每 tick 幾格）：放完往後跳。 */
@@ -5241,6 +5274,12 @@ public final class SkillService {
             final double spirit = Math.max(0, sheet.get(StatKeys.SPIRIT_MAX));
             return build.withMinionReserve(build.minionReserve() / 30.0 * percent / 100.0 * spirit);
         }
+        if (SoulVessel.hosts(build.definition()) && sheet != null && build.definition().summon() != null) {
+            // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：靈魂容器照夥伴的算法（P = 靈魂容器的生命倍率；原作沒寫保留多少）
+            final double percent = MinionAbilities.companionSpiritPercent(build.definition().summon().life());
+            final double spirit = Math.max(0, sheet.get(StatKeys.SPIRIT_MAX));
+            return build.withMinionReserve(build.minionReserve() / 30.0 * percent / 100.0 * spirit);
+        }
         return build;
     }
 
@@ -5303,8 +5342,20 @@ public final class SkillService {
             extra.add(new tw.exilecore.stats.Modifier(tw.exilecore.stats.CostKeys.COST_EFFICIENCY, tw.exilecore.stats.ModType.INCREASED,
                     corruptedEfficiency, java.util.Set.of(), "血契新生"));
         }
-        final StatSheet gemSheet = gem.levels() > 0 && sheet != null
-                ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：已腐化寶石的技能有 x% 魔力消耗改成生命消耗（艾瑟琳的華儀）——當成這個技能自己的
+        //   「x% 魔力消耗改成生命消耗」（TreeKeys.LIFE_COST_PERCENT，跟其他來源相加、最多 100%）
+        final double corruptedLife = entry.corrupted() && sheet != null
+                ? sheet.flat(tw.exilecore.item.unique.VaalKeys.GEM_CORRUPTED_LIFE_COST_PERCENT, java.util.Set.of()) : 0;
+        if (corruptedLife > 0) {
+            extra = new ArrayList<>(extra);
+            extra.add(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, corruptedLife, "已腐化寶石"));
+        }
+        final List<tw.exilecore.stats.Modifier> gemLevels = new ArrayList<>();
+        if (gem.levels() > 0) {
+            gemLevels.add(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"));
+        }
+        gemLevels.addAll(corruptedLevels(entry.corrupted(), sheet));
+        final StatSheet gemSheet = !gemLevels.isEmpty() && sheet != null ? sheet.overlay(gemLevels) : sheet;
         // 2026-10-23：品質放進去一起算（光環、戰吼、詛咒的品質是加效果倍率，算完才補上就沒用了）
         final SkillBuild built = SkillBuild.of(config, definition, entry.level(), state.level(), false, supports, state.weaponTags(), gemSheet,
                 resonantOf(entry), extra); // 2026-10-18：共鳴的專屬輔助不佔名額
@@ -5550,6 +5601,24 @@ public final class SkillService {
     /** 2026-10-26 照 PoE2 天賦樹：「所有技能的品質 +x%」（加在每顆技能寶石自己的品質上）。 */
     static int bonusQuality(final StatSheet sheet) {
         return sheet == null ? 0 : (int) Math.max(0, Math.round(sheet.flat(tw.exilecore.stats.TreeEffectKeys.SKILL_QUALITY, java.util.Set.of())));
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：「+x 全部已腐化（法術）技能寶石等級」（{@code gem.corrupted_level}）——已腐化的寶石才吃，
+     * 換成同樣標籤的 +x 技能等級（[spell] 只算法術）。這次之前沒有。純函式（測試用）。
+     */
+    static List<tw.exilecore.stats.Modifier> corruptedLevels(final boolean corrupted, final StatSheet sheet) {
+        if (!corrupted || sheet == null) {
+            return List.of();
+        }
+        final List<tw.exilecore.stats.Modifier> out = new ArrayList<>();
+        for (final tw.exilecore.stats.Modifier modifier : sheet.modifiersOf(tw.exilecore.item.unique.VaalKeys.GEM_CORRUPTED_LEVEL)) {
+            if (modifier.type() == tw.exilecore.stats.ModType.FLAT && modifier.value() != 0) {
+                out.add(new tw.exilecore.stats.Modifier(StatKeys.SKILL_LEVEL, tw.exilecore.stats.ModType.FLAT, modifier.value(),
+                        modifier.tags(), "已腐化寶石"));
+            }
+        }
+        return out;
     }
 
     /** 2026-10-29：昇華「技能寶石品質」（嵌晶：所有技能品質 +2%，配兩個 +4%）。 */

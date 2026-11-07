@@ -67,6 +67,8 @@ final class AuraService implements Listener {
         int hadCompanion;
         /** 2026-10-27 照 PoE2 天賦樹（召喚物復活時回復生命）：死掉、還沒補回來的隻數。 */
         int toRevive;
+        /** 2026-11-07（希特克拉多的假說「復活一個常駐召喚物」）：只復活一隻——原本該等到哪個 tick（−1＝沒有）。 */
+        long reviveOneReady = -1;
         /** 照隻數算精魂的召喚（2026-10）：現在的精魂養得起幾隻（其他的是不限）。 */
         int minionCap = Integer.MAX_VALUE;
 
@@ -583,7 +585,8 @@ final class AuraService implements Listener {
             return MinionAbilities.GLOBAL_RESUMMON_TICKS;
         }
         return skillId.startsWith("skeletal_") || skillId.startsWith("summon_bone_") || skillId.equals("summon_skeletons") || MinionAbilities.SPECTRE.equals(skillId)
-                || MinionAbilities.BEAST.equals(skillId) ? SKELETON_RESPAWN : COMPANION_RESPAWN;
+                || MinionAbilities.BEAST.equals(skillId)
+                || SoulVessel.ID.equals(skillId) ? SKELETON_RESPAWN : COMPANION_RESPAWN; // 2026-11-07 照 PoE2 Spirit Vessel（is_resummoning_minion）：12 秒
     }
 
     /**
@@ -693,6 +696,31 @@ final class AuraService implements Listener {
         return true;
     }
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（希特克拉多的假說：祭品的持續時間結束時，你的一個常駐召喚物復活）：
+     * 被打死、等著復活的常駐召喚物裡隨機挑一種，馬上復活其中一隻（同一種死了好幾隻的，其他照原本的時間）。回傳有沒有復活。
+     */
+    boolean reviveOne(final UUID player, final long now, final java.util.random.RandomGenerator random) {
+        final Map<String, Active> mine = active.get(player);
+        if (mine == null) {
+            return false;
+        }
+        final List<Active> waiting = new ArrayList<>();
+        for (final Active aura : mine.values()) {
+            if (aura.build.definition().summon() != null && aura.build.definition().summon().interval() <= 0 && aura.toRevive > 0
+                    && aura.companionReady > now && aura.reviveOneReady < 0) {
+                waiting.add(aura);
+            }
+        }
+        if (waiting.isEmpty()) {
+            return false;
+        }
+        final Active chosen = waiting.get(random.nextInt(waiting.size()));
+        chosen.reviveOneReady = chosen.companionReady;
+        chosen.companionReady = 0;
+        return true;
+    }
+
     /** 2026-10-26：附魂術換了附身的怪：舊的收掉之後馬上叫新的（不等 12 秒）。 */
     void resummonNow(final UUID player, final String skillId) {
         final Map<String, Active> mine = active.get(player);
@@ -765,6 +793,7 @@ final class AuraService implements Listener {
                     aura.hadCompanion = alive;
                     if (alive < max && now >= aura.companionReady) {
                         int guard = 0;
+                        final boolean onlyOne = aura.reviveOneReady >= 0; // 2026-11-07：只復活一隻（reviveOne）
                         while (minions.count(player.getUniqueId(), aura.skillId) < max && guard++ < max) {
                             minions.summon(player, aura.build);
                             if (aura.toRevive > 0) {
@@ -774,6 +803,15 @@ final class AuraService implements Listener {
                                     service.treeLeftovers().minionRevived(player, aura.skillId);
                                 }
                             }
+                            if (onlyOne) {
+                                break;
+                            }
+                        }
+                        if (onlyOne) {
+                            if (minions.count(player.getUniqueId(), aura.skillId) < max) {
+                                aura.companionReady = aura.reviveOneReady; // 其他死掉的照原本的時間回來
+                            }
+                            aura.reviveOneReady = -1;
                         }
                         aura.hadCompanion = minions.count(player.getUniqueId(), aura.skillId);
                     }

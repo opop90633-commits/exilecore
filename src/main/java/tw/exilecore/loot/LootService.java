@@ -105,6 +105,31 @@ public final class LootService {
         return LootFilter.UniqueGroup.of(unique.chase(), unique.sources(), finals, pinnacles);
     }
 
+    /** 2026-11-07 照站長「只記 Boss 專屬與追逐」：這件是追逐級、巔峰 Boss 專屬或終局・極境專屬的傳奇。 */
+    public boolean bossOrChaseUnique(final tw.exilecore.item.ItemData item) {
+        final LootFilter.UniqueGroup group = item == null ? null : uniqueGroup(item);
+        return group == LootFilter.UniqueGroup.CHASE || group == LootFilter.UniqueGroup.PINNACLE || group == LootFilter.UniqueGroup.ENDGAME;
+    }
+
+    /**
+     * 2026-11-07 照站長「過濾的拆解查得到嗎」→「只記 Boss 專屬與追逐」：這種傳奇被掉落過濾換成金幣時寫一筆交易紀錄（kind filter）
+     * 與伺服器記錄（[filter]），/ec trace player 名字、/ec trace 物品編號查得到；其他東西照舊只算數量。
+     */
+    private void logFilteredUnique(final Player player, final tw.exilecore.item.ItemData item, final ItemStack stack) {
+        if (item == null || !bossOrChaseUnique(item) || plugin.economy() == null || plugin.database() == null) {
+            return;
+        }
+        final String name = tw.exilecore.economy.Wallet.describe(stack);
+        final tw.exilecore.economy.TradeLogRepository.Entry entry = new tw.exilecore.economy.TradeLogRepository.Entry(
+                java.util.UUID.randomUUID().toString(), tw.exilecore.economy.TradeLogRepository.FILTER, item.uuid(), name, 1,
+                player.getUniqueId(), player.getName(), null, "掉落過濾");
+        plugin.database().async(connection -> {
+            plugin.economy().tradeLog().insert(connection, List.of(entry));
+            return null;
+        });
+        plugin.getSLF4JLogger().info("[filter] {} 的掉落過濾換掉了 {}（{}）", player.getName(), name, item.uuid());
+    }
+
     /** 同上，照傳奇代號（不是傳奇回傳 null）。 */
     private LootFilter.UniqueGroup uniqueGroup(final tw.exilecore.item.ItemData item) {
         if (item.unique() == null) {
@@ -185,6 +210,9 @@ public final class LootService {
                 goldTotal += converted;
                 filterGold += converted;
                 filtered++;
+                if (drop.isEquipment()) {
+                    logFilteredUnique(killer, drop.item(), stack); // 2026-11-07
+                }
                 continue;
             }
             if (asCurrency != null) {
@@ -353,6 +381,7 @@ public final class LootService {
                     if (filter.hides(candidate, viewer)) {
                         gold += config.goldValue(DropTable.Kind.EQUIPMENT, item.rarity(), 0, averageGold);
                         filtered++;
+                        logFilteredUnique(player, item, stack); // 2026-11-07
                         continue;
                     }
                 }

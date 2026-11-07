@@ -42,6 +42,9 @@ public final class CombatModule implements Module {
     private BukkitTask presenceTask;
     private tw.exilecore.item.unique.UniqueMechanics uniques;
     private BukkitTask uniqueTask;
+    /** 2026-11-07：瓦爾傳奇要記狀態的進攻效果（噬魂者、最近的法術暴擊、暴擊殺死、皮囊偶符）。 */
+    private tw.exilecore.item.unique.VaalOffence vaalOffence;
+    private BukkitTask vaalTask;
     /** 2026-10-27：身上減益的冷卻時間這類放進屬性表（遲滯詛咒）。 */
     private BukkitTask selfDebuffTask;
 
@@ -122,10 +125,21 @@ public final class CombatModule implements Module {
         plugin.getServer().getPluginManager().registerEvents(uniques, plugin);
         uniqueTask = plugin.repeat("unique-mechanics", uniques::tick, tw.exilecore.item.unique.UniqueMechanics.PERIOD,
                 tw.exilecore.item.unique.UniqueMechanics.PERIOD);
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：噬魂者、最近的法術暴擊、暴擊殺死、皮囊偶符（VaalOffence）
+        vaalOffence = new tw.exilecore.item.unique.VaalOffence(plugin);
+        plugin.getServer().getPluginManager().registerEvents(vaalOffence, plugin);
+        plugin.players().addBuffSource(vaalOffence::modifiers); // 噬魂者的靈魂
+        vaalTask = plugin.repeat("vaal-offence", vaalOffence::tick, tw.exilecore.item.unique.VaalOffence.PERIOD,
+                tw.exilecore.item.unique.VaalOffence.PERIOD);
         // 2026-10-27：玩家身上減益的「技能冷卻時間增加」（遲滯詛咒）放進屬性表；這次之前只在擊中時疊上，冷卻完全沒變
         final SelfDebuffs selfDebuffs = new SelfDebuffs(plugin, debuffs);
         plugin.players().addSituationalSource(selfDebuffs::modifiers);
         selfDebuffTask = plugin.repeat("self-debuffs", selfDebuffs::tick, SelfDebuffs.PERIOD, SelfDebuffs.PERIOD);
+    }
+
+    /** 2026-11-07：瓦爾傳奇要記狀態的進攻效果；模組沒啟用時 null。 */
+    public tw.exilecore.item.unique.VaalOffence vaalOffence() {
+        return vaalOffence;
     }
 
     /** 2026-10-26：傳奇的特殊效果；模組沒啟用時 null。 */
@@ -228,6 +242,10 @@ public final class CombatModule implements Module {
         if (uniqueTask != null) {
             uniqueTask.cancel();
             uniqueTask = null;
+        }
+        if (vaalTask != null) {
+            vaalTask.cancel();
+            vaalTask = null;
         }
         if (hitEffectTask != null) {
             hitEffectTask.cancel();

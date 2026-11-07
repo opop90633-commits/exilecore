@@ -227,7 +227,7 @@ public final class PhaseLocks {
         state.lock = lock;
         broadcast(arena, String.format(Locale.ROOT,
                 "<#ffb347>✦ %s 鎖血了（%d 層）：牠照常出招——每躲開一招，你身上就開 %s 秒的破綻（這段時間打牠的傷害 ×%s），"
-                        + "只有破綻裡打的才算，一個破綻最多剝一層；%d 秒內剝完 %d 層才破盾，沒剝完牠回復 %d%% 生命。鎖血時牠免疫控場",
+                        + "只有破綻裡打的才算，一個破綻最多剝一層；%d 秒內剝完 %d 層才破盾，沒剝完牠回復 %d%% 生命。鎖血時凍結、電擊、暈眩照上（加傷害照算），但牠不會被控住", // 2026-11-07 照站長「上狀態不控場」；這次之前「免疫控場」
                 ItemRenderer.escape(arena.bossName()), opening.layers(), trim(opening.window()), trim(opening.openTaken()),
                 Math.round(opening.duration()), opening.layers(), Math.round(opening.heal())));
         boss.getWorld().playSound(boss.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1.2f, 0.6f);
@@ -716,7 +716,7 @@ public final class PhaseLocks {
         final double shield = state.energyShield();
         final double absorbed = Math.min(shield, amount);
         state.setEnergyShield(shield - absorbed);
-        final double rest = amount - absorbed;
+        final double rest = plugin.players().wardLethal(player, state, amount - absorbed); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：承受傷害照符文保護保底（PoE2 Runic Ward）
         state.setLife(state.life() - rest);
         state.setLastDamageTick(now);
         if (plugin.combat() != null && plugin.combat().recap() != null) {

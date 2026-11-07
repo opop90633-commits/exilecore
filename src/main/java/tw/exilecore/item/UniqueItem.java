@@ -95,22 +95,7 @@ public record UniqueItem(String id, String name, String base, List<String> affix
         for (final YamlNode modNode : node.list("mods")) {
             index++;
             final String affixId = AFFIX_PREFIX + id + "." + index;
-            final Map<String, int[]> vars = new LinkedHashMap<>();
-            for (final String key : modNode.keys()) {
-                if (!key.equals("text") && !key.equals("stats") && !key.equals("chips") && !key.equals("value_weights")) { // 2026-11-04：chips 是標籤、value_weights 是 value 每個整數的權重（ItemRepository 讀）
-                    vars.put(key, modNode.range(key));
-                }
-            }
-            final List<AffixMod> mods = new ArrayList<>();
-            for (final YamlNode stat : modNode.list("stats")) {
-                mods.add(AffixMod.parse(stat));
-            }
-            if (mods.isEmpty()) {
-                throw new IllegalArgumentException(modNode.path() + "：傳奇詞綴至少要有一條 stats");
-            }
-            final List<AffixTier> tiers = List.of(new AffixTier(1, 1, 1, vars.isEmpty() ? Map.of("value", new int[] {0, 0}) : vars));
-            affixes.put(affixId, new Affix(affixId, AffixType.SUFFIX, affixId, Set.of(SPAWN_TAG), Set.of(), Set.of(), List.of(),
-                    modNode.requireString("text"), tiers, mods));
+            registerMod(affixId, modNode, affixes);
             affixIds.add(affixId);
         }
         if (affixIds.isEmpty()) {
@@ -159,6 +144,36 @@ public record UniqueItem(String id, String name, String base, List<String> affix
         final int weight = node.integer("weight", rarity == null ? 100 : rarity.dropWeight());
         return new UniqueItem(id, name, base, affixIds, node.strings("flavour"), Math.max(1, node.integer("drop_level", 1)),
                 Math.max(0, weight), sources, version, legacy, !retired && node.bool("chase", false));
+    }
+
+    /** 2026-11-07：瓦爾詞綴（vaal_mods，栽培寶珠換上去的）的代號：unique.傳奇.vaal序號。 */
+    public static String vaalAffixId(final String id, final int index) {
+        return AFFIX_PREFIX + id + ".vaal" + index;
+    }
+
+    /** 2026-11-07：這條是不是瓦爾詞綴（栽培寶珠換上去的）。 */
+    public static boolean isVaalAffix(final String affixId) {
+        return affixId != null && affixId.startsWith(AFFIX_PREFIX) && affixId.substring(affixId.lastIndexOf('.') + 1).startsWith("vaal");
+    }
+
+    /** 一條傳奇詞綴登記成詞綴（2026-11-07 從 parse 拆出來，瓦爾詞綴也用）。 */
+    static void registerMod(final String affixId, final YamlNode modNode, final Map<String, Affix> affixes) {
+        final Map<String, int[]> vars = new LinkedHashMap<>();
+        for (final String key : modNode.keys()) {
+            if (!key.equals("text") && !key.equals("stats") && !key.equals("chips") && !key.equals("value_weights")) { // 2026-11-04：chips 是標籤、value_weights 是 value 每個整數的權重（ItemRepository 讀）
+                vars.put(key, modNode.range(key));
+            }
+        }
+        final List<AffixMod> mods = new ArrayList<>();
+        for (final YamlNode stat : modNode.list("stats")) {
+            mods.add(AffixMod.parse(stat));
+        }
+        if (mods.isEmpty()) {
+            throw new IllegalArgumentException(modNode.path() + "：傳奇詞綴至少要有一條 stats");
+        }
+        final List<AffixTier> tiers = List.of(new AffixTier(1, 1, 1, vars.isEmpty() ? Map.of("value", new int[] {0, 0}) : vars));
+        affixes.put(affixId, new Affix(affixId, AffixType.SUFFIX, affixId, Set.of(SPAWN_TAG), Set.of(), Set.of(), List.of(),
+                modNode.requireString("text"), tiers, mods));
     }
 
     /** 這個來源（final、map_boss、地圖代號）會不會掉這件。 */

@@ -81,7 +81,7 @@ final class MapBosses {
                     instance.setBoss(null);
                     detachSkills(boss);
                 }
-                if (instance.boss() == null && (service.events() == null || !service.events().fogTrial().holdsBoss(instance)) // 2026-11-04 照站長：迷霧回廊的 Boss 等最後一波
+                if (instance.boss() == null && (service.events() == null || !service.events().fogTrial().holdsBoss(instance)) && !Delve.is(instance) // 2026-11-07：星脈深坑沒有 Boss（守衛是每 10 層的怪）；2026-11-04 照站長：迷霧回廊的 Boss 等最後一波
                         && !nearbyPlayers(instance, center, service.config().settings().bossRadius()).isEmpty()) {
                     // 區塊重新載入時舊的 Boss 會跟著回來：先找找看，找不到才生新的
                     final LivingEntity existing = findExisting(instance, center);
@@ -1049,6 +1049,13 @@ final class MapBosses {
                 }
             }
         }
+        // 2026-11-07 照站長「新增一種深坑鑰匙」：一般地圖的 Boss 照機率掉深坑鑰匙（每個有份的人各擲一次；吃物品數量）
+        if (plugin.currencies() != null && instance.special() == null && !instance.map().isFinal() && service.events() != null) {
+            final CurrencyType delveKey = service.events().delve().key();
+            if (delveKey != null && random.nextDouble() < bonus.more(service.events().delve().settings().keyChance())) {
+                drops.add(DropTable.Drop.currency(delveKey));
+            }
+        }
         for (int i = 0; i < mapCount; i++) {
             final ItemData map = MapDrops.roll(config, generator, tier, completed, random, atlas.tierUp());
             if (map != null) {
@@ -1575,7 +1582,8 @@ final class MapBosses {
     /** 終局 Boss（含極境）與昇華試煉的 Boss：特殊招式、機制在畫面中間與聊天室說清楚。 */
     static boolean alerts(final MapInstance instance) {
         return instance.map().isFinal() || instance.map().id().startsWith("trial_") || instance.special() != null && instance.map() != null
-                && (FogTrial.KIND.equals(instance.map().id()) || Ultimatum.BOSS_KIND.equals(instance.map().id()) || Legion.DOMAIN_KIND.equals(instance.map().id())); // 2026-11-04：災厄級也說清楚
+                && (FogTrial.KIND.equals(instance.map().id()) || Ultimatum.BOSS_KIND.equals(instance.map().id()) || Legion.DOMAIN_KIND.equals(instance.map().id())
+                || Delve.BOSS_KIND.equals(instance.map().id())); // 2026-11-04：災厄級也說清楚；2026-11-07：＋深坑首領（晶淵王座）
     }
 
     /** 這個階段才開始用的招式名稱（招式組裡 phase 寫這個階段的）。 */

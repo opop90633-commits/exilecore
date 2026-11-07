@@ -113,6 +113,9 @@ public final class MonsterListener implements Listener {
         return damager instanceof LivingEntity living ? plugin.skills().minions().owner(living) : null;
     }
 
+    /** 2026-11-07：怪物倒下後第幾 tick 移除（原版第 20 tick 冒煙，要比它早）。 */
+    static final long DEATH_REMOVE_TICKS = 18;
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDeath(final EntityDeathEvent event) {
         final LivingEntity entity = event.getEntity();
@@ -121,6 +124,13 @@ public final class MonsterListener implements Listener {
             return;
         }
         final MonsterData data = dataOptional.get();
+        // 2026-11-07 照站長「怪物死掉後那團白色的煙能不能關掉」：原版在倒下第 20 tick 送「冒煙」（實體事件 60）再移除，
+        //   我們在第 18 tick 自己先移除（倒下的動畫照播完，煙就不會出來）。只動我們的怪物；這次之前照原版冒煙
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!entity.isValid() && entity.isDead() && entity.getHealth() <= 0) {
+                entity.remove();
+            }
+        }, DEATH_REMOVE_TICKS);
         // 傳奇的擊殺效果（回復、爆炸、疾速）：在清掉屬性表之前拿怪物的最大生命；召喚出來的小怪也算
         final Player killer = entity.getKiller();
         if (plugin.combat() != null) {

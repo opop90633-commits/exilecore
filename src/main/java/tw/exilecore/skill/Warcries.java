@@ -172,6 +172,11 @@ final class Warcries {
                 if (regenPercent > 0 && plugin.skills() != null && player.isOnline()) {
                     plugin.skills().chargeEffects().offeringRegen(player, regenPercent, (int) ((now - start) / 20));
                 }
+                // 2026-11-07 照站長「瓦爾傳奇照原作」（希特克拉多的假說）：祭品的持續時間結束（不是被打倒）時，你的一個常駐召喚物復活
+                if (now >= end && !broken && player.isOnline() && plugin.skills() != null && plugin.skills().auras() != null
+                        && StatKeys.flag(plugin.players().sheet(player), tw.exilecore.item.unique.VaalKeys.FLAG_OFFERING_EXPIRE_REVIVE)) {
+                    plugin.skills().auras().reviveOne(player.getUniqueId(), now, plugin.random());
+                }
                 return;
             }
             if (powerEvery > 0 && now >= nextPower[0] && plugin.combat() != null && plugin.combat().charges() != null) {

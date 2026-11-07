@@ -242,6 +242,72 @@ fog_trial:
     per_wave: [1, 3]
     weights: { emotion: 40, currency: 25, essence: 10, jewel: 10, map: 10, catalyst: 5 }
 
+# 2026-11-07 照站長「地心礦坑有辦法簡化嗎、新增一種深坑鑰匙、能組隊、排行不重置」：星脈深坑（PoE 的 Delve 簡化版）。
+#   地圖裝置用 1 把深坑鑰匙開（一般地圖 Boss 照 key_chance 掉，每個有份的人各擲一次、吃物品數量）。一層一層往下打：
+#   每層的怪物照一張隨機地圖換；怪物等級每層 +level_per_floor（最多 +max_level_bonus，上限 100 級），生命與傷害每層 +difficulty_per_floor%；
+#   一層總共 monsters.base + per_floor×(層−1) 隻（人多再多）；魔法、稀有的機率在 ramp_floors 層之內從 start 漲到 end；
+#   每 guardian.every 層一隻深坑守衛（傳奇怪，生命再 ×guardian.life）。殺光算過關（2026-11-07 照站長：floor_seconds 秒內沒殺光算失敗、這一場結束，紀錄只記到上一層），場地中間打開裂口，走進去就是下一層。
+#   黑暗（每個人自己一條，0～100；2026-11-07 照站長只有打怪的時候漲，過關後到下一層開打之前暫停）：每秒漲 rise + rise_per_10×(層÷10)（燈芯升級每級少 8%），light_radius 格內殺怪回 light_per_kill
+#   （魔法 ×2、稀有 ×5、傳奇 ×10；聚光升級每級 +15%），過關回 clear_light；80 以上畫面變暗，滿了每秒扣 damage% 的（最大生命＋能量護盾），每 25 層多一倍
+#   （2026-11-07 照站長：生命最多扣到剩 1 點，黑暗不會殺死人，讓人有時間回營地不噴經驗；這次之前扣到 0 會死）。
+#   每過一層每個人各拿 rewards.per_floor 份（第 1 層 → 第 1 + ramp_floors 層，守衛層兩倍）的獎勵與 azurite_drop 個藍晶。
+#   角色記住最深過到第幾層，下次從「最深 − start_gap」開始（深掘升級每級少退 1 層、最少退 1 層）；
+#   帳號最深的一層記在 plugins/ExileCore/delve_ladder.json（排行，清檔不重置）。每個人只能進去一次（死了、離開就出局，已經拿到的照拿）。
+delve:
+  name: 星脈深坑
+  key: delve_key
+  cost: 1
+  azurite: azurite
+  key_chance: 0.15
+  level_bonus: 0          # 起始怪物等級比你打過最高的地圖階級多幾級
+  start_gap: 5
+  floor_seconds: 150
+  monsters: { base: 16, per_floor: 0.6, per_player: 0.5 }
+  spawn: { every: 0.5, group: [3, 5] }
+  difficulty_per_floor: 5
+  level_per_floor: 1
+  max_level_bonus: 20
+  ramp_floors: 50
+  magic: { start: 0.15, end: 0.55 }
+  rare: { start: 0.03, end: 0.18 }
+  guardian: { every: 10, life: 8.0 }
+  darkness: { rise: 1.2, rise_per_10: 0.4, light_per_kill: 1.5, light_radius: 20, clear_light: 25, damage: 5 }
+  rewards:
+    per_floor: [1, 4]
+    weights: { currency: 35, essence: 15, jewel: 15, map: 15, catalyst: 10, rare: 10 }
+  azurite_drop: { base: 2, per_10: 1, guardian: 10 }
+  upgrades: { max: 5, costs: [20, 40, 80, 150, 250] }
+  # 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS，把暮色瓣落、遺忘看守都放進這隻裡面」：
+  #   boss_key：深坑守衛給每個有份的人各擲一次 chance%（不吃物品數量）掉 1 把 id（currencies.yml）；
+  #   boss：cost 把在地圖裝置（或深坑按鈕右鍵的選單）開 name——只有一隻災厄級的首領（maps.yml 的 event_bosses.delve_boss）。
+  boss_key: { id: delve_boss_key, chance: 20 }
+  boss: { name: 晶淵王座, cost: 1 }
+  # 2026-11-07 照站長「星脈深坑裡的怪物要會掉 PoE2 Fate of the Vaal 的通貨（不用獻祭法衣），掉落率照原作的稀有度」：
+  #   每隻怪照稀有度擲 chance（%；第 N 層再乘 1 + (N−1)／per_floor，吃物品數量），中了照 weights 挑一種（currencies.yml 的代號）。
+  #   原作沒公開掉落權重：照原作的行情與成交量估（灌注器最常見，雙蝕石最少；遠古魂核不會掉，只能用擾核石變）。
+  #   深坑守衛擲 guardian_rolls 次（機率照 unique），再擲 guardian_unique% 掉一件守衛專屬傳奇（uniques.yml 的 sources 有 delve_guardian）。
+  #   base：深坑小怪專屬的基底（祭紋華袍）。
+  vaal_drops:
+    chance: { normal: 0.6, magic: 1.5, rare: 6, unique: 100 }
+    per_floor: 50
+    guardian_rolls: 3
+    guardian_unique: 5     # 2026-11-07 照站長「機率調到 5%」；同日稍早 1%（「阿茲里掉的 3 件傳奇改由守衛掉」），再之前 15
+    # 2026-11-07 照站長「祭紋華袍改成會掉落，只在深坑小怪掉、不能賭博」：深坑守衛以外的怪每隻擲 chance%（吃物品數量），
+    #   魔法或稀有、未鑑定，物品等級照怪物等級（要到基底的掉落等級 65）。
+    base: { id: body_str_dex_int_01, chance: 0.2 }
+    weights:
+      vaal_infuser_armour: 100      # 蝕鎧灌注器
+      vaal_infuser_weapon: 100      # 蝕鋒灌注器
+      vaal_infuser_caster: 60       # 蝕杖灌注器
+      vaal_siphoner: 50             # 蝕吸器
+      vaal_infuser_jewellery: 40    # 蝕環灌注器
+      core_destabiliser: 35         # 擾核石
+      extraction_orb: 35            # 剝符石
+      ancient_infuser: 30           # 古蝕灌注器
+      vaal_cultivation_orb: 30      # 蝕培石
+      crystal_corruption: 15        # 晶蝕石
+      architect_orb: 8              # 雙蝕石
+
 # 2026-11-04 照站長「先做絕境」：絕境（照 PoE 的 Ultimatum）。地圖裡照機率放一座審判之壇（佔一個房間當場地），右鍵開始：
 #   每回合先從三個懲罰挑一個（挑過的整場都疊著），回合種類照 types 抽：kill 殲滅（seconds 秒內殺 base + per_round×(回合−1) 隻，人多再多）、
 #   survive 生存（撐 base + per_round×(回合−1) 秒）、circle 守圈（站在光圈裡累積 base + per_round×(回合−1) 秒，圈每 move_seconds 秒換位置，時限兩倍）。

@@ -41,6 +41,7 @@ public final class SkillLimits {
             // 各自的上限
             "sky_rend_arrow", "thorn_shaft", "miasma_bud_rain", "ground_tremor", "explosive_spear", "thunderfall_spear", "hurricane_spear",
             "thunder_current_zone", "cinder_sprout", "light_bend_mirror", "rotting_corpse_blast",
+            "midnight_zenith", // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：午夜天頂的冰晶（上限 10 顆，IceCrystals.zenithRoom）
             // 祭品（各一根骨柱）、印記（各標記一個目標）
             "bloodthirst_rite", "bone_rite", "soulfire_rite",
             "prey_kill_mark", "thunder_lure_seal", "frostbind_seal", "blood_scent_seal");

@@ -406,6 +406,7 @@ public final class UniqueMechanics implements Listener {
             witherWhileIgnited(player, sheet, now);
             lifeLoss(player, state, sheet, now);
             manaLoss(player, state, sheet);
+            esLoss(player, state, sheet);
             devour(player, state, sheet, now);
         }
         triggerReady.values().removeIf(until -> until < now);
@@ -556,6 +557,19 @@ public final class UniqueMechanics implements Listener {
             return;
         }
         state.setMana(Math.max(0, state.mana() - state.maxMana() * percent / 100.0 * PERIOD / 20.0));
+        plugin.players().display(player, state);
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（魂縛長帶 es.loss_percent）：每秒失去 x% 最大能量護盾（每半秒扣一次，最少到 0）；
+     * 不算受到傷害，不打斷回充。這次之前沒有。
+     */
+    private void esLoss(final Player player, final PlayerState state, final StatSheet sheet) {
+        final double percent = sheet.flat(VaalKeys.ES_LOSS_PERCENT, Set.of());
+        if (percent <= 0 || state.energyShield() <= 0) {
+            return;
+        }
+        state.setEnergyShield(Math.max(0, state.energyShield() - state.maxEnergyShield() * percent / 100.0 * PERIOD / 20.0));
         plugin.players().display(player, state);
     }
 

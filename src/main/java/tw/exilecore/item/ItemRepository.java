@@ -57,6 +57,8 @@ public final class ItemRepository {
     private final Map<String, Integer> uniqueRuneSockets = new java.util.HashMap<>();
     /** 2026-11-04：掉出來就是已腐化的傳奇（uniques.yml 的 corrupted: true；PoE2 的妄想症、嗓音、信仰稜鏡、朝氣之靈）。 */
     private final java.util.Set<String> uniqueCorrupted = new java.util.HashSet<>();
+    /** 2026-11-07 照 PoE2 的瓦爾栽培寶珠：傳奇 → 瓦爾詞綴（uniques.yml 的 vaal_mods）的代號。 */
+    private final Map<String, List<String>> uniqueVaalMods = new java.util.HashMap<>();
     /** 2026-11-04 照站長「嗓音 2 孔 89%、3 孔 10%、4 孔 1%」：傳奇詞綴 value 從小到大每個整數的權重（uniques.yml mods 的 value_weights）。 */
     private final Map<String, int[]> uniqueValueWeights = new java.util.HashMap<>();
     /** 傳奇的基底數值照哪一個基底（uniques.yml 的 stat_base，2026-10：基底合併後傳奇保留原本那一階的數值）。 */
@@ -135,6 +137,7 @@ public final class ItemRepository {
         uniqueVeiled.clear();
         uniqueRuneSockets.clear();
         uniqueCorrupted.clear();
+        uniqueVaalMods.clear();
         uniqueValueWeights.clear();
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
@@ -243,6 +246,18 @@ public final class ItemRepository {
                 // 2026-10：傳奇自己的符文孔數（rune_sockets，蓋過基底的）與符文效果增加（rune_effect，%）
                 if (root.node(id).bool("corrupted", false)) {
                     uniqueCorrupted.add(id); // 2026-11-04
+                }
+                // 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：vaal_mods 寫法跟 mods 一樣，代號 unique.傳奇.vaal序號
+                final List<String> vaal = new java.util.ArrayList<>();
+                int vaalIndex = 0;
+                for (final YamlNode vaalNode : root.node(id).list("vaal_mods")) {
+                    vaalIndex++;
+                    final String affixId = UniqueItem.vaalAffixId(id, vaalIndex);
+                    UniqueItem.registerMod(affixId, vaalNode, affixes);
+                    vaal.add(affixId);
+                }
+                if (!vaal.isEmpty()) {
+                    uniqueVaalMods.put(id, List.copyOf(vaal));
                 }
                 int weightIndex = 0;
                 for (final YamlNode weightNode : root.node(id).list("mods")) {
@@ -435,7 +450,8 @@ public final class ItemRepository {
                 throw new IllegalArgumentException(where + "：不認得的武器本身屬性 " + mod.stat() + "（只有 "
                         + String.join("、", new java.util.TreeSet<>(LocalMods.KNOWN)) + "）");
             }
-            final tw.exilecore.stats.ModType expected = LocalMods.CRIT_BASE.equals(mod.stat()) ? tw.exilecore.stats.ModType.FLAT : tw.exilecore.stats.ModType.INCREASED;
+            // 2026-11-07：爆心巨錘的 local.no_crit_bonus、local.crit_override 也是 FLAT（LocalMods.flatOnly）
+            final tw.exilecore.stats.ModType expected = LocalMods.flatOnly(mod.stat()) ? tw.exilecore.stats.ModType.FLAT : tw.exilecore.stats.ModType.INCREASED;
             if (mod.type() != expected) {
                 throw new IllegalArgumentException(where + "：武器本身的屬性 " + mod.stat() + " 只能用 " + expected + "，卻是 " + mod.type());
             }
@@ -925,6 +941,11 @@ public final class ItemRepository {
     }
 
     /** 2026-11-04：這件傳奇掉出來是不是已腐化（uniques.yml 的 corrupted）。 */
+    /** 2026-11-07：這件傳奇的瓦爾詞綴（沒有回傳空的）；有的才是「瓦爾傳奇」（栽培寶珠能換詞綴）。 */
+    public List<String> vaalMods(final String id) {
+        return id == null ? List.of() : uniqueVaalMods.getOrDefault(id, List.of());
+    }
+
     public boolean uniqueCorrupted(final String id) {
         return id != null && uniqueCorrupted.contains(id);
     }

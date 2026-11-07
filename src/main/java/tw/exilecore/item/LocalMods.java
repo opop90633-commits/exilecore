@@ -44,8 +44,21 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
 
     private static final String ATTACK_TAG = "attack";
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2 Quecholli）：FLAT 1：用這把武器的擊中沒有暴擊傷害加成。
+     * ItemStats 換成 {@link StatKeys#WEAPON_NO_CRIT_BONUS}（跟著 weapon.* 走，雙持照出手那一把）；這次之前寄在 UniqueStats.LOCAL_ITEM、沒人讀。
+     */
+    public static final String NO_CRIT_BONUS = "local.no_crit_bonus";
+    /** 2026-11-07（同上，「這把武器的暴擊率是 100%」）：FLAT x：武器面板的暴擊率改成 x%，用這把武器的攻擊暴擊率固定 x%（ItemStats 換成 {@link StatKeys#WEAPON_CRIT_OVERRIDE}）。 */
+    public static final String CRIT_OVERRIDE = "local.crit_override";
+
     /** 認得的本地屬性（資料檢查用）。 */
-    public static final Set<String> KNOWN = Set.of(PHYSICAL, ATTACK_SPEED, CRIT, CRIT_BASE, REQUIREMENTS);
+    public static final Set<String> KNOWN = Set.of(PHYSICAL, ATTACK_SPEED, CRIT, CRIT_BASE, REQUIREMENTS, NO_CRIT_BONUS, CRIT_OVERRIDE);
+
+    /** 2026-11-07：只能寫 FLAT 的武器本地屬性（其他的是 INCREASED）。 */
+    public static boolean flatOnly(final String stat) {
+        return CRIT_BASE.equals(stat) || NO_CRIT_BONUS.equals(stat) || CRIT_OVERRIDE.equals(stat);
+    }
 
     public static final LocalMods NONE = new LocalMods(0, 0, 0, Map.of());
 

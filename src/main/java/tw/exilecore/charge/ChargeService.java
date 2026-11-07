@@ -262,6 +262,7 @@ public final class ChargeService implements Listener {
         if (bag.isEmpty()) {
             own.remove(chargeId);
         }
+        lost(player.getUniqueId(), chargeId, plugin.getServer().getCurrentTick()); // 2026-11-07：失去銳星（赤焰導管的每秒一顆）
         if (tw.exilecore.stats.Recently.EVENTS.contains(chargeId)) {
             plugin.players().get(player).markRecent(chargeId, plugin.getServer().getCurrentTick()); // 「最近消耗過銳星／怒星／磐星」
         }
@@ -375,6 +376,7 @@ public final class ChargeService implements Listener {
         if (grew && bag.count() >= max && tw.exilecore.stats.StatKeys.flag(sheet, LOSE_AT_MAX + type.id())) {
             // 2026-10-24（赤焰導管）：滿了就全部失去，並讓自己感電
             bag.clear();
+            lost(player.getUniqueId(), type.id(), plugin.getServer().getCurrentTick());
             if (plugin.ailments() != null) {
                 plugin.ailments().groundAilment(player, tw.exilecore.ailment.AilmentType.SHOCK, SELF_SHOCK, SELF_SHOCK_SECONDS);
             }
@@ -597,6 +599,51 @@ public final class ChargeService implements Listener {
         }
     }
 
+    /** 2026-11-07：玩家 → 最後一次失去銳星的 tick（消耗、過期、上限變小、滿了全部失去）。 */
+    private final Map<UUID, Long> powerLostAt = new HashMap<>();
+    /** 2026-11-07：玩家 → 下一次「每秒一顆銳星」的 tick。 */
+    private final Map<UUID, Long> powerEveryNext = new HashMap<>();
+
+    private void lost(final UUID player, final String chargeId, final long now) {
+        if ("power".equals(chargeId)) {
+            powerLostAt.put(player, now);
+        }
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（PoE2「Gain a Power Charge every Second if you haven't lost Power Charges Recently」，
+     * {@code charge.power_every_second}＝間隔秒數）：最近 4 秒沒有失去過銳星（消耗、過期、滿了全部失去都算）就每 x 秒獲得一顆
+     * （照一般的獲得：吃「多一顆」的機率）。這次之前沒有。
+     */
+    private void powerEverySecond(final long now) {
+        final ChargeType power = config.type("power");
+        for (final Player player : plugin.getServer().getOnlinePlayers()) {
+            final double seconds = power != null && !player.isDead() && plugin.players().get(player).hasCharacter()
+                    ? plugin.players().sheet(player).flat(tw.exilecore.item.unique.VaalKeys.CHARGE_POWER_EVERY_SECOND, java.util.Set.of()) : 0;
+            if (seconds <= 0) {
+                powerEveryNext.remove(player.getUniqueId());
+                continue;
+            }
+            final Long next = powerEveryNext.get(player.getUniqueId());
+            if (next != null && now < next) {
+                continue;
+            }
+            powerEveryNext.put(player.getUniqueId(), now + Math.max(1, Math.round(seconds * 20)));
+            if (next == null || !powerReady(powerLostAt.get(player.getUniqueId()), now)) {
+                continue; // 剛開始戴（下一次才給）、最近失去過
+            }
+            final StatSheet sheet = plugin.players().sheet(player);
+            if (gainRolled(player, power, sheet, 0, 0)) {
+                plugin.players().markDirty(player);
+            }
+        }
+    }
+
+    /** 2026-11-07：最近（4 秒）沒有失去過銳星（lostAt 是 null = 沒失去過）。純函式（測試用）。 */
+    static boolean powerReady(final Long lostAt, final long now) {
+        return lostAt == null || now - lostAt > StatKeys.RECENTLY_TICKS;
+    }
+
     /** 這個玩家這種球最多幾顆（見 {@link ChargeType#maxFor}）。 */
     public static int maxOf(final ChargeType type, final StatSheet sheet) {
         return type.maxFor(sheet);
@@ -652,6 +699,7 @@ public final class ChargeService implements Listener {
     public void tick() {
         final long now = plugin.getServer().getCurrentTick();
         periodic(now); // 2026-10：定期給戰星（charge.periodic）
+        powerEverySecond(now); // 2026-11-07 照站長「瓦爾傳奇照原作」：赤焰導管的瓦爾詞綴
         regulation(now); // 2026-10-24：馭星訣（定期消耗戰星）
         final List<UUID> gone = new ArrayList<>();
         for (final Map.Entry<UUID, Map<String, ChargeBag>> owner : bags.entrySet()) {
@@ -664,9 +712,13 @@ public final class ChargeService implements Listener {
             boolean changed = false;
             for (final Map.Entry<String, ChargeBag> entry : owner.getValue().entrySet()) {
                 final ChargeType type = config.type(entry.getKey());
-                changed |= entry.getValue().expire(now) > 0;
+                int dropped = entry.getValue().expire(now);
                 if (type != null) {
-                    changed |= entry.getValue().trim(maxOf(type, sheet)) > 0;
+                    dropped += entry.getValue().trim(maxOf(type, sheet));
+                }
+                if (dropped > 0) {
+                    changed = true;
+                    lost(owner.getKey(), entry.getKey(), now); // 2026-11-07：過期、上限變小也算失去
                 }
             }
             owner.getValue().values().removeIf(ChargeBag::isEmpty);
@@ -769,6 +821,8 @@ public final class ChargeService implements Listener {
         bags.remove(event.getPlayer().getUniqueId());
         eventReady.remove(event.getPlayer().getUniqueId());
         periodicNext.remove(event.getPlayer().getUniqueId());
+        powerLostAt.remove(event.getPlayer().getUniqueId());
+        powerEveryNext.remove(event.getPlayer().getUniqueId());
         regulationNext.remove(event.getPlayer().getUniqueId());
         rageReady.remove(event.getPlayer().getUniqueId());
     }

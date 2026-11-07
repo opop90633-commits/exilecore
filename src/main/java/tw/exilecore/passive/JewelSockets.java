@@ -357,6 +357,8 @@ public final class JewelSockets {
         //   這次之前 uniqueSeen 一個布林：天賦樹上只有第一顆傳奇珠寶生效，其他種類的傳奇珠寶也被當成第二顆
         final java.util.Set<String> uniquesSeen = new java.util.HashSet<>();
         final double corruptedMagic = corruptedMagicEffect(repository, jewels, passives, tree); // 2026-11-04（朝氣之靈）
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（蝕光之心的瓦爾詞綴）：嵌著已腐化稀有珠寶的珠寶孔效果增加 x%
+        final double corruptedRare = corruptedJewelEffect(repository, jewels, passives, tree, tw.exilecore.item.unique.VaalKeys.JEWEL_CORRUPTED_RARE_EFFECT);
         // 2026-10-26：永恆珠寶征服的節點（半徑珠寶的「範圍內天賦效果增加」放大的是征服後的效果）
         final Map<String, PassiveNode> conquered = TimelessJewels.conquered(tree, TimelessJewels.active(repository, jewels, passives, tree), passives);
         for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
@@ -377,9 +379,11 @@ public final class JewelSockets {
                 continue; // 以前放進去的同一種第二顆傳奇珠寶不算
             }
             List<Modifier> mods = tw.exilecore.item.ItemStats.modifiers(repository, data);
-            if (corruptedMagic != 0 && data.rarity() == tw.exilecore.item.Rarity.MAGIC && data.corrupted()) {
+            final double corruptedScale = !data.corrupted() ? 0 : data.rarity() == tw.exilecore.item.Rarity.MAGIC ? corruptedMagic
+                    : data.rarity() == tw.exilecore.item.Rarity.RARE ? corruptedRare : 0; // 2026-11-07：＋已腐化稀有珠寶（蝕光之心的瓦爾詞綴）
+            if (corruptedScale != 0) {
                 // 2026-11-04（朝氣之靈，PoE2）：嵌著已腐化魔法珠寶的珠寶孔效果增加 x%（那顆珠寶的修飾器整條乘）
-                final double scale = Math.max(0, 1 + corruptedMagic);
+                final double scale = Math.max(0, 1 + corruptedScale);
                 final List<Modifier> scaled = new ArrayList<>(mods.size());
                 for (final Modifier mod : mods) {
                     scaled.add(mod.stat().startsWith("flag.") ? mod : new Modifier(mod.stat(), mod.type(), mod.value() * scale, mod.tags(), mod.source()));
@@ -387,6 +391,7 @@ public final class JewelSockets {
                 mods = scaled;
             }
             mods = withAllocatedNotables(data, mods, passives); // 2026-11-04（妄想症）
+            mods = withAllocatedKeystones(data, mods, passives, tree); // 2026-11-07（熔肉之晶）
             final ItemBase base = repository.base(data.base());
             if (base != null && base.isRadiusJewel()) {
                 if (nonUniqueRadiusScale != 1.0 && data.rarity() != tw.exilecore.item.Rarity.UNIQUE) {
@@ -407,6 +412,15 @@ public final class JewelSockets {
      */
     static double corruptedMagicEffect(final tw.exilecore.item.ItemRepository repository, final Map<String, tw.exilecore.item.ItemData> jewels,
                                        final java.util.Set<String> passives, final PassiveTree tree) {
+        return corruptedJewelEffect(repository, jewels, passives, tree, tw.exilecore.item.unique.UniqueStats.JEWEL_CORRUPTED_MAGIC_EFFECT);
+    }
+
+    /**
+     * 2026-11-07：同上，加總的屬性鍵當參數（照站長「瓦爾傳奇照原作」：蝕光之心的瓦爾詞綴「嵌著已腐化稀有珠寶的珠寶孔效果增加 x%」，
+     * {@link tw.exilecore.item.unique.VaalKeys#JEWEL_CORRUPTED_RARE_EFFECT}）。純函式。
+     */
+    static double corruptedJewelEffect(final tw.exilecore.item.ItemRepository repository, final Map<String, tw.exilecore.item.ItemData> jewels,
+                                       final java.util.Set<String> passives, final PassiveTree tree, final String stat) {
         double total = 0;
         final java.util.Set<String> seen = new java.util.HashSet<>();
         for (final Map.Entry<String, tw.exilecore.item.ItemData> entry : jewels.entrySet()) {
@@ -417,7 +431,7 @@ public final class JewelSockets {
                 continue;
             }
             for (final Modifier mod : tw.exilecore.item.ItemStats.modifiers(repository, data)) {
-                if (tw.exilecore.item.unique.UniqueStats.JEWEL_CORRUPTED_MAGIC_EFFECT.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
+                if (stat.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.INCREASED) {
                     total += mod.value();
                 }
             }
@@ -455,6 +469,31 @@ public final class JewelSockets {
             }
             for (final Modifier mod : notable.modifiers()) {
                 out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "狂念之晶：" + notable.name()));
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2 Flesh Crucible「Random 1 Keystone Passive Skill [1,33]」）：這顆珠寶的
+     * {@link tw.exilecore.item.unique.VaalKeys#JEWEL_ALLOCATE_KEYSTONES}（原本那條）、{@link tw.exilecore.item.unique.VaalKeys#JEWEL_RANDOM_KEYSTONE}
+     * （瓦爾栽培的那條）抽到的基石（{@link tw.exilecore.item.UniquePicks#keystonePicks}，照這顆的 UUID；瓦爾那條一定跟原本那條不同）
+     * 當作配置了：給它們的修飾器（天賦樹上已經配了的不重複給）。基石沒有職業變體，照樹上的效果。
+     */
+    static List<Modifier> withAllocatedKeystones(final tw.exilecore.item.ItemData data, final List<Modifier> mods, final java.util.Set<String> passives,
+                                                 final PassiveTree tree) {
+        final List<String> picked = tree == null ? List.of() : tw.exilecore.item.UniquePicks.keystonePicks(data, mods);
+        if (picked.isEmpty()) {
+            return mods;
+        }
+        final List<Modifier> out = new ArrayList<>(mods);
+        for (final String id : picked) {
+            final PassiveNode keystone = tree.node(id);
+            if (keystone == null || keystone.type() != PassiveNode.Type.KEYSTONE || passives.contains(id)) {
+                continue;
+            }
+            for (final Modifier mod : keystone.modifiers()) {
+                out.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "熔肉之晶：" + keystone.name()));
             }
         }
         return out;

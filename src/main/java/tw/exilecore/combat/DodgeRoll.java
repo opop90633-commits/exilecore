@@ -35,6 +35,13 @@ public final class DodgeRoll implements Listener {
     private static final double SPEED = 1.15;
     /** 2026-10-26：一次翻滾大約幾格（「翻滾距離 +x 格」換算成倍率用）。 */
     public static final double BASE_METRES = 3.5;
+    /** 2026-11-07（希特克拉多的假說）：翻滾犧牲生命換的守護持續幾 tick（PoE2 守護一般 4 秒）。 */
+    static final long SACRIFICE_GUARD_TICKS = 80;
+
+    /** 2026-11-07（希特克拉多的假說）：翻滾要犧牲多少生命——最大生命的 percent%，最多扣到剩 1 點。 */
+    public static double sacrificed(final double life, final double maxLife, final double percent) {
+        return Math.max(0, Math.min(maxLife * Math.max(0, percent) / 100.0, life - 1));
+    }
 
     private final ExileCore plugin;
     private final Map<UUID, Long> rolledAt = new HashMap<>();
@@ -149,6 +156,17 @@ public final class DodgeRoll implements Listener {
         final double heavy = rollSheet.flat(tw.exilecore.item.unique.UniqueStats.OVERENCUMBER_ON_DODGE, java.util.Set.of());
         if (heavy > 0 && plugin.ailments() != null) {
             plugin.ailments().overencumber(player, heavy);
+        }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（希特克拉多的假說）：閃避翻滾時犧牲 x% 最大生命（不會因此死掉，最少留 1），獲得等量的守護（4 秒）
+        final double sacrifice = rollSheet.flat(tw.exilecore.item.unique.VaalKeys.GUARD_ON_DODGE_SACRIFICE, java.util.Set.of());
+        if (sacrifice > 0) {
+            final tw.exilecore.character.PlayerState rollState = plugin.players().get(player);
+            final double paid = sacrificed(rollState.life(), rollState.maxLife(), sacrifice);
+            if (paid > 0) {
+                rollState.setLife(rollState.life() - paid);
+                rollState.addGuard(paid, now + SACRIFICE_GUARD_TICKS);
+                plugin.players().display(player, rollState);
+            }
         }
         if (plugin.guide() != null) {
             plugin.guide().milestone(player, tw.exilecore.guide.GuideService.DODGE); // 2026-10-30 新手教學

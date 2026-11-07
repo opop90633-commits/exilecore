@@ -64,6 +64,14 @@ public final class ItemData {
     private Long foresight;
     /** 2026-10-26 照 PoE2 的聖化（Omen of Sanctification＋神聖石）：數值變動過、之後不能再改造。null = 沒有。 */
     private Boolean sanctified;
+    /** 2026-11-07 照 PoE2 的策匠石（Architect's Orb）：雙重腐化過（第二條腐化詞綴）；null = 沒有。 */
+    private Boolean doubleCorrupted;
+    /** 2026-11-07 照 PoE2 的瓦爾虹吸器（Vaal Siphoner）：要殺幾隻才虹吸；null = 沒有用過虹吸器。 */
+    private Integer siphonGoal;
+    /** 2026-11-07：虹吸器已經記了幾隻（戴著的時候殺怪）。 */
+    private Integer siphonKills;
+    /** 2026-11-07 照 PoE2 的瓦爾栽培寶珠：被瓦爾詞綴換掉的原本詞綴代號（補正舊版傳奇時不要補回來）；null = 沒有。 */
+    private List<String> cultivatedOut;
     /** 2026-10-26：固有詞綴擲出（或上次換算）時的範圍（{@link AffixRescale}）；null = 舊物品沒記（不寫進 JSON）。 */
     private Map<String, int[]> implicitRanges;
 
@@ -244,6 +252,50 @@ public final class ItemData {
         this.foresight = seed;
     }
 
+    /** 2026-11-07：策匠石雙重腐化過。 */
+    public boolean doubleCorrupted() {
+        return Boolean.TRUE.equals(doubleCorrupted);
+    }
+
+    public void setDoubleCorrupted(final boolean value) {
+        this.doubleCorrupted = value ? Boolean.TRUE : null;
+    }
+
+    /** 2026-11-07：被栽培寶珠換掉的原本詞綴代號（唯讀；沒有回傳空的）。 */
+    public List<String> cultivatedOut() {
+        return cultivatedOut == null ? List.of() : java.util.Collections.unmodifiableList(cultivatedOut);
+    }
+
+    /** 2026-11-07：記一條被栽培寶珠換掉的原本詞綴。 */
+    public void addCultivatedOut(final String affixId) {
+        if (cultivatedOut == null) {
+            cultivatedOut = new ArrayList<>();
+        }
+        if (!cultivatedOut.contains(affixId)) {
+            cultivatedOut.add(affixId);
+        }
+    }
+
+    /** 2026-11-07：清掉（變成別件傳奇時）。 */
+    public void clearCultivatedOut() {
+        cultivatedOut = null;
+    }
+
+    /** 2026-11-07：瓦爾虹吸器的目標擊殺數（0 = 沒有在虹吸）。 */
+    public int siphonGoal() {
+        return siphonGoal == null ? 0 : siphonGoal;
+    }
+
+    public int siphonKills() {
+        return siphonKills == null ? 0 : siphonKills;
+    }
+
+    /** 2026-11-07：設定虹吸（goal 0 = 拿掉）。 */
+    public void setSiphon(final int goal, final int kills) {
+        this.siphonGoal = goal <= 0 ? null : goal;
+        this.siphonKills = goal <= 0 ? null : Math.max(0, kills);
+    }
+
     /** 2026-10-26：聖化過（不能再改造）。 */
     public boolean sanctified() {
         return Boolean.TRUE.equals(sanctified);
@@ -376,6 +428,11 @@ public final class ItemData {
         return removed;
     }
 
+    /** 2026-11-07：沿用原本的 uuid（栽培寶珠把傳奇換成別件時，還是同一件物品）。 */
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
     /** 換一個新的 uuid（複製物品時用，讓兩件不同）。 */
     public void regenerateUuid() {
         this.uuid = UUID.randomUUID().toString();
@@ -413,6 +470,10 @@ public final class ItemData {
         copy.runeSockets = runeSockets;
         copy.foresight = foresight;
         copy.sanctified = sanctified;
+        copy.doubleCorrupted = doubleCorrupted;
+        copy.siphonGoal = siphonGoal;
+        copy.siphonKills = siphonKills;
+        copy.cultivatedOut = cultivatedOut == null ? null : new ArrayList<>(cultivatedOut);
         copy.implicitRanges = RolledAffix.copyRanges(implicitRanges);
         return copy;
     }
@@ -448,6 +509,10 @@ public final class ItemData {
         runeSockets = from.runeSockets;
         foresight = from.foresight;
         sanctified = from.sanctified;
+        doubleCorrupted = from.doubleCorrupted;
+        siphonGoal = from.siphonGoal;
+        siphonKills = from.siphonKills;
+        cultivatedOut = from.cultivatedOut;
         implicitRanges = from.implicitRanges;
     }
 }

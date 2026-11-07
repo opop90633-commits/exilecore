@@ -36,6 +36,45 @@ public final class UniqueCosts {
         return maxLife * percent / 100.0;
     }
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：技能額外消耗等於魔力消耗 x% 的生命（PoE2「Skills Gain 100% of Mana Cost as Extra Life Cost」，
+     * {@link VaalKeys#SKILL_EXTRA_LIFE_COST_OF_MANA}）：魔力照付；生命那份照 {@link tw.exilecore.stats.CostKeys#manaToLife}
+     * 換成生命消耗效率，再吃「增加／更多技能的生命消耗」。這次之前沒有。
+     *
+     * @param effective 技能的屬性表（含輔助）
+     * @param manaPaid  這次實際付的魔力（已經扣掉改成生命的部分）
+     */
+    public static double extraLifeOfMana(final StatSheet effective, final Set<String> skillTags, final double manaPaid) {
+        if (effective == null || manaPaid <= 0) {
+            return 0;
+        }
+        final double percent = Math.max(0, effective.flat(VaalKeys.SKILL_EXTRA_LIFE_COST_OF_MANA, skillTags));
+        if (percent <= 0) {
+            return 0;
+        }
+        return manaPaid * percent / 100.0 * tw.exilecore.stats.CostKeys.manaToLife(effective, skillTags)
+                * Math.max(0, 1 + effective.increased(tw.exilecore.stats.TreeKeys.LIFE_COST, skillTags))
+                * Math.max(0, effective.more(tw.exilecore.stats.TreeKeys.LIFE_COST, skillTags));
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（開放問題 2）：這個技能自己是不是「消耗生命」（PoE2 的 Spells which cost Life 是每個技能自己看）：
+     * 有魔力消耗、而且血魔法、血祭術、「x% 魔力消耗改成生命消耗」（含已腐化寶石的）、恍惚之矛、獻祭之心（非引導法術）、
+     * 「額外消耗魔力消耗 x% 的生命」任一成立。SkillBuild 照這個替技能加 {@link VaalKeys#TAG_COSTS_LIFE} 標籤。
+     * 這次之前只有整張屬性表一個「法術要花生命」（PlayerStateService 的 spellsCostLife）。純函式（測試用）。
+     */
+    public static boolean costsLife(final StatSheet effective, final Set<String> skillTags, final int manaCost) {
+        if (effective == null || manaCost <= 0) {
+            return false;
+        }
+        return StatKeys.flag(effective, StatKeys.FLAG_BLOOD_MAGIC) || StatKeys.flag(effective, StatKeys.FLAG_SANGUIMANCY)
+                || effective.flat(tw.exilecore.stats.TreeKeys.LIFE_COST_PERCENT, skillTags) > 0
+                || effective.flat(UniqueStats.COST_MANA_TO_LIFE, Set.of()) > 0
+                || effective.flat(VaalKeys.SKILL_EXTRA_LIFE_COST_OF_MANA, skillTags) > 0
+                || skillTags.contains(Tags.SPELL) && skillTags.contains(Tags.NON_CHANNELLING)
+                && effective.flat(UniqueStats.SPELL_EXTRA_LIFE_COST, Set.of()) > 0;
+    }
+
     /** 這次的魔力消耗有多少改扣生命。 */
     public static double lifeShare(final StatSheet sheet, final double cost) {
         final double percent = Math.max(0, Math.min(100, sheet.flat(UniqueStats.COST_MANA_TO_LIFE, Set.of())));

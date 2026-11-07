@@ -6676,3 +6676,48 @@ boots_str_int_14:
   requirements: { level: 80, str: 59, dex: 0, int: 59 }   # 2026-10-26 照 PoE2（Cryptic Leggings；物品等級比這一階低時，照同一類裡物品等級夠的最高那一階的 PoE2 需求）；這次之前 { level: 1, str: 26, dex: 0, int: 26 }
   armour: 134   # 2026-10-26 照 PoE2 原值（Cryptic Leggings）；這次之前 33
   es: 37   # 2026-10-26 照 PoE2 原值（Cryptic Leggings）；這次之前 10
+
+# 2026-11-07 照站長「瓦爾的傳奇補齊」：新的基底（加到 bases/armour.yml，放在 PoE2 分階基底那一段的外面，
+#   tools/gen_poe2_bases.py 重跑才不會被整段換掉）。
+
+# PoE2 Sacrificial Regalia（poe2db：獻祭法衣；Metadata/Items/Armours/BodyArmours/FourBodyStrDexInt2）：力敏智三防胸甲，
+#   原作只有傳奇「Atziri's Splendour」（艾瑟琳的華儀）用（poe2db 這個基底只列這一件傳奇；同類的 Grand Regalia 也只有不敗亡者用）。
+#   2026-11-07 照站長「祭紋華袍改成會掉落，只在深坑小怪掉、不能賭博」：只在星脈深坑的小怪掉（map_events.yml 的 delve.vaal_drops.base），
+#   一般掉落、地圖獎勵、劫盜、商人、賭博都拿不到（heist_only ＋ drop_weight 0，跟裂隙指環一樣的特殊來源基底）；
+#   這次之前傳奇專用（retired：哪裡都不掉，跟素面指環 jring_plain 一樣）；
+#   數值照 poe2db（Armour 273、Evasion 248、Energy Shield 76、需求 65 級 72／72／72；原作的 -3% 移動速度我們的胸甲基底都沒做）。
+#   材質、模型沒有三防的，借力智最高階的 DIAMOND_CHESTPLATE／plate_body。
+body_str_dex_int_01:
+  name: 祭紋華袍
+  fixed: true
+  heist_only: true     # 2026-11-07 照站長：特殊來源的基底（只在星脈深坑小怪掉）；這次之前 retired: true（傳奇專用）
+  drop_weight: 0       # 2026-11-07：劫盜也不掉（heist_only 的基底 drop_weight > 0 才進劫盜的獎勵）
+  family: body_str_dex_int
+  material: DIAMOND_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, int_armour, str_dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 72, dex: 72, int: 72 }   # 2026-11-07 照 PoE2（Sacrificial Regalia，固定不隨物品等級變）
+  armour: 273   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
+  evasion: 248   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
+  es: 76   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
+
+# 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 Primal Markings（poe2db：野性標記；PoB2 Data/Bases/body.lua hidden = true）：
+#   閃避＋能量護盾胸甲，原作只有傳奇「Forgotten Warden」（遺忘看守）用，所以傳奇專用（retired：哪裡都不掉、不出現在基底清單，
+#   跟祭紋華袍原本、素面指環 jring_plain 一樣）。數值照 poe2db／PoB2（Evasion 268、Energy Shield 82、需求 70 級 0／67／67）；
+#   原作的 −3% 基礎移動速度（MovementPenalty 0.03）照我們胸甲基底的做法不做（其他胸甲基底也都沒做）。
+#   材質、模型照其他敏智胸甲（COPPER_CHESTPLATE／wrap_body）。
+body_dex_int_24:
+  name: 野紋纏衣
+  fixed: true
+  retired: true        # 2026-11-07：傳奇專用（原作 hidden）
+  family: body_dex_int
+  material: COPPER_CHESTPLATE
+  model: exilecore:armour/wrap_body
+  slot: CHEST
+  tags: [armour, body, dex_armour, int_armour, dex_int_armour]
+  drop_level: 70
+  requirements: { level: 70, str: 0, dex: 67, int: 67 }   # 2026-11-07 照 PoE2（Primal Markings，固定不隨物品等級變）
+  evasion: 268   # 2026-11-07 照 PoE2 原值（Primal Markings）
+  es: 82   # 2026-11-07 照 PoE2 原值（Primal Markings）

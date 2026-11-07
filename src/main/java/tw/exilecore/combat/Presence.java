@@ -74,6 +74,15 @@ public final class Presence {
         return list;
     }
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（PoE2 Enemies in your Presence have Lightning Resistance equal to yours）：
+     * 把怪物的這種抗性改成 value（回傳要疊上去的 FLAT 修飾器；本來就一樣回傳 null）。純函式（測試用）。
+     */
+    public static Modifier equalResist(final StatSheet monster, final DamageType type, final double value) {
+        final double diff = value - monster.get(type.mitigationStat());
+        return Math.abs(diff) < 1e-9 ? null : Modifier.flat(type.mitigationStat(), diff, "抗性等於你的");
+    }
+
     public void tick() {
         ticks += PERIOD;
         final boolean burnTick = ticks % 20 == 0;
@@ -113,7 +122,11 @@ public final class Presence {
             final double burn = sheet.flat(StatKeys.PRESENCE_BURN, Set.of());
             // 2026-10-28 照 PoE2（神聖烈焰）：存在範圍內的敵人照牠最低的元素抗性抵抗元素傷害
             final boolean lowest = StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.PRESENCE_LOWEST_RESIST);
-            if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0 && !lowest) {
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（多里亞尼的原型）：存在範圍內的敵人閃電抗性等於你的（你的最終閃電抗性，照你的上限）
+            final boolean equalLightning = StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.PRESENCE_LIGHTNING_RESIST_EQUAL);
+            final double ownLightning = equalLightning ? Math.min(sheet.get(DamageType.LIGHTNING.mitigationStat()),
+                    tw.exilecore.stats.DamageCalculator.resistCap(sheet, DamageType.LIGHTNING)) : 0;
+            if (mods.isEmpty() && taken <= 0 && slow <= 0 && burn <= 0 && !lowest && !equalLightning) {
                 continue;
             }
             final double radius = radius(sheet);
@@ -134,6 +147,14 @@ public final class Presence {
                     if (!toLowest.isEmpty()) {
                         targetMods = new ArrayList<>(mods);
                         targetMods.addAll(toLowest);
+                    }
+                }
+                if (equalLightning) {
+                    final var data = plugin.monsters().data(target).orElse(null);
+                    final Modifier equal = data == null ? null : equalResist(plugin.monsters().sheet(target, data), DamageType.LIGHTNING, ownLightning);
+                    if (equal != null) {
+                        targetMods = new ArrayList<>(targetMods);
+                        targetMods.add(equal);
                     }
                 }
                 if (!targetMods.isEmpty() || taken > 0 || slow > 0) {

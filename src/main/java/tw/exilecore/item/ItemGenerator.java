@@ -430,6 +430,212 @@ public final class ItemGenerator {
         return true;
     }
 
+    /**
+     * 2026-11-07 照 PoE2 的策匠石（雙重腐化）：再加一條腐化詞綴，原本那條留著（不會抽到一樣的）。沒有能加的回傳 false。
+     */
+    public boolean addSecondCorruptionEnchant(final ItemData data, final RandomGenerator random) {
+        final ItemBase base = repository.base(data.base());
+        if (base == null) {
+            return false;
+        }
+        final java.util.Set<String> have = new java.util.HashSet<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            if (isCorruptionEnchant(rolled.id())) {
+                have.add(rolled.id()); // 腐化詞綴都是同一個群組（corrupt_enchant），照代號不重複
+            }
+        }
+        final List<Affix> pool = new ArrayList<>();
+        int total = 0;
+        for (final Affix affix : repository.affixes()) {
+            if (isCorruptionEnchant(affix.id()) && corruptionFits(affix, base) && !affix.tiers().isEmpty() && !have.contains(affix.id())) {
+                pool.add(affix);
+                total += Math.max(1, affix.tiers().getFirst().weight());
+            }
+        }
+        if (pool.isEmpty()) {
+            return false;
+        }
+        int pick = random.nextInt(total);
+        Affix chosen = pool.getLast();
+        for (final Affix affix : pool) {
+            pick -= Math.max(1, affix.tiers().getFirst().weight());
+            if (pick < 0) {
+                chosen = affix;
+                break;
+            }
+        }
+        data.affixes().add(new RolledAffix(chosen.id(), chosen.tiers().getFirst().tier(), chosen.tiers().getFirst().roll(random)));
+        return true;
+    }
+
+    /**
+     * 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Vaal Cultivation Orb）：
+     * 已腐化的瓦爾傳奇（uniques.yml 有 vaal_mods）——隨機 1～2 條原本的詞綴換成這件的瓦爾詞綴（不會重複）；
+     * 其他傳奇——變成同種類（{@link #itemClass}）的隨機一件已腐化傳奇（全域掉落的照稀有度加權，追逐級另外擲；不會是同一件），UUID、物品等級、品質留著。
+     * 回傳結果說明（給聊天訊息）。
+     */
+    public String cultivate(final ItemData data, final RandomGenerator random) {
+        final UniqueItem unique = repository.unique(data.unique());
+        final List<String> pool = unique == null ? List.of() : repository.vaalMods(unique.id());
+        if (unique != null && data.corrupted() && !pool.isEmpty()) {
+            final List<RolledAffix> originals = new ArrayList<>();
+            final java.util.Set<String> present = new java.util.HashSet<>();
+            for (final RolledAffix rolled : data.affixes()) {
+                present.add(rolled.id());
+                if (unique.affixIds().contains(rolled.id())) {
+                    originals.add(rolled);
+                }
+            }
+            final List<String> fresh = new ArrayList<>();
+            for (final String id : pool) {
+                if (!present.contains(id) && repository.affix(id) != null) {
+                    fresh.add(id);
+                }
+            }
+            final int count = Math.min(1 + random.nextInt(2), Math.min(originals.size(), fresh.size()));
+            for (int i = 0; i < count; i++) {
+                final RolledAffix out = originals.remove(random.nextInt(originals.size()));
+                final String in = fresh.remove(random.nextInt(fresh.size()));
+                final int at = data.affixes().indexOf(out);
+                data.affixes().set(at, new RolledAffix(in, 1, rollUnique(repository.affix(in), random)));
+                data.addCultivatedOut(out.id());
+            }
+            return count == 0 ? "沒有能換的詞綴" : "換了 " + count + " 條瓦爾詞綴";
+        }
+        final ItemBase base = repository.base(data.base());
+        final String cls = itemClass(base);
+        // 2026-11-07 照站長「Boss 或特殊來源限定的排除，其他的照稀有度加權」（照 PoE1 遠古石的慣例；原作 poe2db 沒寫）：
+        //   只抽全域掉落的（sources 有 map_boss、chance、gamble），照 weight（稀有度）加權，物品等級要到 drop_level；
+        //   追逐級另外擲一次 maps.yml 的 drops.chase_mob_chance（跟小怪掉、僥倖石賭到一樣），中了才從同種類的追逐級裡抽。
+        //   這次之前同種類有來源的全部（含 Boss 限定、追逐級）同機率
+        final List<UniqueItem> candidates = new ArrayList<>();
+        final List<UniqueItem> chase = new ArrayList<>();
+        for (final UniqueItem other : repository.uniques()) {
+            if (unique != null && other.id().equals(unique.id())) {
+                continue;
+            }
+            final ItemBase otherBase = repository.base(other.base());
+            if (otherBase == null || !cls.equals(itemClass(otherBase)) || repository.retiredUnique(other.id()) || other.weight() <= 0
+                    || other.dropLevel() > data.ilvl()) {
+                continue;
+            }
+            if (other.chase()) {
+                chase.add(other);
+            } else if (globalDrop(other)) {
+                candidates.add(other);
+            }
+        }
+        final List<UniqueItem> into = !chase.isEmpty() && random.nextDouble() < chaseChance() ? chase : candidates;
+        if (into.isEmpty()) {
+            data.setCorrupted(true);
+            return "同種類沒有別的傳奇，只有腐化";
+        }
+        final UniqueItem pick = pickWeighted(into, random);
+        final ItemData made = generateUnique(pick, data.ilvl(), random);
+        final String uuid = data.uuid();
+        final int quality = data.quality();
+        final List<String> runes = new ArrayList<>(data.runes());
+        data.assign(made);
+        data.setUuid(uuid);
+        data.setQualityUpTo(quality, Math.max(20, quality));
+        for (final String rune : runes) {
+            data.addRune(rune); // 符文、魂核照留（孔變少的話多的毀掉）
+        }
+        data.trimRunes(Runes.slots(repository, repository.base(data.base()), data));
+        data.clearCultivatedOut();
+        data.setCorrupted(true);
+        return "變成" + pick.name();
+    }
+
+    /** 2026-11-07：全域掉落的傳奇嗎（sources 有 map_boss、chance、gamble；見 uniques.yml 檔頭的「限定掉落／全域掉落」）。 */
+    static boolean globalDrop(final UniqueItem unique) {
+        return unique.droppedBy("map_boss") || unique.droppedBy("chance") || unique.droppedBy("gamble");
+    }
+
+    /** 2026-11-07：照 weight 抽一件（清單不能是空的）。 */
+    private static UniqueItem pickWeighted(final List<UniqueItem> pool, final RandomGenerator random) {
+        long total = 0;
+        for (final UniqueItem each : pool) {
+            total += Math.max(1, each.weight());
+        }
+        long pick = random.nextLong(total);
+        for (final UniqueItem each : pool) {
+            pick -= Math.max(1, each.weight());
+            if (pick < 0) {
+                return each;
+            }
+        }
+        return pool.getLast();
+    }
+
+    /**
+     * 2026-11-07 照 PoE2 的瓦爾虹吸器（Vaal Siphoner）殺夠了：隨機一條詞綴降一階（重擲在那一階；已經最差的照原階重擲），
+     * 其他詞綴每個數值重擲到「現在～那一階上限再多 10%」（只會變好）。破裂、腐化詞綴不動。虹吸拿掉。回傳說明。
+     */
+    public String siphonComplete(final ItemData data, final RandomGenerator random) {
+        final List<RolledAffix> eligible = new ArrayList<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            if (!data.isFractured(rolled) && !isCorruptionEnchant(rolled.id()) && repository.affix(rolled.id()) != null) {
+                eligible.add(rolled);
+            }
+        }
+        data.setSiphon(0, 0);
+        if (eligible.isEmpty()) {
+            return "沒有能動的詞綴";
+        }
+        final RolledAffix drained = eligible.get(random.nextInt(eligible.size()));
+        final Affix drainedAffix = repository.affix(drained.id());
+        final AffixTier lower = drainedAffix.tiers().stream().filter(t -> t.tier() == drained.tier() + 1).findFirst()
+                .orElse(drainedAffix.tiers().stream().filter(t -> t.tier() == drained.tier()).findFirst().orElse(drainedAffix.tiers().getLast()));
+        drained.record(lower.tier(), lower.vars(), drainedAffix.group(), drainedAffix.type().name().toLowerCase(java.util.Locale.ROOT));
+        drained.setVars(lower.roll(random));
+        for (final RolledAffix rolled : eligible) {
+            if (rolled == drained) {
+                continue;
+            }
+            final Affix affix = repository.affix(rolled.id());
+            final AffixTier tier = affix.tiers().stream().filter(t -> t.tier() == rolled.tier()).findFirst().orElse(null);
+            if (tier == null || rolled.vars() == null) {
+                continue;
+            }
+            final java.util.Map<String, Integer> vars = new java.util.LinkedHashMap<>(rolled.vars());
+            for (final java.util.Map.Entry<String, Integer> entry : vars.entrySet()) {
+                final int[] range = tier.vars().get(entry.getKey());
+                if (range == null) {
+                    continue;
+                }
+                final int high = Math.max(range[0], range[1]);
+                final int top = high + (int) Math.round(Math.abs(high) * 0.1);
+                final int now = entry.getValue();
+                if (top > now) {
+                    entry.setValue(now + random.nextInt(top - now + 1));
+                }
+            }
+            rolled.setVars(vars);
+        }
+        return "「" + drainedAffix.render(drained.vars()) + "」降了一階，其他詞綴變強了";
+    }
+
+    /** 2026-11-07：PoE2 的物品種類（Item Class）：基底代號的前綴（tshield／kshield／cshield 都是盾，staff／cstaff 都是長杖…），珠寶都是珠寶。 */
+    public String itemClass(final ItemBase base) {
+        if (base == null) {
+            return "";
+        }
+        if (base.isJewel()) {
+            return "jewel";
+        }
+        final String id = repository.canonicalBase(base.id());
+        final int cut = id.indexOf('_');
+        final String prefix = cut < 0 ? id : id.substring(0, cut);
+        return switch (prefix) {
+            case "tshield", "kshield", "cshield" -> "shield";
+            case "cstaff" -> "staff";
+            case "csceptre" -> "sceptre";
+            case "cwand" -> "wand";
+            default -> prefix;
+        };
+    }
+
     /** 這條是不是蝕變石加的腐化詞綴。 */
     public boolean isCorruptionEnchant(final String affixId) {
         final Affix affix = repository.affix(affixId);

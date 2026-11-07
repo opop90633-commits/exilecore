@@ -328,12 +328,288 @@ public final class GroundDecals {
             }
             show(decal);
         }
+        tickSprites(); // 2026-11-07：晶爆的晶體（主人不在了收掉、新來的人看得到）
     }
 
     public void clear() {
         for (final String id : new ArrayList<>(decals.keySet())) {
             remove(id);
         }
+        clearSprites(); // 2026-11-07
+    }
+
+    // ---- 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：短暫的圖 ----
+    // 怪物詞綴的熔岩爆、死後爆炸的範圍（平貼在地上、外框就是傷害範圍）、噬魂／蝕生／喚靈的靈魂（立著、轉向看的人、往上或往吃魂的那隻飄、
+    // 邊飄邊縮）、晶爆的晶體（立著，跟著那隻怪，死了照引信漲大再收掉）。這次之前這些只有粒子（看不出範圍、靈魂往哪裡去）。
+    // 跟上面的圈一樣：只有套了資源包的人看得到、不存檔（區塊卸載就沒了）、掛 TAG、關服時 clear() 收掉；
+    // 時間到在 sprites()（每 tick）收掉。附近沒有套資源包的人就不生（回傳 false，呼叫的人照舊給每個人放粒子）。
+
+    /** 短暫的圖最多同時幾個（太多就不生，回傳 false：呼叫的人照舊放粒子）。 */
+    static final int MAX_SPRITES = 96;
+    /** 生出來後幾 tick 才開始動（跟生出來同一個 tick 改的變形，客戶端不會補間）。 */
+    public static final int SPRITE_LEAD = 2;
+
+    /** 一段動作：at 這個 tick 開始，duration tick 內移到 to（null 不移）、縮放到 scale 倍（原本的大小 = 1）。 */
+    private record Step(long at, Location to, int duration, double scale) {
+    }
+
+    private static final class Sprite {
+        ItemDisplay display;
+        boolean flat;
+        double size;
+        /** 跟著的實體（晶體）：不在了就收；null = 照 until。 */
+        Entity owner;
+        long until = Long.MAX_VALUE;
+        final java.util.ArrayDeque<Step> steps = new java.util.ArrayDeque<>(2);
+    }
+
+    /** 有 id 的（晶體：跟著主人，主人死了 {@link #release}）。 */
+    private final Map<String, Sprite> anchored = new HashMap<>();
+    /** 時間到就收的。 */
+    private final List<Sprite> timed = new ArrayList<>();
+
+    /** 附近有沒有套資源包的玩家（沒有就不用生實體）。 */
+    private List<Player> packViewers(final Location at) {
+        List<Player> list = null;
+        for (final Player player : at.getWorld().getPlayers()) {
+            if (player.getLocation().distanceSquared(at) <= VIEW * VIEW && marked(player)) {
+                if (list == null) {
+                    list = new ArrayList<>(2);
+                }
+                list.add(player);
+            }
+        }
+        return list == null ? List.of() : list;
+    }
+
+    private boolean full() {
+        return anchored.size() + timed.size() >= MAX_SPRITES;
+    }
+
+    /**
+     * 平貼在地上一下就收的圖（爆炸的範圍）：model 是 exilecore:mark/ 底下的圖名，整張圖 2 × radius 格寬（圖的外框就是範圍的邊），
+     * 從 grow 倍在 3 tick 內長到原本的大小，ticks 後收掉。rgb 著色（有顏色的圖給 0xFFFFFF）。
+     * 回傳有沒有生（附近沒有套資源包的人、同時太多個時是 false）。
+     */
+    public boolean flash(final Location center, final String model, final double radius, final int rgb, final int ticks, final double grow) {
+        if (center.getWorld() == null || full()) {
+            return false;
+        }
+        final List<Player> viewers = packViewers(center);
+        if (viewers.isEmpty()) {
+            return false;
+        }
+        final Location at = new Location(center.getWorld(), center.getX(), groundY(center) + 0.01, center.getZ());
+        final Sprite sprite = new Sprite();
+        sprite.flat = true;
+        sprite.size = radius * 2;
+        sprite.display = spawnSprite(at, "mark/" + model, rgb, true, sprite.size * grow);
+        final long now = now();
+        if (grow != 1) {
+            sprite.steps.add(new Step(now + SPRITE_LEAD, null, 3, 1));
+        }
+        sprite.until = now + Math.max(SPRITE_LEAD + 1, ticks);
+        timed.add(sprite);
+        reveal(sprite.display, viewers);
+        return true;
+    }
+
+    /**
+     * 立著的圖（轉向看的人）沿著 path 飄：從 from 生出來（size 格寬），依序移到 path 的每一點，每段 legTicks[i] tick、
+     * 縮放到 scales[i] 倍；走完收掉。圖名是 exilecore:fx/ 底下的（{@code tw.exilecore.web.MonsterFx#SPRITES}）。
+     * 回傳有沒有生（附近沒有套資源包的人、同時太多個時是 false）。
+     */
+    public boolean drift(final Location from, final String model, final double size, final List<Location> path, final int[] legTicks,
+                         final double[] scales) {
+        if (from.getWorld() == null || full()) {
+            return false;
+        }
+        final List<Player> viewers = packViewers(from);
+        if (viewers.isEmpty()) {
+            return false;
+        }
+        final Sprite sprite = new Sprite();
+        sprite.size = size;
+        sprite.display = spawnSprite(from, "fx/" + model, -1, false, size);
+        long at = now() + SPRITE_LEAD;
+        for (int i = 0; i < path.size(); i++) {
+            final int duration = Math.max(1, Math.min(59, legTicks[i])); // 傳送的補間最多 59 tick
+            sprite.steps.add(new Step(at, path.get(i), duration, scales[i]));
+            at += duration;
+        }
+        sprite.until = at + 1;
+        timed.add(sprite);
+        reveal(sprite.display, viewers);
+        return true;
+    }
+
+    /**
+     * 立著、跟著 owner 的圖（晶爆的晶體）：同一個 id 已經有了就不再生；主人不在了（每秒檢查）就收。
+     * 從 0.3 倍在 4 tick 內長到 size 格寬。回傳現在有沒有這張圖。
+     */
+    public boolean anchor(final String id, final Location at, final String model, final double size, final Entity owner) {
+        final Sprite existing = anchored.get(id);
+        if (existing != null && existing.display != null && existing.display.isValid()) {
+            return true;
+        }
+        anchored.remove(id);
+        if (at.getWorld() == null || full()) {
+            return false;
+        }
+        final List<Player> viewers = packViewers(at);
+        if (viewers.isEmpty()) {
+            return false;
+        }
+        final Sprite sprite = new Sprite();
+        sprite.size = size;
+        sprite.owner = owner;
+        sprite.display = spawnSprite(at, "fx/" + model, -1, false, size * 0.3);
+        sprite.steps.add(new Step(now() + SPRITE_LEAD, null, 4, 1));
+        anchored.put(id, sprite);
+        reveal(sprite.display, viewers);
+        return true;
+    }
+
+    /** 有沒有這張跟著主人的圖。 */
+    public boolean anchored(final String id) {
+        final Sprite sprite = anchored.get(id);
+        return sprite != null && sprite.display != null && sprite.display.isValid();
+    }
+
+    /** 跟著主人的圖不再跟（主人死了）：ticks 內漲到 swell 倍，然後收掉（晶體的引信）。沒有這個 id 不做事。 */
+    public void release(final String id, final int ticks, final double swell) {
+        final Sprite sprite = anchored.remove(id);
+        if (sprite == null || sprite.display == null || !sprite.display.isValid()) {
+            return;
+        }
+        sprite.owner = null;
+        sprite.steps.clear();
+        final long now = now();
+        sprite.steps.add(new Step(now + 1, null, Math.max(1, ticks - 1), swell));
+        sprite.until = now + Math.max(2, ticks);
+        timed.add(sprite);
+    }
+
+    /** 某個前綴開頭的跟著主人的圖全部收掉。 */
+    public void removeAnchored(final String prefix) {
+        for (final Iterator<Map.Entry<String, Sprite>> iterator = anchored.entrySet().iterator(); iterator.hasNext(); ) {
+            final Map.Entry<String, Sprite> entry = iterator.next();
+            if (entry.getKey().startsWith(prefix)) {
+                discard(entry.getValue());
+                iterator.remove();
+            }
+        }
+    }
+
+    /** 現在有幾張短暫的圖（測試、/ops 看用）。 */
+    public int spriteCount() {
+        return anchored.size() + timed.size();
+    }
+
+    /** 每 tick：該動的開始動（客戶端補間）、時間到的收掉。 */
+    public void sprites() {
+        if (anchored.isEmpty() && timed.isEmpty()) {
+            return;
+        }
+        final long now = now();
+        for (final Iterator<Sprite> iterator = timed.iterator(); iterator.hasNext(); ) {
+            final Sprite sprite = iterator.next();
+            if (sprite.display == null || !sprite.display.isValid() || now >= sprite.until) {
+                discard(sprite);
+                iterator.remove();
+                continue;
+            }
+            step(sprite, now);
+        }
+        for (final Sprite sprite : anchored.values()) {
+            if (sprite.display != null && sprite.display.isValid()) {
+                step(sprite, now);
+            }
+        }
+    }
+
+    private static void step(final Sprite sprite, final long now) {
+        while (!sprite.steps.isEmpty() && sprite.steps.peekFirst().at() <= now) {
+            final Step step = sprite.steps.pollFirst();
+            if (step.to() != null && step.to().getWorld() != null && step.to().getWorld().equals(sprite.display.getWorld())) {
+                sprite.display.setTeleportDuration(step.duration());
+                sprite.display.teleport(step.to());
+            }
+            sprite.display.setInterpolationDelay(0);
+            sprite.display.setInterpolationDuration(step.duration());
+            sprite.display.setTransformation(spriteTransformation(sprite.flat, sprite.size * step.scale()));
+        }
+    }
+
+    /** 每秒：跟著主人的圖，主人不在了就收；附近新來的（套了資源包的）玩家看得到。 */
+    private void tickSprites() {
+        for (final Iterator<Sprite> iterator = anchored.values().iterator(); iterator.hasNext(); ) {
+            final Sprite sprite = iterator.next();
+            if (sprite.display == null || !sprite.display.isValid() || sprite.owner == null || !sprite.owner.isValid()
+                    || sprite.owner.isDead() || !sprite.owner.getWorld().equals(sprite.display.getWorld())) {
+                discard(sprite);
+                iterator.remove();
+                continue;
+            }
+            reveal(sprite.display, packViewers(sprite.display.getLocation()));
+        }
+    }
+
+    private void clearSprites() {
+        for (final Sprite sprite : anchored.values()) {
+            discard(sprite);
+        }
+        anchored.clear();
+        for (final Sprite sprite : timed) {
+            discard(sprite);
+        }
+        timed.clear();
+    }
+
+    private static void discard(final Sprite sprite) {
+        if (sprite.display != null && sprite.display.isValid()) {
+            sprite.display.remove();
+        }
+    }
+
+    private void reveal(final ItemDisplay display, final List<Player> viewers) {
+        for (final Player player : viewers) {
+            if (!player.canSee(display)) {
+                player.showEntity(plugin, display);
+            }
+        }
+    }
+
+    /** 短暫的圖的實體：key 是 exilecore: 底下的物品模型；rgb < 0 不著色；flat 平貼在地上，不然轉向看的人。 */
+    private ItemDisplay spawnSprite(final Location at, final String key, final int rgb, final boolean flat, final double size) {
+        return at.getWorld().spawn(at, ItemDisplay.class, entity -> {
+            entity.setVisibleByDefault(false); // 只有套了資源包的人看得到（沒套的會看到一張紙）
+            entity.setPersistent(false); // 區塊卸載、關服不存檔：不會留下來
+            entity.addScoreboardTag(TAG);
+            entity.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            final ItemStack stack = new ItemStack(Material.PAPER);
+            stack.setData(DataComponentTypes.ITEM_MODEL, Key.key("exilecore", key));
+            if (rgb >= 0) {
+                stack.setData(DataComponentTypes.CUSTOM_MODEL_DATA, CustomModelData.customModelData().addColor(Color.fromRGB(rgb)).build());
+            }
+            entity.setItemStack(stack);
+            entity.setBrightness(new Display.Brightness(15, 15));
+            entity.setShadowRadius(0);
+            entity.setViewRange(1.5f);
+            if (!flat) {
+                entity.setBillboard(Display.Billboard.CENTER);
+            }
+            entity.setTransformation(spriteTransformation(flat, size));
+        });
+    }
+
+    /** 平貼的：跟上面的圈一樣（size 格寬）；立著的：等比例縮放（size 格寬）。 */
+    static Transformation spriteTransformation(final boolean flat, final double size) {
+        if (flat) {
+            return transformation(size, 0);
+        }
+        final float scale = (float) Math.max(0.01, size);
+        return new Transformation(new Vector3f(0f, 0f, 0f), new Quaternionf(), new Vector3f(scale, scale, scale), new Quaternionf());
     }
 
     private void show(final Decal decal) {

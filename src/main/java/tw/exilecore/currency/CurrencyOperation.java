@@ -619,7 +619,191 @@ public enum CurrencyOperation {
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
             throw new UnsupportedOperationException("共鳴石要用在專屬輔助寶石上");
         }
+    },
+
+    // ==== 2026-11-07 照站長「星脈深坑掉 PoE2 Fate of the Vaal 的通貨」（poe2db「瓦爾命途」物品）====
+
+    /** 瓦爾護甲鍛造師的灌注器（Vaal Armourer's Infuser）：品質已滿的防具、副手品質再加，最多超過上限 10%（30%），可能腐化。 */
+    VAAL_INFUSE_ARMOUR {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return vaalInfusable(data, generator, 0);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            vaalInfuse(data, random);
+        }
+    },
+
+    /** 瓦爾鐵匠的灌注器（Vaal Blacksmith's Infuser）：軍用武器（法杖、長杖、權杖以外）。 */
+    VAAL_INFUSE_WEAPON {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return vaalInfusable(data, generator, 1);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            vaalInfuse(data, random);
+        }
+    },
+
+    /** 瓦爾催化灌注器（Vaal Catalysing Infuser）：戒指、項鍊（品質是催化劑的那種）。 */
+    VAAL_INFUSE_JEWELLERY {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return vaalInfusable(data, generator, 2);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            vaalInfuse(data, random);
+        }
+    },
+
+    /** 瓦爾奧術師的灌注器（Vaal Arcanist's Infuser）：法杖、長杖、權杖。 */
+    VAAL_INFUSE_CASTER {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return vaalInfusable(data, generator, 3);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            vaalInfuse(data, random);
+        }
+    },
+
+    /**
+     * 策匠石（Architect's Orb）：已腐化的裝備或珠寶「雙重腐化」：一半機率碎掉，一半多一條腐化詞綴（原本那條留著）。
+     * 結果由 CurrencyService 處理（可能會碎）；雙重腐化過的不能再用。
+     */
+    ARCHITECT {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && data.corrupted() && !data.doubleCorrupted() && !data.mirrored() && !data.starter()
+                    && (base.isWearable() || base.isJewel()) && !base.isMap() && !base.isFlaskLike();
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("策匠石的結果由 CurrencyService 處理（可能會碎掉）");
+        }
+    },
+
+    /** 萃取石（Orb of Extraction）：毀掉一件裝備，嵌在上面的符文、魂核還給你（嵌死的遠古增幅不還）。CurrencyListener 處理。 */
+    EXTRACT {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return !data.runes().isEmpty() && !data.locked();
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("萃取石由 CurrencyListener 處理（物品會毀掉、符文還給玩家）");
+        }
+    },
+
+    /** 瓦爾栽培寶珠（Vaal Cultivation Orb）：傳奇。已腐化的瓦爾傳奇最多兩條換成瓦爾詞綴；其他傳奇變成同種類的隨機已腐化傳奇。 */
+    CULTIVATE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return data.rarity() == Rarity.UNIQUE && data.unique() != null && !data.mirrored() && !data.starter()
+                    && generator.repository().unique(data.unique()) != null;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            generator.cultivate(data, random);
+        }
+    },
+
+    /** 瓦爾虹吸器（Vaal Siphoner）：已腐化的稀有戒指、項鍊加上擊殺數門檻；戴著殺到了，一條詞綴降一階、其他詞綴重擲到現在～上限再多 10%。 */
+    SIPHON {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            return base != null && data.rarity() == Rarity.RARE && data.corrupted() && data.siphonGoal() <= 0 && !data.mirrored()
+                    && (base.slot() == tw.exilecore.item.ItemSlot.RING || base.slot() == tw.exilecore.item.ItemSlot.AMULET)
+                    && data.affixes().size() >= 2;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            data.setSiphon(SIPHON_GOAL, 0);
+        }
+    },
+
+    /** 核心擾亂器（Core Destabiliser）：用在一顆魂核符文上（不是裝備）。CurrencyListener 處理。 */
+    DESTABILISE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return false;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("核心擾亂器要用在魂核符文上");
+        }
+    },
+
+    /** 遠古灌注器（Ancient Infuser）：用在一片先驅石板上（不是裝備）。CurrencyListener 處理。 */
+    ANCIENT_INFUSE {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return false;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("遠古灌注器要用在先驅石板上");
+        }
+    },
+
+    /** 結晶腐化（Crystallised Corruption）：用在技能面板上已腐化的技能寶石（SkillMenu → GemService.crystallise）。 */
+    CRYSTAL_CORRUPT {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            return false;
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            throw new UnsupportedOperationException("結晶腐化要用在技能面板上已腐化的技能寶石");
+        }
     };
+
+    /** 2026-11-07：瓦爾灌注器的品質上限（PoE2：最多超過上限 10%）。 */
+    public static final int VAAL_QUALITY_MAX = 30;
+    /** 2026-11-07：瓦爾灌注器腐化物品的機率（poe2db 沒寫；社群說約 1/6）。 */
+    public static final double VAAL_INFUSE_CORRUPT = 1.0 / 6;
+    /** 2026-11-07：瓦爾虹吸器的擊殺數門檻（poe2db 沒寫數字，先定 500）。 */
+    public static final int SIPHON_GOAL = 500;
+
+    /** 2026-11-07：瓦爾灌注器能不能用（kind：0 防具與副手、1 軍用武器、2 戒指與項鍊、3 法杖類）。品質要已經滿（20%）才能用。 */
+    static boolean vaalInfusable(final ItemData data, final ItemGenerator generator, final int kind) {
+        final var base = generator.repository().base(data.base());
+        if (base == null || data.corrupted() || data.mirrored() || data.sanctified() || data.starter() || !data.identified()
+                || data.quality() < 20 || data.quality() >= VAAL_QUALITY_MAX) {
+            return false;
+        }
+        return switch (kind) {
+            case 0 -> base.isArmour() || base.isShield();
+            case 1 -> base.isWeapon() && !casterWeapon(base);
+            case 2 -> base.slot() == tw.exilecore.item.ItemSlot.RING || base.slot() == tw.exilecore.item.ItemSlot.AMULET;
+            default -> base.isWeapon() && casterWeapon(base);
+        };
+    }
+
+    /** 2026-11-07：瓦爾灌注器：品質 +1～5%（最多 30%），1/6 機率同時腐化（poe2db 沒寫增加多少、腐化機率，先這樣定）。 */
+    static void vaalInfuse(final ItemData data, final RandomGenerator random) {
+        data.setQualityUpTo(data.quality() + 1 + random.nextInt(5), VAAL_QUALITY_MAX);
+        if (random.nextDouble() < VAAL_INFUSE_CORRUPT) {
+            data.setCorrupted(true);
+        }
+    }
 
     /** 這個操作現在能不能用在這件物品上（規則面，不含通貨自己的 applies_to）。 */
     public abstract boolean canApply(ItemData data, ItemGenerator generator);
@@ -765,7 +949,15 @@ public enum CurrencyOperation {
      * （再腐化各自的 canApply 會擋）。沒腐化的一律 true。已聖化的照舊不行（呼叫端另外看）。
      */
     public boolean allowedOn(final ItemData data, final tw.exilecore.item.ItemRepository repository) {
-        return !data.corrupted() || allowedOnCorrupted() || this != CORRUPT && modifiableWhileCorrupted(repository, data);
+        return !data.corrupted() || allowedOnCorrupted() || worksOnCorrupted() || this != CORRUPT && modifiableWhileCorrupted(repository, data);
+    }
+
+    /**
+     * 2026-11-07 修正（檢查發現）：本來就是用在已腐化物品上的瓦爾通貨——雙蝕石、蝕吸器、蝕培石（已腐化的瓦爾傳奇）；
+     * 腐化的條件各自的 canApply 會看。已聖化的照舊不行。這次之前一律被「已腐化不能再改造」擋掉，這三顆完全用不了。
+     */
+    public boolean worksOnCorrupted() {
+        return this == ARCHITECT || this == SIPHON || this == CULTIVATE;
     }
 
     /** 2026-11-04（混沌一瞥）：這件有沒有「已汙染時仍可調整」（傳奇詞綴的 local.modifiable_corrupted）。 */

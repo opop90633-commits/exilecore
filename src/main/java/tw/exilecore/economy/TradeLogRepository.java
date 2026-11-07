@@ -35,6 +35,10 @@ public final class TradeLogRepository {
     public static final String ADMIN = "admin";
     /** kind：傳奇三換一（拆解台；放進去的從玩家到「三換一」，換到的從「三換一」到玩家）。 */
     public static final String RECIPE = "recipe";
+    /** kind：2026-11-07 照站長：Boss 專屬與追逐級的傳奇被掉落過濾換成金幣（從玩家到「掉落過濾」；那件沒進過背包）。 */
+    public static final String FILTER = "filter";
+    /** kind：2026-11-07 照站長：Boss 專屬與追逐級的傳奇被拆解（從玩家到「拆解」）。 */
+    public static final String SALVAGE = "salvage";
 
     private static final int DESC_MAX = 255;
     private static final int NAME_MAX = 16;

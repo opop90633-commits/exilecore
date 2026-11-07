@@ -51,6 +51,14 @@ public final class Recently {
     public static final Set<String> EVENTS = Set.of(HIT, DODGE, BLOCK, CHARM, FLASK, LIFE_FLASK, MANA_FLASK, PROJECTILE_HIT, MELEE_HIT, ENEMY_HIT,
             CRIT, KILL, STUN, CORPSE, POWER, FRENZY, ENDURANCE);
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（蛇窟之環，PoE2「Left ring slot: …」「Right ring slot: …」）：這枚戒指戴在左手（第一個戒指欄）／
+     * 右手（第二個戒指欄）才有效。不是角色狀態：彙整裝備時就決定（{@link tw.exilecore.item.unique.UniqueDerived#forRingSlot}，
+     * 留下的拿掉條件、另一手的丟掉），所以算屬性表時不會再看到；這裡認得只是讓資料檢查、說明知道它合法。萬一漏到狀態判斷就當不成立。
+     */
+    public static final String RING_LEFT = "ring_left";
+    public static final String RING_RIGHT = "ring_right";
+
     /** 一個條件：哪個事件、要不要取反（{@code @no…}）。 */
     public record Condition(String event, boolean negated) {
         public String key() {
@@ -80,7 +88,7 @@ public final class Recently {
         }
         final String text = stat.substring(at + 1).trim().toLowerCase(Locale.ROOT);
         // 2026-10-26：天賦樹的狀態條件（靜止、被包圍、低血…，見 TreeConditions）也走這裡
-        if (EVENTS.contains(text) || TreeConditions.isSelf(text)) {
+        if (EVENTS.contains(text) || TreeConditions.isSelf(text) || RING_LEFT.equals(text) || RING_RIGHT.equals(text)) { // 2026-11-07：＋戒指左右手
             return new Condition(text, false);
         }
         if (text.startsWith("no") && TreeConditions.isSelf(text.substring(2))) {
@@ -91,6 +99,9 @@ public final class Recently {
 
     /** 條件的中文（詞綴說明、審核用）。 */
     public static String describe(final Condition condition) {
+        if (RING_LEFT.equals(condition.event()) || RING_RIGHT.equals(condition.event())) {
+            return RING_LEFT.equals(condition.event()) ? "左手戒指" : "右手戒指"; // 2026-11-07（蛇窟之環）：照原作「Left ring slot:」
+        }
         final String event = switch (condition.event()) {
             case HIT -> "被擊中";
             case DODGE -> "翻滾";

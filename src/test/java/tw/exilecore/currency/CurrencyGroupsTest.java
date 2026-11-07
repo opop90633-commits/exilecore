@@ -58,7 +58,7 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.RUNES, CurrencyGroups.of(currencies.get("rune_iron_lesser")));
         assertEquals(CurrencyGroups.Group.RUNES_HIGH, CurrencyGroups.of(currencies.get("rune_vision_perfect")));
         assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES).size());
-        assertEquals(15, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.CORES).size()); // 2026-11-04：魂核符文一組
+        assertEquals(15 + 4, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.CORES).size()); // 2026-11-07：＋遠古魂核 4 顆；2026-11-04：魂核符文一組
         assertEquals(31, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.IDOLS).size()); // 2026-11-04：魔偶符文一組
         assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES_HIGH).size());
         // 未切割寶石（2026-10 算通貨）：技能寶石 1–21 級、輔助寶石 1–3 階各一種
@@ -74,7 +74,8 @@ class CurrencyGroupsTest {
         // 2026-10-26：活動素材 4 種、劫盜合約與藍圖、揭露石、傳奇兌換券也放這組（一般通貨那組加了高階／完美通貨）
         // 2026-11-02：多一片傳奇石板（殘酷霸權，PoE2 Cruel Hegemony）
         // 2026-11-03：星潮祭的貝殼、珍珠（event_ 開頭，自動分進這組）
-        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1 + 2, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
+        // 2026-11-07：深坑鑰匙、藍晶（星脈深坑）
+        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1 + 2 + 2, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_candy")));
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_shell")));
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_pearl")));
@@ -84,7 +85,7 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.BASIC, CurrencyGroups.first(currencies.all(), type -> 0));
         final int[] counts = CurrencyGroups.kindsHeld(currencies.all(), type -> held.getOrDefault(type.id(), 0));
         // 2026-10-26：星魄分三組、星籤自己一組、符文兩組
-        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・星魄・攻擊 0 種・星魄・法術與腐化 0 種・催化劑・蒸餾情緒 1 種・星籤 0 種・符文 0 種・高階符文 0 種・魂核符文 0 種・魔偶符文 0 種・門票・劫盜・活動 0 種・星諭卡 0 種", // 2026-11-04：＋魂核、魔偶兩組
+        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・星魄・攻擊 0 種・星魄・法術與腐化 0 種・催化劑・蒸餾情緒 1 種・瓦爾通貨 0 種・星籤 0 種・符文 0 種・高階符文 0 種・魂核符文 0 種・魔偶符文 0 種・門票・劫盜・活動 0 種・星諭卡 0 種", // 2026-11-04：＋魂核、魔偶兩組
                 CurrencyGroups.summary(counts));
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.Group.BASIC.next());
         assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.Group.BASIC.previous()); // 2026-10-19：星諭卡在最後
@@ -92,6 +93,9 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.of(currencies.get("card_tide_mark")));
         assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.of(currencies.get("stacked_deck")));
         assertEquals(CurrencyGroups.Group.IDOLS, CurrencyGroups.Group.KEYS.previous()); // 2026-10-26：符文兩組在門票前面；2026-11-04：中間多了魔偶符文
-        assertEquals(CurrencyGroups.Group.OMEN, CurrencyGroups.Group.MECHANIC.next());
+        assertEquals(CurrencyGroups.Group.VAAL, CurrencyGroups.Group.MECHANIC.next()); // 2026-11-07：瓦爾通貨一組（這次之前下一組是星籤）
+        assertEquals(CurrencyGroups.Group.OMEN, CurrencyGroups.Group.VAAL.next());
+        // 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙」：深坑首領鑰匙放瓦爾通貨那組（門票那組滿了）
+        assertEquals(CurrencyGroups.Group.VAAL, CurrencyGroups.of(currencies.get("delve_boss_key")));
     }
 }

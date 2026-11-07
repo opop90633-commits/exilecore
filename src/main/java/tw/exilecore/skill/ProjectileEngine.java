@@ -112,6 +112,13 @@ final class ProjectileEngine implements Listener {
         boolean sticky;
         /** 2026-10-21（PoE2 腐化箭袋）：碰到地形還能連鎖幾次（射出時照機率擲好）。 */
         int terrainChains;
+        /**
+         * 2026-11-07 照站長「瓦爾傳奇照原作」：蛇窟之環「法術的投射物無法連鎖／分裂／穿透」（flag.no_chain／no_fork／no_pierce，帶標籤）：
+         * 射出時照技能的情境看；之後所有連鎖（含從地形、躍霆、電鍊）、分裂（含霜岔、多分出一發）、穿透（含不算次數的穿透）都不做。
+         */
+        boolean noChain;
+        boolean noFork;
+        boolean noPierce;
         /** 2026-10-26：霜岔已經從凍結的敵人分裂過、躍霆已經從感電的敵人連鎖過（一發只有一次）。 */
         boolean forkedFrozen;
         boolean chainedShocked;
@@ -771,6 +778,11 @@ final class ProjectileEngine implements Listener {
         } else {
             shot = new Shot(id, owner.getUniqueId(), build, profile, world, start, direction, speed, range, null, volley, secondary);
         }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：法術的投射物無法連鎖／分裂／穿透（蛇窟之環；VaalKeys）
+        final tw.exilecore.stats.StatSheet blockSheet = profile.effective(plugin.players().sheet(owner));
+        shot.noChain = blockSheet.flat(tw.exilecore.item.unique.VaalKeys.FLAG_NO_CHAIN, profile.tags()) > 0;
+        shot.noFork = blockSheet.flat(tw.exilecore.item.unique.VaalKeys.FLAG_NO_FORK, profile.tags()) > 0;
+        shot.noPierce = blockSheet.flat(tw.exilecore.item.unique.VaalKeys.FLAG_NO_PIERCE, profile.tags()) > 0;
         if (shot.fuseLeft < 0) {
             // 2026-10-21：射出時擲的機率：x% 機率穿透（箭袋）、x% 機率從地形連鎖（腐化箭袋；分裂、散射出來的不擲）
             final tw.exilecore.stats.StatSheet effective = profile.effective(plugin.players().sheet(owner));
@@ -1227,7 +1239,7 @@ final class ProjectileEngine implements Listener {
                 shot.position = at.add(shot.direction.clone().multiply(0.6));
                 return;
             }
-            if (shot.terrainChains > 0) {
+            if (shot.terrainChains > 0 && !shot.noChain) { // 2026-11-07 照站長「瓦爾傳奇照原作」：無法連鎖的也不從地形連鎖
                 // 2026-10-21：從地形連鎖：轉向附近最近、還沒打過的敵人
                 final LivingEntity next = targets.nearest(at.toLocation(shot.world), SkillBuild.PROJECTILE_CHAIN_RANGE, shot.hit, owner);
                 if (next != null) {
@@ -1446,6 +1458,10 @@ final class ProjectileEngine implements Listener {
         if (!pierceFree) {
             pierceFree = TreeLeftovers.pierceClose(shot.profile.effective(ownerSheet), shot.profile.tags(), owner, target, random);
         }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：無法穿透／分裂／連鎖（蛇窟之環）蓋過上面這些「一定穿透、從凍結的分裂、從感電的連鎖」
+        pierceFree &= !shot.noPierce;
+        forkFrozen &= !shot.noFork;
+        chainShocked &= !shot.noChain;
         // 2026-10-26（穿雲箭袋）：每穿透過一次，擊中傷害與暴擊率增加
         // 2026-10-28 照 PoE2（穿甲重彈）：打中完全破甲的敵人用「對破甲」那一段的傷害表（SkillStages 的 vs_armour_broken）
         SkillProfile hitProfile = shot.profile;
@@ -1517,7 +1533,7 @@ final class ProjectileEngine implements Listener {
         if (!shot.secondary && !shot.split) {
             split(shot, owner, target, ownerSheet); // 2026-10-26 照 PoE2（魔湧強化的法術）：分裂射向附近其他敵人
         }
-        if (shot.forksLeft > 0) {
+        if (shot.forksLeft > 0 && !shot.noFork) {
             fork(shot, owner, at);
         } else if (forkFrozen) {
             shot.forkedFrozen = true;
@@ -1529,7 +1545,7 @@ final class ProjectileEngine implements Listener {
             visuals.impact(shot.visual(), at);
             return null; // 穿過去，不算穿透次數
         }
-        if (shot.pierceLeft > 0) {
+        if (shot.pierceLeft > 0 && !shot.noPierce) {
             shot.passedEnemy = true;
             shot.pierceLeft--;
             shot.pierced++;
@@ -1551,7 +1567,7 @@ final class ProjectileEngine implements Listener {
         final boolean chainCursed = tw.exilecore.stats.StatKeys.flag(chainSheet, tw.exilecore.stats.GrantedSkillKeys.FLAG_CHAIN_CURSED);
         final boolean targetCursed = chainCursed && plugin.combat() != null
                 && plugin.combat().debuffs().cursed(target.getUniqueId(), plugin.getServer().getCurrentTick());
-        if (tw.exilecore.stats.GrantedSkillKeys.canChain(shot.chainsLeft, chainCursed, targetCursed)) {
+        if (!shot.noChain && tw.exilecore.stats.GrantedSkillKeys.canChain(shot.chainsLeft, chainCursed, targetCursed)) {
             // 2026-10-28 照 PoE2 Shockchain Arrow：連鎖最遠 8 公尺（PoE2 0.2.0）、先連受到閃電異常的敵人（箭追蹤牠們）
             final double chainRange = tw.exilecore.stats.GrantedSkillKeys.chainRange(shot.shockchain > 0 ? ShockchainArrows.CHAIN_RANGE
                     : SkillBuild.PROJECTILE_CHAIN_RANGE, chainSheet.increased(tw.exilecore.stats.GrantedSkillKeys.CHAIN_RANGE, shot.profile.tags()));

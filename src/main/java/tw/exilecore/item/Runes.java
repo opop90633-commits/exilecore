@@ -113,6 +113,23 @@ public final class Runes {
             }
             return bondedWeapon;
         }
+
+        /**
+         * 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀「也照某個部位的效果算」）：照部位代號（{@link #SLOT_KEYS}，加上軍用武器 weapon、
+         * 法杖類 caster）給的加成，跟 {@link #on} 的規則一樣：部位專屬的先，沒有的話權杖、法杖類照 caster（只限軍用武器的沒有），
+         * 軍用武器照 weapon，其他（防具、盾、法器）照 armour。
+         */
+        public List<Line> onSlot(final String key) {
+            final List<Line> own = slots.get(key);
+            if (own != null) {
+                return own;
+            }
+            return switch (key) {
+                case "weapon" -> weapon;
+                case "caster", "sceptre" -> martialOnly ? List.of() : caster;
+                default -> armour;
+            };
+        }
     }
 
     /** 法杖類武器的標籤（法杖、長杖、權杖；PoE2 符文的 Wand or Staff 那一類）。 */
@@ -277,7 +294,7 @@ public final class Runes {
      */
     public static double effect(final ItemRepository repository, final ItemData data, final Rune rune) {
         double effect = 1 + (data.unique() == null || repository == null ? 0 : repository.uniqueRuneEffect(data.unique()));
-        final boolean core = rune != null && rune.id().startsWith(CORE_PREFIX);
+        final boolean core = rune != null && isSoulCore(rune.id()); // 2026-11-07：遠古魂核（thesis_＊）也是魂核（艾瑟琳的華儀的「魂核效果增加」也吃）；這次之前只看 core_＊
         if (repository != null && data.identified()) {
             for (final RolledAffix rolled : data.affixes()) {
                 final Affix affix = repository.affix(rolled.id());
@@ -297,6 +314,115 @@ public final class Runes {
 
     /** 2026-11-04：魂核符文的代號開頭（runes.yml 的 core_＊）。 */
     public static final String CORE_PREFIX = "core_";
+    /** 2026-11-07：遠古魂核（假說，Ancient Augment）的代號開頭（runes.yml 的 thesis_＊）；也算魂核（艾瑟琳的華儀能嵌、也吃「也照某部位」）。 */
+    public static final String THESIS_PREFIX = "thesis_";
+
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀）：這顆是不是魂核（core_＊ 與遠古魂核 thesis_＊；魔偶、一般符文不是）。 */
+    public static boolean isSoulCore(final String runeId) {
+        return runeId != null && (runeId.startsWith(CORE_PREFIX) || runeId.startsWith(THESIS_PREFIX));
+    }
+
+    /** 2026-11-07：這件物品自己的（已鑑定的詞綴裡）FLAT 本地屬性加總。 */
+    private static double localFlat(final ItemRepository repository, final ItemData data, final String stat) {
+        if (repository == null || data == null || !data.identified()) {
+            return 0;
+        }
+        double total = 0;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final AffixMod mod : affix.mods()) {
+                if (stat.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.FLAT) {
+                    total += mod.toModifier(rolled.vars(), "").value();
+                }
+            }
+        }
+        return total;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀，PoE2 Atziri's Splendour）：嵌在這件上的魂核「也照哪些部位的效果算」：
+     * 瓦爾詞綴 local.core_as.head／legs／feet（頭盔、手套＝腿甲、鞋子），原本那條 local.core_extra_slot 照這件的 UUID 抽一個
+     * （{@link UniquePicks#CORE_SLOT}）。照這個順序、不重複。沒有回傳空的。
+     */
+    public static List<String> coreExtraSlots(final ItemRepository repository, final ItemData data) {
+        if (repository == null || data == null || data.unique() == null) {
+            return List.of();
+        }
+        final List<String> out = new ArrayList<>();
+        if (localFlat(repository, data, tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_EXTRA_SLOT) > 0) {
+            out.addAll(UniquePicks.picks(data, UniquePicks.CORE_SLOT, 1));
+        }
+        for (final String[] pair : new String[][] {{tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_HEAD, "head"},
+                {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_LEGS, "legs"}, {tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_AS_FEET, "feet"}}) {
+            if (!out.contains(pair[1]) && localFlat(repository, data, pair[0]) > 0) {
+                out.add(pair[1]);
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀）：這顆符文嵌在這件上給的全部加成：{@link Rune#on} 自己那一欄，
+     * 魂核再加上 {@link #coreExtraSlots} 每個部位的（{@link Rune#onSlot}）。跟已經算過的同一組（例如胸甲與手套都照 armour）不重複給——
+     * 原作「也當成鞋子」是多拿鞋子專屬的那條，防具共通的那條本來就有了。軍用武器、法杖類那幾組嵌在非武器上時，
+     * 改那件武器自己數值的（攻速、物理增加、附加傷害、本地暴擊傷害加成）沒有武器可改，拿掉。
+     */
+    public static List<Line> linesOn(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
+        final List<Line> own = rune.on(base);
+        if (!isSoulCore(rune.id())) {
+            return own;
+        }
+        final List<String> extras = coreExtraSlots(repository, data);
+        if (extras.isEmpty()) {
+            return own;
+        }
+        final List<List<Line>> seen = new ArrayList<>();
+        seen.add(own);
+        final List<Line> out = new ArrayList<>(own);
+        for (final String key : extras) {
+            final List<Line> lines = rune.onSlot(key);
+            if (lines.isEmpty() || seen.stream().anyMatch(done -> done == lines || done.equals(lines))) {
+                continue;
+            }
+            seen.add(lines);
+            final boolean weaponLines = !base.isWeapon() && ("weapon".equals(key) || "caster".equals(key) || "sceptre".equals(key));
+            for (final Line line : lines) {
+                if (!weaponLines) {
+                    out.add(line);
+                    continue;
+                }
+                final List<AffixMod> kept = line.mods().stream().filter(mod -> !LocalMods.isWeaponLocal(mod)
+                        && !(tw.exilecore.stats.StatKeys.CRIT_MULTI.equals(mod.stat()) && mod.type() == tw.exilecore.stats.ModType.FLAT && mod.tags().isEmpty())).toList();
+                if (!kept.isEmpty()) {
+                    out.add(kept.size() == line.mods().size() ? line : new Line(line.text(), kept));
+                }
+            }
+        }
+        return out;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀「這件物品只能鑲嵌魂核符文」，{@link tw.exilecore.item.unique.VaalKeys#LOCAL_ONLY_SOUL_CORES}）
+     * 與嵌了沒有加成的（{@link #uselessOn}）：這顆符文不能嵌進這件的原因；可以回傳 null。嵌空孔、覆蓋舊的都問這個。
+     */
+    public static String socketProblem(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
+        if (rune == null || base == null) {
+            return null;
+        }
+        if (!isSoulCore(rune.id()) && localFlat(repository, data, tw.exilecore.item.unique.VaalKeys.LOCAL_ONLY_SOUL_CORES) > 0) {
+            return "這件物品只能鑲嵌魂核符文（魂核、遠古魂核）";
+        }
+        if (uselessOn(repository, base, data, rune)) {
+            // 2026-11-04 照站長：攫握指環、日冕墜飾沒有護甲、閃避、能量護盾，只加這些的符文嵌了沒效果
+            // 2026-11-04 照 PoE2 的魂核：只限軍用武器的嵌在法杖類上、只有某個部位才有加成的嵌在別的部位上，一樣沒效果
+            return rune.soulCore() ? "這顆魂核符文嵌在這種裝備上沒有加成（看說明：武器、法杖類、哪個部位）"
+                    : "這個符文只加那件裝備的護甲、閃避、能量護盾，戒指、項鍊沒有這些，嵌了沒效果";
+        }
+        return null;
+    }
 
     /**
      * 2026-11-04：符文說明裡的數字乘上符文效果（effect 是 {@link #effect} 的倍率）：整數照四捨五入，有小數的留一位。
@@ -356,7 +482,7 @@ public final class Runes {
                 continue;
             }
             final double effect = effect(repository, data, rune); // 傳奇的符文效果增加；2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
-            for (final Line line : rune.on(base)) {
+            for (final Line line : linesOn(repository, base, data, rune)) { // 2026-11-07（艾瑟琳的華儀）：魂核也照別的部位算；這次之前 rune.on(base)
                 for (final AffixMod mod : line.mods()) {
                     if (base.isWeapon() && LocalMods.isWeaponLocal(mod)) {
                         continue; // 2026-10-17：武器本地的（增加 x% 物理傷害、攻擊速度）算進武器面板（LocalMods）
@@ -415,7 +541,11 @@ public final class Runes {
                 continue;
             }
             final double effect = effect(repository, data, rune); // 2026-10-27：跟其他符文加成一樣算上 local.rune_effect 詞綴；2026-11-04：每一顆各自算
-            for (final Line line : rune.armour()) {
+            final List<Line> lines = new ArrayList<>(rune.armour());
+            // 2026-11-07（艾瑟琳的華儀）：魂核「也照某部位算」多出來的那幾組（linesOn 在自己那一欄後面接的），本地的防禦增加也算在這件上
+            final List<Line> all = linesOn(repository, base, data, rune);
+            lines.addAll(all.subList(Math.min(all.size(), rune.on(base).size()), all.size()));
+            for (final Line line : lines) {
                 for (final AffixMod mod : line.mods()) {
                     if (stat.equals(mod.stat()) && mod.type() == type && ItemStats.isArmourLocal(base, mod)) {
                         total += mod.toModifier(Map.of(), "").value() * effect;
@@ -424,6 +554,17 @@ public final class Runes {
             }
         }
         return total;
+    }
+
+    /**
+     * 2026-11-07：同 {@link #uselessOn(ItemBase, Rune)}，再看這件物品：魂核嵌在「也照某部位算」的傳奇（艾瑟琳的華儀）上，
+     * 別的部位有加成就不算沒效果。
+     */
+    public static boolean uselessOn(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
+        if (base != null && rune != null && isSoulCore(rune.id()) && !base.isJewellery() && !linesOn(repository, base, data, rune).isEmpty()) {
+            return false;
+        }
+        return uselessOn(base, rune);
     }
 
     /**
@@ -465,7 +606,7 @@ public final class Runes {
                 continue;
             }
             final double effect = effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
-            for (final Line line : rune.on(base)) {
+            for (final Line line : linesOn(repository, base, data, rune)) { // 2026-11-07：魂核也照別的部位算
                 for (final AffixMod mod : line.mods()) {
                     if (!mod.stat().startsWith(REQ_CONVERT)) {
                         continue;
@@ -503,7 +644,8 @@ public final class Runes {
             if (rune == null || rune.limit() <= 0) {
                 continue;
             }
-            final int count = seen.merge(id, 1, Integer::sum);
+            // 2026-11-07 照 PoE2「Limited to: 1 Ancient Augment」：四顆假說（thesis_…）合起來一個角色只算一顆
+            final int count = seen.merge(id.startsWith("thesis_") ? "ancient_augment" : id, 1, Integer::sum);
             if (count > rune.limit()) {
                 if (blocked == null) {
                     blocked = new java.util.HashSet<>();

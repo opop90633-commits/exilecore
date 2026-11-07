@@ -636,6 +636,7 @@ public final class AscendancyEffects implements Listener {
         final double fromEs = Math.min(state.energyShield(), amount);
         state.setEnergyShield(state.energyShield() - fromEs);
         amount -= fromEs;
+        amount = plugin.players().wardLethal(player, state, amount); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：承受傷害照符文保護保底（PoE2 Runic Ward）
         state.setLife(state.life() - amount);
         state.setLastDamageTick(now());
         recoupSelf(player, state, dealt, fromEs + amount);
@@ -677,7 +678,8 @@ public final class AscendancyEffects implements Listener {
         }
         final double es = taken * share * Math.max(0, Math.min(100, sheet.flat(tw.exilecore.stats.TreeEffectKeys.ES_RECOUP_ELEMENTAL, none))) / 100.0;
         if (es > 0 && state.maxEnergyShield() > 0) {
-            state.recoup().add(tw.exilecore.character.Recoup.ES, es, speed);
+            state.recoup().add(tw.exilecore.character.Recoup.ES, es, speed
+                    * tw.exilecore.character.PlayerStateService.esRecoveryRate(sheet)); // 2026-11-07：吃能量護盾回復速度
         }
     }
 
@@ -1665,7 +1667,8 @@ public final class AscendancyEffects implements Listener {
                 && now - state.lastDamageTick() >= tw.exilecore.character.PlayerStateService.esRechargeDelay(sheet)) {
             state.setEnergyShield(Math.min(state.maxEnergyShield(), state.energyShield()
                     + tw.exilecore.stats.Formulas.esRechargePerSecond(state.maxEnergyShield(),
-                    tw.exilecore.character.PlayerStateService.esRechargeSpeed(sheet)) * lowEs / 100.0 * PERIOD / 20.0));
+                    tw.exilecore.character.PlayerStateService.esRechargeSpeed(sheet)) * lowEs / 100.0 * PERIOD / 20.0
+                    * tw.exilecore.character.PlayerStateService.esRecoveryRate(sheet))); // 2026-11-07：吃能量護盾回復速度
             changed = true;
         }
         // 永生：擁有能量護盾時，生命無法改變

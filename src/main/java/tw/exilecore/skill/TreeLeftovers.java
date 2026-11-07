@@ -295,6 +295,11 @@ public final class TreeLeftovers implements Listener {
     public void minionRevived(final Player player, final String skillId) {
         final StatSheet sheet = plugin.players().sheet(player);
         heal(player, sheet.flat(TreeLastKeys.LIFE_ON_MINION_REVIVE, Set.of()));
+        if (StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.FLAG_ES_RECHARGE_ON_MINION_REFORM)) {
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（克特帕托的假說）：你的召喚物復甦時，能量護盾開始充能（跳過回充延遲）
+            plugin.players().find(player.getUniqueId()).ifPresent(state -> state.setLastDamageTick(Math.min(state.lastDamageTick(),
+                    plugin.getServer().getCurrentTick() - tw.exilecore.character.PlayerStateService.esRechargeDelay(sheet))));
+        }
         final double seconds = sheet.flat(AnointKeys.MINION_REVIVE_ARCHON, Set.of());
         if (seconds > 0 && service.minions() != null) {
             final UUID minion = service.minions().newest(player.getUniqueId(), skillId);

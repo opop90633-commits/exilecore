@@ -22,6 +22,7 @@ public final class CurrencyGroups {
         ESSENCE_ATTACK("星魄・攻擊", "保證加上某一條詞綴（攻擊類：附加傷害、命中、攻速、暴擊；移速、能盾）"), // 2026-10-26
         ESSENCE_CASTER("星魄・法術與腐化", "保證加上某一條詞綴（法術類：法傷、施速、統御；腐化星魄）"), // 2026-10-26
         MECHANIC("催化劑・蒸餾情緒", "飾品品質、項鍊注入"),
+        VAAL("瓦爾通貨", "星脈深坑掉的：灌注器、雙蝕石、剝符石、晶蝕石、蝕培石、蝕吸器、擾核石、古蝕灌注器、深坑首領鑰匙"), // 2026-11-07 照站長（一般通貨、催化劑那組都放不下）；2026-11-07：＋深坑首領鑰匙
         OMEN("星籤", "改變下一次改造（掛在物品上，下一顆對應的通貨照星籤的規則用）"), // 2026-10-26：以前跟催化劑同一組
         // 2026-10-26 照 PoE2：符文 13 個家族 × 4 階，一頁放不下，分兩組（次級與普通、高階與完美）
         RUNES("符文", "嵌進武器、防具的符文孔：次級與普通"),
@@ -118,7 +119,13 @@ public final class CurrencyGroups {
 
     /** 2026-10-26：活動素材（event_<名稱>）跟劫盜的東西也放門票那組（一般通貨那組加了高階／完美通貨，36 格放不下）。 */
     public static final String EVENT_PREFIX = "event_";
-    public static final java.util.Set<String> OTHER_KEYS = java.util.Set.of("heist_contract", "heist_blueprint", "unveil_stone", "unique_voucher");
+    // 2026-11-07 照站長「地心礦坑簡化版」：＋深坑鑰匙、藍晶（一般通貨那組一頁放不下了）
+    public static final java.util.Set<String> OTHER_KEYS = java.util.Set.of("heist_contract", "heist_blueprint", "unveil_stone", "unique_voucher",
+            "delve_key", "azurite");
+    /**
+     * 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙」：深坑首領鑰匙放瓦爾通貨那組（也是星脈深坑掉的；門票那組 36 格滿了）。
+     */
+    public static final java.util.Set<String> VAAL_KEYS = java.util.Set.of("delve_boss_key");
 
     /** 2026-10-21：星圖的先驅石板（tablet_<種類>）：插在塔上，跟門票放同一組（一般通貨那組放不下了）。 */
     public static final String TABLET_PREFIX = "tablet_";
@@ -160,6 +167,9 @@ public final class CurrencyGroups {
         if (type.uncutGem()) {
             return Group.GEM;
         }
+        if (VAAL_KEYS.contains(type.id())) {
+            return Group.VAAL; // 2026-11-07：深坑首領鑰匙
+        }
         if (bossKey(type) || type.id().startsWith(TABLET_PREFIX) || type.id().startsWith(EVENT_PREFIX) || OTHER_KEYS.contains(type.id())) {
             return Group.KEYS; // 2026-10-18：Boss 門票（共鳴石算一般通貨）；2026-10-21：星圖石板也放這組
         }
@@ -167,8 +177,11 @@ public final class CurrencyGroups {
             case ESSENCE -> essenceGroup(type);
             case OMEN -> Group.OMEN;
             case CATALYST, INSTIL -> Group.MECHANIC;
+            case VAAL_INFUSE_ARMOUR, VAAL_INFUSE_WEAPON, VAAL_INFUSE_JEWELLERY, VAAL_INFUSE_CASTER, ARCHITECT, EXTRACT, CULTIVATE,
+                 SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT -> Group.VAAL; // 2026-11-07：瓦爾通貨
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
-                    : type.affix() != null && type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX) ? Group.CORES
+                    : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)
+                    || type.affix().startsWith("thesis_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組
                     : type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))
                     ? Group.RUNES_HIGH : Group.RUNES; // 2026-10-26：符文自己兩組（照階級）
             default -> Group.BASIC;

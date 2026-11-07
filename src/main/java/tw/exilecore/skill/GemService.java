@@ -1385,6 +1385,9 @@ public final class GemService {
         if (ChayulaHand.hosts(host)) {
             return ChayulaHand.problem(inner); // 2026-10-29 照 PoE2 Hand of Chayula：夏烏拉之手放印記、詛咒
         }
+        if (SoulVessel.hosts(host)) {
+            return SoulVessel.problem(inner); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：靈魂容器放巨熊、狼人、飛龍的變身技能
+        }
         final MetaSpec spec = config().meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
     }
@@ -1557,6 +1560,55 @@ public final class GemService {
         player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + roll.result()
                 + (omen != null ? "<gray>（用了" + ItemRenderer.escape(omen.name()) + "）" : "")
                 + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
+        return Change.ok(returned);
+    }
+
+    /** 2026-11-07：晶蝕石碎掉技能寶石的機率（poe2db 沒寫，估的）。 */
+    static final double CRYSTAL_DESTROY = 0.25;
+
+    /**
+     * 2026-11-07 照 PoE2 的結晶腐化（Crystallised Corruption：Unpredictably reforges a Corrupted Skill Gem, or Destroys it）：
+     * 已腐化的技能寶石再腐化一次（照蝕變石那一套：等級 ±1、輔助孔 ±1、品質變動，一定有變化），或 1/4 機率碎掉
+     * （碎掉時掛著的輔助、孔裡的技能寶石還給你）。
+     */
+    Change crystallise(final Player player, final int position, final CurrencyType orb) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        final SkillLoadout.Entry entry = loadout.skill(position);
+        if (entry == null) {
+            return Change.fail("那一格沒有技能");
+        }
+        if (entry.granted()) {
+            return Change.fail("武器賦予的技能不是寶石");
+        }
+        if (!entry.corrupted()) {
+            return Change.fail(orb.name() + "只能用在已腐化的技能寶石（先用蝕變石腐化）");
+        }
+        final java.util.random.RandomGenerator random = plugin.items().random();
+        plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
+        if (random.nextDouble() < CRYSTAL_DESTROY) {
+            loadout.remove(position);
+            final List<ItemStack> back = new java.util.ArrayList<>();
+            for (int i = 0; i < entry.sockets(); i++) {
+                if (!entry.support(i).isEmpty() && !entry.spellSocket(i)) {
+                    back.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                }
+            }
+            for (final SkillLoadout.Entry spell : entry.spells()) {
+                back.add(create(GemData.skill(spell), 1));
+            }
+            giveAll(player, back);
+            player.sendMessage(plugin.text().prefixed("<#d20000>" + ItemRenderer.escape(orb.name()) + "：<red>" + ItemRenderer.escape(skillName(entry))
+                    + " 碎掉了<gray>（掛著的寶石還給你）"));
+            return Change.ok(null);
+        }
+        CorruptRoll roll = rollCorrupt(entry, random);
+        for (int attempt = 1; !roll.changed() && attempt < 50; attempt++) {
+            roll = rollCorrupt(entry, random);
+        }
+        loadout.set(position, roll.updated());
+        final ItemStack returned = roll.returnedGem() == null ? null : create(roll.returnedGem(), 1);
+        player.sendMessage(plugin.text().prefixed("<#d20000>" + ItemRenderer.escape(orb.name()) + " " + ItemRenderer.escape(skillName(entry))
+                + "：<white>" + roll.result() + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
         return Change.ok(returned);
     }
 

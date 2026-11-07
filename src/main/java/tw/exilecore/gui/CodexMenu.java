@@ -723,6 +723,10 @@ public final class CodexMenu extends Menu {
                 return "審判者的試場的審判者・衡";
             case "legion":
                 return "時沉領域的不朽統帥・磐";
+            case "delve_guardian": // 2026-11-07：星脈深坑每 10 層的守衛（原作阿茲里掉的）
+                return "星脈深坑的深坑守衛";
+            case "delve_boss": // 2026-11-07 照站長「再做一隻 BOSS，把暮色瓣落、遺忘看守都放進這隻裡面」：晶淵王座（深坑首領鑰匙開）的首領
+                return "星脈深坑的首領（晶淵之王・黯冕）";
             case "lineage": // 2026-10-27 照 PoE2：血脈輔助寶石（supports_lineage.yml 的 drops）
                 return "血脈：地圖怪物（約 50 萬隻一顆）、地圖 Boss";
             case "lineage_rare":

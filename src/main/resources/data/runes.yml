@@ -968,6 +968,56 @@ runes:
       - { text: "40% 需求轉換為智慧", stat: local.req_convert.int, type: FLAT, value: 40 }
 
 # =====================================================================================================
+# 2026-11-07 照站長「星脈深坑掉 PoE2 Fate of the Vaal 的通貨」：遠古魂核（PoE2 的 Ancient Augment「…的假說」，poe2db 4 顆）。
+#   不會直接掉：只有用擾核石（Core Destabiliser）擾亂一般魂核時有機會變出來（currency/VaalCrafting）。
+#   嵌進武器或防具的符文孔，只有寫在 slots 的部位有效果（head 頭盔、legs 手套（我們的手套放腿甲）、chest 胸甲、feet 鞋子）；
+#   四顆合起來一個角色僅限 1 顆（Runes.limitedDuplicates 的 ancient_augment）；嵌上去拿不下來（換掉、萃取都不還，VaalCrafting.socketBound）。
+  thesis_quipolatl:   # Quipolatl's Thesis（克特帕托的假說）
+    name: 遠古魂核・克特帕托
+    level: 60
+    limit: 1
+    slots:
+      head:
+        - { text: "你的印記啟動時，隨機一個需要榮耀的技能獲得 50% 最大榮耀", stat: thesis.glory_on_mark, type: FLAT, value: 50 }
+      legs:
+        - { text: "你的召喚物復甦時，能量護盾開始充能", stat: flag.es_recharge_on_minion_reform, type: FLAT, value: 1 }
+      chest:
+        - { text: "能量護盾全滿時，+75% 的護甲同時套用在混沌傷害", stat: "armour.chaos@fulles", type: FLAT, value: 75 }
+  thesis_jiquani:   # Jiquani's Thesis（吉卡尼的假說）
+    name: 遠古魂核・吉卡尼
+    level: 60
+    limit: 1
+    slots:
+      head:
+        - { text: "裝備的頭盔每 3 點護甲 +1 最大魔力", stat: mana.per_3_helmet_armour, type: FLAT, value: 1 }
+      legs:
+        - { text: "每用掉 2000 魔力，能量護盾開始充能（每 2 秒最多一次）", stat: es.recharge_on_mana_spent, type: FLAT, value: 2000 }
+      feet:
+        - { text: "移動速度的增減也套用在能量護盾充能速度", stat: flag.movement_to_es_recharge, type: FLAT, value: 1 }
+  thesis_guatelitzi:   # Guatelitzi's Thesis（瓜特利斯的假說）
+    name: 遠古魂核・瓜特利斯
+    level: 60
+    limit: 1
+    slots:
+      head:
+        - { text: "獲得等同過去 8 秒內被擊中失去的生命 35% 的護甲", stat: armour.from_life_lost_8s, type: FLAT, value: 35 }
+      chest:
+        - { text: "抵銷的物理傷害 10% 補償為生命", stat: life.recoup_prevented_physical, type: FLAT, value: 10 }
+      feet:
+        - { text: "衝刺時每秒失去 5% 最大生命，衝刺時增加 25% 移動速度", mods: [ { stat: "life.loss_percent@sprinting", type: FLAT, value: 5 }, { stat: sprint.movement, type: INCREASED, value: 25 } ] }
+  thesis_citaqualotl:   # Citaqualotl's Thesis（希特克拉多的假說）
+    name: 遠古魂核・希特克拉多
+    level: 60
+    limit: 1
+    slots:
+      chest:
+        - { text: "你的祭品承受的傷害 50% 補償為你的生命", stat: offering.recoup_life, type: FLAT, value: 50 }
+      legs:
+        - { text: "祭品的持續時間結束時，你的一個常駐召喚物復活", stat: flag.offering_expire_revive, type: FLAT, value: 1 }
+      feet:
+        - { text: "閃避翻滾時犧牲 10% 最大生命，獲得等量的守護", stat: guard.on_dodge_sacrifice, type: FLAT, value: 10 }
+
+# =====================================================================================================
 # 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（PoE2 的 Idol，poe2db「Idol」31 顆；原作是燃燒豐碑的附身怪掉的）。
 #   跟符文一樣嵌進符文孔，名字都叫「魔偶符文・某某」。照原作每一顆只在兩種東西上有加成：某個部位（頭盔、胸甲、手套＝我們的腿甲、鞋子、盾、輕盾、法器）
 #   或武器（軍用武器、法杖或長杖），以及權杖（slots 的 sceptre）；別的嵌了沒效果（不給嵌）。一個角色僅限 1 顆（limit，第二顆沒效果）——2026-11-05 照 poe2db：蛇、猿、梟、貓、狼、野豬、熊、牛這 8 顆原作沒有 Limited to，不限顆數；這次之前 31 顆全部僅限 1 顆。

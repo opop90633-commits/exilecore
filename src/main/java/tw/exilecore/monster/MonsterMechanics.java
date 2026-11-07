@@ -67,6 +67,8 @@ public final class MonsterMechanics implements Listener {
     static final double MIRAGE_CHANCE = 0.25;
     static final long MIRAGE_COOLDOWN = 40;
     static final double MIRAGE_SPEED = 0.3;
+    /** 閃電幻影炸開的範圍（2026-11-07 抽成常數：地上的圖要畫一樣大）。 */
+    static final double MIRAGE_RADIUS = 2.5;
     static final double SIPHON_INNER = 3;
     static final double SIPHON_OUTER = 7;
     // 2026-11-02 照 PoE2 0.5（poe2db 有寫的照寫，沒寫的推估，寫在 monsters.yml）
@@ -701,8 +703,94 @@ public final class MonsterMechanics implements Listener {
         final double distance = 1.5 + random.nextDouble() * 1.5;
         final Location at = defender.getLocation().add(Math.cos(angle) * distance, 0.1, Math.sin(angle) * distance);
         list.add(at);
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.DUST, at.clone().add(0, 0.5, 0), 8, 0.15, 0.4, 0.15, 0, CRYSTAL_DUST);
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：套了資源包的人看到一顆立著的紫晶（跟著這隻，死了照引信漲大）；
+        //   這次之前只有一團紫色粒子（沒套的照舊）
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        final boolean drawn = decals != null && decals.anchor(crystalId(defender.getUniqueId(), list.size() - 1),
+                at.clone().add(0, CRYSTAL_SPRITE / 2, 0), tw.exilecore.web.MonsterFx.CRYSTAL, CRYSTAL_SPRITE, defender);
+        particles(drawn, () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.DUST, at.clone().add(0, 0.5, 0), 8, 0.15, 0.4, 0.15, 0,
+                CRYSTAL_DUST));
         at.getWorld().playSound(at, Sound.BLOCK_AMETHYST_CLUSTER_PLACE, 0.7f, 1.2f);
+    }
+
+    // ---- 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：材質包畫的效果圖 ----
+    // 套了介面資源包的人看 skill/GroundDecals 的短暫的圖（web/MonsterFx 畫的），粒子只給沒套的人；附近沒有套的人（或圖太多）就照舊給每個人粒子。
+    // 這次之前這些效果全部是粒子。
+
+    /** 晶體的圖幾格高。 */
+    static final double CRYSTAL_SPRITE = 0.9;
+    /** 靈魂的圖幾格寬。 */
+    static final double SOUL_SPRITE = 0.6;
+
+    private tw.exilecore.skill.GroundDecals decals() {
+        return plugin.skills() == null ? null : plugin.skills().decals();
+    }
+
+    /** 粒子：有畫圖（drawn）就只給沒套資源包的人，沒畫就給每個人。 */
+    private static void particles(final boolean drawn, final Runnable draw) {
+        if (drawn) {
+            tw.exilecore.skill.Fx.withoutPack(draw);
+        } else {
+            draw.run();
+        }
+    }
+
+    static String crystalId(final UUID monster, final int index) {
+        return "mobcrystal:" + monster + ":" + index;
+    }
+
+    /** 爆炸範圍的圖的顏色（照傷害類型；物理是紅色）。 */
+    static int typeColor(final DamageType type) {
+        return ENEMY_DAMAGE_RED; // 2026-11-07 照站長「敵人給的傷害類的希望都是紅色」：不分傷害類型一律紅色；同日稍早火橘、冰淡藍、電黃、混沌紫、物理紅
+    }
+
+    /** 2026-11-07 照站長：敵人造成傷害的範圍（爆炸、焦土凍土雷土、熔岩爆）一律這個紅色。 */
+    static final int ENEMY_DAMAGE_RED = 0xE03030;
+
+    /** 平貼在地上的爆炸範圍（外框 = radius）：一下就收。 */
+    private boolean burstMark(final Location at, final double radius, final DamageType type) {
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        return decals != null && decals.flash(at, tw.exilecore.web.MonsterFx.BURST, radius, typeColor(type), BURST_MARK_TICKS, 0.5);
+    }
+
+    /** 爆炸範圍的圖留幾 tick。 */
+    static final int BURST_MARK_TICKS = 12;
+    /** 熔岩爆的圖留幾 tick。 */
+    static final int MAGMA_MARK_TICKS = 16;
+    /** 蝕生的魂火：升起、停住、沉回去各幾 tick（加上開始動前的 2 tick 剛好是 RAISE_DELAY）。 */
+    static final int[] RAISE_SOUL_LEGS = {16, 8, 14};
+    /** 爬起來時腳下那圈魂火的半徑。 */
+    static final double SOUL_RING_RADIUS = 1.4;
+
+    /** 靈魂從 from 飄到 to（邊飄邊縮），速度大約每 tick 0.8 格（6～24 tick）。 */
+    private boolean soulTo(final Location from, final Location to) {
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        if (decals == null || !from.getWorld().equals(to.getWorld())) {
+            return false;
+        }
+        final int ticks = soulTicks(from.distance(to));
+        return decals.drift(from, tw.exilecore.web.MonsterFx.SOUL, SOUL_SPRITE, List.of(to), new int[] {ticks}, new double[] {0.45});
+    }
+
+    /** 有畫地上的圖的地面（只給沒套資源包的人撒粒子）；同一塊用同一個物件認（紀錄的 equals 是照數值）。 */
+    private final java.util.Set<Patch> markedPatches = java.util.Collections.newSetFromMap(new java.util.IdentityHashMap<>());
+
+    /**
+     * 焦土／凍土／雷土的地面（死掉時、活著時每 5 秒）：放進地面清單，套了資源包的人看到地上一片尖齒外框的圖（著色成點燃橘、冰緩淡藍、感電黃，
+     * 外框就是範圍）。這次之前只有撒在範圍裡的粒子（點燃另外一圈外框粒子）。
+     */
+    private void addGround(final Patch patch, final Location at, final long duration) {
+        patches.add(patch);
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        if (decals != null && decals.flash(at, tw.exilecore.web.MonsterFx.GROUND, patch.radius(), typeColor(groundType(patch.type())),
+                (int) duration, 0.85)) {
+            markedPatches.add(patch);
+        }
+    }
+
+    /** 純邏輯：靈魂飛 distance 格要幾 tick（每 tick 約 0.8 格、6～24 tick）。 */
+    static int soulTicks(final double distance) {
+        return (int) Math.max(6, Math.min(24, Math.round(distance / 0.8)));
     }
 
     /** 這隻的護盾、熔岩護盾（沒有回傳 null）；第一次用時照最大生命建好。 */
@@ -728,8 +816,15 @@ public final class MonsterMechanics implements Listener {
 
     private void magmaBurst(final LivingEntity source) {
         final Location at = source.getLocation();
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.5, 0), 30, MAGMA_RADIUS / 2, 0.5, MAGMA_RADIUS / 2, 0.1);
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.5, 0), 40, MAGMA_RADIUS / 2, 0.3, MAGMA_RADIUS / 2, 0.05);
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：套了資源包的人看到地上一圈岩漿爆（外框就是 4 格的傷害範圍）、
+        //   只剩幾顆岩漿粒子；這次之前每個人都是一大團岩漿＋火焰粒子（看不出範圍）
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        final boolean drawn = decals != null && decals.flash(at, tw.exilecore.web.MonsterFx.MAGMA, MAGMA_RADIUS, 0xFF5A5A, MAGMA_MARK_TICKS, 0.55); // 2026-11-07 照站長「敵人給的傷害都是紅色」：岩漿裂紋染紅；同日稍早原色（橘黃）
+        particles(drawn, () -> {
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.5, 0), 24, MAGMA_RADIUS / 2, 0.5, MAGMA_RADIUS / 2, 0.1);
+            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.5, 0), 40, MAGMA_RADIUS / 2, 0.3, MAGMA_RADIUS / 2, 0.05);
+        });
+        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.LAVA, at.clone().add(0, 0.5, 0), 6, MAGMA_RADIUS / 3, 0.4, MAGMA_RADIUS / 3, 0.1);
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.8f, 1.2f);
         for (final Player player : at.getNearbyPlayers(MAGMA_RADIUS)) {
             hit(source, player, "magma_burst", DamageType.FIRE, 2.0);
@@ -775,7 +870,16 @@ public final class MonsterMechanics implements Listener {
             } else {
                 soulDirty.add(eater.getUniqueId()); // 招式速度跟著變（下一次 tick 一起重算）
             }
-            tw.exilecore.skill.Fx.spawn(eater.getWorld(), Particle.SOUL, dead.getLocation().add(0, 0.8, 0), 6, 0.2, 0.3, 0.2, 0.03);
+            // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：套了資源包的人看到一團魂火從屍體飄進吃魂的那隻；
+            //   這次之前只在屍體上冒幾顆靈魂粒子（看不出被誰吃了；沒套的照舊）
+            final Location from = dead.getLocation().add(0, 0.8, 0);
+            final boolean drawn = soulTo(from, eater.getLocation().add(0, eater.getHeight() * 0.75, 0));
+            particles(drawn, () -> tw.exilecore.skill.Fx.spawn(eater.getWorld(), Particle.SOUL, from, 6, 0.2, 0.3, 0.2, 0.03));
+        }
+        // 2026-11-07：沒炸的晶體圖（爆炸前已經收的、沒有分身的）一起收掉
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        if (decals != null && grown != null) {
+            decals.removeAnchored("mobcrystal:" + id + ":");
         }
     }
 
@@ -799,8 +903,8 @@ public final class MonsterMechanics implements Listener {
         final Location at = dead.getLocation();
         final UUID world = at.getWorld().getUID();
         for (final AilmentType type : extra.grounds()) {
-            patches.add(new Patch(world, at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + DEATH_GROUND_FOR,
-                    DEATH_GROUND_RADIUS, null));
+            addGround(new Patch(world, at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + DEATH_GROUND_FOR,
+                    DEATH_GROUND_RADIUS, null), at, DEATH_GROUND_FOR);
         }
         final boolean crystalsLeft = extra.crystals() && grown != null && !grown.isEmpty();
         if (!extra.deathBlasts().isEmpty() || crystalsLeft || !extra.grounds().isEmpty()) {
@@ -815,8 +919,13 @@ public final class MonsterMechanics implements Listener {
                             groundType(type)));
                 }
                 if (crystalsLeft) {
+                    final tw.exilecore.skill.GroundDecals decals = decals();
                     int i = 0;
                     for (final Location crystal : grown) {
+                        if (decals != null) {
+                            // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：晶體的圖照引信漲大，炸的時候收掉
+                            decals.release(crystalId(dead.getUniqueId(), i), (int) (CRYSTAL_FUSE + 3L * i), 1.7);
+                        }
                         blasts.add(new Blast(ghost.getUniqueId(), crystal, now + CRYSTAL_FUSE + 3L * i++, CRYSTAL_RADIUS, CRYSTAL_DAMAGE,
                                 DamageType.CHAOS));
                     }
@@ -831,7 +940,13 @@ public final class MonsterMechanics implements Listener {
             final MonsterData risen = new MonsterData(data.level(), data.rarity(), List.copyOf(mods), "復生的" + data.name(),
                     data.lifeMultiplier(), data.damageMultiplier(), false);
             final LivingEntity source = dead;
-            tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.5, 0), 12, 0.4, 0.3, 0.4, 0.02);
+            // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：套了資源包的人看到魂火從屍體升起、停一下、再沉回去
+            //   （剛好 RAISE_DELAY，沉回去就爬起來）；這次之前只有一團靈魂粒子（沒套的照舊）
+            final tw.exilecore.skill.GroundDecals decals = decals();
+            final boolean drawn = decals != null && decals.drift(at.clone().add(0, 0.6, 0), tw.exilecore.web.MonsterFx.SOUL, SOUL_SPRITE,
+                    List.of(at.clone().add(0, 2.0, 0), at.clone().add(0, 2.0, 0), at.clone().add(0, 0.5, 0)),
+                    RAISE_SOUL_LEGS, new double[] {1.2, 1.2, 0.3});
+            particles(drawn, () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.5, 0), 12, 0.4, 0.3, 0.4, 0.02));
             plugin.getServer().getScheduler().runTaskLater(plugin, () -> raise(source, type, at, risen), RAISE_DELAY);
         }
     }
@@ -862,7 +977,10 @@ public final class MonsterMechanics implements Listener {
         }
         monsters.decorateData(living, risen);
         living.setPersistent(false);
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.8, 0), 16, 0.4, 0.6, 0.4, 0.03);
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：腳下一圈魂火（沒套資源包的照舊看靈魂粒子）
+        final tw.exilecore.skill.GroundDecals decals = decals();
+        final boolean drawn = decals != null && decals.flash(at, tw.exilecore.web.MonsterFx.SOUL_RING, SOUL_RING_RADIUS, 0xFFFFFF, 16, 0.4);
+        particles(drawn, () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.SOUL, at.clone().add(0, 0.8, 0), 16, 0.4, 0.6, 0.4, 0.03));
         at.getWorld().playSound(at, Sound.ENTITY_ZOMBIE_VILLAGER_CURE, 0.7f, 0.7f);
     }
 
@@ -1006,17 +1124,24 @@ public final class MonsterMechanics implements Listener {
             final StatSheet sheet = extra.grounds().contains(AilmentType.IGNITE) ? sheetOf(monster) : null;
             final double hit = sheet == null ? 0 : averageHit(sheet);
             for (final AilmentType type : extra.grounds()) {
-                patches.add(new Patch(world.getUID(), at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + GROUND_FOR,
-                        GROUND_RADIUS, null));
+                addGround(new Patch(world.getUID(), at.getX(), at.getY(), at.getZ(), type, groundValue(type, hit), now + GROUND_FOR,
+                        GROUND_RADIUS, null), at, GROUND_FOR);
                 blasts.add(new Blast(monster.getUniqueId(), at.clone(), now + GROUND_NOVA_FUSE, GROUND_RADIUS, groundNovaDamage(type), groundType(type)));
             }
         }
         // 晶爆的：身邊的晶體閃一下
         final List<Location> grown = extra.crystals() ? crystals.get(monster.getUniqueId()) : null;
         if (grown != null) {
-            for (final Location crystal : grown) {
-                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, crystal.clone().add(0, 0.4, 0), 2, 0.1, 0.25, 0.1, 0, CRYSTAL_DUST);
-                tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, crystal.clone().add(0, 0.7, 0), 1, 0.05, 0.05, 0.05, 0);
+            final tw.exilecore.skill.GroundDecals decals = decals();
+            for (int i = 0; i < grown.size(); i++) {
+                final Location crystal = grown.get(i);
+                // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：有晶體的圖就只給沒套資源包的人閃（剛生的時候沒人套、後來才來的補一張）
+                final boolean drawn = decals != null && decals.anchor(crystalId(monster.getUniqueId(), i), crystal.clone().add(0, CRYSTAL_SPRITE / 2, 0),
+                        tw.exilecore.web.MonsterFx.CRYSTAL, CRYSTAL_SPRITE, monster);
+                particles(drawn, () -> {
+                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, crystal.clone().add(0, 0.4, 0), 2, 0.1, 0.25, 0.1, 0, CRYSTAL_DUST);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, crystal.clone().add(0, 0.7, 0), 1, 0.05, 0.05, 0.05, 0);
+                });
             }
         }
         // 狂躁的：狂暴的時候頭上冒火
@@ -1129,7 +1254,13 @@ public final class MonsterMechanics implements Listener {
                     if (minion instanceof Mob minionMob) {
                         minionMob.setTarget(target);
                     }
-                    tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, spot.clone().add(0, 0.5, 0), 12, 0.3, 0.5, 0.3, 0.03);
+                    // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：魂火從喚靈的那隻飄進屍體、屍體腳下一圈魂火；
+                    //   這次之前只有屍體上一團靈魂粒子（沒套資源包的照舊）
+                    final tw.exilecore.skill.GroundDecals decals = decals();
+                    final boolean flew = soulTo(at.clone().add(0, monster.getHeight() * 0.8, 0), spot.clone().add(0, 0.6, 0));
+                    final boolean ring = decals != null && decals.flash(spot, tw.exilecore.web.MonsterFx.SOUL_RING, SOUL_RING_RADIUS, 0xFFFFFF, 16, 0.4);
+                    final boolean drawn = flew || ring;
+                    particles(drawn, () -> tw.exilecore.skill.Fx.spawn(world, Particle.SOUL, spot.clone().add(0, 0.5, 0), 12, 0.3, 0.5, 0.3, 0.03));
                 }
             }
             if (raised > 0) {
@@ -1200,6 +1331,7 @@ public final class MonsterMechanics implements Listener {
     private void tickPatches(final long now) {
         patches.removeIf(patch -> patch.until() <= now);
         mapPatches.removeIf(patch -> patch.until() <= now);
+        markedPatches.removeIf(patch -> patch.until() <= now); // 2026-11-07
         if (patches.isEmpty() && mapPatches.isEmpty()) {
             return;
         }
@@ -1240,7 +1372,8 @@ public final class MonsterMechanics implements Listener {
             if (seen) {
                 final World world = here.getFirst().getWorld();
                 // 2026-11-02 照站長（粒子太多）：每 0.5 秒畫一次（以前每 5 tick），一次多畫一點；地圖的地面效果是危險區（重要的，每個人都看得到）
-                tw.exilecore.skill.Fx.with(null, patch.owner() != null, () -> {
+                // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：有地上的圖的（焦土／凍土／雷土）粒子只給沒套資源包的人
+                particles(markedPatches.contains(patch), () -> tw.exilecore.skill.Fx.with(null, patch.owner() != null, () -> {
                     if (tw.exilecore.skill.Fx.redrawDue(patch)) {
                         tw.exilecore.skill.Fx.spawn(world, switch (patch.type()) {
                             case IGNITE -> Particle.FLAME;
@@ -1255,7 +1388,7 @@ public final class MonsterMechanics implements Listener {
                                 tw.exilecore.skill.Fx.Look.edge(Particle.DUST, tw.exilecore.skill.Fx.BURNING_EDGE), (int) (patch.until() - now),
                                 null, patch.owner() != null);
                     }
-                });
+                }));
             }
         }
         for (final Map.Entry<Player, Map<AilmentType, Double>> entry : standing.entrySet()) {
@@ -1377,9 +1510,11 @@ public final class MonsterMechanics implements Listener {
     }
 
     private void explodeMirage(final LivingEntity source, final Location at) {
-        tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ELECTRIC_SPARK, at, 30, 1, 0.6, 1, 0.1);
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：地上一圈黃色爆炸（外框 = 2.5 格），粒子只給沒套資源包的人
+        particles(burstMark(at, MIRAGE_RADIUS, DamageType.LIGHTNING),
+                () -> tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ELECTRIC_SPARK, at, 30, 1, 0.6, 1, 0.1));
         at.getWorld().playSound(at, Sound.ENTITY_LIGHTNING_BOLT_IMPACT, 0.6f, 1.6f);
-        for (final Player player : at.getNearbyPlayers(2.5)) {
+        for (final Player player : at.getNearbyPlayers(MIRAGE_RADIUS)) {
             hit(source, player, "lightning_mirage", DamageType.LIGHTNING, 0.8);
         }
     }
@@ -1404,8 +1539,11 @@ public final class MonsterMechanics implements Listener {
             iterator.remove();
             tw.exilecore.skill.Fx.zoneStop(blast);
             tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, blast.at().clone().add(0, 0.5, 0), 2, 0.4, 0.2, 0.4, 0);
-            tw.exilecore.skill.Fx.spawn(world, Particle.DUST, blast.at().clone().add(0, 0.5, 0), 30, 1.2, 0.4, 1.2, 0,
-                    new Particle.DustOptions(Color.fromRGB(0x8a0e0e), 1.4f));
+            // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：死後爆炸、晶體、屍爆、地面新星炸開時，
+            //   套了資源包的人看到地上一圈照傷害類型著色的爆炸（外框就是傷害範圍），粒子只給沒套的人；這次之前每個人都是一團粒子
+            final boolean drawn = burstMark(blast.at(), blast.radius(), blast.type());
+            particles(drawn, () -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, blast.at().clone().add(0, 0.5, 0), 30, 1.2, 0.4, 1.2, 0,
+                    new Particle.DustOptions(Color.fromRGB(0x8a0e0e), 1.4f)));
             world.playSound(blast.at(), Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.4f);
             final Entity source = plugin.getServer().getEntity(blast.source());
             if (!(source instanceof LivingEntity living) || !living.isValid()) {
@@ -1413,12 +1551,12 @@ public final class MonsterMechanics implements Listener {
             }
             if (blast.type() != DamageType.PHYSICAL) {
                 // 2026-11-02：死後爆炸、爆晶的顏色照傷害類型
-                tw.exilecore.skill.Fx.spawn(world, switch (blast.type()) {
+                particles(drawn, () -> tw.exilecore.skill.Fx.spawn(world, switch (blast.type()) {
                     case FIRE -> Particle.FLAME;
                     case COLD -> Particle.SNOWFLAKE;
                     case LIGHTNING -> Particle.ELECTRIC_SPARK;
                     default -> Particle.WITCH;
-                }, blast.at().clone().add(0, 0.5, 0), 30, blast.radius() / 2, 0.4, blast.radius() / 2, 0.05);
+                }, blast.at().clone().add(0, 0.5, 0), 30, blast.radius() / 2, 0.4, blast.radius() / 2, 0.05));
             }
             for (final Player player : blast.at().getNearbyPlayers(blast.radius())) {
                 hit(living, player, blast.type() == DamageType.PHYSICAL ? "corpse_blast" : "death_blast", blast.type(), blast.damage());
@@ -1563,7 +1701,9 @@ public final class MonsterMechanics implements Listener {
                                final Particle.DustOptions dust, final String id) {
         final World world = at.getWorld();
         tw.exilecore.skill.Fx.spawn(world, Particle.EXPLOSION, at, 1, 0.2, 0.2, 0.2, 0);
-        tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 24, CRYSTAL_RADIUS / 2, 0.4, CRYSTAL_RADIUS / 2, 0, dust);
+        // 2026-11-07 照站長「怪物死掉冒出來的粒子換成比較明顯的、用材質包畫的」：地上一圈爆炸（外框 = 2.5 格），粒子只給沒套資源包的人
+        particles(burstMark(at, CRYSTAL_RADIUS, type),
+                () -> tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 24, CRYSTAL_RADIUS / 2, 0.4, CRYSTAL_RADIUS / 2, 0, dust));
         world.playSound(at, Sound.ENTITY_GENERIC_EXPLODE, 0.6f, 1.5f);
         for (final Player player : at.getNearbyPlayers(CRYSTAL_RADIUS)) {
             hit(source, player, id, type, effectiveness);

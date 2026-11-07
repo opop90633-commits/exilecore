@@ -1551,6 +1551,27 @@ outlaws_vest:
       stats:
         - { stat: thorns.min, type: FLAT, value: "{min}" }
         - { stat: thorns.max, type: FLAT, value: "{max}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 能量護盾"   # (100—150)% increased Energy Shield（本地；Explorer Armour 沒有能量護盾，原作也是空詞，見 NEEDS）
+      value: [100, 150]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 獲得的生命藥劑充能"   # (15—30)% increased Life Flask Charges gained
+      value: [15, 30]
+      stats:
+        - { stat: flask.charges_gained.life, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 生命藥劑回復量"   # (25—50)% increased Life Recovery from Flasks
+      value: [25, 50]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+    - text: "{value}% 的荊棘傷害偷取為生命"   # (5—10)% of Thorns Damage Leeched as Life
+      value: [5, 10]
+      stats:
+        - { stat: thorns.leech, type: FLAT, value: "{value}" }
+    - text: "+{value} 護甲"   # +(220—320) to Armour（本地）
+      value: [220, 320]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
 
 turncoat_spear:
   name: 叛徒之矛
@@ -1592,6 +1613,25 @@ turncoat_spear:
     - text: "增加 30% 點燃傷害"        # 2026-10-26 原作的加劇流血時也加劇目標身上的點燃做不出來，改成強度相當的這條
       stats:
         - { stat: ignite.magnitude, type: INCREASED, value: 30 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "擊中時 {value}% 機率讓敵人曝露"   # exposure.chance：照打出的元素給曝露（原作英文是 Exposure；繁中寫「閃電曝曬」，見 NEEDS）
+      value: [30, 50]
+      stats:
+        - { stat: exposure.chance, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 點燃機率"   # PoE2 Flammability Magnitude（易燃幅度＝點燃機率）
+      value: [15, 25]
+      stats:
+        - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 物理傷害"
+      value: [300, 400]
+      stats:
+        - { stat: local.physical, type: INCREASED, value: "{value}" }
+    - text: "+1 全部火焰技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [fire] }
+    - text: "對流血的敵人，這把武器的擊中有撲殺"   # flag.culling 帶 vs_bleeding（AttributeScalingKeys.culls 照情境標籤）；「這把武器」用 attack 標籤近似（見 NEEDS）
+      stats:
+        - { stat: flag.culling, type: FLAT, value: 1, tags: [attack, vs_bleeding] }
 
 fugitive_greaves:
   name: 逃亡者脛甲
@@ -2295,6 +2335,18 @@ tailwind_quiver:
       value: [42, 64]
       stats:
         - { stat: pierce.crit_per, type: FLAT, value: "{value}", tags: [projectile] }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 投射物速度"   # (16—24)% increased Projectile Speed
+      value: [16, 24]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
+    - text: "衝刺時，增加 {value}% 閃避值"   # (100—150)% increased Evasion Rating while Sprinting（箭袋不是防具，全域）
+      value: [100, 150]
+      stats:
+        - { stat: evasion@sprinting, type: INCREASED, value: "{value}" }
+    - text: "箭矢穿透額外 1 個目標"   # Arrows Pierce 1 additional Targets
+      stats:
+        - { stat: skill.pierce, type: FLAT, value: 1, tags: [bow] }
 
 solar_sceptre:
   name: 炎陽長杖
@@ -3927,6 +3979,31 @@ spiritgrove_plate:
         - { stat: resist.fire, type: FLAT, value: -10 }
         - { stat: resist.cold, type: FLAT, value: -10 }
         - { stat: resist.lightning, type: FLAT, value: -10 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "減少 {value}% 圖騰生命"
+      value: [20, 30]
+      stats:
+        - { stat: totem.life, type: INCREASED, value: "-{value}" }
+    - text: "若你最近召喚過圖騰，增加 25% 攻擊與施法速度"   # 新條件 @totemplaced（最近 4 秒放過圖騰）；@totem 是「有圖騰在」，不一樣
+      stats:
+        - { stat: attack.speed@totemplaced, type: INCREASED, value: 25 }
+        - { stat: cast.speed@totemplaced, type: INCREASED, value: 25 }
+    - text: "你身上每有一個詛咒，增加 {value}% 圖騰傷害（最多算 5 個）"   # 2026-11-07 照天賦樹「守護神器」的寫法拆成 selfcurses1–5 門檻
+      value: [10, 20]
+      stats:
+        - { stat: damage@selfcurses1, type: INCREASED, value: "{value}", tags: [totem] }
+        - { stat: damage@selfcurses2, type: INCREASED, value: "{value}", tags: [totem] }
+        - { stat: damage@selfcurses3, type: INCREASED, value: "{value}", tags: [totem] }
+        - { stat: damage@selfcurses4, type: INCREASED, value: "{value}", tags: [totem] }
+        - { stat: damage@selfcurses5, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "增加 {value}% 圖騰持續時間"   # 2026-11-07 原作「(-30—30)% reduced Totem Duration」，對稱範圍改寫；skill.duration 帶 totem 標籤（SkillBuild.durationScale）
+      value: [-30, 30]
+      stats:
+        - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [totem] }
+    - text: "+{value} 最大能量護盾"
+      value: [50, 80]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
 
 # ---- 2026-10：星骸之海的淵鯨（life.yml 的 whale）專屬傳奇（sources 寫 abyss_whale；機率見 life.yml 的 whale.drops）----
 
@@ -4932,6 +5009,23 @@ crimsonarc_wrap:             # Redflare Conduit
     - text: "銳星滿了就全部失去，並讓你感電"
       stats:
         - { stat: charge.lose_at_max.power, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 閃避與能量護盾"   # (150—300)% increased Evasion and Energy Shield（本地）
+      value: [150, 300]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "消耗銳星時回復 {value}% 最大魔力"   # Recover (2—5)% of maximum Mana when you consume a Power Charge
+      value: [2, 5]
+      stats:
+        - { stat: recover.mana_on_power_spent, type: FLAT, value: "{value}" }
+    - text: "最近沒有失去銳星時，每秒獲得一顆銳星"   # Gain a Power Charge every Second if you haven't lost Power Charges Recently
+      stats:
+        - { stat: charge.power_every_second, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）：ChargeService 每秒檢查
+    - text: "你身上的感電效果減少 {value}%"   # (25—50)% reduced effect of Shock on you
+      value: [25, 50]
+      stats:
+        - { stat: shock.effect_on_self, type: INCREASED, value: "-{value}" }
 
 spiteforge_greaves:         # Hateforge
   name: 憎鑄腿鎧
@@ -4960,6 +5054,18 @@ spiteforge_greaves:         # Hateforge
     - text: "怒氣滿時失去全部怒氣"
       stats:
         - { stat: flag.lose_rage_at_max, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 25% 攻擊速度"   # 25% increased Attack Speed
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: 25 }
+    - text: "過去 20 秒內使用過需要榮耀的技能時，+{value} 怒氣上限"   # +(8—10) maximum Rage if you've used a Skill that Requires Glory in the past 20 seconds
+      value: [8, 10]
+      stats:
+        - { stat: rage.max@glory20s, type: FLAT, value: "{value}" }   # TreeConditions.GLORY_20S（天賦樹同一條）
+    - text: "擊中獲得怒氣時，有 {value}% 機率改為獲得至怒氣上限"   # (12—16)% chance that if you would gain Rage on Hit, you instead gain up to your maximum Rage
+      value: [12, 16]
+      stats:
+        - { stat: rage.fill_chance, type: FLAT, value: "{value}" }
 
 serpent_egg_amulet:        # Serpent's Egg
   name: 蛇卵墜
@@ -4989,6 +5095,18 @@ serpent_egg_amulet:        # Serpent's Egg
     - text: "獲得戰星時多獲得一顆同種的"
       stats:
         - { stat: charge.extra, type: FLAT, value: 100 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "獲得戰星時 50% 機率多獲得一顆隨機種類的"   # 50% chance to gain an additional random Charge when you gain a Charge
+      stats:
+        - { stat: charge.extra_random, type: FLAT, value: 50 }   # ChargeService.EXTRA_RANDOM
+    - text: "減少 {value}% 磐星、怒星與銳星的持續時間"   # (-60—60)% reduced Endurance, Frenzy and Power Charge Duration
+      value: [-60, 60]
+      stats:
+        - { stat: charge.duration, type: INCREASED, value: "-{value}" }
+    - text: "技能消耗戰星時 {value}% 機率不移除，但效果照算"   # Skills have (10—15)% chance to not remove Charges but still count as consuming them
+      value: [10, 15]
+      stats:
+        - { stat: charge.sup.keep, type: FLAT, value: "{value}" }   # ChargeService.SUP_KEEP（已有傳奇用同一條）
 
 mountain_breath_charm:     # Breath of the Mountains
   name: 岳息護符
@@ -5311,6 +5429,18 @@ shedscale_coat:        # 2026-10-26 照 PoE2 0.5 的「Quatl's Molt」（原作�
     - text: "不會中毒"
       stats:
         - { stat: flag.immune.poison, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 混沌傷害"   # (60—80)% increased Chaos Damage
+      value: [60, 80]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "偏斜擊中所承受的傷害有 {value}% 補償為生命"   # (10—20)% of Damage taken from Deflected Hits Recouped as Life
+      value: [10, 20]
+      stats:
+        - { stat: life.recoup_deflected, type: FLAT, value: "{value}" }
+    - text: "目標可同時受到你的 +1 個中毒影響"   # Targets can be affected by +1 of your Poisons at the same time
+      stats:
+        - { stat: poison.stacks, type: FLAT, value: 1 }
 
 defiant_robe:        # 2026-10-26 照 PoE2 0.5 的「Cloak of Defiance」（原作有、我們以前沒有的）
   name: 抗命法袍
@@ -5664,6 +5794,22 @@ rearguard_quiver:        # 2026-10-26 照 PoE2 0.5 的「Rearguard」（原作�
       value: [15, 25]
       stats:
         - { stat: block.chance, type: FLAT, value: "{value}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 閃避"
+      value: [50, 150]
+      stats:
+        - { stat: evasion, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 被包圍的判定範圍"   # surrounded.area（TreeLastKeys.SURROUNDED_AREA）；要登記進 UniqueStats.SHARED
+      value: [20, 30]
+      stats:
+        - { stat: surrounded.area, type: INCREASED, value: "{value}" }
+    - text: "增加 25% 攻擊速度"
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: 25 }
+    - text: "增加 {value}% 偏斜值"
+      value: [15, 25]
+      stats:
+        - { stat: deflection, type: INCREASED, value: "{value}" }
 
 deathdash_ring:        # 2026-10-26 照 PoE2 0.5 的「Death Rush」（原作有、我們以前沒有的）
   name: 奔命指環
@@ -5710,6 +5856,22 @@ dreamshard_ring:        # 2026-10-26 照 PoE2 0.5 的「Dream Fragments」（原
       stats:
         - { stat: flag.immune.chill, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
         - { stat: flag.immune.freeze, type: FLAT, value: 1 }   # 2026-10-28 修正：「不會被…」是免疫（avoid 有 75% 上限，這次之前寫 avoid 100 只有 75%）
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "受到的傷害（扣生命的部分）有 10% 先從魔力扣"
+      stats:
+        - { stat: damage.from_mana, type: FLAT, value: 10 }
+    - text: "增加 {value}% 冰晶的生命"   # crystal.life（SupportParityKeys）：IceCrystals 目前只讀 MORE，要加讀 INCREASED、登記進 UniqueStats.SHARED
+      value: [40, 60]
+      stats:
+        - { stat: crystal.life, type: INCREASED, value: "{value}" }
+    - text: "擊殺時回復 {value}% 最大魔力"
+      value: [1, 2]
+      stats:
+        - { stat: mana.on_kill, type: FLAT, value: "{value}" }
+    - text: "承受的易爆物理傷害有 {value}% 視為冰冷傷害"   # 新：taken.volatility_physical_as_cold
+      value: [50, 100]
+      stats:
+        - { stat: taken.volatility_physical_as_cold, type: FLAT, value: "{value}" }
 
 stormseek_ring:        # 2026-10-26 照 PoE2 0.5 的「Levinstone」（原作有、我們以前沒有的）
   name: 引雷石戒
@@ -6043,6 +6205,23 @@ empress_sneer:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Contempt」（poe
     - text: "你殺死的敵人爆炸，對周圍造成牠最大生命 10% 的火焰傷害"   # 原作血石之槍＋憎惡碎綻的平衡等效
       stats:
         - { stat: kill.explode, type: FLAT, value: 10 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 攻擊的元素傷害"   # (100—150)% increased Elemental Damage with Attacks
+      value: [100, 150]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [attack, elemental] }
+    - text: "+{value}% 暴擊率"   # +(2—4)% to Critical Hit Chance（武器本地）
+      value: [2, 4]
+      stats:
+        - { stat: local.crit_base, type: FLAT, value: "{value}" }
+    - text: "擊中有 {value}% 機率將敵方怪物的元素抗性數值視為相反"   # Hits have (15—30)% chance to treat Enemy Monster Elemental Resistance values as inverted
+      value: [15, 30]
+      stats:
+        - { stat: resist.invert_chance, type: FLAT, value: "{value}" }
+    - text: "若你在過去八秒內造成過近戰擊中，投射物有 {value}% 機率分裂"   # Projectiles have (50—75)% chance to Fork if you've dealt a Melee Hit in the past eight seconds
+      value: [50, 75]
+      stats:
+        - { stat: projectile.fork_chance@meleehit8s, type: FLAT, value: "{value}" }   # TreeLastKeys.FORK_CHANCE（天賦樹同一條）
 
 faceless_mask:              # 2026-10-28 照 PoE2 0.5 的「The Vertex」（poe2db：謎容；原作有、我們以前沒有的）
   name: 無相面
@@ -6074,6 +6253,31 @@ faceless_mask:              # 2026-10-28 照 PoE2 0.5 的「The Vertex」（poe2
       kind: [1, 2]
       stats:
         - { stat: attr_req.none, type: FLAT, value: "{kind}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "減少 50% 裝備與技能寶石的屬性需求"   # Equipment and Skill Gems have 50% reduced Attribute Requirements（疑似原本「沒有能力值需求」的瓦爾版，見 NEEDS）
+      stats:
+        - { stat: item.attr_requirement, type: INCREASED, value: -50 }   # TreeEffectKeys／GemAttributes 都乘
+    - text: "增加 {value}% 全部屬性"   # (5—10)% increased Attributes
+      value: [5, 10]
+      stats:
+        - { stat: attr.str, type: INCREASED, value: "{value}" }
+        - { stat: attr.dex, type: INCREASED, value: "{value}" }
+        - { stat: attr.int, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 魔力消耗效率"   # (13—17)% increased Mana Cost Efficiency
+      value: [13, 17]
+      stats:
+        - { stat: skill.mana_cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 點燃、感電、流血與中毒機率"   # (20—30)% increased chance to inflict Ailments（照珠寶 j2_ailment_chance 的寫法）
+      value: [20, 30]
+      stats:
+        - { stat: ignite.chance, type: INCREASED, value: "{value}" }
+        - { stat: shock.chance, type: INCREASED, value: "{value}" }
+        - { stat: bleed.chance, type: INCREASED, value: "{value}" }
+        - { stat: poison.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value} 全部詛咒技能等級"   # +(3—5) to Level of all Curse Skills
+      value: [3, 5]
+      stats:
+        - { stat: skill.level, type: FLAT, value: "{value}", tags: [curse] }
 
 hallowed_fire:            # 2026-10-28 照 PoE2 0.5 的「Sacred Flame」（poe2db：神聖烈焰；原作有、我們以前沒有的）
   name: 聖火
@@ -6458,6 +6662,18 @@ scornful_circlet:        # 2026-10-27 照 PoE2 0.5 的「Atziri's Disdain」（�
     - text: "受到的傷害有 10% 跳過能量護盾"
       stats:
         - { stat: es.bypass, type: FLAT, value: 10 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "受到的傷害（扣生命的部分）有 10% 先從魔力扣"
+      stats:
+        - { stat: damage.from_mana, type: FLAT, value: 10 }
+    - text: "增加 {value}% 最大生命"
+      value: [5, 10]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
+    - text: "受到的傷害 {value}% 補償為魔力"
+      value: [6, 10]
+      stats:
+        - { stat: mana.recoup, type: FLAT, value: "{value}" }
 
 scornful_stride:        # 2026-10-27 照 PoE2 0.5 的「Atziri's Step」（原作有、我們以前沒有的）
   name: 冷蔑步靴
@@ -6492,6 +6708,18 @@ scornful_stride:        # 2026-10-27 照 PoE2 0.5 的「Atziri's Step」（原�
     - text: "被偏斜的擊中不會讓你輕暈"
       stats:
         - { stat: stun.no_light_deflected, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "移動時，增加 {value}% 偏斜值"   # (15—25)% increased Deflection Rating while moving
+      value: [15, 25]
+      stats:
+        - { stat: deflection@moving, type: INCREASED, value: "{value}" }
+    - text: "+{value} 閃避"   # +(50—150) to Evasion Rating（本地）
+      value: [50, 150]
+      stats:
+        - { stat: evasion, type: FLAT, value: "{value}" }
+    - text: "側身之擊（閃避機率為不幸、偏斜機率為幸運）"   # Glancing Blows（基石）
+      stats:
+        - { stat: flag.glancing_blows, type: FLAT, value: 1 }
 
 void_eye_amulet:        # 2026-10-27 照 PoE2 0.5 的「Eye of Chayula」（原作有、我們以前沒有的）
   name: 虛眸墜
@@ -6748,6 +6976,14 @@ gilded_greed_plate:        # 2026-10-27 照 PoE2 0.5 的「Greed's Embrace」（
       value: [20, 30]
       stats:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "減少 100% 臨在範圍"   # 2026-11-07 照 PoE2；Presence.radius 下限 0.1（半徑剩約 32%）
+      stats:
+        - { stat: presence.area, type: INCREASED, value: -100 }
+    - text: "被包圍時，攻擊增加 {value}% 傷害"   # 2026-11-07 原作「(-40—40)% reduced Attack Damage while Surrounded」，對稱範圍改寫成增加
+      value: [-40, 40]
+      stats:
+        - { stat: damage@surrounded, type: INCREASED, value: "{value}", tags: [attack] }
 
 gloaming_gown:        # 2026-10-27 照 PoE2 0.5 的「Gloamgown」（原作有、我們以前沒有的）
   name: 暮色長袍
@@ -7159,6 +7395,23 @@ keenstep_shoes:        # 2026-10-27 照 PoE2 0.5 的「Powertread」（原作有
     - text: "每顆銳星增加 12% 暴擊傷害加成"
       stats:
         - { stat: crit.bonus_per_power, type: FLAT, value: 12 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 閃避與能量護盾"   # 2026-11-07 跟原本的詞綴一模一樣（poe2db 栽培清單列了兩次；見 NEEDS）
+      value: [60, 80]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "若你最近消耗過銳星，增加 {value}% 暴擊傷害加成"   # 2026-11-07 原作「(-60—60)% reduced …」，對稱範圍改寫
+      value: [-60, 60]
+      stats:
+        - { stat: crit.bonus@power, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 銳星的持續時間"   # 2026-11-07 原作「(-60—60)% reduced Power Charge Duration」，對稱範圍改寫
+      value: [-60, 60]
+      stats:
+        - { stat: charge.duration, type: INCREASED, value: "{value}", tags: [power] }
+    - text: "獲得一顆銳星時 10% 機率多獲得一顆"
+      stats:
+        - { stat: charge.extra.power, type: FLAT, value: 10 }
 
 thornbush_boots:        # 2026-10-27 照 PoE2 0.5 的「Briarpatch」（原作有、我們以前沒有的）
   name: 荊叢皮靴
@@ -7510,6 +7763,19 @@ viperfang_bracers:        # 2026-10-27 照 PoE2 0.5 的「Snakebite」（原作�
     - text: "敵人身上你的中毒可以多 1 層同時生效"
       stats:
         - { stat: poison.stacks, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "若你最近消耗過怒星，增加 {value}% 你造成的中毒持續時間"
+      value: [30, 40]
+      stats:
+        - { stat: poison.duration@frenzy, type: INCREASED, value: "{value}" }
+    - text: "你身上的中毒持續時間減少 {value}%"
+      value: [40, 60]
+      stats:
+        - { stat: ailment.self_duration.poison, type: INCREASED, value: "-{value}" }
+    - text: "擊殺敵人時，牠身上每一層中毒讓你回復 {value/10}% 最大生命"   # 新：life.per_poison_on_kill
+      value: [5, 10]
+      stats:
+        - { stat: life.per_poison_on_kill, type: FLAT, value: "{value/10}" }
 
 wisdom_action_wraps:        # 2026-10-27 照 PoE2 0.5 的「Hand of Wisdom and Action」（原作有、我們以前沒有的）
   name: 知行捲布
@@ -7738,6 +8004,20 @@ scholar_crown:        # 2026-10-27 照 PoE2 0.5 的「Cornathaum」（原作有�
     - text: "增加 5% 經驗值獲得"
       stats:
         - { stat: experience.gain, type: INCREASED, value: 5 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 護甲與能量護盾"   # (100—150)% increased Armour and Energy Shield（本地）
+      value: [100, 150]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 怪物掉落的金幣"   # (5—10)% increased Quantity of Gold Dropped by Slain Enemies
+      value: [5, 10]
+      stats:
+        - { stat: gold.find, type: INCREASED, value: "{value}" }
+    - text: "照亮範圍的增加與減少，以 {value}% 的數值套用在範圍效果上"   # Increases and Reductions to Light Radius also apply to Area of Effect at (25—50)% of their value
+      value: [25, 50]
+      stats:
+        - { stat: light.radius_as_area, type: FLAT, value: "{value}" }   # 2026-11-07 新的（NEEDS）：我們沒有光照範圍（原本那條 30% 也沒做），要站長決定
 
 veiled_tiara:        # 2026-10-27 照 PoE2 0.5 的「Forbidden Gaze」（原作有、我們以前沒有的）
   retired: true
@@ -8335,6 +8615,19 @@ crimson_door_shield:        # 2026-10-29 照 PoE2 0.5 的「Bloodbarrier」（po
     - text: "格擋時對目標造成持續 5 秒的腐化之血，每秒造成等同於你最大生命 50% 的物理傷害"
       stats:
         - { stat: block.corrupted_blood, type: FLAT, value: 50 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 暈眩門檻"
+      value: [20, 30]
+      stats:
+        - { stat: stun.threshold, type: INCREASED, value: "{value}" }
+    - text: "受到的傷害 {value}% 補償為生命"
+      value: [5, 10]
+      stats:
+        - { stat: life.recoup, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 最大生命"
+      value: [5, 10]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
 
 ashrise_crest:        # 2026-10-27 照 PoE2 0.5 的「Rise of the Phoenix」（原作有、我們以前沒有的）
   name: 鳳起聖盾
@@ -8362,6 +8655,20 @@ ashrise_crest:        # 2026-10-27 照 PoE2 0.5 的「Rise of the Phoenix」（�
     - text: "低血時，每秒回復 3% 最大生命"
       stats:
         - { stat: life.regen_percent@lowlife, type: FLAT, value: 3 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "你擊殺的點燃中敵人有 {value}% 機率爆炸，造成等同牠最大生命十分之一的火焰傷害"   # 新：unique.ignited_kill_explode（kill.explode 是一定爆、kill.explode_chance 是 100% 生命物理傷害，都不合）
+      value: [5, 10]
+      stats:
+        - { stat: unique.ignited_kill_explode, type: FLAT, value: "{value}" }
+    - text: "增加 25% 點燃機率"   # PoE2 Flammability Magnitude（易燃幅度＝我們的點燃機率，照 affixes/corrupted.yml 站長的定義）
+      stats:
+        - { stat: ignite.chance, type: INCREASED, value: 25 }
+    - text: "+1 全部火焰技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [fire] }
+    - text: "點燃時每秒回復 3% 最大生命"
+      stats:
+        - { stat: life.regen_percent@ignited, type: FLAT, value: 3 }
 
 unmoving_tower:        # 2026-10-27 照 PoE2 0.5 的「Dionadair」（原作有、我們以前沒有的）
   name: 不移塔盾
@@ -8856,6 +9163,20 @@ rathpith_globe:        # 2026-11-01 照 PoE2 0.5 的「Rathpith Globe」（原�
     - text: "每 100 最大生命，增加 6% 非引導法術的傷害"
       stats:
         - { stat: damage.spell_per_100_life, type: INCREASED, value: 6 }   # AttributeScalingKeys
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 生命消耗效率"   # (8—15)% increased Life Cost Efficiency
+      value: [8, 15]
+      stats:
+        - { stat: skill.life_cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "每 100 最大生命，增加 3% 非引導法術的異常狀態幅度"   # Non-Channelling Spells have 3% increased Magnitude of Ailments per 100 maximum Life
+      stats:
+        - { stat: ailment.magnitude_spell_per_100_life, type: INCREASED, value: 3 }   # 2026-11-07 新的（NEEDS）：AttributeScalingKeys
+    - text: "每 100 最大魔力，增加 3% 非引導法術的暴擊率"   # Non-Channelling Skills have 3% increased Spell Critical Hit Chance per 100 maximum Mana
+      stats:
+        - { stat: crit.spell_per_100_mana, type: INCREASED, value: 3 }   # 2026-11-07 新的（NEEDS）：crit.spell_per_100_life 的魔力版
+    - text: "每 100 最大魔力，增加 6% 非引導法術的傷害"   # Non-Channelling Spells deal 6% increased Damage per 100 maximum Mana
+      stats:
+        - { stat: damage.nonchannel_spell_per_100_mana, type: INCREASED, value: 6 }   # 2026-11-07 新的（NEEDS）：現有的 damage.spell_per_100_mana 對全部法術（含引導），不一樣
 
 undying_ember_focus:        # 2026-10-27 照 PoE2 0.5 的「The Eternal Spark」（原作有、我們以前沒有的）
   name: 永燃火花
@@ -9008,6 +9329,19 @@ empress_insight:        # 2026-10-28 照 PoE2 0.5 的「Atziri's Acuity」（原
         - { stat: life.regen, type: MORE, value: -100 }
         - { stat: life.regen_percent, type: MORE, value: -100 }
         - { stat: flask.life_recovery, type: MORE, value: -100 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 最大能量護盾"
+      value: [100, 150]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 最大生命"
+      value: [5, 10]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 流血機率"
+      value: [30, 50]
+      stats:
+        - { stat: bleed.chance, type: INCREASED, value: "{value}" }
 
 wickmaker:        # 2026-10-28 照 PoE2 0.5 的「Candlemaker」（原作有、我們以前沒有的）
   name: 蠟燭匠
@@ -9069,6 +9403,23 @@ seamwright:        # 2026-10-28 照 PoE2 0.5 的「Demon Stitcher」（原作有
       value: [5, 15]
       stats:
         - { stat: servant_corpse_swap.es_on_spell, type: FLAT, value: "{value}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 消耗效率"
+      value: [20, 30]
+      stats:
+        - { stat: skill.cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "{value}% 最大生命轉換為能量護盾"
+      value: [10, 15]
+      stats:
+        - { stat: life.convert_es, type: FLAT, value: "{value}" }
+    - text: "法術魔力消耗的 {value}% 改成生命消耗"
+      value: [25, 50]
+      stats:
+        - { stat: skill.life_cost_percent, type: FLAT, value: "{value}", tags: [spell] }
+    - text: "增加 {value}% 你身上的秘術增強效果"   # surging_chant.effect（TreeNewMechanicKeys.ARCANE_SURGE_EFFECT）；要登記進 UniqueStats.SHARED
+      value: [20, 40]
+      stats:
+        - { stat: surging_chant.effect, type: INCREASED, value: "{value}" }
 
 fearfist:        # 2026-10-28 照 PoE2 0.5 的「Dreadfist」（原作有、我們以前沒有的）
   name: 恐懼之拳
@@ -9262,6 +9613,21 @@ restless_hands:        # 2026-10-28 照 PoE2 0.5 的「Idle Hands」（原作有
     - text: "魔力在最大魔力的 90% 以上就算滿魔力"
       stats:
         - { stat: mana.full_threshold, type: FLAT, value: 90 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "物理攻擊傷害的 {value}% 偷取為魔力"
+      value: [4, 6]
+      stats:
+        - { stat: leech.mana, type: FLAT, value: "{value}", tags: [attack, physical] }
+    - text: "增加 {value}% 最大魔力"
+      value: [10, 20]
+      stats:
+        - { stat: mana.max, type: INCREASED, value: "{value}" }
+    - text: "增加 25% 魔力消耗效率"
+      stats:
+        - { stat: skill.mana_cost_efficiency, type: INCREASED, value: 25 }
+    - text: "滿魔力時，元技能增加 25% 獲得的能量"
+      stats:
+        - { stat: meta.energy_gain@fullmana, type: INCREASED, value: 25 }
 
 irongrip_gauntlets:        # 2026-10-28 照 PoE2 0.5 的「Jarngreipr」（原作有、我們以前沒有的）
   name: 鐵握
@@ -9486,6 +9852,22 @@ festerfinger:        # 2026-10-28 照 PoE2 0.5 的「Plaguefinger」（原作有
     - text: "擊中的所有傷害都算進中毒幅度"
       stats:
         - { stat: flag.all_damage_poisons, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+1 全部混沌技能等級"
+      stats:
+        - { stat: skill.level, type: FLAT, value: 1, tags: [chaos] }
+    - text: "擊中時 {value}% 機率致盲敵人"
+      value: [5, 10]
+      stats:
+        - { stat: blind.chance, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 你造成的中毒幅度"
+      value: [10, 16]
+      stats:
+        - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 你對未中毒目標造成的中毒幅度"
+      value: [30, 60]
+      stats:
+        - { stat: poison.magnitude, type: INCREASED, value: "{value}", tags: [vs_notpoisoned] }
 
 misery_shackles:        # 2026-10-28 照 PoE2 0.5 的「Shackles of the Wretched」（原作有、我們以前沒有的）
   name: 苦難枷鎖
@@ -9517,6 +9899,36 @@ misery_shackles:        # 2026-10-28 照 PoE2 0.5 的「Shackles of the Wretched
     - text: "你造成的詛咒會反射給你"
       stats:
         - { stat: flag.curse_reflect_self, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 詛咒效果"   # (10—20)% increased Curse Magnitudes
+      value: [10, 20]
+      stats:
+        - { stat: curse.effect, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 凍結持續時間"   # (10—20)% increased Freeze Duration on Enemies
+      value: [10, 20]
+      stats:
+        - { stat: freeze.duration, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 點燃傷害"   # (20—40)% increased Ignite Magnitude
+      value: [20, 40]
+      stats:
+        - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 感電效果"   # (20—40)% increased Magnitude of Shock you inflict
+      value: [20, 40]
+      stats:
+        - { stat: shock.effect, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 冰緩效果"   # (20—40)% increased Magnitude of Chill you inflict
+      value: [20, 40]
+      stats:
+        - { stat: chill.effect, type: INCREASED, value: "{value}" }
+    - text: "你身上每有一個詛咒，增加 {value}% 傷害"   # (10—15)% increased Damage per Curse on you
+      value: [10, 15]
+      # 2026-11-07：照門檻條件 selfcurses（TreeConditions.SELF_CURSES，石拳之道用過 @selfcurses1）拆成每多一個詛咒一份，寫到 5 個
+      stats:
+        - { stat: damage@selfcurses1, type: INCREASED, value: "{value}" }
+        - { stat: damage@selfcurses2, type: INCREASED, value: "{value}" }
+        - { stat: damage@selfcurses3, type: INCREASED, value: "{value}" }
+        - { stat: damage@selfcurses4, type: INCREASED, value: "{value}" }
+        - { stat: damage@selfcurses5, type: INCREASED, value: "{value}" }
 
 peerless:        # 2026-10-28 照 PoE2 0.5 的「Sine Aequo」（原作有、我們以前沒有的）
   name: 舉世無雙
@@ -9780,6 +10192,31 @@ glimpse_of_chaos:        # 2026-11-04 照 PoE2 0.5 的「Glimpse of Chaos」（p
     - text: "混沌抗性為 0"
       stats:
         - { stat: flag.chaos_res_zero, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 最大能量護盾"
+      value: [50, 150]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 混沌傷害"
+      value: [1, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [chaos] }
+    - text: "增加 {value}% 冰冷傷害"
+      value: [1, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [cold] }
+    - text: "增加 {value}% 閃電傷害"
+      value: [1, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [lightning] }
+    - text: "增加 {value}% 火焰傷害"
+      value: [1, 60]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [fire] }
+    - text: "+{value}% 混沌抗性"   # 2026-11-07 注意：原本的「混沌抗性為 0」（flag.chaos_res_zero）還在的話這條沒用（見 NEEDS）
+      value: [1, 60]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
 
 zerphi_genesis:        # 2026-11-04 照 PoE2 0.5 的「Zerphi's Genesis」（poe2db：澤佛伊的創世紀）
   name: 血契新生        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「澤佛伊的創世紀」（原作的中文名）
@@ -9817,6 +10254,25 @@ zerphi_genesis:        # 2026-11-04 照 PoE2 0.5 的「Zerphi's Genesis」（poe
     - text: "免疫腐化之血"
       stats:
         - { stat: flag.corrupted_blood_immune, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 護符每次用掉的充能"
+      value: [10, 30]
+      stats:
+        - { stat: charm.charges_used, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護符拿到的充能"
+      value: [10, 30]
+      stats:
+        - { stat: charm.charges_gained, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 藥劑生命回復"
+      value: [10, 30]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+    - text: "護符每秒獲得 0.5 點充能"
+      stats:
+        - { stat: charm.charges_per_minute, type: FLAT, value: 30 }
+    - text: "使用生命藥劑時移除流血"   # 新：flag.life_flask_removes_bleed
+      stats:
+        - { stat: flag.life_flask_removes_bleed, type: FLAT, value: 1 }
 
 mahuxotl_machination:        # 2026-11-04 照 PoE2 0.5 的「Mahuxotl's Machination」（poe2db：瑪哈薩多的陰謀）
   name: 魂核詭盾        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「瑪哈薩多的陰謀」（原作的中文名）
@@ -9841,6 +10297,15 @@ mahuxotl_machination:        # 2026-11-04 照 PoE2 0.5 的「Mahuxotl's Machinat
     - text: "永恆奉獻：能量護盾全滿時犧牲全部，獲得 +5% 全部抗性上限 4 秒"   # 2026-11-04 照站長（poe2db Everlasting Sacrifice；PlayerStateService 回充那邊）
       stats:
         - { stat: es.everlasting_sacrifice, type: FLAT, value: 5 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "能量護盾開始回充速度加快 {value}%"   # (33—66)% faster start of Energy Shield Recharge
+      value: [33, 66]
+      stats:
+        - { stat: es.delay, type: INCREASED, value: "-{value}" }   # 2026-11-07 照天賦樹同一種詞的寫法（INCREASED 負的）；原作「加快 x%」＝等待 ÷(1＋x)，數值大時有落差，見 NEEDS
+    - text: "護甲的 {value}% 也套用在元素傷害上"   # +(33—66)% of Armour also applies to Elemental Damage
+      value: [33, 66]
+      stats:
+        - { stat: armour.elemental, type: FLAT, value: "{value}" }
 
 vitality_spirit:        # 2026-11-04 照 PoE2 0.5 的試煉大師傳奇（poe2db：朝氣之靈，鑽石）
   name: 蝕光之心        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「朝氣之靈」（原作的中文名）
@@ -9856,6 +10321,47 @@ vitality_spirit:        # 2026-11-04 照 PoE2 0.5 的試煉大師傳奇（poe2db
       value: [0, 150]
       stats:
         - { stat: jewel.corrupted_magic_effect, type: INCREASED, value: "{value}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "減少 {value}% 全域物理傷害"   # (-30—30)% reduced Global Physical Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [physical] }
+    - text: "嵌著已腐化稀有珠寶的珠寶孔，那顆珠寶的效果增加 {value}%"   # (0—75)% increased Effect of Jewel Socket Passive Skills containing Corrupted Rare Jewels
+      value: [0, 75]
+      stats:
+        - { stat: jewel.corrupted_rare_effect, type: INCREASED, value: "{value}" }   # 2026-11-07 新的（NEEDS）：jewel.corrupted_magic_effect 的稀有版
+    - text: "減少 {value}% 火焰傷害"   # (-30—30)% reduced Fire Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [fire] }
+    - text: "減少 {value}% 冰冷傷害"   # (-30—30)% reduced Cold Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [cold] }
+    - text: "減少 {value}% 閃電傷害"   # (-30—30)% reduced Lightning Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [lightning] }
+    - text: "減少 {value}% 混沌傷害"   # (-30—30)% reduced Chaos Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [chaos] }
+    - text: "減少 {value}% 護甲"   # (-30—30)% reduced Armour（珠寶上是全域的）
+      value: [-30, 30]
+      stats:
+        - { stat: armour, type: INCREASED, value: "-{value}" }
+    - text: "減少 {value}% 閃避"   # (-30—30)% reduced Evasion Rating
+      value: [-30, 30]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "-{value}" }
+    - text: "{value} 最大能量護盾"   # (-30—30) to maximum Energy Shield
+      value: [-30, 30]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "召喚物減少 {value}% 傷害"   # Minions deal (-30—30)% reduced Damage
+      value: [-30, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "-{value}", tags: [minion] }
 
 # ---- 迷霧之主・無面（fog_trial）：科西斯、譫妄異域 ----
 perfidy_armour:        # 2026-11-04 照 PoE2 0.5 的「Perfidy」（poe2db：背信忘義）
@@ -10065,3 +10571,939 @@ prism_of_belief:        # 2026-11-04 照 PoE2 0.5 的「Prism of Belief」（poe
       value: [1, 3]
       stats:
         - { stat: skill.level.picked, type: FLAT, value: "{value}" }
+
+# =====================================================================================================
+# 2026-11-07 照站長「瓦爾的傳奇補齊」：PoE2 0.5（瓦爾命途）原作有、我們以前沒有的 18 件（名字是自己的）。
+# 原作沒有掉落限制的是全域掉落（rarity 照檔頭的 NeverSink 對照表）；原作「瓦爾命途 Dropped by」（阿茲里）的三件
+#   放進星脈深坑每 10 層的深坑守衛（delve_guardian，2026-11-07 新的來源，見 NEEDS_new_uniques.md）。
+# 第 19 件「The Adorned」（poe2db：朝氣之靈）我們已經有了：蝕光之心（vitality_spirit，2026-11-04 試煉大師那一批），不重複定義。
+# 要新機制的屬性鍵都列在 NEEDS_new_uniques.md。
+# =====================================================================================================
+
+soul_tether_belt:        # 2026-11-07 照 PoE2 0.5 的「Soul Tether」（poe2db：靈魂束縛）
+  name: 縛魂之繩
+  base: jbelt_long        # 原作基底 Long Belt（長結束帶）
+  drop_level: 20
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-11-07 照 PoE2 稀有度（Soul Tether／Long Belt：t3）
+  flavour:
+    - "「繩子的另一頭綁著誰的魂，你最好別去拉。」"
+  # 原作「有 1–3 個護符欄位」「增加 15–20% 護符效果持續時間」是長結束帶本來的固定詞綴，不重寫
+  mods:
+    - text: "+{value} 最大能量護盾"
+      value: [40, 60]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "每秒失去 5% 最大能量護盾"   # 新機制（NEEDS：es.loss_percent，照 life.loss_percent／mana.loss_percent）
+      stats:
+        - { stat: es.loss_percent, type: FLAT, value: 5 }
+    - text: "偷取的生命溢出的部分改成回復能量護盾"   # 新機制（NEEDS：flag.leech_excess_to_es）
+      stats:
+        - { stat: flag.leech_excess_to_es, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 能量護盾回復速度"   # 新：es.recovery_rate
+      value: [10, 15]
+      stats:
+        - { stat: es.recovery_rate, type: INCREASED, value: "{value}" }
+    - text: "每秒失去 {value/10}% 最大生命"
+      value: [25, 50]
+      stats:
+        - { stat: life.loss_percent, type: FLAT, value: "{value/10}" }
+    - text: "增加 {value}% 生命偷取速度"   # 2026-11-07 原作「Leech Life (-25—25)% slower」，對稱範圍改寫；leech.rate 目前生命、魔力偷取共用（見 NEEDS）
+      value: [-25, 25]
+      stats:
+        - { stat: leech.rate, type: INCREASED, value: "{value}" }
+    - text: "生命回復改成回復能量護盾"
+      stats:
+        - { stat: flag.regen_to_es, type: FLAT, value: 1 }
+
+red_sun_greathelm:        # 2026-11-07 照 PoE2 0.5 的「Corona of the Red Sun」（poe2db：紅日之冕）
+  name: 赤陽戰冕
+  base: helm_str_20        # 原作基底 Warrior Greathelm（精鐵戰盔）
+  stat_base: helm_str_06          # 原作基底那一階的數值
+  drop_level: 36
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Corona of the Red Sun／Warrior Greathelm：hideable）
+  flavour:
+    - "「紅日落下的地方，喝血的不只你一個。」"
+  mods:
+    - text: "+{value} 命中"
+      value: [100, 150]
+      stats:
+        - { stat: accuracy, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [60, 80]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value}% 火焰抗性"
+      value: [20, 25]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+    - text: "增加 25% 光照範圍"   # 2026-11-07 新機制（NEEDS：light.radius；我們只有星脈深坑有光照，接深坑的光照範圍；之前黑日巨盔的同類詞綴沒做）
+      stats:
+        - { stat: light.radius, type: INCREASED, value: 25 }
+    - text: "你的擊中偷取生命時，你臨在範圍內的友方也偷取同樣多的生命"   # 新機制（NEEDS：presence.ally_leech_life）
+      stats:
+        - { stat: presence.ally_leech_life, type: FLAT, value: 100 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 全部召喚物技能等級"
+      value: [1, 2]
+      stats:
+        - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
+    - text: "增加 {value}% 臨在範圍"
+      value: [25, 50]
+      stats:
+        - { stat: presence.area, type: INCREASED, value: "{value}" }
+    - text: "+{value} 護甲"
+      value: [100, 150]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
+
+coward_legacy_belt:        # 2026-11-07 照 PoE2 0.5 的「Coward's Legacy」（poe2db：懦夫的遺產）
+  name: 怯者遺帶
+  base: jbelt_mail        # 原作基底 Mail Belt（環鏈束帶）
+  drop_level: 40
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-11-07 照 PoE2 稀有度（Coward's Legacy／Mail Belt：t3）
+  flavour:
+    - "「他活得比誰都久，因為他永遠覺得自己快死了。」"
+  # 原作「有 1–3 個護符欄位」「減少 10–15% 藥劑每次消耗的充能」是環鏈束帶本來的固定詞綴，不重寫
+  mods:
+    - text: "-{value} 力量"   # 原作 (-20—-10) to Strength
+      value: [10, 20]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "-{value}" }
+    - text: "+{value} 敏捷"
+      value: [20, 30]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 藥劑的生命與魔力回復"
+      value: [30, 40]
+      stats:
+        - { stat: flask.life_recovery, type: INCREASED, value: "{value}" }
+        - { stat: flask.mana_recovery, type: INCREASED, value: "{value}" }
+    - text: "改成生命在最大生命的 75% 以下就算低血"   # 新機制（NEEDS：life.low_threshold，照 mana.low_threshold）
+      stats:
+        - { stat: life.low_threshold, type: FLAT, value: 75 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "低血時，每秒回復 {value}% 最大生命"
+      value: [2, 3]
+      stats:
+        - { stat: life.regen_percent@lowlife, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 藥劑充能獲取"
+      value: [20, 30]
+      stats:
+        - { stat: flask.charges_gained, type: INCREASED, value: "{value}" }
+    - text: "低血時，+{value} 閃避"
+      value: [100, 150]
+      stats:
+        - { stat: evasion@lowlife, type: FLAT, value: "{value}" }
+
+cataclysm_seed_ring:        # 2026-11-07 照 PoE2 0.5 的「Seed of Cataclysm」（poe2db：浩劫種子）
+  name: 劫種之戒
+  base: jring_02        # 原作基底 Lazuli Ring（青晶指環：+20–30 最大魔力）
+  drop_level: 1
+  sources: [map_boss, chance, gamble]
+  rarity: rare        # 2026-11-07 照 PoE2 稀有度（Seed of Cataclysm／Lazuli Ring：multispecial）
+  flavour:
+    - "「第一道裂縫最亮，後面的就一道比一道暗。」"
+  mods:
+    - text: "增加 {value}% 法術暴擊率"
+      value: [30, 50]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}", tags: [spell] }
+    - text: "最近每用法術造成一次暴擊，減少 5% 法術暴擊傷害加成"   # 新機制（NEEDS：crit.bonus_per_recent_spell_crit；最近＝4 秒）
+      stats:
+        - { stat: crit.bonus_per_recent_spell_crit, type: INCREASED, value: -5, tags: [spell] }
+    - text: "+{value}% 混沌抗性"
+      value: [13, 17]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "增加 10% 技能魔力消耗"
+      stats:
+        - { stat: skill.cost, type: INCREASED, value: 10 }
+    - text: "法術傷害的暴擊有 {value}% 機率為幸運"   # 新機制（NEEDS：damage.lucky_crit；damage.lucky 是暴擊判定前擲的，不能直接用）
+      value: [15, 30]
+      stats:
+        - { stat: damage.lucky_crit, type: FLAT, value: "{value}", tags: [spell] }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 法術暴擊傷害加成"
+      value: [30, 50]
+      stats:
+        - { stat: crit.bonus, type: INCREASED, value: "{value}", tags: [spell] }
+    - text: "若你最近造成過暴擊，增加 {value}% 施法速度"   # 2026-11-07 原作「(-15—15)% reduced Cast Speed if you've dealt a Critical Hit Recently」，對稱範圍改寫
+      value: [-15, 15]
+      stats:
+        - { stat: cast.speed@crit, type: INCREASED, value: "{value}" }
+    - text: "暴擊時 {value}% 機率獲得一層易爆"   # volatility.on_crit（SupportExtraKeys）；要登記進 UniqueStats.SHARED
+      value: [30, 50]
+      stats:
+        - { stat: volatility.on_crit, type: FLAT, value: "{value}" }
+    - text: "法術技能有 {value}% 機率往四周一圈多射 8 發投射物"   # 新：unique.spell_nova_chance
+      value: [5, 10]
+      stats:
+        - { stat: unique.spell_nova_chance, type: FLAT, value: "{value}", tags: [spell] }
+
+serpent_lesson_focus:        # 2026-11-07 照 PoE2 0.5 的「Serpent's Lesson」（poe2db：巨蛇教誨）
+  name: 蛇語之訓
+  base: focus_23        # 原作基底 Tonal Focus（鍛紋法器）
+  stat_base: focus_05          # 原作基底那一階的數值
+  drop_level: 22
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Serpent's Lesson／Tonal Focus：hideable）
+  flavour:
+    - "「蛇只教一件事：餓的時候，什麼都像獵物。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [60, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [60, 100]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "魔力在最大魔力的 35% 以下時也算低血"   # 新機制（NEEDS：life.low_from_mana）
+      stats:
+        - { stat: life.low_from_mana, type: FLAT, value: 35 }
+    - text: "生命在最大生命的 35% 以下時也算貧魔"   # 新機制（NEEDS：mana.low_from_life）
+      stats:
+        - { stat: mana.low_from_life, type: FLAT, value: 35 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 最大能量護盾"
+      value: [60, 100]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "受到的傷害 {value}% 補償為生命、魔力與能量護盾"
+      value: [5, 10]
+      stats:
+        - { stat: life.recoup, type: FLAT, value: "{value}" }
+        - { stat: mana.recoup, type: FLAT, value: "{value}" }
+        - { stat: es.recoup, type: FLAT, value: "{value}" }
+
+tetzla_desire_robe:        # 2026-11-07 照 PoE2 0.5 的「Tetzlapokal's Desire」（poe2db：特沙波卡爾之慾）
+  name: 渴血祭袍
+  base: body_int_20        # 原作基底 Votive Raiment（鋼脊法袍）
+  stat_base: body_int_07          # 原作基底那一階的數值
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Tetzlapokal's Desire／Votive Raiment：hideable）
+  flavour:
+    - "「祭壇上流乾的血，會自己慢慢流回來。」"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [100, 150]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 力量"
+      value: [20, 30]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "生命會回充（像能量護盾一樣）"   # 新機制（NEEDS：flag.life_recharges）
+      stats:
+        - { stat: flag.life_recharges, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "每 4 點力量增加 1% 能量護盾回充速度"   # 新：per_str.es_recharge
+      stats:
+        - { stat: per_str.es_recharge, type: FLAT, value: 1 }
+    - text: "{value}% 最大生命轉換為能量護盾"
+      value: [10, 15]
+      stats:
+        - { stat: life.convert_es, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [70, 100]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+
+stitched_demon_mask:        # 2026-11-07 照 PoE2 0.5 的「Mask of the Stitched Demon」（poe2db：惡縫之面）
+  name: 綴魔假面
+  base: helm_int_20        # 原作基底 Feathered Tiara（鍛紋頭冠）
+  stat_base: helm_int_05          # 原作基底那一階的數值
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Mask of the Stitched Demon／Feathered Tiara：hideable）
+  flavour:
+    - "「縫上去的臉不會笑，只會一直吸氣。」"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [120, 160]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [17, 23]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "無法擁有能量護盾"   # 新機制（NEEDS：flag.no_energy_shield；下一條照歸零之前的最大能量護盾算）
+      stats:
+        - { stat: flag.no_energy_shield, type: FLAT, value: 1 }
+    - text: "每 1 點最大能量護盾每秒回復 0.05 生命"   # 新機制（NEEDS：per_es.life_regen，照 per_int.life_regen）
+      stats:
+        - { stat: per_es.life_regen, type: FLAT, value: 0.05 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value} 最大能量護盾"   # 2026-11-07 注意：原本的「無法擁有能量護盾」還在的話這條只會加大「每 1 點最大能量護盾回復 0.05 生命」的量（見 NEEDS）
+      value: [70, 100]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [60, 80]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 全部屬性"
+      value: [17, 23]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+
+apep_supremacy_focus:        # 2026-11-07 照 PoE2 0.5 的「Apep's Supremacy」（poe2db：艾普霸權）
+  name: 蛇王霸印
+  base: focus_23        # 原作基底 Voodoo Focus（鋼脊法器）
+  stat_base: focus_07          # 原作基底那一階的數值
+  drop_level: 33
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-11-07 照 PoE2 稀有度（Apep's Supremacy／Voodoo Focus：t3）
+  flavour:
+    - "「毒是蛇王的語言，牠說話的時候，自己也在聽。」"
+  mods:
+    - text: "增加 {value}% 能量護盾"
+      value: [100, 200]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 能量護盾回充速度"
+      value: [30, 50]
+      stats:
+        - { stat: es.recharge, type: INCREASED, value: "{value}" }
+    - text: "受到的擊中元素傷害有 20% 視為混沌傷害"   # 新機制（NEEDS：taken.elemental_as_chaos，照 taken.physical_as_chaos）
+      stats:
+        - { stat: taken.elemental_as_chaos, type: FLAT, value: 20 }
+    - text: "+25% 被中毒的機率"   # 新機制（NEEDS：poison.chance_taken）
+      stats:
+        - { stat: poison.chance_taken, type: FLAT, value: 25 }
+    - text: "法術傷害擊中時 100% 機率造成中毒"
+      stats:
+        - { stat: poison.chance, type: FLAT, value: 100, tags: [spell] }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "能量護盾提前 {value}% 開始充能"   # 照既有詞綴的寫法（es.delay INCREASED 負的）；原作是速度（等待 ÷ (1 + x)），見 NEEDS
+      value: [30, 50]
+      stats:
+        - { stat: es.delay, type: INCREASED, value: "-{value}" }
+    - text: "+{value}% 混沌抗性"
+      value: [16, 26]
+      stats:
+        - { stat: resist.chaos, type: FLAT, value: "{value}" }
+    - text: "每秒回復 {value/10}% 最大生命"
+      value: [15, 30]
+      stats:
+        - { stat: life.regen_percent, type: FLAT, value: "{value/10}" }
+    - text: "你中毒時，增加 {value}% 你造成的中毒幅度"   # 新條件 @poisoned（自己中毒中）
+      value: [30, 40]
+      stats:
+        - { stat: poison.magnitude@poisoned, type: INCREASED, value: "{value}" }
+
+doryani_prototype:        # 2026-11-07 照 PoE2 0.5 的「Doryani's Prototype」（poe2db：多里亞尼之型）
+  name: 雷構原甲
+  base: body_str_dex_27        # 原作基底 Scale Mail（精鐵鱗甲）
+  stat_base: body_str_dex_06          # 原作基底那一階的數值
+  drop_level: 37
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Doryani's Prototype／Scale Mail：hideable）
+  flavour:
+    - "「第一副成功的鎧甲，殺死了它的第一個主人。」"
+  mods:
+    - text: "增加 {value}% 護甲與閃避"
+      value: [50, 100]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [60, 80]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "護甲的 100% 也套用在閃電傷害上"
+      stats:
+        - { stat: armour.elemental, type: FLAT, value: 100, tags: [lightning] }   # DamageCalculator 照傷害類型的標籤查（只算閃電）
+    - text: "你臨在範圍內的敵人，閃電抗性跟你的一樣"   # 新機制（NEEDS：presence.lightning_resist_equal，combat.Presence）
+      stats:
+        - { stat: presence.lightning_resist_equal, type: FLAT, value: 1 }
+    - text: "閃電抗性不影響你受到的閃電傷害"   # 新機制（NEEDS：flag.lightning_resist_ignored）
+      stats:
+        - { stat: flag.lightning_resist_ignored, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "傷害穿透 {value}% 閃電抗性"   # Damage Penetrates (10—20)% Lightning Resistance
+      value: [10, 20]
+      stats:
+        - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
+    - text: "{value}% 閃電抗性"   # (-60—60)% to Lightning Resistance（配原本的「臨在範圍的敵人閃電抗性跟你一樣」）
+      value: [-60, 60]
+      stats:
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "你的擊中穿透元素抗性時最低可以降到 -50%"   # Your Hits can Penetrate Elemental Resistances down to a minimum of -50%
+      stats:
+        - { stat: penetration.minimum, type: FLAT, value: -50 }   # 2026-11-07 新的（NEEDS）：DamageCalculator.PENETRATION_MINIMUM 目前固定 0
+    - text: "+{value} 護甲"   # +(260—400) to Armour（本地）
+      value: [260, 400]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
+
+constricting_cap:        # 2026-11-07 照 PoE2 0.5 的「Constricting Command」（poe2db：限制之令）
+  name: 纏絞之令
+  base: helm_dex_20        # 原作基底 Viper Cap（精鐵皮帽）
+  stat_base: helm_dex_06          # 原作基底那一階的數值
+  drop_level: 38
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-11-07 照 PoE2 稀有度（Constricting Command／Viper Cap：t3）
+  flavour:
+    - "「蛇從不數獵物有幾隻，牠只管纏緊。」"
+  mods:
+    - text: "+{value} 最大生命"
+      value: [80, 120]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "+{value} 全部屬性"
+      value: [10, 15]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "每秒回復 {value} 生命"
+      value: [8, 12]
+      stats:
+        - { stat: life.regen, type: FLAT, value: "{value}" }
+    - text: "被包圍需要的敵人少 {value} 隻"   # 新機制（NEEDS：surrounded.fewer；基本 5 隻，TreeConditions.SURROUNDED_COUNT）
+      value: [2, 4]
+      stats:
+        - { stat: surrounded.fewer, type: FLAT, value: "{value}" }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "被包圍時，減少 {value}% 攻擊傷害"   # (-40—40)% reduced Attack Damage while Surrounded
+      value: [-40, 40]
+      stats:
+        - { stat: damage@surrounded, type: INCREASED, value: "-{value}", tags: [attack] }
+    - text: "被包圍時，每秒回復 {value/10}% 最大生命"   # Regenerate (0.5—1.5)% of maximum Life per second while Surrounded
+      value: [5, 15]
+      stats:
+        - { stat: life.regen_percent@surrounded, type: FLAT, value: "{value/10}" }
+    - text: "+{value} 護甲"   # +(60—75) to Armour（本地）
+      value: [60, 75]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 被包圍判定範圍"   # (20—60)% increased Surrounded Area of Effect
+      value: [20, 60]
+      stats:
+        - { stat: surrounded.area, type: INCREASED, value: "{value}" }   # TreeLastKeys.SURROUNDED_AREA
+
+quecholli_maul:        # 2026-11-07 照 PoE2 0.5 的「Quecholli」（poe2db：重擊之錘）
+  name: 爆心巨錘
+  base: mace2_27        # 原作基底 Crumbling Maul（鑄紋巨錘）
+  stat_base: mace2_08          # 原作基底那一階的數值
+  drop_level: 38
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Quecholli／Crumbling Maul：hideable）
+  flavour:
+    - "「每一錘都正中要害，只是沒有一錘比較痛。」"
+  mods:
+    - text: "用暴擊殺死的敵人爆炸，造成牠最大生命 10% 的物理傷害"   # 新機制（NEEDS：kill.explode_crit；kill.explode 是火焰、不限暴擊）
+      stats:
+        - { stat: kill.explode_crit, type: FLAT, value: 10 }
+    - text: "增加 {value}% 物理傷害"
+      value: [100, 150]
+      stats:
+        - { stat: local.physical, type: INCREASED, value: "{value}" }
+    - text: "+{value} 全部屬性"
+      value: [10, 15]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "每擊殺一個敵人回復 30 生命"
+      stats:
+        - { stat: life.per_kill, type: FLAT, value: 30 }
+    - text: "這把武器的擊中沒有暴擊傷害加成"   # 新機制（NEEDS：local.no_crit_bonus；crit.bonus_override 寫 0 沒效果，而且不分武器）
+      stats:
+        - { stat: local.no_crit_bonus, type: FLAT, value: 1 }
+    - text: "這把武器的暴擊率是 100%"   # 新機制（NEEDS：local.crit_override；crit.attack_override 不分武器，徒手攻擊也會吃到）
+      stats:
+        - { stat: local.crit_override, type: FLAT, value: 100 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "若你最近擊殺過，增加 {value}% 範圍效果"   # (10—25)% increased Area of Effect if you've Killed Recently
+      value: [10, 25]
+      stats:
+        - { stat: skill.area@kill, type: INCREASED, value: "{value}" }
+    - text: "你親自使用的猛擊技能有 {value}% 機率額外造成 1 次餘震"   # (5—10)% chance for Slam Skills you use yourself to cause an additional Aftershock
+      value: [5, 10]
+      stats:
+        - { stat: slam.aftershock_chance, type: FLAT, value: "{value}", tags: [slam] }
+    - text: "增加 {value}% 力量"   # (5—10)% increased Strength
+      value: [5, 10]
+      stats:
+        - { stat: attr.str, type: INCREASED, value: "{value}" }
+    - text: "附加 {min} 到 {max} 物理傷害"   # Adds (40—60) to (70—90) Physical Damage
+      min: [40, 60]
+      max: [70, 90]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+
+snakepit_ring:        # 2026-11-07 照 PoE2 0.5 的「Snakepit」（poe2db：蛇巢）
+  name: 蛇窟之環
+  base: jring_08        # 原作基底 Pearl Ring（詠珠指環：增加 7–10% 施法速度，需求等級 32）
+  drop_level: 32
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Snakepit／Pearl Ring：hideable；同基底的攫命之環是 uncommon）
+  flavour:
+    - "「左邊的蛇分頭咬，右邊的蛇一口接一口。」"
+  # 左手／右手的條件（@ring_left／@ring_right）是新機制，見 NEEDS（照裝備順序：第一枚左手、第二枚右手，跟 UniqueDerived.rings 一樣）
+  mods:
+    - text: "增加 {value}% 法術傷害"
+      value: [20, 30]
+      stats:
+        - { stat: damage, type: INCREASED, value: "{value}", tags: [spell] }
+    - text: "增加 {value}% 施法速度"
+      value: [10, 15]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "左手戒指：法術的投射物無法連鎖"
+      stats:
+        - { stat: flag.no_chain@ring_left, type: FLAT, value: 1, tags: [spell, projectile] }
+    - text: "左手戒指：法術的投射物會分裂"
+      stats:
+        - { stat: skill.split_shot@ring_left, type: FLAT, value: 1, tags: [spell, projectile] }
+    - text: "右手戒指：法術的投射物多連鎖 1 次"
+      stats:
+        - { stat: skill.chains@ring_right, type: FLAT, value: 1, tags: [spell, projectile] }
+    - text: "右手戒指：法術的投射物無法分裂"
+      stats:
+        - { stat: flag.no_fork@ring_right, type: FLAT, value: 1, tags: [spell, projectile] }
+    - text: "法術的投射物無法穿透"   # 新機制（NEEDS：flag.no_pierce）
+      stats:
+        - { stat: flag.no_pierce, type: FLAT, value: 1, tags: [spell, projectile] }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "法術技能有 {value}% 機率額外發射 2 個投射物"   # (5—10)% chance for Spell Skills to fire 2 additional Projectiles
+      value: [5, 10]
+      stats:
+        - { stat: skill.projectile_chance_two, type: FLAT, value: "{value}", tags: [spell] }
+    - text: "減少 {value}% 魔力消耗效率"   # (-30—30)% reduced Mana Cost Efficiency
+      value: [-30, 30]
+      stats:
+        - { stat: skill.mana_cost_efficiency, type: INCREASED, value: "-{value}" }
+    - text: "減少 {value}% 引星獲得的能量"   # Meta Skills gain (-30—30)% reduced Energy
+      value: [-30, 30]
+      stats:
+        - { stat: meta.energy_gain, type: INCREASED, value: "-{value}" }
+    - text: "減少 {value}% 法術技能的投射物速度"   # (-30—30)% reduced Projectile Speed for Spell Skills
+      value: [-30, 30]
+      stats:
+        - { stat: skill.projectile_speed, type: INCREASED, value: "-{value}", tags: [spell] }
+    - text: "技能有 {value}% 機率不移除元素灌注，但仍視為已消耗"   # Skills have (5—10)% chance to not remove Elemental Infusions but still count as consuming them
+      value: [5, 10]
+      stats:
+        - { stat: infusion.keep_chance, type: FLAT, value: "{value}" }
+
+zerphi_serape:        # 2026-11-07 照 PoE2 0.5 的「Zerphi's Serape」（poe2db：澤菲披肩）
+  name: 噬魂披衣
+  base: body_dex_int_18        # 原作基底 Scalper's Jacket（精鐵纏衣）
+  stat_base: body_dex_int_06          # 原作基底那一階的數值
+  drop_level: 39
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（Zerphi's Serape／Scalper's Jacket：hideable）
+  flavour:
+    - "「他披著別人的靈魂取暖，從來不嫌多。」"
+  mods:
+    - text: "增加 {value}% 閃避與能量護盾"
+      value: [60, 80]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大魔力"
+      value: [40, 60]
+      stats:
+        - { stat: mana.max, type: FLAT, value: "{value}" }
+    - text: "增加 50% 能力值需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: 50 }
+    - text: "減少 {value}% 生命再生速度"   # 原作 (-30—30)% reduced（負的＝增加）
+      value: [-30, 30]
+      stats:
+        - { stat: life.regen, type: INCREASED, value: "-{value}" }
+    - text: "減少 {value}% 魔力再生速度"   # 原作 (-30—30)% reduced（負的＝增加）
+      value: [-30, 30]
+      stats:
+        - { stat: mana.regen, type: INCREASED, value: "-{value}" }
+    - text: "噬魂者：臨在範圍內有敵人死掉時吞下牠的靈魂，每個靈魂增加 1% 技能速度（最多 50 個；4 秒沒吞到，每 0.5 秒少一個）"   # 新機制（NEEDS：flag.soul_eater；怪物版是 monster.soul_eater）
+      stats:
+        - { stat: flag.soul_eater, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 存在範圍"   # (15—30)% increased Presence Area of Effect
+      value: [15, 30]
+      stats:
+        - { stat: presence.area, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大能量護盾"   # +(90—120) to maximum Energy Shield（本地）
+      value: [90, 120]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "擊中傳奇敵人時吞噬一個靈魂（每 0.5 秒最多一次）"   # Eat a Soul when you Hit a Unique Enemy, no more than once every 0.5 seconds
+      stats:
+        - { stat: soul_eater.on_unique_hit, type: FLAT, value: 0.5 }   # 2026-11-07 新的（NEEDS）：要先有玩家的噬魂者（原本那條 Soul Eater）
+    - text: "減少 {value}% 消耗效率"   # (-30—30)% reduced Cost Efficiency
+      value: [-30, 30]
+      stats:
+        - { stat: skill.cost_efficiency, type: INCREASED, value: "-{value}" }
+
+covenant_robe:        # 2026-11-07 照 PoE2 0.5 的「The Covenant」（poe2db：血誓）
+  name: 命契法袍
+  base: body_int_20        # 原作基底 Altar Robe（鑄紋法袍）
+  stat_base: body_int_08          # 原作基底那一階的數值
+  drop_level: 40
+  sources: [map_boss, chance, gamble]
+  rarity: uncommon        # 2026-11-07 照 PoE2 稀有度（The Covenant／Altar Robe：t3）
+  flavour:
+    - "「契約寫得很清楚：你用掉的每一滴，都要先拿命來換。」"
+  mods:
+    - text: "賦予技能：生命殘息（等級 10）"   # 原作 Level 10 Life Remnants（生命痕跡＝我們昇華的 vital_residue）；固定等級是新機制（NEEDS：grant_skill 的值大於 1 當固定等級）
+      stats:
+        - { stat: grant_skill.vital_residue, type: FLAT, value: 10 }
+    - text: "增加 {value}% 能量護盾"
+      value: [100, 150]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [100, 150]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "法術傷害的 10% 偷取為生命"
+      stats:
+        - { stat: leech.life_spell, type: FLAT, value: 10 }
+    - text: "技能額外消耗等於魔力消耗 100% 的生命"   # 新機制（NEEDS：skill.extra_life_cost_of_mana；魔力照付，另外再扣生命）
+      stats:
+        - { stat: skill.extra_life_cost_of_mana, type: FLAT, value: 100 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 生命消耗效率"   # (10—25)% increased Life Cost Efficiency
+      value: [10, 25]
+      stats:
+        - { stat: skill.life_cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 最大生命"   # (5—10)% increased maximum Life
+      value: [5, 10]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
+    - text: "每秒回復 {value}% 最大生命"   # Regenerate (1—3)% of maximum Life per second
+      value: [1, 3]
+      stats:
+        - { stat: life.regen_percent, type: FLAT, value: "{value}" }
+
+empress_splendour:        # 2026-11-07 照 PoE2 0.5 的「Atziri's Splendour」（poe2db：阿茲里的威權）
+  name: 艾瑟琳的華儀
+  base: body_str_dex_int_01        # 原作基底 Sacrificial Regalia（祭紋華袍；2026-11-07 新的力敏智胸甲，只在星脈深坑小怪掉；同日稍早傳奇專用）
+  drop_level: 65
+  sources: [delve_guardian]        # 2026-11-07 照 PoE2：poe2db 限定「瓦爾命途」阿茲里掉落 → 我們的星脈深坑每 10 層的深坑守衛
+  weight: 100
+  rune_sockets: 6        # 原作「有 6 個增幅插槽（隱藏）」
+  flavour:
+    - "「女王的禮服只配鑲靈魂，其他的寶石都不夠格。」"
+  mods:
+    - text: "+1 全部已腐化技能寶石等級"   # 新機制（NEEDS：gem.corrupted_level，SkillService 照 entry.corrupted() 加）
+      stats:
+        - { stat: gem.corrupted_level, type: FLAT, value: 1 }
+    - text: "這件物品只能鑲嵌魂核符文"   # 新機制（NEEDS：local.only_soul_cores）
+      stats:
+        - { stat: local.only_soul_cores, type: FLAT, value: 1 }
+    - text: "沒有能力值需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: -100 }
+    - text: "增加 {value}% 護甲、閃避與能量護盾"
+      value: [80, 120]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value}% 全部元素抗性"
+      value: [10, 20]
+      stats:
+        - { stat: resist.fire, type: FLAT, value: "{value}" }
+        - { stat: resist.cold, type: FLAT, value: "{value}" }
+        - { stat: resist.lightning, type: FLAT, value: "{value}" }
+    - text: "已腐化寶石的技能有 50% 魔力消耗改成生命消耗"   # 新機制（NEEDS：gem.corrupted_life_cost_percent）
+      stats:
+        - { stat: gem.corrupted_life_cost_percent, type: FLAT, value: 50 }
+    - text: "嵌在這件上的魂核符文，也照隨機一種部位的效果算"   # 哪一種照這件的 UUID 決定（新的 UniquePicks 候選 core_slot，NEEDS：local.core_extra_slot）
+      stats:
+        - { stat: local.core_extra_slot, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "增加 {value}% 護甲"   # (200—300)% increased Armour
+      value: [200, 300]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 閃避"   # (200—300)% increased Evasion Rating
+      value: [200, 300]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 能量護盾"   # (200—300)% increased Energy Shield
+      value: [200, 300]
+      stats:
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲與閃避"   # (120—180)% increased Armour and Evasion
+      value: [120, 180]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 護甲與能量護盾"   # (120—180)% increased Armour and Energy Shield
+      value: [120, 180]
+      stats:
+        - { stat: armour, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 閃避與能量護盾"   # (120—180)% increased Evasion and Energy Shield
+      value: [120, 180]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 消耗效率"   # (10—20)% increased Cost Efficiency
+      value: [10, 20]
+      stats:
+        - { stat: skill.cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 嵌在這件上的魂核符文效果"   # (10—20)% increased effect of Socketed Soul Cores
+      value: [10, 20]
+      stats:
+        - { stat: local.core_effect, type: INCREASED, value: "{value}" }   # 同魂核詭盾
+    - text: "+{value} 護甲"   # +(100—200) to Armour
+      value: [100, 200]
+      stats:
+        - { stat: armour, type: FLAT, value: "{value}" }
+    - text: "+{value} 閃避"   # +(100—200) to Evasion Rating
+      value: [100, 200]
+      stats:
+        - { stat: evasion, type: FLAT, value: "{value}" }
+    - text: "+{value} 最大能量護盾"   # +(66—100) to maximum Energy Shield
+      value: [66, 100]
+      stats:
+        - { stat: es.max, type: FLAT, value: "{value}" }
+    - text: "嵌在這件上的魂核符文也照鞋子的效果算"   # This item gains bonuses from Socketed Soul Cores as though it was also Boots
+      stats:
+        - { stat: local.core_as.feet, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）
+    - text: "嵌在這件上的魂核符文也照手套的效果算"   # This item gains bonuses from Socketed Soul Cores as though it was also Gloves
+      stats:
+        - { stat: local.core_as.legs, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）：手套＝腿甲那一欄
+    - text: "嵌在這件上的魂核符文也照頭盔的效果算"   # This item gains bonuses from Socketed Soul Cores as though it was also a Helmet
+      stats:
+        - { stat: local.core_as.head, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）
+
+empress_rule:        # 2026-11-07 照 PoE2 0.5 的「Atziri's Rule」（poe2db：阿茲里的統御）
+  name: 艾瑟琳的御令
+  base: cstaff_17        # 原作基底 Reflecting Staff（映鏡長杖；賦予技能鏡面折射是基底本來的）
+  drop_level: 70
+  sources: [delve_guardian]        # 2026-11-07 照 PoE2：poe2db 限定「瓦爾命途」阿茲里掉落 → 我們的星脈深坑每 10 層的深坑守衛
+  weight: 100
+  flavour:
+    - "「她的命令是用血寫的，所以每一道都很昂貴。」"
+  mods:
+    - text: "增加 {value}% 最大生命"
+      value: [10, 20]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 全部已腐化法術技能寶石等級"   # 新機制（NEEDS：gem.corrupted_level，tags [spell]）
+      value: [3, 5]
+      stats:
+        - { stat: gem.corrupted_level, type: FLAT, value: "{value}", tags: [spell] }
+    - text: "增加 {value}% 施法速度"
+      value: [10, 20]
+      stats:
+        - { stat: cast.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [20, 30]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "消耗生命的法術獲得 {value}% 傷害為額外物理傷害"   # 新機制（NEEDS：damage.gain_if_life_cost.physical；照 damage.spell_costing_life 的「法術要花生命」判斷）
+      value: [80, 120]
+      stats:
+        - { stat: damage.gain_if_life_cost.physical, type: FLAT, value: "{value}", tags: [spell] }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "法術技能有 {value}% 機率額外發射 2 個投射物"   # (10—25)% chance for Spell Skills to fire 2 additional Projectiles
+      value: [10, 25]
+      stats:
+        - { stat: skill.projectile_chance_two, type: FLAT, value: "{value}", tags: [spell] }
+    - text: "增加 {value}% 生命消耗效率"   # (10—20)% increased Life Cost Efficiency
+      value: [10, 20]
+      stats:
+        - { stat: skill.life_cost_efficiency, type: INCREASED, value: "{value}" }
+    - text: "{value}% 最大生命轉換為能量護盾"   # (10—15)% of Maximum Life Converted to Energy Shield
+      value: [10, 15]
+      stats:
+        - { stat: life.convert_es, type: FLAT, value: "{value}" }
+    - text: "法術傷害的 5% 偷取為生命"   # 5% of Spell Damage Leeched as Life
+      stats:
+        - { stat: leech.life_spell, type: FLAT, value: 5 }
+
+flesh_crucible_jewel:        # 2026-11-07 照 PoE2 0.5 的「Flesh Crucible」（poe2db：血肉坩堝）
+  name: 熔肉之晶
+  base: diamond_jewel        # 原作基底 Diamond（白星晶）
+  drop_level: 1
+  sources: [delve_guardian]        # 2026-11-07 照 PoE2：poe2db 限定「瓦爾命途」阿茲里掉落 → 我們的星脈深坑每 10 層的深坑守衛
+  weight: 100
+  corrupted: true        # 照 PoE2：已汙染
+  flavour:
+    - "「把肉放進爐裡熬，熬出來的是另一種活法。」"
+  mods:
+    - text: "配置 1 個隨機的基石天賦"   # 哪一個照這顆的 UUID 決定（新的 UniquePicks 候選 keystone：天賦樹上的 33 個基石；NEEDS：jewel.allocate_keystones）
+      stats:
+        - { stat: jewel.allocate_keystones, type: FLAT, value: 1 }
+    - text: "{value}% 更少{kind:傷害|護甲、閃避與能量護盾|最大生命|最大魔力|移動速度|精魂}"   # 原作六種隨機一種：kind 照永恆珠寶 {who:…} 的寫法擲（已汙染，不會重擲）；kind 對到哪個屬性是新機制（NEEDS：jewel.crucible_less）
+      value: [10, 20]
+      kind: [1, 6]
+      stats:
+        - { stat: jewel.crucible_less, type: FLAT, value: "{value}" }
+        - { stat: jewel.crucible_less_kind, type: FLAT, value: "{kind}" }
+    - text: "僅限：同時只能配一顆"   # 原作 Limited To: 1（NEEDS：jewel.limit_one；照恆時珠寶的 timeless.historic 擋第二顆）
+      stats:
+        - { stat: jewel.limit_one, type: FLAT, value: 1 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "配置 1 個隨機基石天賦"   # Random 1 Keystone Passive Skill [1,33]
+      stats:
+        - { stat: jewel.random_keystone, type: FLAT, value: 1 }   # 2026-11-07 新的（NEEDS）：UniquePicks 加一個 keystone 池（33 個）
+    - text: "傷害更少 {value}%"   # (10—20)% less Damage
+      value: [10, 20]
+      stats:
+        - { stat: damage, type: MORE, value: "-{value}" }
+    - text: "護甲、閃避與能量護盾更少 {value}%"   # (10—20)% less Armour, Evasion and Energy Shield
+      value: [10, 20]
+      stats:
+        - { stat: armour, type: MORE, value: "-{value}" }
+        - { stat: evasion, type: MORE, value: "-{value}" }
+        - { stat: es.max, type: MORE, value: "-{value}" }
+    - text: "最大生命更少 {value}%"   # (10—20)% less maximum Life
+      value: [10, 20]
+      stats:
+        - { stat: life.max, type: MORE, value: "-{value}" }
+    - text: "最大魔力更少 {value}%"   # (10—20)% less maximum Mana
+      value: [10, 20]
+      stats:
+        - { stat: mana.max, type: MORE, value: "-{value}" }
+    - text: "移動速度更少 {value}%"   # (10—20)% less Movement Speed
+      value: [10, 20]
+      stats:
+        - { stat: movement.speed, type: MORE, value: "-{value}" }
+    - text: "精魂更少 {value}%"   # (10—20)% less Spirit
+      value: [10, 20]
+      stats:
+        - { stat: spirit.max, type: MORE, value: "-{value}" }
+
+flesh_poppet_talisman:        # 2026-11-07 照 PoE2 0.5 的「The Flesh Poppet」（poe2db：血肉傀儡）
+  name: 皮囊偶符
+  base: talis_18        # 原作基底 Vicious Talisman（鑄紋獸符）
+  stat_base: talis_08          # 原作基底那一階的數值
+  drop_level: 40
+  sources: [map_boss, chance, gamble]
+  rarity: common        # 2026-11-07 照 PoE2 稀有度（The Flesh Poppet／Vicious Talisman：hideable）
+  flavour:
+    - "「披上野獸的皮，順手把敵人的本事也縫上去。」"
+  mods:
+    - text: "增加 {value}% 物理傷害"
+      value: [90, 120]
+      stats:
+        - { stat: local.physical, type: INCREASED, value: "{value}" }
+    - text: "增加 {value}% 攻擊速度"
+      value: [7, 13]
+      stats:
+        - { stat: attack.speed, type: INCREASED, value: "{value}" }
+    - text: "+{value} 全部屬性"
+      value: [7, 13]
+      stats:
+        - { stat: attr.str, type: FLAT, value: "{value}" }
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "減少 {value}% 臨在範圍"
+      value: [30, 40]
+      stats:
+        - { stat: presence.area, type: INCREASED, value: "-{value}" }
+    - text: "變形成野獸型態時，從臨在範圍內的每一個敵人身上複製一條隨機詞綴"   # 新機制（NEEDS：shapeshift.copy_mods，照 steal.mods 的偷詞綴）
+      stats:
+        - { stat: shapeshift.copy_mods, type: FLAT, value: 1 }
+    - text: "這樣獲得的詞綴 30 秒後、或下一次變形時失去"   # 跟上一條同一個機制（NEEDS：shapeshift.copy_mods_duration，秒數）
+      stats:
+        - { stat: shapeshift.copy_mods_duration, type: FLAT, value: 30 }
+  vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
+    - text: "+{value}% 暴擊率"   # +(2—4)% to Critical Hit Chance（武器本地）
+      value: [2, 4]
+      stats:
+        - { stat: local.crit_base, type: FLAT, value: "{value}" }
+    - text: "附加 {min} 到 {max} 物理傷害"   # Adds (65—73) to (83—91) Physical Damage
+      min: [65, 73]
+      max: [83, 91]
+      stats:
+        - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, physical] }
+        - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, physical] }
+    - text: "獲得 {value}% 傷害為額外火焰傷害"   # Gain (25—40)% of Damage as Extra Fire Damage
+      value: [25, 40]
+      stats:
+        - { stat: damage.extra.fire, type: FLAT, value: "{value}" }
+
+eventide_petals:        # 2026-11-07 照 PoE2 0.5（Runes of Aldur）的「Eventide Petals」（poe2db：暮色瓣落）
+  name: 暮色瓣落
+  base: jamulet_veridical        # 原作基底 Veridical Chain（幻象鎖鏈；固有 +(30—40) 最大符文保護在基底上）
+  drop_level: 55        # 原作需求 55（0.5.4；之前 69）
+  sources: [delve_boss]        # 2026-11-07 照站長：星脈深坑的首領專屬（原作是死境探險掉的）；不能用僥倖石、賭博做出來
+  weight: 100
+  flavour:
+    - "「花在天黑以後才開，一瓣一瓣落成冰；數得清的人，都還沒走到最深的地方。」"
+  mods:
+    - text: "賦予技能：午夜天頂（等級 13）"   # 照 poe2db 目前的物品：Level 13 Midnight Zenith（PoB2 寫 Level (1-20)，是舊的寫法）
+      stats:
+        - { stat: grant_skill.midnight_zenith, type: FLAT, value: 13 }
+    - text: "增加 {value}% 暴擊率"
+      value: [30, 50]
+      stats:
+        - { stat: crit.chance, type: INCREASED, value: "{value}" }
+    - text: "+{value} 智慧"
+      value: [25, 35]
+      stats:
+        - { stat: attr.int, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 光照範圍"   # 我們只有星脈深坑有光照（Delve 讀 light.radius）
+      value: [30, 50]
+      stats:
+        - { stat: light.radius, type: INCREASED, value: "{value}" }
+    - text: "你每有 5% 冰冷抗性，冰晶減少 {value}% 最大生命"   # 原作 Ice Crystals have (-3—3)% reduced maximum Life per 5% Cold Resistance you have（負的＝增加；照封頂後的冰冷抗性，IceCrystals.coldLifeFactor）
+      value: [-3, 3]
+      stats:
+        - { stat: crystal.life_per_5_cold_resist, type: FLAT, value: "-{value}" }
+
+forgotten_warden:        # 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 0.5 的「Forgotten Warden」（poe2db：遺忘看守）
+  name: 遺忘看守
+  base: body_dex_int_24        # 原作基底 Primal Markings（野紋纏衣；原作 hidden，傳奇專用）
+  drop_level: 70
+  sources: [delve_boss]        # 2026-11-07 照站長：原作「博德克」掉落 → 我們的星脈深坑首領（晶淵之王・黯冕，每次擊殺各自 1%；僥倖石、賭博都出不來）
+  weight: 100
+  flavour:
+    - "「它守的那扇門早就塌了，"
+    - "　卻還記得每一個該攔下的影子。」"
+  mods:
+    - text: "賦予技能：靈魂容器（等級 16）"   # Grants Skill: Level 16 Spirit Vessel（poe2db 現在的值是固定 16 級；PoB2 寫 (1-20)，照 poe2db）
+      stats:
+        - { stat: grant_skill.soul_vessel, type: FLAT, value: 16 }
+    - text: "每失去 50 能量護盾 +{value} 偏斜值"   # +(70—100) to Deflection Rating per 50 missing Energy Shield（被擊中那一下照當下的護盾，CombatListener）
+      value: [70, 100]
+      stats:
+        - { stat: deflection.per_50_missing_es, type: FLAT, value: "{value}" }
+    - text: "增加 {value}% 閃避與能量護盾"   # (200—300)% increased Evasion and Energy Shield（本地）
+      value: [200, 300]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+        - { stat: es.max, type: INCREASED, value: "{value}" }
+    - text: "+{value} 敏捷"
+      value: [20, 30]
+      stats:
+        - { stat: attr.dex, type: FLAT, value: "{value}" }
+    - text: "夥伴增加 {value}% 最大生命"   # Companions have (30—50)% increased maximum Life（同符文「夥伴增加 25% 最大生命」的寫法）
+      value: [30, 50]
+      stats:
+        - { stat: life.max, type: INCREASED, value: "{value}", tags: [minion, companion] }
+    - text: "被偏斜的擊中傷害有 {value}% 先由可受傷害的夥伴的生命承受"   # (10—15)% of Damage from Deflected Hits is taken from Damageable Companion's Life before you
+      value: [10, 15]
+      stats:
+        - { stat: companion.takes_damage_deflected, type: FLAT, value: "{value}" }

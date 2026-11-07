@@ -192,6 +192,76 @@ public final class UniqueDerived {
         return list;
     }
 
+    /** 2026-11-07（瓜特利斯的假說）：「過去 8 秒被擊中失去的生命」看多久（tick）。 */
+    public static final long LIFE_LOST_WINDOW_TICKS = 160;
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（瓦爾傳奇與遠古魂核，第一段：裝備、屬性點都加好之後，在算魔力再生的基礎之前）：
+     * <ul>
+     *   <li>{@link VaalKeys#PER_STR_ES_RECHARGE}：每 4 點力量增加 x% 能量護盾回充速度。</li>
+     *   <li>{@link VaalKeys#MANA_PER_3_HELMET_ARMOUR}：裝備的頭盔每 3 點護甲 +x 最大魔力（helmetArmour＝頭盔自己的護甲，沒戴是 0）。</li>
+     * </ul>
+     * 這次之前沒有。
+     */
+    public static List<Modifier> vaalEarly(final StatSheet sheet, final double helmetArmour) {
+        final List<Modifier> list = new ArrayList<>();
+        final Set<String> none = Set.of();
+        final double perStr = sheet.flat(VaalKeys.PER_STR_ES_RECHARGE, none);
+        final double fours = perStr > 0 ? Math.floor(Math.max(0, sheet.get(StatKeys.STR)) / 4) : 0;
+        if (fours > 0) {
+            list.add(Modifier.increased(StatKeys.ES_RECHARGE, perStr * fours / 100.0, SOURCE + "（力量）"));
+        }
+        final double perArmour = sheet.flat(VaalKeys.MANA_PER_3_HELMET_ARMOUR, none);
+        final double threes = perArmour > 0 ? Math.floor(Math.max(0, helmetArmour) / 3) : 0;
+        if (threes > 0) {
+            list.add(Modifier.flat(StatKeys.MANA_MAX, perArmour * threes, SOURCE + "（頭盔護甲）"));
+        }
+        return list;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（第二段：最大能量護盾、移動速度、護甲都算好之後）：
+     * <ul>
+     *   <li>{@link VaalKeys#PER_ES_LIFE_REGEN}：每 1 點最大能量護盾每秒回復 x 生命——照「無法擁有能量護盾」歸零之前的最大能量護盾（跟 PoB 一樣）。</li>
+     *   <li>{@link VaalKeys#FLAG_NO_ENERGY_SHIELD}：無法擁有能量護盾（最大能量護盾更少 100%；PlayerState.maxEnergyShield 也直接回 0）。</li>
+     *   <li>{@link VaalKeys#FLAG_MOVEMENT_TO_ES_RECHARGE}：移動速度的增加與減少也套用在能量護盾回充速度（更多／更少不算）。</li>
+     *   <li>{@link VaalKeys#LIGHT_RADIUS_AS_AREA}：光照範圍的增加與減少以 x% 的數值套用在範圍效果。</li>
+     *   <li>{@link VaalKeys#ARMOUR_FROM_LIFE_LOST_8S}：獲得等同過去 8 秒被擊中失去的生命 x% 的護甲（lifeLost 由 PlayerState 記）。</li>
+     * </ul>
+     * 這次之前都沒有。
+     */
+    public static List<Modifier> vaalLate(final StatSheet sheet, final double lifeLost) {
+        final List<Modifier> list = new ArrayList<>();
+        final Set<String> none = Set.of();
+        final double perEs = sheet.flat(VaalKeys.PER_ES_LIFE_REGEN, none);
+        if (perEs > 0) {
+            final double es = StatKeys.flag(sheet, VaalKeys.FLAG_NO_ENERGY_SHIELD) ? Math.max(0, sheet.get(StatKeys.ES_MAX))
+                    : tw.exilecore.character.PlayerState.maxEnergyShield(sheet);
+            if (es > 0) {
+                list.add(Modifier.flat(StatKeys.LIFE_REGEN, es * perEs, SOURCE + "（最大能量護盾）"));
+            }
+        }
+        if (StatKeys.flag(sheet, VaalKeys.FLAG_NO_ENERGY_SHIELD)) {
+            list.add(Modifier.more(StatKeys.ES_MAX, -1.0, SOURCE + "（無法擁有能量護盾）"));
+        }
+        if (StatKeys.flag(sheet, VaalKeys.FLAG_MOVEMENT_TO_ES_RECHARGE)) {
+            final double movement = sheet.increased(StatKeys.MOVEMENT_SPEED, none);
+            if (movement != 0) {
+                list.add(Modifier.increased(StatKeys.ES_RECHARGE, movement, SOURCE + "（移動速度）"));
+            }
+        }
+        final double lightArea = sheet.flat(VaalKeys.LIGHT_RADIUS_AS_AREA, none);
+        final double light = lightArea != 0 ? sheet.increased(VaalKeys.LIGHT_RADIUS, none) : 0;
+        if (light != 0) {
+            list.add(Modifier.increased(StatKeys.SKILL_AREA, light * lightArea / 100.0, SOURCE + "（光照範圍）"));
+        }
+        final double fromLost = sheet.flat(VaalKeys.ARMOUR_FROM_LIFE_LOST_8S, none);
+        if (fromLost > 0 && lifeLost > 0) {
+            list.add(Modifier.flat(StatKeys.ARMOUR, Math.floor(lifeLost * fromLost / 100.0), SOURCE + "（過去 8 秒失去的生命）"));
+        }
+        return list;
+    }
+
     /**
      * 2026-10-27：戒指的傳奇效果（照裝備順序，第一枚是左手、第二枚是右手）。
      * 映鏡指環：另一隻手的戒指的詞綴在這裡再算一次（兩枚都是映鏡就都不算；有條件的、賦予技能的不抄）；
@@ -281,5 +351,66 @@ public final class UniqueDerived {
             }
         }
         return list == null ? List.of() : list;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（命契法袍，PoE2「Grants Skill: Level 10 Life Remnants」）：這件裝備賦予的技能與固定等級
+     * （grant_skill.代號 的值 ≥ 2 = 固定那個等級；1 = 照物品等級，回傳 0）。同一個技能寫兩次取大的。沒有回傳空的。
+     * 這次之前一律照物品等級（值都寫 1）。
+     */
+    public static java.util.Map<String, Integer> grantedSkillLevels(final List<Modifier> itemModifiers) {
+        java.util.Map<String, Integer> map = null;
+        for (final Modifier modifier : itemModifiers) {
+            if (modifier.stat().startsWith(UniqueStats.GRANT_SKILL) && modifier.value() > 0) {
+                if (map == null) {
+                    map = new java.util.LinkedHashMap<>();
+                }
+                map.merge(modifier.stat().substring(UniqueStats.GRANT_SKILL.length()), fixedGrantLevel(modifier.value()), Math::max);
+            }
+        }
+        return map == null ? java.util.Map.of() : map;
+    }
+
+    /** 2026-11-07：grant_skill 的值換成固定等級（≥ 2 四捨五入；1 以下 = 0，照物品等級）。 */
+    public static int fixedGrantLevel(final double value) {
+        final long rounded = Math.round(value);
+        return rounded >= 2 ? (int) rounded : 0;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（蛇窟之環，PoE2「Left ring slot: …」「Right ring slot: …」）：照這枚戒指戴在哪一手決定
+     * {@code @ring_left}／{@code @ring_right} 的詞綴：hand 0 = 左手（第一個戒指欄）、1 = 右手（第二個）、其他（第三個戒指欄、不是戒指）兩種都不算。
+     * 對得上的拿掉條件留下，對不上的丟掉，其他的原樣。沒有這兩種條件時回傳同一個 list。純函式。
+     */
+    public static List<Modifier> forRingSlot(final List<Modifier> modifiers, final int hand) {
+        boolean any = false;
+        for (final Modifier mod : modifiers) {
+            if (ringHand(mod.stat()) >= 0) {
+                any = true;
+                break;
+            }
+        }
+        if (!any) {
+            return modifiers;
+        }
+        final List<Modifier> out = new ArrayList<>(modifiers.size());
+        for (final Modifier mod : modifiers) {
+            final int own = ringHand(mod.stat());
+            if (own < 0) {
+                out.add(mod);
+            } else if (own == hand) {
+                out.add(new Modifier(tw.exilecore.stats.Recently.stat(mod.stat()), mod.type(), mod.value(), mod.tags(), mod.source()));
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-07：屬性代號的條件是 {@code @ring_left}（0）、{@code @ring_right}（1）；都不是回傳 -1。 */
+    static int ringHand(final String stat) {
+        final tw.exilecore.stats.Recently.Condition condition = tw.exilecore.stats.Recently.condition(stat);
+        if (condition == null || condition.negated()) {
+            return -1;
+        }
+        return tw.exilecore.stats.Recently.RING_LEFT.equals(condition.event()) ? 0 : tw.exilecore.stats.Recently.RING_RIGHT.equals(condition.event()) ? 1 : -1;
     }
 }

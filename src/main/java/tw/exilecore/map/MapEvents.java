@@ -175,6 +175,8 @@ final class MapEvents implements Listener {
     private final Ultimatum ultimatum;
     /** 2026-11-04 照站長「軍團」：軍團。 */
     private final Legion legion;
+    /** 2026-11-07 照站長「地心礦坑簡化版」：星脈深坑。 */
+    private final Delve delve;
 
     MapEvents(final ExileCore plugin, final MapService service, final MapEventConfig config) {
         this.plugin = plugin;
@@ -189,6 +191,11 @@ final class MapEvents implements Listener {
         this.fogTrial = new FogTrial(plugin, service, config);
         this.ultimatum = new Ultimatum(plugin, service, config);
         this.legion = new Legion(plugin, service, config);
+        this.delve = new Delve(plugin, service, config);
+    }
+
+    Delve delve() {
+        return delve;
     }
 
     FogTrial fogTrial() {
@@ -611,6 +618,7 @@ final class MapEvents implements Listener {
         fogTrial.tick(now);
         ultimatum.tick(now);
         legion.tick(now);
+        delve.tick(now);
         if (byInstance.isEmpty()) {
             return;
         }
@@ -2128,6 +2136,7 @@ final class MapEvents implements Listener {
         fogTrial.clear(instance);
         ultimatum.clear(instance);
         legion.clear(instance);
+        delve.clear(instance);
         final List<Event> events = byInstance.remove(instance.id());
         if (events != null) {
             for (final Event event : events) {
@@ -2144,6 +2153,7 @@ final class MapEvents implements Listener {
         fogTrial.clearAll();
         ultimatum.clearAll();
         legion.clearAll();
+        delve.clearAll();
         for (final List<Event> events : byInstance.values()) {
             for (final Event event : events) {
                 dispose(event);

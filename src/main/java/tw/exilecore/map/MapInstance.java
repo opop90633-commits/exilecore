@@ -474,7 +474,8 @@ public final class MapInstance {
 
     /** 每個人只能進一次的實例：極境、劫盜終局（死了或離開就不能再進）。巔峰另外算「門」（見 {@link #attemptActive}）。 */
     public boolean singleEntry() {
-        return isUber() || special != null && "heist_finale".equals(special.kind());
+        // 2026-11-07 照站長「地心礦坑簡化版」：星脈深坑也是（死了、離開就出局）
+        return isUber() || special != null && ("heist_finale".equals(special.kind()) || "delve".equals(special.kind()));
     }
 
     /** 用「門」算的實例（2026-10）：終局、極境、巔峰（特別的實例除外），還有金庫之主（劫盜終局）。 */

@@ -169,11 +169,11 @@ public final class Crafting {
                     return "符文孔都滿了（" + slots + " 個）";
                 }
                 final tw.exilecore.item.Runes.Rune rune = generator.repository().rune(type.affix());
-                if (tw.exilecore.item.Runes.uselessOn(base, rune)) {
-                    // 2026-11-04 照站長：攫握指環、日冕墜飾沒有護甲、閃避、能量護盾，只加這些的符文嵌了沒效果
-                    // 2026-11-04 照 PoE2 的魂核：只限軍用武器的嵌在法杖類上、只有某個部位才有加成的嵌在別的部位上，一樣沒效果
-                    return rune.soulCore() ? "這顆魂核符文嵌在這種裝備上沒有加成（看說明：武器、法杖類、哪個部位）"
-                            : "這個符文只加那件裝備的護甲、閃避、能量護盾，戒指、項鍊沒有這些，嵌了沒效果";
+                // 2026-11-04：嵌了沒有加成的（飾品只加防禦的、魂核在不對的部位）擋下；2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀）：
+                //   「只能鑲嵌魂核符文」的擋一般符文、「也照某部位算」的魂核照多出來的部位看有沒有加成（Runes.socketProblem）
+                final String socketProblem = tw.exilecore.item.Runes.socketProblem(generator.repository(), base, data, rune);
+                if (socketProblem != null) {
+                    return socketProblem;
                 }
                 if (rune.limit() > 0 && data.runes().stream().filter(type.affix()::equals).count() >= rune.limit()) {
                     return rune.name() + "一個角色僅限 " + rune.limit() + " 顆，這件已經嵌著了（嵌在別件上的第二顆也沒有效果）"; // 2026-11-04 照 PoE2 的魂核

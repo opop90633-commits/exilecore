@@ -18,6 +18,11 @@ public final class StatKeys {
     public static final String ES_RECHARGE = "es.recharge";
     /** INCREASED（負的 = 縮短）：被打之後，能量護盾要等多久才開始回充（基礎 2 秒，最短剩 20%）。 */
     public static final String ES_DELAY = "es.delay";
+    /**
+     * 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：最大符文保護（PoE2 Runic Ward；FLAT、INCREASED、MORE）。
+     * 致死的那一下讓你剩 1 點生命、剩下的由符文保護吃（{@link tw.exilecore.character.RunicWard}）；這次之前沒有符文保護。
+     */
+    public static final String WARD_MAX = "ward.max";
 
     // 防禦
     public static final String ARMOUR = "armour";
@@ -41,6 +46,10 @@ public final class StatKeys {
     public static final String WEAPON_CRIT = "weapon.crit";        // 百分比點數
     /** 2026-11-05 照站長「照原作」：武器上的「+x% 暴擊傷害加成」是本地的，只算用這把武器的攻擊（PoE2 LocalCriticalStrikeMultiplier）：加在暴擊加成上，只有攻擊才算；雙持時照出手的那一把（DualWield 換 weapon.*）。 */
     public static final String WEAPON_CRIT_BONUS = "weapon.crit_bonus";
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2 Quecholli「Hits with this Weapon have no Critical Damage Bonus」）：FLAT 1：用這把武器的擊中沒有暴擊傷害加成（暴擊倍率 1）；武器本地的 local.no_crit_bonus 換成這個，雙持照出手那一把。 */
+    public static final String WEAPON_NO_CRIT_BONUS = "weapon.no_crit_bonus";
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2「This Weapon's Critical Hit Chance is 100%」）：FLAT x：用這把武器的攻擊暴擊率固定 x%（不吃增加／更多）；武器本地的 local.crit_override 換成這個，雙持照出手那一把。 */
+    public static final String WEAPON_CRIT_OVERRIDE = "weapon.crit_override";
     public static final String WEAPON_RELOAD = "weapon.reload";    // 2026-10-26：弩的裝填時間（秒，照 PoE2 每把基底不同）
 
     // 速度與暴擊

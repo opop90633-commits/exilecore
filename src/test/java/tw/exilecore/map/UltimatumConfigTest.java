@@ -59,12 +59,12 @@ class UltimatumConfigTest {
         skills.load(DATA);
         final tw.exilecore.monster.MonsterConfig monsters = new tw.exilecore.monster.MonsterConfig();
         monsters.load(DATA);
-        for (final String id : new String[] {FogTrial.KIND, Ultimatum.BOSS_KIND, Legion.DOMAIN_KIND}) {
+        for (final String id : new String[] {FogTrial.KIND, Ultimatum.BOSS_KIND, Legion.DOMAIN_KIND, Delve.BOSS_KIND}) { // 2026-11-07：＋深坑首領
             final MapConfig.EventBoss boss = maps.eventBoss(id);
             assertTrue(boss != null && boss.boss().named(), "maps.yml 的 event_bosses 少了 " + id);
             assertTrue(boss.boss().skills().size() >= 10, id + "：招式太少");
             for (final tw.exilecore.skill.BossSkillUse use : boss.boss().skills()) {
-                assertTrue(use.id().startsWith(id.equals(FogTrial.KIND) ? "fog_" : id.equals(Ultimatum.BOSS_KIND) ? "judge_" : "legion_"), id + " 的招式 " + use.id() + " 不是自己的（照站長：新增的 Boss 要有獨特的招式）");
+                assertTrue(use.id().startsWith(id.equals(FogTrial.KIND) ? "fog_" : id.equals(Ultimatum.BOSS_KIND) ? "judge_" : id.equals(Delve.BOSS_KIND) ? "delve_" : "legion_"), id + " 的招式 " + use.id() + " 不是自己的（照站長：新增的 Boss 要有獨特的招式）");
             }
             for (final tw.exilecore.skill.BossSkillUse use : boss.boss().skills()) {
                 assertTrue(skills.skill(use.id()) != null, id + " 的招式 " + use.id() + " 不在 boss_skills.yml");

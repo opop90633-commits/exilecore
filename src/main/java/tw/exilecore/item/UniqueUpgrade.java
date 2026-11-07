@@ -26,8 +26,8 @@ public final class UniqueUpgrade {
      * （2026-10-21 修正：以前腐化過的傳奇每次讀出來都被當成舊版補正，腐化詞綴被拿掉，穿上去屬性沒算、說明那行也不見）。
      */
     private static boolean preserved(final ItemRepository repository, final String affixId) {
-        if (Veiled.isSpecial(affixId)) {
-            return true;
+        if (Veiled.isSpecial(affixId) || UniqueItem.isVaalAffix(affixId)) {
+            return true; // 2026-11-07：栽培寶珠換上去的瓦爾詞綴也原樣留著
         }
         final Affix affix = repository.affix(affixId);
         return affix != null && affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG);
@@ -65,8 +65,8 @@ public final class UniqueUpgrade {
         for (final String affixId : unique.affixIds()) {
             index++;
             final Affix affix = repository.affix(affixId);
-            if (affix == null) {
-                continue;
+            if (affix == null || data.cultivatedOut().contains(affixId)) {
+                continue; // 2026-11-07：被栽培寶珠換掉的不補回來
             }
             final AffixTier tier = affix.tiers().getFirst();
             // 版本一樣（只是數值跑出範圍、或設定檔改了沒加版本）照序號找；版本不同照 legacy 對應表
@@ -122,7 +122,7 @@ public final class UniqueUpgrade {
         }
         final List<String> expected = new ArrayList<>();
         for (final String affixId : unique.affixIds()) {
-            if (repository.affix(affixId) != null) {
+            if (repository.affix(affixId) != null && !data.cultivatedOut().contains(affixId)) { // 2026-11-07：栽培寶珠換掉的不算
                 expected.add(affixId);
             }
         }

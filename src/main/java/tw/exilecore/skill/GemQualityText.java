@@ -154,6 +154,7 @@ final class GemQualityText {
             Map.entry("sand_spirit_cruelty", "多擲 {i:skill.projectiles} 把飛刀"),
             Map.entry("sand_spirit_verdict", "擊中時多施加 {i:crit_weakness.on_hit} 層暴擊弱點"),
             Map.entry("vital_residue", "擊殺時產生痕跡的機率 +{asc.remnant_kill_chance}%"),
+            Map.entry("midnight_zenith", "冰晶上限 +{i:zenith.max_crystals}"), // 2026-11-07 照 PoE2 Midnight Zenith（midnight_star_max_ice_crystals 每 1% 0.1）
             Map.entry("calm_mind_trance", "能量護盾回充速度另外更多 {effect.es.recharge}%"),
             Map.entry("mirage_deadeye", "幻影持續時間 +{asc.mirage_seconds} 秒"),
             Map.entry("primal_bounty", "強化的投射物速度另外增加 {asc.bounty_speed}%"),

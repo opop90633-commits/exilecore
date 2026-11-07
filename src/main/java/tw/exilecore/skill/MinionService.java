@@ -183,6 +183,11 @@ public final class MinionService implements Listener, MinionHooks {
          * 這次之前召喚物的偷取一下直接回。
          */
         final tw.exilecore.character.Leech leech = new tw.exilecore.character.Leech();
+        /** 2026-11-07 照 PoE2 Spirit Vessel：靈魂容器下一次從孔裡第幾個技能開始找（照孔的順序輪流）。 */
+        int vesselNext;
+        /** 2026-11-07：靈魂容器現在變成的形態（熊形態…；null = 原本的樣子）與維持到哪個 tick。 */
+        String vesselForm;
+        long vesselFormUntil;
 
         boolean onCooldown(final String ability, final long now) {
             return ready.getOrDefault(ability, 0L) > now;
@@ -1421,6 +1426,14 @@ public final class MinionService implements Listener, MinionHooks {
             ownerModifiers.addAll(AuraService.presenceAllyEffects(ownerSheet));
         }
         ownerModifiers.addAll(minion.tamed); // 2026-10-30 照 PoE2 Tame Beast：收服的野獸保留的怪物詞綴
+        if (SoulVessel.ID.equals(minion.skillId()) && ownerPlayer != null && plugin.skills() != null) {
+            // 2026-11-07 照 PoE2 Spirit Vessel：孔裡每個不同的技能讓靈魂容器造成 20% 更多傷害（一條更多 = 20% × 種數；普攻、技能的複製都算）
+            final double more = SoulVessel.damageMore(SoulVessel.distinct(plugin.skills().vesselSocketed(ownerPlayer).stream()
+                    .map(socketed -> socketed.definition().id()).toList()));
+            if (more > 0) {
+                ownerModifiers.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, more / 100.0, "靈魂容器"));
+            }
+        }
         if (tw.exilecore.ascendancy.AscendancyEffects.get() != null) {
             ownerModifiers.addAll(tw.exilecore.ascendancy.AscendancyEffects.get().minionWeapon(minion.owner, minion.mob.getLocation())); // 2026-10-27 照 PoE2：看看我怎麼辦事的（友軍含召喚物）
         }
@@ -2377,6 +2390,9 @@ public final class MinionService implements Listener, MinionHooks {
         if (minion.leapLandAt > 0 && now >= minion.leapLandAt) {
             land(minion, now);
         }
+        if (minion.vesselForm != null && now >= minion.vesselFormUntil) {
+            vesselForm(minion, null, now); // 2026-11-07 照 PoE2 Spirit Vessel：形態時間到變回原本的樣子
+        }
         if (minion.iceArmourUntil > now && now % 10 == 0) {
             Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.SNOWFLAKE, minion.mob.getLocation().add(0, 1, 0), 2, 0.3, 0.5, 0.3, 0);
         }
@@ -2533,6 +2549,13 @@ public final class MinionService implements Listener, MinionHooks {
                     return used;
                 }
             }
+            case SoulVessel.ID -> {
+                // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 Spirit Vessel）：輪流用孔裡變身攻擊技能的複製（孔裡沒有能用的就普攻）
+                final long used = vesselAct(minion, target, owner, now);
+                if (used > 0) {
+                    return used;
+                }
+            }
             case ANCESTRAL -> {
                 // 2026-10-30 照 PoE2：先祖之靈照型態用自己的招式（冷卻好了就放，沒有就普攻）
                 final long used = ancestralAct(minion, target, owner, now);
@@ -2553,6 +2576,163 @@ public final class MinionService implements Listener, MinionHooks {
         }
         attack(minion, target, 0);
         return minion.attackTicks;
+    }
+
+    // ---- 靈魂容器（2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 Spirit Vessel）----
+
+    /** 孔裡那個技能的複製自己的冷卻（靈魂容器自己的，跟你自己按的那一顆分開）。 */
+    private static String vesselKey(final SkillBuild copy) {
+        return "vessel:" + copy.definition().id();
+    }
+
+    /**
+     * 2026-11-07 照 PoE2 Spirit Vessel：靈魂容器照孔的順序輪流用孔裡變身攻擊技能的複製（冷卻中的跳過），回傳幾 tick 後再出手；
+     * 孔裡沒有能用的回傳 0（這次普攻）。複製照召喚物算：靈魂容器的屬性表與武器傷害 × 那個技能這一級的傷害效益、
+     * 技能自己的標籤（攻擊、近戰、範圍、熊／狼人／飛龍…）、轉換與輔助（靈魂容器其他孔的）；間隔 = 靈魂容器的攻擊間隔 ÷ 技能的攻速倍率。
+     * 範圍照技能的運作方式簡化（打擊：前方 reach 格、angle 度內最多 targets 個；新星：自己周圍；扇形：前方；跳躍、位移：跳到目標旁邊打一圈；
+     * 投射物：射一發）；引導、地裂、怒氣、狂怒強化這些技能自己的特殊機制，靈魂容器的複製不做（列在 SoulVessel 的偏離）。
+     */
+    private long vesselAct(final Minion minion, final LivingEntity target, final Player owner, final long now) {
+        if (owner == null || !owner.isOnline() || plugin.skills() == null || minion.profile == null) {
+            return 0;
+        }
+        final List<SkillBuild> usable = new ArrayList<>();
+        for (final SkillBuild socketed : plugin.skills().vesselSocketed(owner)) {
+            if (SoulVessel.uses(socketed.definition())) {
+                usable.add(socketed);
+            }
+        }
+        SkillBuild copy = null;
+        for (int i = 0; i < usable.size(); i++) {
+            final int index = Math.floorMod(minion.vesselNext + i, usable.size());
+            if (!minion.onCooldown(vesselKey(usable.get(index)), now)) {
+                copy = usable.get(index);
+                minion.vesselNext = index + 1;
+                break;
+            }
+        }
+        if (copy == null) {
+            return 0;
+        }
+        final SkillDefinition definition = copy.definition();
+        if (copy.cooldownTicks() > 0) {
+            minion.startCooldown(vesselKey(copy), now, copy.cooldownTicks() / 20.0);
+        }
+        vesselForm(minion, SoulVessel.form(definition.tags()), now);
+        final SkillProfile own = copy.profile();
+        final Set<String> tags = new HashSet<>(own.tags());
+        tags.add(tw.exilecore.stats.Tags.MINION);
+        tags.remove(Commandables.TAG);
+        final List<Modifier> local = new ArrayList<>(own.local());
+        local.addAll(musterModifiers(minion)); // 群鋒
+        final Attack hit = with(minion, new SkillProfile(minion.profile.id() + ".vessel." + definition.id(), tags, own.effectiveness(),
+                null, null, own.conversion(), local));
+        minion.mob.swingMainHand();
+        final double area = areaScale(minion);
+        final int level = copy.level();
+        final SkillParams params = definition.params();
+        final Location from = minion.mob.getLocation();
+        final org.bukkit.Particle fx = definition.tags().contains(tw.exilecore.stats.Tags.FIRE) ? org.bukkit.Particle.FLAME
+                : definition.tags().contains(tw.exilecore.stats.Tags.COLD) ? org.bukkit.Particle.SNOWFLAKE : org.bukkit.Particle.CRIT;
+        final Set<LivingEntity> struck = new java.util.LinkedHashSet<>();
+        switch (definition.mechanic()) {
+            case PROJECTILE -> {
+                final double explode = params.explode() == null ? 0 : params.explode().at(level) * area;
+                shoot(minion, target, definition.tags().contains(tw.exilecore.stats.Tags.FIRE) ? "fire" : "arrow", 0, (shot, hitEntity, where) -> {
+                    strike(minion, hitEntity, hit);
+                    if (explode > 0 && where != null) {
+                        Fx.disk(where.getWorld(), fx, where.clone().add(0, 0.3, 0), (int) Math.min(40, 10 * explode), explode, 0.3, 0.02);
+                        for (final LivingEntity enemy : targets.around(where, explode, owner)) {
+                            if (enemy != hitEntity) {
+                                strike(minion, enemy, hit);
+                            }
+                        }
+                    }
+                });
+                return SoulVessel.attackTicks(minion.attackTicks, definition.attackSpeed());
+            }
+            case LEAP, DASH -> {
+                final Vector away = from.toVector().subtract(target.getLocation().toVector()).setY(0);
+                if (away.length() > 2) {
+                    final Location beside = target.getLocation().clone().add(away.normalize().multiply(1.2));
+                    beside.setYaw(from.getYaw());
+                    minion.mob.teleport(beside);
+                }
+                final double radius = Math.max(1.0, (params.radius() == null ? 1.5 : params.radius().at(level)) * area);
+                struck.addAll(targets.around(target.getLocation(), radius, owner));
+                Fx.disk(target.getWorld(), fx, target.getLocation().add(0, 0.3, 0), (int) Math.min(60, 12 * radius), radius, 0.3, 0.02);
+            }
+            case NOVA -> {
+                final double radius = Math.max(1.0, (params.radius() == null ? 2 : params.radius().at(level)) * area);
+                struck.addAll(targets.around(from, radius, owner));
+                Fx.disk(from.getWorld(), fx, from.clone().add(0, 0.3, 0), (int) Math.min(60, 12 * radius), radius, 0.3, 0.02);
+            }
+            case CONE -> {
+                final double length = Math.max(1.5, (params.length() == null ? 2 : params.length().at(level)) * area);
+                struck.addAll(inFront(from, target, length, Math.max(params.angle(), 90), 0, owner));
+                Fx.spawn(from.getWorld(), fx, target.getLocation().add(0, 0.5, 0), 12, 0.6, 0.3, 0.6, 0.02);
+            }
+            default -> {
+                // 打擊與其他：前方 reach 格、angle 度內最多 targets 個（0 = 全部）；範圍技能的 reach 吃範圍
+                final double reach = Math.max(minion.spec.reach(), params.reach() * (definition.tags().contains(tw.exilecore.stats.Tags.AREA) ? area : 1));
+                struck.addAll(inFront(from, target, reach, Math.max(params.angle(), 60), params.targets(), owner));
+                Fx.spawn(from.getWorld(), fx, target.getLocation().add(0, 1, 0), 10, 0.4, 0.4, 0.4, 0.02);
+            }
+        }
+        struck.add(target); // 出手是因為碰得到目標：目標一定挨這一下
+        for (final LivingEntity enemy : struck) {
+            strike(minion, enemy, hit);
+        }
+        return SoulVessel.attackTicks(minion.attackTicks, definition.attackSpeed());
+    }
+
+    /** 從 from 朝 target 的方向，length 格內、angle 度扇形裡的敵人（離得近的先；limit 0 = 全部）。 */
+    private List<LivingEntity> inFront(final Location from, final LivingEntity target, final double length, final double angle,
+                                       final int limit, final Player owner) {
+        final Vector facing = target.getLocation().toVector().subtract(from.toVector()).setY(0);
+        if (facing.lengthSquared() < 1e-6) {
+            facing.setX(1);
+        }
+        facing.normalize();
+        final double cos = Math.cos(Math.toRadians(Math.min(360, angle) / 2));
+        final List<LivingEntity> list = new ArrayList<>();
+        for (final LivingEntity enemy : targets.around(from, length, owner)) {
+            final Vector to = enemy.getLocation().toVector().subtract(from.toVector()).setY(0);
+            if (to.lengthSquared() < 1e-6 || angle >= 360 || to.normalize().dot(facing) >= cos) {
+                list.add(enemy);
+            }
+        }
+        list.sort(java.util.Comparator.comparingDouble(enemy -> enemy.getLocation().distanceSquared(from)));
+        return limit > 0 && list.size() > limit ? new ArrayList<>(list.subList(0, limit)) : list;
+    }
+
+    /**
+     * 2026-11-07 照 PoE2 Spirit Vessel（Shapeshifting Spirit Vessel Companion）：用了熊、狼人、飛龍的技能就變成那個形態
+     * （頭上戴德魯伊變身的 3D 頭套，ShapeshiftCostumes 的 form_* 模型；沒送資源包的伺服器不換，看起來是原本的樣子），
+     * {@link SoulVessel#FORM_TICKS} 後變回來。form = null 變回原本的樣子。
+     */
+    private void vesselForm(final Minion minion, final String form, final long now) {
+        final String model = SoulVessel.headModel(form);
+        if (form != null) {
+            minion.vesselFormUntil = now + SoulVessel.FORM_TICKS;
+        }
+        if (java.util.Objects.equals(form, minion.vesselForm)) {
+            return;
+        }
+        minion.vesselForm = form;
+        final EntityEquipment equipment = minion.mob.getEquipment();
+        if (equipment == null) {
+            return;
+        }
+        if (model == null || plugin.sponsors() == null || !plugin.sponsors().resourcePackSent()) {
+            equipment.setItem(EquipmentSlot.HEAD, null, true);
+            return;
+        }
+        final ItemStack head = ItemStack.of(Material.PAPER);
+        head.setData(io.papermc.paper.datacomponent.DataComponentTypes.ITEM_MODEL,
+                org.bukkit.NamespacedKey.fromString("exilecore:skin/" + model + "_helmet"));
+        equipment.setItem(EquipmentSlot.HEAD, head, true);
+        Fx.spawn(minion.mob.getWorld(), org.bukkit.Particle.SOUL, minion.mob.getLocation().add(0, 1.2, 0), 8, 0.3, 0.5, 0.3, 0.02);
     }
 
     // ---- 先祖之靈（2026-10-30 照 PoE2 Ancestral Spirits 的四種型態）----
@@ -4294,6 +4474,9 @@ public final class MinionService implements Listener, MinionHooks {
     public void hitTaken(final LivingEntity entity, final double total) {
         final Minion minion = byEntity.get(entity.getUniqueId());
         final long now = now();
+        if (minion != null && minion.spike) {
+            offeringRecoup(minion, total, now);
+        }
         if (minion == null || minion.offeringUntil <= now || minion.shieldLostAt >= 0 || minion.effective == null) {
             return;
         }
@@ -4307,6 +4490,26 @@ public final class MinionService implements Listener, MinionHooks {
         if (owner != null) {
             rebuild(minion, plugin.players().sheet(owner), false);
         }
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（希特克拉多的假說 offering.recoup_life）：你的祭品（骨柱）承受的擊中傷害 x% 補償為你的生命
+     * （8 秒平均回來，吃回復速度與生命回復速度；禁療中不存）。這次之前沒有。
+     */
+    private void offeringRecoup(final Minion minion, final double total, final long now) {
+        final Player owner = plugin.getServer().getPlayer(minion.owner);
+        if (owner == null || total <= 0) {
+            return;
+        }
+        final StatSheet sheet = plugin.players().sheet(owner);
+        final double percent = sheet.flat(tw.exilecore.item.unique.VaalKeys.OFFERING_RECOUP_LIFE, Set.of());
+        final tw.exilecore.character.PlayerState state = plugin.players().get(owner);
+        if (percent <= 0 || state.isDead() || state.ruined(now)) {
+            return;
+        }
+        state.recoup().add(tw.exilecore.character.Recoup.LIFE, total * percent / 100.0,
+                tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, Set.of(), 0.1)
+                        * tw.exilecore.stats.TreeEffectKeys.recoveryRate(sheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE));
     }
 
     /**

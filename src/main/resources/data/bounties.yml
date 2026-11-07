@@ -158,5 +158,8 @@ boss_titles:
                      stats: [ { stat: damage, type: INCREASED, value: 4 } ] }
   legion:          { id: kill_legion,          boss_name: 不朽統帥・磐,     name: 破陣之將,   kills: 50, color: "#d9a066",
                      stats: [ { stat: armour, type: INCREASED, value: 8 } ] }
+  # 2026-11-07 照站長「再做一隻 BOSS」：星脈深坑的首領（晶淵王座；一把深坑首領鑰匙打一次，所以 50 次）
+  delve_boss:      { id: kill_delve_boss,      boss_name: 晶淵之王・黯冕,   name: 掘穿永夜者, kills: 50, color: "#7cc4ff",
+                     stats: [ { stat: resist.chaos, value: 5 } ] }
   abyss_lich:      { id: kill_abyss_lich,      boss_name: 淵底之王・骨潮,   name: 淵底歸來者, kills: 50, color: "#5ec4ff",
                      stats: [ { stat: resist.cold, value: 5 }, { stat: resist.chaos, value: 3 } ] }

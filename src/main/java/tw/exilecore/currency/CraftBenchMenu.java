@@ -519,7 +519,7 @@ public final class CraftBenchMenu extends Menu {
             final tw.exilecore.item.Runes.Rune rune = plugin.items().repository().rune(id);
             lore.add("<white>" + ItemRenderer.escape(rune == null ? id : rune.name())
                     + (rune == null || base == null ? "" : "<gray>（" + ItemRenderer.escape(String.join("、",
-                    rune.on(base).stream().map(tw.exilecore.item.Runes.Line::text).toList())) + "）"));
+                    tw.exilecore.item.Runes.linesOn(plugin.items().repository(), base, data, rune).stream().map(tw.exilecore.item.Runes.Line::text).toList())) + "）"));
         }
         lore.add("");
         final String problem = runeProblem(data);
@@ -553,10 +553,17 @@ public final class CraftBenchMenu extends Menu {
         final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
         final List<tw.exilecore.gui.Dialogs.Option> options = new ArrayList<>();
         for (int i = 0; i < data.runes().size(); i++) {
+            if (VaalCrafting.socketBound(data.runes().get(i))) {
+                continue; // 2026-11-07 修正：遠古魂核拿不下來，不列
+            }
             final tw.exilecore.item.Runes.Rune rune = plugin.items().repository().rune(data.runes().get(i));
             final String text = rune == null ? data.runes().get(i) : rune.name()
-                    + (base == null ? "" : "（" + String.join("、", rune.on(base).stream().map(tw.exilecore.item.Runes.Line::text).toList()) + "）");
+                    + (base == null ? "" : "（" + String.join("、", tw.exilecore.item.Runes.linesOn(plugin.items().repository(), base, data, rune).stream().map(tw.exilecore.item.Runes.Line::text).toList()) + "）");
             options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
+        }
+        if (options.isEmpty()) {
+            fail("遠古魂核嵌上去就拿不下來");
+            return;
         }
         final int slot = itemSlot;
         final String uuid = data.uuid();
@@ -581,7 +588,7 @@ public final class CraftBenchMenu extends Menu {
                         return;
                     }
                     final String id = current.runes().get(index);
-                    if (currencies().runeType(id) == null) {
+                    if (currencies().runeType(id) == null || VaalCrafting.socketBound(id)) { // 2026-11-07 修正（檢查發現）：遠古魂核（遠古增幅）嵌上去就拿不下來；這次之前工作台取得出來、可以一直搬
                         fail("這顆符文拿不出來");
                         return;
                     }

@@ -179,6 +179,7 @@ public final class SupportProcs implements Listener {
             return;
         }
         fireAll(player, baseId(markId), "mark_activated", living.getLocation(), living, null);
+        service.supportMechanics().gloryOnMark(player); // 2026-11-07 照站長「瓦爾傳奇照原作」：奎波拉特的論述（印記啟動時隨機一個技能獲得榮耀）
     }
 
     /**

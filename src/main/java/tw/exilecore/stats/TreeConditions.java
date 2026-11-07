@@ -84,6 +84,8 @@ public final class TreeConditions {
     public static final String CHILLED = "chilled";
     /** 2026-10-28 照 PoE2（貝雷克的火與雷之樂「被感電時」）：自己被感電。 */
     public static final String SHOCKED = "shocked";
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（阿佩普的至高「你中毒時」）：自己中毒中；這次之前只有傷害型異常（damagingailment）。 */
+    public static final String POISONED = "poisoned";
     /** 自己身上有傷害型異常（點燃、流血、中毒）。 */
     public static final String DAMAGING_AILMENT = "damagingailment";
     /** 魔力全滿。 */
@@ -105,6 +107,8 @@ public final class TreeConditions {
     public static final String HERALD_BLOOD = "heraldblood";
     /** 至少有一個圖騰（{@code totems1}）。 */
     public static final String TOTEM = "totem";
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（魂鎧「若你最近召喚過圖騰」）：最近 4 秒放過圖騰（事件，SkillDeployables 放圖騰時記）；跟「有圖騰在」（totem）不一樣。 */
+    public static final String TOTEM_PLACED = "totemplaced";
     /** 主手拿斧。 */
     public static final String WIELD_AXE = "wieldaxe";
     /** 主手拿長杖。 */
@@ -309,12 +313,13 @@ public final class TreeConditions {
             WIELD_QUARTERSTAFF, NO_ENEMY_NEAR, LIFE_FLASK_10S, ARCHON,
             ARCANE_SURGE, LOW_ES, ALL_COMPANIONS, EMPOWERED_ATTACK, GLORY_20S, PROJECTILE_HIT_8S, MELEE_HIT_8S, ES_RECHARGE_2S, // 2026-10-27
             ON_SHOCKED_GROUND, ON_CHILLED_GROUND, ON_IGNITED_GROUND, RAGE_GAINED,
-            TRINITY_HIGH, UNARMED, SHOCKED); // 2026-10-28
+            TRINITY_HIGH, UNARMED, SHOCKED, // 2026-10-28
+            POISONED); // 2026-11-07
     /** 還沒有系統支撐的條件（一律不成立）。2026-10-26：變身、夥伴接上了，現在沒有。 */
     public static final Set<String> RESERVED = Set.of();
     public static final Set<String> EVENTS = Set.of(STUNNED_ENEMY, SHAPESHIFT_EVENT, REVERT_EVENT, INFUSION_EVENT, POWER_GAIN, ATTACK_EVENT,
             TRIGGERED_EVENT, MINION_DIED, MARK_EVENT, PARRIED_EVENT, ACTIVE_BLOCK_EVENT, CHILLED_ENEMY, SHOCKED_ENEMY, IGNITED_ENEMY,
-            PINNED_ENEMY, NON_CRIT, MANA_FLASK_USED,
+            PINNED_ENEMY, NON_CRIT, MANA_FLASK_USED, TOTEM_PLACED, // 2026-11-07：最近放過圖騰
             KeystoneKeys.RECENT_ATTACK, KeystoneKeys.RECENT_SPELL, // 2026-10-26：最近攻擊過、施放過法術（KeystoneKeys）
             TreeLastKeys.EVENT_STUNNED, TreeLastKeys.EVENT_STUNNED_TWO_HAND, TreeLastKeys.EVENT_HIT_FIRE, TreeLastKeys.EVENT_HIT_COLD, TreeLastKeys.EVENT_HIT_LIGHTNING); // 2026-10-27
     public static final Set<String> ENEMY;

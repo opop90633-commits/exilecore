@@ -72,7 +72,11 @@ public final class ItemStats {
         }
         final double aps = local.attackSpeed() == 0 ? base.aps() : roundTo(base.aps() * (1 + local.attackSpeed()), 100);
         final double critBase = base.crit() + (base.isWeapon() ? localSum(repository, base, data, LocalMods.CRIT_BASE, ModType.FLAT) : 0);
-        final double crit = local.crit() == 0 && critBase == base.crit() ? base.crit() : roundTo(critBase * (1 + local.crit()), 100);
+        final double critOverride = base.isWeapon() ? localSum(repository, base, data, LocalMods.CRIT_OVERRIDE, ModType.FLAT) : 0;
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2「This Weapon's Critical Hit Chance is 100%」）：武器面板的暴擊率就是那個數字
+        //   （戰鬥照 weapon.crit_override 固定，不吃增加／更多，見 DamageCalculator.critChanceOn）
+        final double crit = critOverride > 0 ? Math.min(100, critOverride)
+                : local.crit() == 0 && critBase == base.crit() ? base.crit() : roundTo(critBase * (1 + local.crit()), 100);
         // 防具、盾本身的防禦詞綴是本地的（2026-10 PoE2）：(基底 + 附加) ×（1 + 增加）
         final double armour = defence(repository, base, data, StatKeys.ARMOUR, base.armour() * levelFactorDefence);
         final double evasion = defence(repository, base, data, StatKeys.EVASION, base.evasion() * levelFactorDefence);
@@ -264,7 +268,8 @@ public final class ItemStats {
     }
 
     static int scaleRequirement(final int value, final double scale) {
-        return value <= 0 ? 0 : (int) Math.max(1, Math.round(value * Math.max(0, scale)));
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀「沒有能力值需求」＝減少 100%）：減到 0 就是沒有；這次之前至少留 1（面板寫力量 1、敏捷 1、智慧 1）
+        return value <= 0 || scale <= 0 ? 0 : (int) Math.max(1, Math.round(value * scale));
     }
 
     private static ItemBase.Requirements requirementsAt(final ItemRepository repository, final ItemBase base, final int itemLevel) {
@@ -373,6 +378,20 @@ public final class ItemStats {
                     list.set(i, new Modifier(StatKeys.WEAPON_CRIT_BONUS, ModType.FLAT, mod.value(), mod.tags(), mod.source()));
                 }
             }
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2 Quecholli）：「這把武器的擊中沒有暴擊傷害加成」「這把武器的暴擊率是 100%」
+            //   是武器本地的：換成 weapon.*（只算用這把武器的攻擊、雙持照出手那一把；DamageCalculator 讀）。這次之前這兩條沒人讀
+            final double noCritBonus = localSum(repository, base, data, LocalMods.NO_CRIT_BONUS, ModType.FLAT);
+            if (noCritBonus > 0) {
+                list.add(Modifier.flat(StatKeys.WEAPON_NO_CRIT_BONUS, 1, source));
+            }
+            final double critOverride = localSum(repository, base, data, LocalMods.CRIT_OVERRIDE, ModType.FLAT);
+            if (critOverride > 0) {
+                list.add(Modifier.flat(StatKeys.WEAPON_CRIT_OVERRIDE, Math.min(100, critOverride), source));
+            }
+        }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2 Flesh Crucible「(10—20)% less [六種之一]」）：換成那一種的「更少」
+        if (data.unique() != null) {
+            crucibleLess(list);
         }
         // 2026-11-04（信仰稜鏡）：「隨機一個技能 +x 等級」換成那個技能的等級（skill.level［skill:代號］）
         if (data.unique() != null) {
@@ -387,6 +406,52 @@ public final class ItemStats {
             }
         }
         return list;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2 Flesh Crucible）：{@link tw.exilecore.item.unique.VaalKeys#JEWEL_CRUCIBLE_LESS}（x%）
+     * 與 {@link tw.exilecore.item.unique.VaalKeys#JEWEL_CRUCIBLE_LESS_KIND}（擲出來的第幾種，1–6，同一條詞綴、同一個來源）換成那一種的 MORE −x%：
+     * 1 傷害、2 護甲＋閃避＋能量護盾、3 最大生命、4 最大魔力、5 移動速度、6 精魂。種類不認得（舊資料）就兩條都拿掉、不給效果。就地改 list。純函式。
+     */
+    public static void crucibleLess(final List<Modifier> list) {
+        final Map<String, double[]> pairs = new java.util.LinkedHashMap<>(); // 來源 → {x（比例）, 種類}
+        boolean any = false;
+        for (final Modifier mod : list) {
+            if (tw.exilecore.item.unique.VaalKeys.JEWEL_CRUCIBLE_LESS.equals(mod.stat())) {
+                pairs.computeIfAbsent(mod.source(), k -> new double[2])[0] += mod.value() / 100.0;
+                any = true;
+            } else if (tw.exilecore.item.unique.VaalKeys.JEWEL_CRUCIBLE_LESS_KIND.equals(mod.stat())) {
+                pairs.computeIfAbsent(mod.source(), k -> new double[2])[1] = Math.round(mod.value());
+                any = true;
+            }
+        }
+        if (!any) {
+            return;
+        }
+        list.removeIf(mod -> tw.exilecore.item.unique.VaalKeys.JEWEL_CRUCIBLE_LESS.equals(mod.stat())
+                || tw.exilecore.item.unique.VaalKeys.JEWEL_CRUCIBLE_LESS_KIND.equals(mod.stat()));
+        for (final Map.Entry<String, double[]> entry : pairs.entrySet()) {
+            final double less = entry.getValue()[0];
+            if (less <= 0) {
+                continue;
+            }
+            for (final String stat : crucibleStats((int) entry.getValue()[1])) {
+                list.add(new Modifier(stat, ModType.MORE, -less, Set.of(), entry.getKey()));
+            }
+        }
+    }
+
+    /** 2026-11-07（熔肉之晶）：「更少」的第幾種（1–6，跟 uniques.yml 文字 {kind:…} 的順序一樣）對到哪些屬性；不認得回傳空的。 */
+    public static List<String> crucibleStats(final int kind) {
+        return switch (kind) {
+            case 1 -> List.of(StatKeys.DAMAGE);
+            case 2 -> List.of(StatKeys.ARMOUR, StatKeys.EVASION, StatKeys.ES_MAX);
+            case 3 -> List.of(StatKeys.LIFE_MAX);
+            case 4 -> List.of(StatKeys.MANA_MAX);
+            case 5 -> List.of(StatKeys.MOVEMENT_SPEED);
+            case 6 -> List.of(StatKeys.SPIRIT_MAX);
+            default -> List.of();
+        };
     }
 
     /** 權杖的精魂（2026-10，PoE2）：基礎 100，乘上權杖自己的「增加 x% 精魂」（本地，只放大權杖這 100）。不是權杖回傳 0。 */

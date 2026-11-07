@@ -66,6 +66,15 @@ public final class CurrencyListener implements Listener {
             }
             return;
         }
+        if (holding != null && (holding.operation() == CurrencyOperation.DESTABILISE || holding.operation() == CurrencyOperation.ANCIENT_INFUSE)) {
+            // 2026-11-07 照 PoE2 Fate of the Vaal：核心擾亂器用在魂核符文上、遠古灌注器用在先驅石板上（都是通貨，不是裝備）
+            final CurrencyType onto = currencies.read(target).orElse(null);
+            if (onto != null && (holding.operation() == CurrencyOperation.DESTABILISE ? VaalCrafting.isSoulCore(onto) : VaalCrafting.isTablet(onto))) {
+                event.setCancelled(true);
+                VaalCrafting.useOnCurrency(plugin, player, event, holding, onto, target);
+            }
+            return;
+        }
         if (!plugin.items().isEquipment(target)) {
             // 通貨點到非裝備：照原版行為（交換／堆疊）
             return;
@@ -83,6 +92,11 @@ public final class CurrencyListener implements Listener {
         if (clicked != null && clicked.operation() == CurrencyOperation.RUNE && runesFull(target)) {
             // 2026-10：符文孔都滿了：選一個舊的符文換掉（2026-10-30 照站長：沒腐化的換下來的那顆還給你；腐化的才會消失）
             overwriteRune(player, event, clicked, target);
+            return;
+        }
+        if (clicked != null && clicked.operation() == CurrencyOperation.EXTRACT) {
+            // 2026-11-07 照 PoE2 的萃取石：毀掉裝備、符文還給你
+            VaalCrafting.extract(plugin, player, event, clicked, target, why);
             return;
         }
         if (clicked != null && clicked.operation() == CurrencyOperation.MIRROR) {
@@ -141,7 +155,9 @@ public final class CurrencyListener implements Listener {
                 cursor.setAmount(cursor.getAmount() - 1);
                 event.getView().setCursor(cursor.getAmount() <= 0 ? ItemStack.empty() : cursor);
                 event.setCurrentItem(ItemStack.empty());
-                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>僥倖石失敗：物品碎掉了"));
+                // 2026-11-07：策匠石也會碎（這次之前只有僥倖石）
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + (used == null ? "僥倖石" : tw.exilecore.item.ItemRenderer.escape(used.name()))
+                        + (chance ? "失敗" : "") + "：物品碎掉了"));
                 player.playSound(player.getLocation(), Sound.BLOCK_GLASS_BREAK, 0.8f, 0.8f);
             }
             case NOT_APPLICABLE -> {
@@ -189,10 +205,39 @@ public final class CurrencyListener implements Listener {
                     + (unique != null ? "：<#af6025>" + tw.exilecore.item.ItemRenderer.escape(unique.name()) : "")
                     + (after.quality() > 0 ? "<gray>・品質 " + after.quality() + "%" : "")
                     + (after.corrupted() ? "<#d20000>・已腐化" : "") + (after.sanctified() ? "<#ffe08a>・已聖化" : "")));
+            // 2026-11-08 照站長（預見定星石只列詞綴，看不出哪條會破裂）：標出這次會變的——破裂的那條、新的詞綴、數值重擲的，
+            //   拿掉的詞綴另外列出來；這次之前只照順序列出用了之後的全部詞綴
+            final tw.exilecore.item.ItemData before = plugin.items().read(target).orElse(null);
+            final java.util.Map<String, tw.exilecore.item.RolledAffix> old = new java.util.HashMap<>();
+            if (before != null) {
+                for (final tw.exilecore.item.RolledAffix rolled : before.affixes()) {
+                    old.put(rolled.id(), rolled);
+                }
+            }
             for (final tw.exilecore.item.RolledAffix rolled : after.affixes()) {
                 final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
-                if (affix != null) {
-                    player.sendMessage(plugin.text().parse("<#8888ff>  " + tw.exilecore.item.ItemRenderer.escape(affix.render(rolled.vars()))));
+                if (affix == null) {
+                    continue;
+                }
+                final tw.exilecore.item.RolledAffix was = old.get(rolled.id());
+                final boolean fracturedNow = after.isFractured(rolled) && (before == null || !rolled.id().equals(before.fractured()));
+                final String mark = fracturedNow ? " <#c9a66b>✦這條會破裂"
+                        : before != null && was == null ? " <green>（新）"
+                        : was != null && !java.util.Objects.equals(was.vars(), rolled.vars()) ? " <yellow>（重擲）"
+                        : after.isFractured(rolled) ? " <dark_gray>（破裂）" : "";
+                player.sendMessage(plugin.text().parse((fracturedNow ? "<#c9a66b>  " : "<#8888ff>  ")
+                        + tw.exilecore.item.ItemRenderer.escape(affix.render(rolled.vars())) + mark));
+            }
+            if (before != null) {
+                final java.util.Set<String> kept = new java.util.HashSet<>();
+                for (final tw.exilecore.item.RolledAffix rolled : after.affixes()) {
+                    kept.add(rolled.id());
+                }
+                for (final tw.exilecore.item.RolledAffix rolled : before.affixes()) {
+                    final tw.exilecore.item.Affix affix = plugin.items().repository().affix(rolled.id());
+                    if (affix != null && !kept.contains(rolled.id())) {
+                        player.sendMessage(plugin.text().parse("<red>  － " + tw.exilecore.item.ItemRenderer.escape(affix.render(rolled.vars())) + " <dark_gray>（會被拿掉）"));
+                    }
                 }
             }
         }
@@ -274,13 +319,21 @@ public final class CurrencyListener implements Listener {
             return;
         }
         final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀「只能鑲嵌魂核符文」）：覆蓋舊的也照嵌空孔的規則擋（Runes.socketProblem）；
+        //   這次之前孔滿了覆蓋時不看這些（嵌了沒加成的符文也蓋得上去）
+        final String problem = tw.exilecore.item.Runes.socketProblem(plugin.items().repository(), base, data, plugin.items().repository().rune(rune.affix()));
+        if (problem != null) {
+            fail(player, rune.name() + "：" + problem);
+            return;
+        }
         final int slot = event.getSlot();
         final String uuid = data.uuid();
         final List<tw.exilecore.gui.Dialogs.Option> options = new java.util.ArrayList<>();
         for (int i = 0; i < data.runes().size(); i++) {
             final tw.exilecore.item.Runes.Rune old = plugin.items().repository().rune(data.runes().get(i));
             final String text = old == null ? data.runes().get(i)
-                    : old.name() + "（" + String.join("、", old.on(base).stream().map(tw.exilecore.item.Runes.Line::text).toList()) + "）";
+                    : old.name() + "（" + String.join("、", tw.exilecore.item.Runes.linesOn(plugin.items().repository(), base, data, old).stream()
+                    .map(tw.exilecore.item.Runes.Line::text).toList()) + "）";
             options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
         }
         // 游標上的符文先放回背包（對話框打開時背包會關掉；確定了才從背包、通貨袋扣一顆）
@@ -317,7 +370,7 @@ public final class CurrencyListener implements Listener {
                     }
                     final String before = plugin.items().toJson(now);
                     final String old = now.runes().get(index);
-                    final boolean refund = !now.corrupted() && currencies.returnRune(player, plugin.economy().wallet(), old);
+                    final boolean refund = !now.corrupted() && !VaalCrafting.socketBound(old) && currencies.returnRune(player, plugin.economy().wallet(), old); // 2026-11-07：遠古增幅（假說）嵌死了，換掉不還
                     now.replaceRune(index, rune.affix());
                     if (plugin.guide() != null) {
                         plugin.guide().milestone(player, tw.exilecore.guide.GuideService.RUNE); // 2026-10-30 新手教學

@@ -1092,6 +1092,40 @@ legion_emblem:
   description: "軍團的將領、軍曹掉落；5 個在地圖裝置打開「時沉領域」挑戰不朽統帥"
   flavor: "徽記上的軍號早就沒人認得，但它還在等集合。"
 
+# 2026-11-07 照站長「地心礦坑簡化版、新增一種深坑鑰匙」：星脈深坑。一般地圖的 Boss 照機率掉鑰匙（每個有份的人各擲一次；
+#   map_events.yml 的 delve.key_chance），1 把在地圖裝置開一場。藍晶是深坑每過一層給的，在深坑按鈕右鍵買升級。都不走掉落表、沒有用法。
+delve_key:
+  name: 深坑鑰匙
+  material: TRIAL_KEY
+  model: exilecore:currency/delve_key
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "地圖 Boss 有機率掉；1 把在地圖裝置打開「星脈深坑」（一層一層往下打，排行不重置）"
+  flavor: "鑰匙齒上沾著藍色的礦粉，越往下越亮。"
+
+# 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：深坑首領鑰匙。星脈深坑的守衛（每 10 層一隻）給每個有份的人各擲一次
+#   map_events.yml 的 delve.boss_key.chance（20%），1 把在地圖裝置開「晶淵王座」挑戰深坑的首領晶淵之王・黯冕。不走掉落表、沒有用法。
+delve_boss_key:
+  name: 深坑首領鑰匙
+  material: TRIAL_KEY
+  model: exilecore:currency/delve_boss_key
+  stack: 20
+  operation: NONE
+  drop_weight: 0
+  description: "星脈深坑的守衛有機率掉；1 把在地圖裝置打開「晶淵王座」挑戰深坑的首領"
+  flavor: "鑰匙是一整塊藍晶磨出來的，握久了，手心會聽到心跳。"
+
+azurite:
+  name: 藍晶
+  material: LAPIS_LAZULI
+  model: exilecore:currency/azurite
+  stack: 500
+  operation: NONE
+  drop_weight: 0
+  description: "星脈深坑每過一層給；在地圖裝置的深坑按鈕右鍵買升級（燈芯、聚光、深掘）"
+  flavor: "在黑暗裡還會自己發光的礦石，礦工說它是星脈的血。"
+
 # ---- 開服活動（2026-10，events.yml 的 world_events）：不定時事件的素材，拿去「不定時活動」的兌換商店換東西 ----
 event_swarm_shard:
   name: 潮湧殘片
@@ -4089,4 +4123,193 @@ rune_idol_fox:
   drop_level: 50
   description: "嵌進一個空的符文孔（魔偶）：胸甲 嵌在這件上的符文與魔偶獲得羈絆加成；權杖 增加 50% 臨在範圍。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆；羈絆要昇華・聖賢智慧或狐狸魔偶）"
   flavor: "阿茲莫里人拜的小像，掌心大，眼睛是兩粒黑石。"
+
+# =====================================================================================================
+# 2026-11-07 照站長「星脈深坑裡的怪物要會掉 PoE2 Fate of the Vaal 的通貨（不用獻祭法衣）」：poe2db「瓦爾命途」物品，名字是自己的。
+#   都不走掉落表（drop_weight 0）：只有星脈深坑的怪物掉（map_events.yml 的 delve.vaal_drops，照原作的稀有度）。
+#   原作沒寫的機率（灌注器多少品質、腐化機率、擾核石／古蝕灌注器各結果的機率、蝕吸器要殺幾隻）是估的，寫在
+#   CurrencyOperation（VAAL_*、SIPHON_GOAL）與 currency/VaalCrafting 的常數。
+vaal_infuser_armour:
+  name: 蝕鎧灌注器
+  material: NETHERITE_SCRAP
+  model: exilecore:currency/vaal_infuser_armour
+  stack: 10
+  operation: VAAL_INFUSE_ARMOUR
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "品質已滿（20%）的防具、副手：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  flavor: "瓦爾鍛工把自己的血也打進了甲片裡。"
+
+vaal_infuser_weapon:
+  name: 蝕鋒灌注器
+  material: NETHERITE_SCRAP
+  model: exilecore:currency/vaal_infuser_weapon
+  stack: 10
+  operation: VAAL_INFUSE_WEAPON
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "品質已滿（20%）的軍用武器（法杖、長杖、權杖以外）：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  flavor: "刃口上那道紅，不是鏽。"
+
+vaal_infuser_jewellery:
+  name: 蝕環灌注器
+  material: NETHERITE_SCRAP
+  model: exilecore:currency/vaal_infuser_jewellery
+  stack: 10
+  operation: VAAL_INFUSE_JEWELLERY
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "品質已滿（20%）的戒指、項鍊：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  flavor: "滴在戒圈上，戒圈就像活的一樣收緊了一點。"
+
+vaal_infuser_caster:
+  name: 蝕杖灌注器
+  material: NETHERITE_SCRAP
+  model: exilecore:currency/vaal_infuser_caster
+  stack: 10
+  operation: VAAL_INFUSE_CASTER
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "品質已滿（20%）的法杖、長杖、權杖：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  flavor: "杖身上的紋路被灌滿之後，會自己發出低低的嗡聲。"
+
+architect_orb:
+  name: 雙蝕石
+  material: RED_DYE
+  model: exilecore:currency/architect_orb
+  stack: 10
+  operation: ARCHITECT
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "已腐化的裝備或珠寶「雙重腐化」：一半機率碎掉，一半多一條腐化詞綴（原本那條留著）；雙重腐化過的不能再用"
+  flavor: "瓦爾的建築師不蓋第二次——要嘛更好，要嘛沒了。"
+
+ancient_infuser:
+  name: 古蝕灌注器
+  material: AMETHYST_SHARD
+  model: exilecore:currency/ancient_infuser
+  stack: 10
+  operation: ANCIENT_INFUSE
+  applies_to: { rarity: [] }
+  drop_weight: 0
+  drop_level: 1
+  description: "拿在游標上點一片先驅石板：碎掉、變成別種石板、多一片同樣的、或變成傳奇石板殘酷霸權"
+  flavor: "比石板還老的東西，滲進去之後誰也說不準它會變成什麼。"
+
+extraction_orb:
+  name: 剝符石
+  material: FLINT
+  model: exilecore:currency/extraction_orb
+  stack: 10
+  operation: EXTRACT
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "毀掉一件裝備（要在自己的背包裡），嵌在上面的符文、魂核還給你（遠古魂核嵌死了，不還）"
+  flavor: "敲碎外殼，把裡面還能用的東西挖出來。"
+
+crystal_corruption:
+  name: 晶蝕石
+  material: QUARTZ
+  model: exilecore:currency/crystal_corruption
+  stack: 10
+  operation: CRYSTAL_CORRUPT
+  applies_to: { rarity: [] }
+  drop_weight: 0
+  drop_level: 1
+  description: "在技能面板上點一顆已腐化的技能寶石：重新腐化一次（等級、輔助孔、品質變動），或碎掉"
+  flavor: "結晶化的腐化，比蝕變石更不講道理。"
+
+vaal_cultivation_orb:
+  name: 蝕培石
+  material: BROWN_DYE
+  model: exilecore:currency/vaal_cultivation_orb
+  stack: 10
+  operation: CULTIVATE
+  applies_to: { rarity: [UNIQUE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "傳奇：已腐化的瓦爾傳奇隨機 1～2 條詞綴換成它的瓦爾詞綴；其他傳奇變成同種類的隨機一件已腐化傳奇"
+  flavor: "在瓦爾神殿的血池裡養出來的菌，長在什麼上就改寫什麼。"
+
+vaal_siphoner:
+  name: 蝕吸器
+  material: HEART_OF_THE_SEA
+  model: exilecore:currency/vaal_siphoner
+  stack: 10
+  operation: SIPHON
+  applies_to: { rarity: [RARE] }
+  drop_weight: 0
+  drop_level: 1
+  description: "已腐化的稀有戒指、項鍊：戴著殺 500 隻之後，隨機一條詞綴降一階、其他詞綴重擲到現在～上限再多 10%"
+  flavor: "它會慢慢喝，喝飽了才吐出更好的東西。"
+
+core_destabiliser:
+  name: 擾核石
+  material: DISC_FRAGMENT_5
+  model: exilecore:currency/core_destabiliser
+  stack: 10
+  operation: DESTABILISE
+  applies_to: { rarity: [] }
+  drop_weight: 0
+  drop_level: 1
+  description: "拿在游標上點一顆魂核符文：碎掉、複製一顆、變成別的魂核、或變成遠古魂核"
+  flavor: "把魂核裡的心跳打亂，有時候會跳出很古老的節奏。"
+
+rune_thesis_quipolatl:
+  name: 遠古魂核・克特帕托
+  material: ECHO_SHARD
+  model: exilecore:currency/rune_thesis_quipolatl
+  stack: 10
+  operation: RUNE
+  rune: thesis_quipolatl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：頭盔 你的印記啟動時，隨機一個需要榮耀的技能獲得 50% 最大榮耀；手套 你的召喚物復甦時，能量護盾開始充能；胸甲 能量護盾全滿時，+75% 的護甲同時套用在混沌傷害。別的部位沒效果；嵌上去拿不下來（只能換掉）；遠古魂核一個角色僅限 1 顆（需求等級 60）"
+  flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
+
+rune_thesis_jiquani:
+  name: 遠古魂核・吉卡尼
+  material: ECHO_SHARD
+  model: exilecore:currency/rune_thesis_jiquani
+  stack: 10
+  operation: RUNE
+  rune: thesis_jiquani
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：頭盔 裝備的頭盔每 3 點護甲 +1 最大魔力；手套 每用掉 2000 魔力，能量護盾開始充能（每 2 秒最多一次）；鞋子 移動速度的增減也套用在能量護盾充能速度。別的部位沒效果；嵌上去拿不下來（只能換掉）；遠古魂核一個角色僅限 1 顆（需求等級 60）"
+  flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
+
+rune_thesis_guatelitzi:
+  name: 遠古魂核・瓜特利斯
+  material: ECHO_SHARD
+  model: exilecore:currency/rune_thesis_guatelitzi
+  stack: 10
+  operation: RUNE
+  rune: thesis_guatelitzi
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：頭盔 獲得等同過去 8 秒內被擊中失去的生命 35% 的護甲；胸甲 抵銷的物理傷害 10% 補償為生命；鞋子 衝刺時每秒失去 5% 最大生命，衝刺時增加 25% 移動速度。別的部位沒效果；嵌上去拿不下來（只能換掉）；遠古魂核一個角色僅限 1 顆（需求等級 60）"
+  flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
+
+rune_thesis_citaqualotl:
+  name: 遠古魂核・希特克拉多
+  material: ECHO_SHARD
+  model: exilecore:currency/rune_thesis_citaqualotl
+  stack: 10
+  operation: RUNE
+  rune: thesis_citaqualotl
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：胸甲 你的祭品承受的傷害 50% 補償為你的生命；手套 祭品的持續時間結束時，你的一個常駐召喚物復活；鞋子 閃避翻滾時犧牲 10% 最大生命，獲得等量的守護。別的部位沒效果；嵌上去拿不下來（只能換掉）；遠古魂核一個角色僅限 1 顆（需求等級 60）"
+  flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
 

@@ -257,6 +257,7 @@ class UiPackTest {
                     || path.startsWith("assets/minecraft/textures/gui/sprites/")
                     || path.startsWith("assets/exilecore/textures/item/currency/")
                     || path.startsWith("assets/exilecore/textures/item/mark/")
+                    || path.startsWith("assets/exilecore/textures/item/fx/") // 2026-11-07：怪物詞綴的靈魂、晶體（16×16，MonsterFxTest 另外測）
                     || path.startsWith("assets/exilecore/textures/item/skin3d/")
                     || path.startsWith("assets/exilecore/textures/font/")) {
                 // 原版介面的圖照原版的大小、通貨的圖示是 16×16、地上的範圍另外測、

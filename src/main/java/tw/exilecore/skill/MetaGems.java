@@ -801,6 +801,33 @@ public final class MetaGems {
 
     // ---- 說明 ----
 
+    /**
+     * 2026-11-07 照站長「裝在引星裡的技能寶石吃昇華的 +技能等級嗎 → 好像沒吃到」：插槽法術真正施放的等級（寶石等級＋裝備、昇華・嵌晶、
+     * 掛在引星上的輔助加的），跟觸發時用的同一套（觸發的照 {@link SkillService#metaBuild}，圖騰照 {@link #totemBuild}）。
+     * 這次之前面板只寫寶石本身的等級，看起來像沒吃到。沒有可以顯示的回傳 null。
+     */
+    private String innerLevels(final Player player, final PlayerState state, final Socket socket, final SkillDefinition meta) {
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        final MetaSpec spec = socket.spec();
+        final List<String> parts = new ArrayList<>();
+        for (int i = 0; i < socket.spells().size(); i++) {
+            final SkillDefinition spell = socket.spells().get(i);
+            final SkillLoadout.Entry entry = socket.spellEntries().get(i);
+            final SkillBuild build;
+            try {
+                build = spec.totem() ? totemBuild(state, sheet, socket, i, service.build(state, sheet, meta, socket.metaEntry()).level(), 0, 0)
+                        : service.metaBuild(state, sheet, socket.metaEntry(), meta, spell, entry);
+            } catch (final RuntimeException e) {
+                return null;
+            }
+            final int extra = build.level() - entry.level();
+            parts.add(ItemRenderer.escape(spell.name()) + " <white>Lv." + build.level() + "</white>"
+                    + (extra != 0 ? "<dark_gray>（寶石 " + entry.level() + (extra > 0 ? " ＋" : " ") + extra + "）" : ""));
+        }
+        return parts.isEmpty() ? null : "<gray>插槽法術實際等級：" + String.join("<gray>、", parts)
+                + "<dark_gray>（含裝備、昇華、掛在這顆上的輔助加的等級）";
+    }
+
     /** 主要寶石的說明多幾行：插槽裡是什麼、能量上限、現在的能量。 */
     List<String> lines(final Player player, final SkillDefinition meta) {
         final MetaSpec spec = service.config().meta(meta.id());
@@ -862,6 +889,10 @@ public final class MetaGems {
         }
         final Socket socket = socket(state, position);
         if (socket != null) {
+            final String levels = innerLevels(player, state, socket, meta);
+            if (levels != null) {
+                lines.add(levels);
+            }
             if (spec.totem()) {
                 lines.add("<gray>插槽：<white>" + ItemRenderer.escape(socket.names()) + (socket.spells().size() > 1 ? "<gray>（圖騰照順序輪流放）" : ""));
                 // 2026-10-21：圖騰替你放插槽法術的速度（以前只寫放圖騰的速度，看不出圖騰放得多快）

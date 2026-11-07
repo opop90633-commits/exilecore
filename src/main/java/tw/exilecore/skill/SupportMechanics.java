@@ -319,6 +319,44 @@ public final class SupportMechanics implements Listener {
         glory.merge(key(player, skillId), Math.min(cap, amount * gain), (a, b) -> Math.min(cap, a + b));
     }
 
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（奎波拉特的論述魂核，頭盔：「A random Skill that requires Glory generates 50% of its maximum Glory
+     * when your Marks Activate」，{@code thesis.glory_on_mark}）：你的印記啟動（被用掉）時，面板上隨機一個需要榮耀的技能
+     * （含裂甲熊咆孔裡的戰吼）獲得最大榮耀的 x%（吃榮耀獲得增加）。這次之前沒有。
+     */
+    void gloryOnMark(final Player player) {
+        final double percent = plugin.players().sheet(player).flat(tw.exilecore.item.unique.VaalKeys.THESIS_GLORY_ON_MARK, Set.of());
+        if (percent <= 0) {
+            return;
+        }
+        final PlayerState state = plugin.players().get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return;
+        }
+        final List<SkillDefinition> candidates = new ArrayList<>();
+        for (int i = 0; i < SkillLoadout.MAX_SKILLS; i++) {
+            final SkillLoadout.Entry entry = state.skills().skill(i);
+            final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());
+            if (definition == null) {
+                continue;
+            }
+            if (gloryCap(definition) > 0 && !candidates.contains(definition)) {
+                candidates.add(definition);
+            }
+            final SkillDefinition socketed = SocketedWarcry.hosts(definition) && entry.inner() != null
+                    ? service.config().skill(entry.inner().skillId()) : null;
+            if (socketed != null && gloryCap(socketed) > 0 && !candidates.contains(socketed)) {
+                candidates.add(socketed);
+            }
+        }
+        if (candidates.isEmpty()) {
+            return;
+        }
+        final SkillDefinition picked = candidates.get(plugin.random().nextInt(candidates.size()));
+        final int cap = gloryCap(picked);
+        addGlory(player, picked.id(), cap * percent / 100.0, cap);
+    }
+
     /** 2026-10-26（待價而沽）：面板上的某個技能直接加榮耀（照它自己的上限）。 */
     void addGloryDirect(final Player player, final String skillId, final double amount) {
         final SkillDefinition definition = service.config().skill(skillId);

@@ -103,7 +103,9 @@ public final class AffixChips {
         if (lower.startsWith("local.")) {
             // 武器自己的攻速、暴擊。2026-10-17：「這件物品上揭露詞綴的幅度」不是武器屬性，不標攻擊
             // 2026-11-04 照站長（A）：需求（local.requirement*）、符文效果（local.rune_*）也不是武器屬性，不標攻擊（照 PoE2：沒有標籤）
-            if (!lower.startsWith("local.unveiled") && !lower.startsWith("local.requirement") && !lower.startsWith("local.rune")) {
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀）：魂核相關的（local.core_*、local.only_soul_cores）也不是武器屬性
+            if (!lower.startsWith("local.unveiled") && !lower.startsWith("local.requirement") && !lower.startsWith("local.rune")
+                    && !lower.startsWith("local.core") && !lower.startsWith("local.only_soul")) {
                 chips.add(Chip.ATTACK);
             }
             lower = lower.substring("local.".length()).replace("attack_speed", "attack.speed").replace("crit_base", "crit");

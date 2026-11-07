@@ -93,6 +93,10 @@ public final class PlayerState {
     private final Leech manaLeech = new Leech();
     /** 2026-10-26 照 PoE2：受到的傷害之後 4 秒內回來的回復（Recoup；這次之前生命的存進偷取）。 */
     private final Recoup recoup = new Recoup();
+    /** 2026-11-07（瓜特利斯的假說）：最近被擊中失去的生命 {tick, 量}（只留過去 8 秒的）。 */
+    private final java.util.ArrayDeque<double[]> hitLifeLost = new java.util.ArrayDeque<>();
+    /** 2026-11-07：上一次屬性表重算時用的「過去 8 秒被擊中失去的生命」（變了就重算）。 */
+    private double hitLifeLostUsed;
     private final StatSheet sheet = new StatSheet();
     private boolean dirty = true;
     /** 很久以前（不能用 Long.MIN_VALUE：「現在 − 它」會溢位成負數）。 */
@@ -109,6 +113,8 @@ public final class PlayerState {
     /** 守護（2026-10，PoE2）：護符觸發時拿到的一層額外血，效果期間先替你吃掉傷害，到期就消失。 */
     private double guard;
     private long guardExpiresTick;
+    /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：目前的符文保護（PoE2 Runic Ward，{@link RunicWard}；不存檔，登入、重生回滿）。 */
+    private double ward;
     /** 入場保護的落點（傳送進地圖、傳送到檢查點之後還沒移動）；null 表示沒有保護。見 {@link EntryGrace}。 */
     private Location safeSpot;
 
@@ -504,6 +510,9 @@ public final class PlayerState {
 
     /** 某張屬性表的最大能量護盾。 */
     public static double maxEnergyShield(final StatSheet sheet) {
+        if (StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.FLAG_NO_ENERGY_SHIELD)) {
+            return 0; // 2026-11-07 照站長「瓦爾傳奇照原作」（綴魔假面）：無法擁有能量護盾（所有來源都不算）
+        }
         // 2026-10-28 照 PoE2（吉爾菲的聖殿）：最大能量護盾等於力量的 x%（其他的護盾加成都不算），而且不能被轉換（靈能電池不換）
         final double fromStr = esEqualToStr(sheet);
         if (fromStr > 0) {
@@ -540,6 +549,7 @@ public final class PlayerState {
         life = unreservedLife(); // 2026-11-01：保留的生命不回（這次之前回到最大生命）
         mana = maxMana();
         energyShield = maxEnergyShield();
+        ward = maxWard(); // 2026-11-07：符文保護也回滿
         leech.clear();
         manaLeech.clear();
         recoup.clear();
@@ -584,10 +594,49 @@ public final class PlayerState {
         }
         final double before = life;
         setLife(life + amount);
-        if (isFullLife()) { // 2026-11-01：沒被保留的生命滿了就算滿（PlayerState#isFullLife）
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（魂縛長帶 flag.leech_excess_to_es）：生命滿了溢出的偷取回復改成回復能量護盾，
+        //   偷取要等護盾也滿了才結束；這次之前生命滿了剩下的偷取全部結束
+        final boolean toEs = StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.FLAG_LEECH_EXCESS_TO_ES) && maxEnergyShield() > 0;
+        if (toEs) {
+            setEnergyShield(energyShield + leechExcess(amount, life - before));
+        }
+        if (isFullLife() && (!toEs || energyShield >= maxEnergyShield() - 1e-6)) { // 2026-11-01：沒被保留的生命滿了就算滿（PlayerState#isFullLife）
             leech.clear();
         }
         return life - before;
+    }
+
+    /** 2026-11-07：偷取回復的量裡，生命吃不下（溢出）的部分。 */
+    static double leechExcess(final double recovered, final double lifeGained) {
+        return Math.max(0, recovered - Math.max(0, lifeGained));
+    }
+
+    /** 2026-11-07（瓜特利斯的假說）：被擊中失去了 amount 點生命（記 8 秒）。 */
+    public void noteHitLifeLost(final long tick, final double amount) {
+        if (amount > 0) {
+            hitLifeLost.addLast(new double[] {tick, amount});
+        }
+    }
+
+    /** 2026-11-07（瓜特利斯的假說）：過去 windowTicks 內被擊中失去的生命（順便丟掉更早的）。 */
+    public double hitLifeLost(final long currentTick, final long windowTicks) {
+        while (!hitLifeLost.isEmpty() && currentTick - hitLifeLost.peekFirst()[0] > windowTicks) {
+            hitLifeLost.removeFirst();
+        }
+        double total = 0;
+        for (final double[] entry : hitLifeLost) {
+            total += entry[1];
+        }
+        return total;
+    }
+
+    /** 2026-11-07：上一次重算屬性表時用的「過去 8 秒被擊中失去的生命」。 */
+    public double hitLifeLostUsed() {
+        return hitLifeLostUsed;
+    }
+
+    public void setHitLifeLostUsed(final double value) {
+        this.hitLifeLostUsed = value;
     }
 
     /** 不是擊中來的魔力「慢慢回」：每秒回最大魔力的 10%（擊中的用 {@link #addHitManaLeech}）。 */
@@ -638,6 +687,32 @@ public final class PlayerState {
         mana = Math.min(mana, maxMana());
         manaOverflow = Math.max(0, Math.min(manaOverflow, maxMana() * (OVERFLOW_CAP - 1)));
         energyShield = Math.min(energyShield, maxEnergyShield());
+        ward = Math.min(ward, maxWard()); // 2026-11-07：符文保護
+    }
+
+    /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：目前的符文保護。 */
+    public double ward() {
+        return ward;
+    }
+
+    /** 2026-11-07：最大符文保護（屬性表的 ward.max）。 */
+    public double maxWard() {
+        return RunicWard.max(sheet);
+    }
+
+    /** 2026-11-07：設定目前的符文保護（夾在 0～最大）。 */
+    public void setWard(final double value) {
+        this.ward = Math.max(0, Math.min(maxWard(), value));
+    }
+
+    /**
+     * 2026-11-07 照 PoE2 Runic Ward：受到的傷害要扣 lifeDamage 生命（護盾那些先扣過了）時，照符文保護保底——
+     * 會死而且符文保護吃得下，生命扣到剩 1、多的由符文保護吃（直接扣掉）。回傳真的要扣的生命（{@link RunicWard#absorb}）。
+     */
+    public double wardLethal(final double lifeDamage) {
+        final double[] absorbed = RunicWard.absorb(life, lifeDamage, ward);
+        ward = Math.max(0, ward - absorbed[1]);
+        return absorbed[0];
     }
 
     public boolean isDead() {

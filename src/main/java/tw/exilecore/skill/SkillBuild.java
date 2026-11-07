@@ -392,6 +392,11 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 definition.mana().at(level) + extraManaCost(definition.mana().at(level), effective, context),
                 effective.apply(StatKeys.SKILL_COST, 1.0, context) * SkillConfig.manaCostScale(), // 2026-10-27 照站長：全部砍半（skills.yml mana_cost_scale）
                 tw.exilecore.stats.CostKeys.manaEfficiency(effective, context));
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（開放問題 2）：這個技能自己消耗生命就加 costs_life 標籤（艾瑟琳的御令「消耗生命的法術」照每個技能看）；
+        //   這次之前只有整張屬性表的「法術要花生命」
+        if (tw.exilecore.item.unique.UniqueCosts.costsLife(effective, context, manaCost)) {
+            profile = profile.derive(profile.id(), Set.of(tw.exilecore.item.unique.VaalKeys.TAG_COSTS_LIFE), Set.of());
+        }
         final double baseCooldown = tw.exilecore.item.unique.UniqueHits.cooldown(definition.cooldown() > 0 ? definition.cooldown()
                 : Math.max(0, effective.flat(StatKeys.SKILL_ADDED_COOLDOWN, context)), effective, context); // 2026-10：輔助給的冷卻；2026-10-27（逆漏法袍）：± 秒
         // 2026-10-26 照 PoE2（戰爭之哮「無視戰吼冷卻時間」＝更少 100% 冷卻）：沒有冷卻；這次之前最低夾在一成

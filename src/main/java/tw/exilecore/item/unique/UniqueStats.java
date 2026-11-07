@@ -161,6 +161,13 @@ public final class UniqueStats {
     public static final String TRIGGER_DECOMPOSE_METRES = "trigger.decompose_metres";
     /** 武器以外的裝備賦予技能（grant_skill.技能代號，FLAT 1；等級照物品等級，跟法杖賦予的一樣）。 */
     public static final String GRANT_SKILL = "grant_skill.";
+    /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：暮色瓣落賦予午夜天頂（值是固定等級 13，照 poe2db）。 */
+    public static final String GRANT_SKILL_MIDNIGHT_ZENITH = GRANT_SKILL + "midnight_zenith";
+    /**
+     * 2026-11-07（暮色瓣落，PoE2 ice_crystal_maximum_life_+%_per_5%_cold_resistance）：FLAT，你每有 5% 冰冷抗性（封頂後），
+     * 你的冰晶最大生命增加 x%（物品「減少」寫負的；IceCrystals.coldLifeFactor）。
+     */
+    public static final String CRYSTAL_LIFE_PER_5_COLD = "crystal.life_per_5_cold_resist";
 
     // ---- 技能 ----
     /** 2026-11-01 照 PoE2 Rathpith Globe（獻祭之心）：非引導法術額外消耗 x% 最大生命（付不起就放不出來）。 */
@@ -462,8 +469,15 @@ public final class UniqueStats {
             tw.exilecore.ascendancy.AscKeys.DOUBLE_CHILL);
 
     /** 這件物品自己的（local.）屬性：不進角色屬性表，由 Runes、ItemStats 讀物品的詞綴。 */
-    public static final Set<String> LOCAL_ITEM = Set.of(LOCAL_RUNE_EFFECT, LOCAL_RUNE_AS_SHIELD, LOCAL_REQUIREMENT_STR,
-            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT, LOCAL_CORE_EFFECT, LOCAL_MODIFIABLE_CORRUPTED, LOCAL_INSTIL_EXTRA, LOCAL_SOCKET_MODS);
+    public static final Set<String> LOCAL_ITEM = union(Set.of(LOCAL_RUNE_EFFECT, LOCAL_RUNE_AS_SHIELD, LOCAL_REQUIREMENT_STR,
+            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT, LOCAL_CORE_EFFECT, LOCAL_MODIFIABLE_CORRUPTED, LOCAL_INSTIL_EXTRA, LOCAL_SOCKET_MODS),
+            VaalKeys.LOCAL); // 2026-11-07：瓦爾傳奇的本地屬性
+
+    private static Set<String> union(final Set<String> a, final Set<String> b) {
+        final Set<String> all = new HashSet<>(a);
+        all.addAll(b);
+        return Set.copyOf(all);
+    } // 2026-11-07：瓦爾傳奇的本地屬性
 
     /** 某種傷害轉換為另一種的屬性鍵（{@link #CONVERT_FROM}）。 */
     public static String convertFrom(final tw.exilecore.stats.DamageType from, final tw.exilecore.stats.DamageType to) {
@@ -473,6 +487,9 @@ public final class UniqueStats {
     /** 這裡所有的屬性鍵（資料檢查用；GRANT_SKILL、SKILL_TAG_PREFIX、CONVERT_FROM 是前綴，不算；轉換的每一種組合、{@link #SHARED} 另外加）。 */
     public static Set<String> all() {
         final Set<String> keys = new HashSet<>(SHARED);
+        keys.addAll(VaalKeys.STATS); // 2026-11-07：瓦爾傳奇、遠古魂核的新屬性鍵
+        keys.addAll(VaalKeys.LOCAL);
+        keys.addAll(WardenKeys.STATS); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：遺忘看守的新屬性鍵
         for (final tw.exilecore.stats.DamageType from : tw.exilecore.stats.DamageType.values()) {
             keys.add(AVOID_HIT + from.tag()); // 2026-11-04（背信忘義）
             // 2026-10-27（舞影外套）：受到的某種傷害增加／減少（減益用的 debuff.taken.類型，傷害計算照類型讀）

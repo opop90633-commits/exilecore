@@ -16,6 +16,8 @@
 #   poe2db 寶石頁 Additional Effects From Quality 的第二條是額外的品質效果（進階奇術才有，RePoE quality_stats 沒有那條），寫在下面 advanced；
 #   急裝、瞬影擊、寒夜嗥、銀月庇這次之前把第二條算在一般品質裡，這次移到 advanced。
 
+midnight_zenith:   # Midnight Zenith（2026-11-07 照 PoE2：冰晶上限 +(0—2)；品質照暮色瓣落的品質）
+  - { stat: zenith.max_crystals, type: FLAT, per: 0.1 }   # 冰晶上限 +x（MidnightZenith）
 molten_dive_crash:   # Molten Crash（2026-11-05 照 PoE2：熔岩地裂持續時間 +(0—2) 秒；品質照焚王獸符的品質）
   - { stat: molten.fissure_seconds, type: FLAT, per: 0.1 }   # 熔岩地裂 +秒（SkillExecutor.moltenCrash）
 potion_craft_insight:   # Alchemist's Boon（2026-10-28 照 PoE2：每分鐘另外獲得 (0—2) 點藥劑充能（生命、魔力藥劑各一份，加在增益上）；這次之前照通用規則）
@@ -52,6 +54,8 @@ wild_beast_taming:   # Tame Beast（2026-10-30 照 PoE2：鬼火持續時間 +(0
   - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 crimson_wrath:   # Berserk（2026-10-28 照 PoE2：增益讓怒氣效果另外增加 (0—10)%；這次之前照通用規則）
   - { stat: effect.rage.effect, type: INCREASED, per: 0.5 }   # 增益：怒氣效果
+soul_vessel:   # Spirit Vessel（2026-11-07 照 PoE2：召喚物 (0—20)% 更多最大生命；遺忘看守賦予，品質只有天賦樹的技能品質這類來源）
+  - { stat: life.max, type: MORE, per: 1.0 }   # 召喚物最大生命（更多；MinionSheets）
 curse_ring:   # Blasphemy（2026-10-29 照 PoE2：(0—10)% 增加保留效率；另一條插槽詛咒 (0—20)% 增加效果是額外的品質效果，寫在下面 advanced）
   - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 flame_blast_shaft:   # Detonating Arrow（2026-10-28 照 PoE2：最大階段 +(0—1)（無條件捨去）；這次之前照通用規則）

@@ -770,6 +770,10 @@ public final class CombatListener implements Listener {
             conditional.addAll(tw.exilecore.ascendancy.AscendancyEffects.attackerConditional((Player) attacker, defender, defenderMonster, skillSheet, hitTagSet, skill));
             // 2026-10-27 照 PoE2：抽出穿刺、箭照飛行距離的暴擊率（KeystoneEffects）
             conditional.addAll(KeystoneEffects.attackerConditional((Player) attacker, defender, skillSheet, skill));
+            // 2026-11-07 照站長「瓦爾傳奇照原作」：最近每用法術暴擊一次，法術暴擊傷害加成減少 x%（災變之種）
+            if (plugin.combat() != null && plugin.combat().vaalOffence() != null) {
+                conditional.addAll(plugin.combat().vaalOffence().critBonus((Player) attacker, skillSheet, hitTagSet));
+            }
             if (!conditional.isEmpty()) {
                 hitSheet = hitSheet.overlay(conditional);
             }
@@ -816,6 +820,16 @@ public final class CombatListener implements Listener {
         if (defenderIsPlayer) {
             // 2026-10-26（昇華）：神聖儀式（當前護盾加到護甲）、保持警覺（敵人依距離的命中懲罰）
             hitDefender = tw.exilecore.ascendancy.AscendancyEffects.defenderSheet((Player) defender, defenderState, hitDefender);
+            // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 Forgotten Warden）：每失去 50 能量護盾 +x 偏斜值（照被打這一下當時的護盾；
+            //   加在偏斜值的基礎上，增加／更多偏斜照乘，DamageCalculator.deflectionRating）
+            final double perMissingEs = hitDefender.flat(tw.exilecore.item.unique.WardenKeys.DEFLECTION_PER_50_MISSING_ES, java.util.Set.of());
+            if (perMissingEs > 0 && defenderState != null) {
+                final double missingDeflection = tw.exilecore.item.unique.WardenKeys.deflectionFromMissingEs(perMissingEs,
+                        defenderState.maxEnergyShield(), defenderState.energyShield());
+                if (missingDeflection > 0) {
+                    hitDefender = hitDefender.overlay(java.util.List.of(Modifier.flat(StatKeys.DEFLECTION, missingDeflection, "遺忘看守")));
+                }
+            }
             hitSheet = tw.exilecore.ascendancy.AscendancyEffects.enemyVsPlayer((Player) defender, attacker, hitSheet);
             // 2026-10-27 照 PoE2 天賦樹：6 格外打來的用更多護甲防禦、免疫曝露、身上的凋零效果減少（TreeLeftovers）
             hitDefender = tw.exilecore.skill.TreeLeftovers.defenderSheet(defender, attacker, hitDefender, defenderDebuffs,
@@ -1004,11 +1018,13 @@ public final class CombatListener implements Listener {
                     .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.RARE || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE)
                     .orElse(false);
             tw.exilecore.ascendancy.AscendancyEffects.hitBy(attacker); // 2026-11-01 照 PoE2 Navira's Embrace：泡泡只擋泡泡外面的敵人
+            hitDeflected = result.deflected(); // 2026-11-07（遺忘看守）：被偏斜的擊中有 x% 先由夥伴承受
             applyToPlayer((Player) defender, defenderState, result.esDamage(), result.lifeDamage(), event,
                     describeSource(attacker), describeSkill(attacker, skill, event.getCause()), result.dealt(), result.outgoing(), thornsTarget,
                     (!attackerIsPlayer && !attackerIsMinion) || pvpAttacker != null, pvpAttacker);
             tw.exilecore.ascendancy.AscendancyEffects.hitBy(null);
             hitByRare = false;
+            hitDeflected = false;
             if (pvpAttacker != null) {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
             }
@@ -1353,6 +1369,7 @@ public final class CombatListener implements Listener {
             if (plugin.skills() != null && plugin.skills().treeMechanics() != null) {
                 plugin.skills().treeMechanics().leechedLife(player, effective, life); // 2026-10-26 照 PoE2 天賦：夥伴也偷取同樣多的生命
             }
+            allyLeech(player, effective, life); // 2026-11-07 照站長「瓦爾傳奇照原作」：臨在範圍內的友方也偷取同樣多
         }
         if (mana > 0) {
             final double now = Math.min(mana * instant, state.maxMana() * INSTANT_LEECH_CAP);
@@ -1364,6 +1381,42 @@ public final class CombatListener implements Listener {
         }
         if (changed) {
             plugin.players().display(player, state);
+        }
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（PoE2「Leeching Life from your Hits causes Allies in your Presence to also Leech the same amount of Life」，
+     * {@code presence.ally_leech_life}，值 100 = 一樣多）：你的擊中偷取生命時，臨在範圍內的隊友與召喚物（你的、隊友的）也偷取 x% 的量，
+     * 各自照自己的偷取上限（隊友 PlayerState.addHitLeech、召喚物 MinionHooks.leech）。這次之前沒有。
+     */
+    private void allyLeech(final Player player, final StatSheet effective, final double life) {
+        final double percent = effective.flat(tw.exilecore.item.unique.VaalKeys.PRESENCE_ALLY_LEECH_LIFE, java.util.Set.of());
+        if (percent <= 0 || life <= 0) {
+            return;
+        }
+        final double amount = life * percent / 100.0;
+        final double radius = Presence.radius(effective);
+        final java.util.Set<java.util.UUID> group = new java.util.HashSet<>(plugin.party() == null
+                ? java.util.List.of(player.getUniqueId()) : plugin.party().groupMembers(player.getUniqueId()));
+        group.add(player.getUniqueId());
+        final MinionHooks minions = plugin.combat() == null ? null : plugin.combat().minions();
+        for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), radius)) {
+            if (near == player || near.isDead() || near.getLocation().distanceSquared(player.getLocation()) > radius * radius) {
+                continue;
+            }
+            if (near instanceof Player ally) {
+                if (group.contains(ally.getUniqueId())) {
+                    final PlayerState state = plugin.players().find(ally.getUniqueId()).orElse(null);
+                    if (state != null && state.hasCharacter() && !state.isDead()) {
+                        state.addHitLeech(amount);
+                    }
+                }
+            } else if (minions != null && minions.isMinion(near)) {
+                final Player owner = minions.owner(near);
+                if (owner != null && group.contains(owner.getUniqueId())) {
+                    minions.leech(near, amount);
+                }
+            }
         }
     }
 
@@ -1532,6 +1585,9 @@ public final class CombatListener implements Listener {
     /** 2026-10-28：這一下是稀有、傳奇怪物打的（applyToPlayer 的補償用；主執行緒，呼叫完就清掉）。 */
     private boolean hitByRare;
 
+    /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：這一下被偏斜了（applyToPlayer 的「偏斜的擊中先由夥伴承受」用；主執行緒，呼叫完就清掉）。 */
+    private boolean hitDeflected;
+
     /** 上一次 applyToPlayer 的競技場上限比例（主執行緒；緊接著的 pvpRewards 用）。 */
     private double lastPvpCapScale = 1.0;
 
@@ -1562,11 +1618,25 @@ public final class CombatListener implements Listener {
                 lifeTaken *= 0.7;
                 defer(player, () -> delayedLoss(player, later, 80, 1, true)); // 2026-10-18：事件被取消就不排延遲扣血
             }
+            final double beforeCompanion = esTaken + lifeTaken; // 2026-11-07（遺忘看守）：偏斜那份照夥伴承受之前的整下算
             // 2026-10-26 照 PoE2 天賦：擊中傷害的 x% 先由你的夥伴的生命承受（沒有夥伴照常）
             final double toCompanion = sheet.flat(tw.exilecore.stats.TreeNewMechanicKeys.COMPANION_TAKES, java.util.Set.of());
             if (toCompanion > 0 && esTaken + lifeTaken > 0 && plugin.skills() != null && plugin.skills().treeMechanics() != null) {
                 final double total = esTaken + lifeTaken;
                 final double absorbed = plugin.skills().treeMechanics().companionAbsorb(player, total * Math.min(100, toCompanion) / 100.0);
+                if (absorbed > 0) {
+                    esTaken *= 1 - absorbed / total;
+                    lifeTaken *= 1 - absorbed / total;
+                }
+            }
+            // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」（PoE2 Forgotten Warden）：被偏斜的擊中傷害有 x% 先由可受傷害的夥伴的生命承受
+            //   （跟上面那條同一套 companionAbsorb：不會受傷的召喚物不算、最多扣到夥伴剩 1 點生命；沒有夥伴照常）。
+            //   照 PoB2 CalcDefence（CompanionAllyDamageMitigation = 一般的 % + 偏斜的 %）：兩份相加，都照夥伴承受之前的整下算
+            final double deflectedShare = Math.min(esTaken + lifeTaken, tw.exilecore.item.unique.WardenKeys.deflectedShare(hitDeflected, beforeCompanion,
+                    sheet.flat(tw.exilecore.item.unique.WardenKeys.COMPANION_TAKES_DEFLECTED, java.util.Set.of())));
+            if (deflectedShare > 0 && plugin.skills() != null && plugin.skills().treeMechanics() != null) {
+                final double total = esTaken + lifeTaken;
+                final double absorbed = plugin.skills().treeMechanics().companionAbsorb(player, deflectedShare);
                 if (absorbed > 0) {
                     esTaken *= 1 - absorbed / total;
                     lifeTaken *= 1 - absorbed / total;
@@ -1638,8 +1708,20 @@ public final class CombatListener implements Listener {
         final IncomingDamage rawSplit = IncomingDamage.split(esTaken, lifeTaken, Math.max(0, state.mana() - ascMana),
                 sheet.flat(StatKeys.DAMAGE_FROM_MANA, java.util.Set.of()), sheet.flat(StatKeys.LIFE_RECOUP, java.util.Set.of())
                         + (hitByRare ? sheet.flat(tw.exilecore.item.unique.UniqueStats.LIFE_RECOUP_VS_RARE, java.util.Set.of()) : 0));
-        final IncomingDamage split = ascMana > 0
+        final IncomingDamage unwarded = ascMana > 0
                 ? new IncomingDamage(rawSplit.es(), rawSplit.life(), rawSplit.mana() + ascMana, rawSplit.recoup()) : rawSplit;
+        // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：符文保護（PoE2 Runic Ward）——這一下會讓生命歸零、符文保護吃得下多的那些：
+        //   生命扣到剩 1，多的由符文保護吃（真的扣等 MONITOR 確定事件沒被取消）；吃不下照樣死。這次之前沒有符文保護
+        final double[] warded = tw.exilecore.character.RunicWard.absorb(state.life(), unwarded.life(), state.ward());
+        final IncomingDamage split = warded[1] > 0
+                ? new IncomingDamage(unwarded.es(), warded[0], unwarded.mana(), unwarded.recoup()) : unwarded;
+        if (warded[1] > 0) {
+            final double spent = warded[1];
+            defer(player, () -> {
+                state.setWard(state.ward() - spent);
+                plugin.players().wardSaved(player);
+            });
+        }
         final boolean lethal = state.life() - split.life() <= 0;
         event.setDamage(lethal ? LETHAL : 0);
         // 2026-11-03 照站長＋PoE2：回復只算擊中（摔落、火、岩漿這些環境傷害不回）；這次之前環境傷害也回
@@ -1670,6 +1752,10 @@ public final class CombatListener implements Listener {
                     final double absorbed = Math.min(state.energyShield(), rest);
                     state.setEnergyShield(state.energyShield() - absorbed);
                     rest -= absorbed;
+                }
+                if (shieldFirst) {
+                    // 2026-11-07 照 PoE2 Runic Ward：相位形態延後再受到的那份是承受傷害，符文保護保底（緊握傷口、血肉獻祭是生命流失，不擋）
+                    rest = plugin.players().wardLethal(player, state, rest);
                 }
                 state.setLife(state.life() - rest);
                 state.setLastDamageTick(plugin.getServer().getCurrentTick()); // 2026-10-17：延遲扣血也算在戰鬥中
@@ -1829,8 +1915,12 @@ public final class CombatListener implements Listener {
             if (damage != null && !event.isCancelled()) {
                 final PlayerState state = plugin.players().get(player);
                 final double esBefore = state.energyShield();
+                final double lifeBefore = state.life();
                 state.setEnergyShield(state.energyShield() - damage.esDamage());
                 state.setLife(state.life() - damage.lifeDamage());
+                if (!ENVIRONMENT.equals(damage.source())) {
+                    state.noteHitLifeLost(plugin.getServer().getCurrentTick(), lifeBefore - state.life()); // 2026-11-07（瓜特利斯的假說）：被擊中失去的生命
+                }
                 if (damage.manaDamage() > 0) {
                     state.setMana(state.mana() - damage.manaDamage());
                 }
@@ -1859,7 +1949,8 @@ public final class CombatListener implements Listener {
                                 * tw.exilecore.stats.TreeEffectKeys.recoveryRate(recoupSheet, tw.exilecore.stats.TreeEffectKeys.LIFE_RECOVERY_RATE));
                         if (StatKeys.flag(recoupSheet, tw.exilecore.item.unique.UniqueStats.LIFE_RECOUP_ALSO_ES)) {
                             // 2026-11-03 照 PoE2 Sacrosanctum：回復成生命的承受傷害也回復成能量護盾（同樣的量，吃回復速度）
-                            state.recoup().add(tw.exilecore.character.Recoup.ES, damage.recoup(), recoupSpeed);
+                            state.recoup().add(tw.exilecore.character.Recoup.ES, damage.recoup(), recoupSpeed
+                                    * tw.exilecore.character.PlayerStateService.esRecoveryRate(recoupSheet)); // 2026-11-07：吃能量護盾回復速度
                         }
                     }
                     if (damage.manaRecoup() > 0) { // 2026-10-27 照 PoE2：魔力回復也吃魔力回復速度（這次之前只吃回復速度）
@@ -1873,7 +1964,8 @@ public final class CombatListener implements Listener {
                         final double elemental = (damage.dealt().get(DamageType.FIRE) + damage.dealt().get(DamageType.COLD)
                                 + damage.dealt().get(DamageType.LIGHTNING)) / dealtTotal;
                         state.recoup().add(tw.exilecore.character.Recoup.ES,
-                                (damage.esDamage() + damage.lifeDamage() + damage.manaDamage()) * elemental * esRecoup / 100.0, recoupSpeed);
+                                (damage.esDamage() + damage.lifeDamage() + damage.manaDamage()) * elemental * esRecoup / 100.0,
+                                recoupSpeed * tw.exilecore.character.PlayerStateService.esRecoveryRate(recoupSheet)); // 2026-11-07：吃能量護盾回復速度
                     }
                     plugin.players().display(player, state);
                     if (damage.byEnemy() && charges != null) {

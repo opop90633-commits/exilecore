@@ -118,7 +118,7 @@ public final class LootFilter {
         /** 地圖事件（神龕、寶箱、保險箱、裂隙、流寇、深淵裂縫、祭壇、幻霧）掉的。 */
         EVENT("事件傳奇", "event", "地圖事件（神龕、寶箱、保險箱、裂隙、流寇、深淵裂縫、祭壇、幻霧）掉的"),
         /** 巔峰 Boss 專屬（覺醒之主・虛星、七隻事件巔峰 Boss、迷霧之主、審判者、不朽統帥、淵鯨、世界 Boss）。 */
-        PINNACLE("巔峰 Boss 專屬", "pinnacle", "覺醒之主・虛星、七隻事件巔峰 Boss、迷霧之主、審判者、不朽統帥、淵鯨、世界 Boss 才掉的"),
+        PINNACLE("巔峰 Boss 專屬", "pinnacle", "覺醒之主・虛星、七隻事件巔峰 Boss、迷霧之主、審判者、不朽統帥、深坑首領、淵鯨、世界 Boss 才掉的"), // 2026-11-07：＋深坑首領
         /** 終局 Boss、極境專屬。 */
         ENDGAME("終局・極境專屬", "endgame", "四個終局 Boss 與極境才掉的"),
         /** 劫盜的大金庫掉的。 */
@@ -129,7 +129,9 @@ public final class LootFilter {
         /** 不在地圖設定檔的巔峰裡、但也算巔峰 Boss 專屬的來源。 */
         // 2026-11-06 照站長「關掉一般傳奇會把一些 Boss 專屬的一起過濾掉」：迷霧回廊、絕境、軍團三隻災厄級 Boss（fog_trial／ultimatum／legion）
         //   的專屬傳奇也算巔峰 Boss 專屬；這次之前不在任何一組的來源裡，被當成一般傳奇
-        static final Set<String> EXTRA_PINNACLE_SOURCES = Set.of("abyss_whale", "world_boss", "fog_trial", "ultimatum", "legion");
+        static final Set<String> EXTRA_PINNACLE_SOURCES = Set.of("abyss_whale", "world_boss", "fog_trial", "ultimatum", "legion",
+                "delve_guardian", // 2026-11-07：星脈深坑的守衛（原作阿茲里掉的）
+                "delve_boss"); // 2026-11-07 照站長「再做一隻 BOSS」：星脈深坑的首領（晶淵王座，第四隻災厄級；暮色瓣落、遺忘看守）
 
         private final String displayName;
         private final String id;

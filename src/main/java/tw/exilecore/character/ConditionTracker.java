@@ -105,6 +105,14 @@ public final class ConditionTracker {
         /** 2026-10-28：魔力在這個比例以下算貧魔、以上算滿魔（遊手好閒：滿魔 90%；磐石之拳：貧魔 50%）。 */
         double lowManaFraction = TreeConditions.LOW_FRACTION;
         double fullManaFraction = 0.999;
+        /** 2026-11-07 照站長「瓦爾傳奇照原作」：生命在這個比例以下算低血（life.low_threshold，取代 35%）。 */
+        double lowLifeFraction = TreeConditions.LOW_FRACTION;
+        /** 2026-11-07：魔力在這個比例以下也算低血（life.low_from_mana；0＝沒有）。 */
+        double lowLifeFromMana;
+        /** 2026-11-07：生命在這個比例以下也算貧魔（mana.low_from_life；0＝沒有）。 */
+        double lowManaFromLife;
+        /** 2026-11-07：被包圍要幾隻敵人（基本 5 隻，surrounded.fewer 少 x 隻，最少 1 隻）。 */
+        int surroundedCount = TreeConditions.SURROUNDED_COUNT;
         /** 2026-10-26：上次看是不是獸形、從哪個 tick 開始（變回人形的效果用）。 */
         boolean shapeshifted;
         long formSince;
@@ -163,6 +171,12 @@ public final class ConditionTracker {
         final double fullMana = state.sheet().flat(tw.exilecore.item.unique.UniqueStats.FULL_MANA_THRESHOLD, Set.of());
         sample.lowManaFraction = lowMana > 0 ? Math.max(lowMana, TreeConditions.LOW_FRACTION * 100) / 100.0 : TreeConditions.LOW_FRACTION;
         sample.fullManaFraction = fullMana > 0 ? Math.min(0.999, fullMana / 100.0) : 0.999;
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：低血門檻改成 x%（取代 35%）、魔力低時也算低血、生命低時也算貧魔、被包圍少要幾隻
+        final double lowLife = state.sheet().flat(tw.exilecore.item.unique.VaalKeys.LIFE_LOW_THRESHOLD, Set.of());
+        sample.lowLifeFraction = lowLife > 0 ? Math.min(1, lowLife / 100.0) : TreeConditions.LOW_FRACTION;
+        sample.lowLifeFromMana = Math.max(0, state.sheet().flat(tw.exilecore.item.unique.VaalKeys.LIFE_LOW_FROM_MANA, Set.of())) / 100.0;
+        sample.lowManaFromLife = Math.max(0, state.sheet().flat(tw.exilecore.item.unique.VaalKeys.MANA_LOW_FROM_LIFE, Set.of())) / 100.0;
+        sample.surroundedCount = surroundedCount(state.sheet().flat(tw.exilecore.item.unique.VaalKeys.SURROUNDED_FEWER, Set.of()));
         sample.es = state.energyShield();
         sample.maxEs = state.maxEnergyShield();
         sample.presenceRadius = tw.exilecore.combat.Presence.BASE_RADIUS
@@ -470,6 +484,7 @@ public final class ConditionTracker {
             case TreeConditions.IGNITED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.IGNITE);
             case TreeConditions.CHILLED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.CHILL);
             case TreeConditions.SHOCKED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.SHOCK); // 2026-10-28
+            case TreeConditions.POISONED -> plugin.ailments() != null && plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.POISON); // 2026-11-07
             case TreeConditions.DAMAGING_AILMENT -> plugin.ailments() != null && (plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.IGNITE)
                     || plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.BLEED)
                     || plugin.ailments().has(player, tw.exilecore.ailment.AilmentType.POISON));
@@ -484,10 +499,12 @@ public final class ConditionTracker {
             case TreeConditions.LIFE_FLASK_10S -> now - state.recentTick(TreeConditions.LIFE_FLASK_USED) <= LIFE_FLASK_WINDOW;
             case TreeConditions.MOVING -> sample != null && sample.moving;
             case TreeConditions.STATIONARY -> sample == null || !sample.moving;
-            case TreeConditions.LOW_LIFE -> lowLife(sample == null ? 1 : sample.lifeFraction);
+            case TreeConditions.LOW_LIFE -> sample == null ? false : lowLife(sample.lifeFraction, sample.lowLifeFraction, sample.manaFraction,
+                    sample.lowLifeFromMana); // 2026-11-07：門檻、魔力低也算（瓦爾傳奇）
             case TreeConditions.FULL_LIFE -> fullLife(sample == null ? 1 : sample.fullLifeFraction);
             // 2026-10-28 照 PoE2（磐石之拳的遊手好閒）：「最大魔力的 50% 以下視為貧魔」
-            case TreeConditions.LOW_MANA -> sample == null ? false : sample.manaFraction <= sample.lowManaFraction + 1e-9;
+            case TreeConditions.LOW_MANA -> sample == null ? false : sample.manaFraction <= sample.lowManaFraction + 1e-9
+                    || sample.lowManaFromLife > 0 && sample.lifeFraction <= sample.lowManaFromLife + 1e-9; // 2026-11-07：生命低也算貧魔（瓦爾傳奇）
             case TreeConditions.FULL_ES -> sample != null && sample.maxEs > 0 && sample.es >= sample.maxEs - 1e-6;
             case TreeConditions.HAS_ES -> sample != null && sample.es > 0;
             // 2026-10-27 照 PoE2：低能量護盾（35% 以下；沒有護盾也算）
@@ -504,7 +521,7 @@ public final class ConditionTracker {
             case TreeConditions.MELEE_WEAPON -> weapon(state, MAIN_HAND) && !hasTag(state, MAIN_HAND, "ranged");
             case TreeConditions.UNARMED -> !weapon(state, MAIN_HAND) && !weapon(state, OFF_HAND); // 2026-10-28
             case TreeConditions.SURROUNDED -> enemiesNear(player, sample == null ? TreeConditions.SURROUNDED_RADIUS : sample.surroundedRadius, false)
-                    >= TreeConditions.SURROUNDED_COUNT; // 2026-10-27：範圍吃「增加被包圍的範圍」
+                    >= (sample == null ? TreeConditions.SURROUNDED_COUNT : sample.surroundedCount); // 2026-10-27：範圍吃「增加被包圍的範圍」；2026-11-07：隻數吃「少 x 隻」
             case TreeConditions.RARE_NEARBY -> enemiesNear(player, sample == null ? tw.exilecore.combat.Presence.BASE_RADIUS : sample.presenceRadius, true) > 0;
             case TreeConditions.ALLY -> allyNear(player, sample == null ? tw.exilecore.combat.Presence.BASE_RADIUS : sample.presenceRadius);
             default -> state.recently(condition, now);
@@ -513,6 +530,19 @@ public final class ConditionTracker {
 
     static boolean lowLife(final double fraction) {
         return fraction <= TreeConditions.LOW_FRACTION + 1e-9;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：低血——生命在 lowLifeFraction 以下（life.low_threshold 改門檻，預設 35%），
+     * 或魔力在 fromMana 以下（life.low_from_mana，0＝沒有）；這次之前只看生命 35%。
+     */
+    static boolean lowLife(final double lifeFraction, final double lowLifeFraction, final double manaFraction, final double fromMana) {
+        return lifeFraction <= lowLifeFraction + 1e-9 || fromMana > 0 && manaFraction <= fromMana + 1e-9;
+    }
+
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」：被包圍要幾隻敵人——基本 5 隻，少 fewer 隻，最少 1 隻；這次之前固定 5 隻。 */
+    static int surroundedCount(final double fewer) {
+        return Math.max(1, TreeConditions.SURROUNDED_COUNT - (int) Math.floor(Math.max(0, fewer)));
     }
 
     static boolean fullLife(final double fraction) {

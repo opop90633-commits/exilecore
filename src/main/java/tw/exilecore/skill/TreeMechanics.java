@@ -109,6 +109,8 @@ public final class TreeMechanics implements Listener {
 
     /** 「最近」：4 秒。 */
     public static final long RECENT_TICKS = 80;
+    /** 2026-11-07（吉卡尼的假說）：用掉魔力讓能量護盾開始充能，每 2 秒最多一次。 */
+    static final long ES_RECHARGE_ON_MANA_COOLDOWN = 40;
 
     /** 增益名稱（快捷欄字型要收進去）。 */
     public static final List<String> HUD_TEXTS = List.of("元素統治者", "不死統治者", "易爆之力", "傀儡大師", "秘術增強", "最近放過圖騰",
@@ -121,6 +123,9 @@ public final class TreeMechanics implements Listener {
         long archonRecoveryUntil;
         double manaSpent;
         double surgeSpent;
+        /** 2026-11-07（吉卡尼的假說）：累計用掉的魔力（每 x 點讓能量護盾開始充能）、下一次可以觸發的 tick。 */
+        double esRechargeSpent;
+        long esRechargeReady;
         int volatility;
         long volatilityExplodeAt;
         long volatilityLastGain = Long.MIN_VALUE / 2;
@@ -275,12 +280,20 @@ public final class TreeMechanics implements Listener {
         return mods;
     }
 
-    /** 易爆爆炸對你造成的物理傷害（每層 100，先吃護甲、物理減傷）。 */
+    /**
+     * 易爆爆炸對你造成的物理傷害（每層 100，先吃護甲、物理減傷）。
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（夢之碎片「承受的易爆物理傷害有 x% 視為冰冷傷害」，taken.volatility_physical_as_cold）：
+     * 那 x% 改成冰冷，照你的冰冷抗性（含上限）減免，剩下的物理照舊吃護甲、物理減傷；這次之前全部是物理。
+     */
     public static double volatilityDamage(final int stacks, final StatSheet sheet) {
-        final double raw = VOLATILITY_DAMAGE * stacks;
-        final double armour = Formulas.armourReduction(Math.max(0, sheet.get(StatKeys.ARMOUR)), raw);
+        final double total = VOLATILITY_DAMAGE * stacks;
+        final double coldShare = Math.min(100, Math.max(0, sheet.flat(tw.exilecore.item.unique.VaalKeys.TAKEN_VOLATILITY_PHYSICAL_AS_COLD, Set.of()))) / 100.0;
+        final double raw = total * (1 - coldShare);
+        final double cold = total * coldShare * (1 - Formulas.resistReduction(sheet.get(DamageType.COLD.mitigationStat()),
+                tw.exilecore.stats.DamageCalculator.resistCap(sheet, DamageType.COLD)));
+        final double armour = raw <= 0 ? 0 : Formulas.armourReduction(Math.max(0, sheet.get(StatKeys.ARMOUR)), raw);
         final double reduction = Math.max(0, Math.min(90, sheet.flat(StatKeys.PHYS_REDUCTION, Set.of()))) / 100.0;
-        return raw * (1 - armour) * (1 - reduction);
+        return raw * (1 - armour) * (1 - reduction) + cold;
     }
 
     /** 傀儡大師的修飾器（層數 × 效果）。 */
@@ -341,6 +354,16 @@ public final class TreeMechanics implements Listener {
                     } else {
                         state.manaSpent = ps.maxMana(); // 恢復期中：存滿，恢復期一過下一次花魔力就給
                     }
+                }
+            }
+            // 2026-11-07 照站長「瓦爾傳奇照原作」（吉卡尼的假說）：每用掉 x 點魔力，能量護盾開始充能（每 2 秒最多一次；冷卻中存滿等冷卻過）
+            final double perMana = sheet.flat(tw.exilecore.item.unique.VaalKeys.ES_RECHARGE_ON_MANA_SPENT, Set.of());
+            if (perMana > 0) {
+                state.esRechargeSpent = Math.min(perMana, state.esRechargeSpent + manaCost);
+                if (state.esRechargeSpent >= perMana && now >= state.esRechargeReady) {
+                    state.esRechargeSpent = 0;
+                    state.esRechargeReady = now + ES_RECHARGE_ON_MANA_COOLDOWN;
+                    ps.setLastDamageTick(Math.min(ps.lastDamageTick(), now - tw.exilecore.character.PlayerStateService.esRechargeDelay(sheet)));
                 }
             }
             final double surge = effective.flat(TreeNewMechanicKeys.ARCANE_SURGE_ON_SPEND, tags);
@@ -579,6 +602,7 @@ public final class TreeMechanics implements Listener {
                 ps.setEnergyShield(ps.energyShield() - es);
                 damage -= es;
             }
+            damage = plugin.players().wardLethal(player, ps, damage); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：承受傷害照符文保護保底（PoE2 Runic Ward）
             if (damage > 0) {
                 // 2026-10-29 照 PoE2（Volatility：每層對你造成 100 物理傷害，沒有保底）：扣到 0 就死；這次之前最多扣到剩 1 點生命
                 ps.setLife(ps.life() - damage);

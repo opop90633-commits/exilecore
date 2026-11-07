@@ -173,6 +173,14 @@ public final class DamageCalculator {
             crit = true;
         }
         if (crit) {
+            // 2026-11-07 照站長「瓦爾傳奇照原作」：暴擊的傷害有 x% 機率為幸運（災變之種，damage.lucky_crit）——知道暴擊了才擲，
+            //   中了就每一種傷害再擲一次取高（damage.lucky 是暴擊判定之前擲的、不分暴擊）
+            final double luckyCrit = attacker.flat(tw.exilecore.item.unique.VaalKeys.DAMAGE_LUCKY_CRIT, critContext) / 100.0;
+            if (luckyCrit > 0 && random.nextDouble() < luckyCrit) {
+                final DamagePacket again = StatKeys.flag(attacker, LineageKeys.LIGHTNING_EXTREMES)
+                        ? outgoing(attacker, skill, roller, extremes) : outgoing(attacker, skill, roller);
+                luckier(outgoing, again);
+            }
             final double multiplier = 1 + (critMultiplier(attacker, critContext, defender) - 1) * Math.pow(0.7, rerolls);
             outgoing.scale(multiplier);
             if (firstRoll && secondRoll && multiplier > 1) {
@@ -415,6 +423,9 @@ public final class DamageCalculator {
      * defender 不是 null 時再乘防禦方的「擊中你的暴擊傷害加成減少」。
      */
     public static double critMultiplier(final StatSheet attacker, final Set<String> tags, final StatSheet defender) {
+        if (withWeapon(tags) && attacker.flat(StatKeys.WEAPON_NO_CRIT_BONUS, tags) > 0) {
+            return 1; // 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘）：用這把武器的擊中沒有暴擊傷害加成（固定的「暴擊傷害加成為 x%」也不算）
+        }
         final double fixed = attacker.flat(tw.exilecore.item.unique.UniqueStats.CRIT_BONUS_OVERRIDE, Set.of());
         // 2026-10-28 照 PoE2（馬雷葛蘿的血染手套）：「你的暴擊傷害加成為 250%」——固定，不吃增加／更多
         double bonus = fixed > 0 ? fixed / 100.0
@@ -429,6 +440,14 @@ public final class DamageCalculator {
     /** 2026-11-05 照站長「照原作」：武器上的「+x% 暴擊傷害加成」是本地的，只算用這把武器的攻擊：武器本地的暴擊傷害加成（weapon.crit_bonus），只有攻擊才算。 */
     static double weaponCritBonus(final StatSheet attacker, final Set<String> tags) {
         return tags != null && tags.contains(Tags.ATTACK) ? attacker.flat(StatKeys.WEAPON_CRIT_BONUS, tags) : 0;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘）：這一下是不是「用武器的攻擊」（攻擊、而且不是不用武器的那種），
+     * 武器本地的 weapon.no_crit_bonus／weapon.crit_override 才算。法術、不用武器的攻擊不吃。
+     */
+    static boolean withWeapon(final Set<String> tags) {
+        return tags != null && tags.contains(Tags.ATTACK) && !tags.contains(WEAPONLESS_TAG);
     }
 
     /** 防禦方減免（不含護盾）。基石「混沌免疫」讓混沌傷害歸零。 */
@@ -454,6 +473,15 @@ public final class DamageCalculator {
         return lowest;
     }
 
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」：幸運——每一種傷害取兩次裡高的那個（寫回 into）。純函式（測試用）。 */
+    static void luckier(final DamagePacket into, final DamagePacket again) {
+        for (final DamageType type : DamageType.values()) {
+            if (again.get(type) > into.get(type)) {
+                into.set(type, again.get(type));
+            }
+        }
+    }
+
     /** 2026-11-01 照 PoE2 穿透的下限（PoB2 PenetrationMinimum，我們沒有改下限的來源）：0。 */
     static final double PENETRATION_MINIMUM = 0;
 
@@ -461,7 +489,32 @@ public final class DamageCalculator {
      * 2026-11-01 照 PoE2（PoB2 CalcOffence calcPenResist）：抗性高於下限時扣掉穿透、最低到下限（0）；抗性本來就 ≤ 下限（負抗性、被曝露）時穿透沒作用。
      */
     static double penetrated(final double resist, final double penetration) {
-        return resist > PENETRATION_MINIMUM ? Math.max(resist - penetration, PENETRATION_MINIMUM) : resist;
+        return penetrated(resist, penetration, PENETRATION_MINIMUM);
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：同上，下限照攻擊方（PoE2「你的擊中穿透元素抗性時最低可以降到 -50%」，PoB2 PenetrationMinimum）；
+     * 抗性本來就 ≤ 下限時穿透沒作用。這次之前下限固定 0。
+     */
+    static double penetrated(final double resist, final double penetration, final double minimum) {
+        return resist > minimum ? Math.max(resist - penetration, minimum) : resist;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」：攻擊方的穿透下限（{@code penetration.minimum}，FLAT 負的百分比）：只算元素，
+     * 好幾個來源取最低的那個（不相加），不會高過 0。這次之前一律 0。
+     */
+    static double penetrationMinimum(final StatSheet attacker, final DamageType type, final Set<String> context) {
+        double minimum = PENETRATION_MINIMUM;
+        if (attacker == null || !type.isElemental()) {
+            return minimum;
+        }
+        for (final Modifier modifier : attacker.modifiersOf(tw.exilecore.item.unique.VaalKeys.PENETRATION_MINIMUM)) {
+            if (modifier.type() == ModType.FLAT && modifier.appliesTo(context)) {
+                minimum = Math.min(minimum, modifier.value());
+            }
+        }
+        return minimum;
     }
 
     /** 同上，攻擊方的穿透（penetration，tags 限定類型）在抗性上限之後扣。 */
@@ -496,7 +549,10 @@ public final class DamageCalculator {
                 context.addAll(type.tags());
                 // 2026-11-01 照 PoE2（PoB2 CalcOffence calcPenResist）：穿透只能把抗性降到 0，本來就 ≤ 0 的不再降；
                 //   這次之前直接相減，可以穿到負的
-                resist = penetrated(resist, Math.max(0, attacker.flat(StatKeys.PENETRATION, context)));
+                resist = penetrated(resist, Math.max(0, attacker.flat(StatKeys.PENETRATION, context)), penetrationMinimum(attacker, type, context));
+            }
+            if (type == DamageType.LIGHTNING && StatKeys.flag(defender, tw.exilecore.item.unique.VaalKeys.FLAG_LIGHTNING_RESIST_IGNORED)) {
+                resist = 0; // 2026-11-07 照站長「瓦爾傳奇照原作」：閃電抗性不影響受到的閃電傷害（抗性照常顯示）；這次之前沒有
             }
             double taken = amount;
             if (type == DamageType.PHYSICAL) {
@@ -517,7 +573,9 @@ public final class DamageCalculator {
                 // 護甲的一部分套用在元素傷害（PoE2，在抗性之前）
                 // 2026-10-26 照 PoE2 天賦樹：「x% 護甲也套用在火焰傷害」這種分元素的（標籤寫元素）；這次之前只看沒標籤的
                 // 2026-10-26（昇華・奇塔弗奉獻）：混沌也可以
-                final double share = type == DamageType.CHAOS ? defender.flat(tw.exilecore.ascendancy.AscKeys.CHAOS_ARMOUR, Set.of()) / 100.0 : defender.flat(StatKeys.ARMOUR_ELEMENTAL, type.tags()) / 100.0;
+                // 2026-11-07 照站長「瓦爾傳奇照原作」（克特帕托的假說「能量護盾全滿時 +75% 護甲套用在混沌」，armour.chaos@fulles）也算混沌的
+                final double share = type == DamageType.CHAOS ? (defender.flat(tw.exilecore.ascendancy.AscKeys.CHAOS_ARMOUR, Set.of())
+                        + defender.flat(tw.exilecore.item.unique.VaalKeys.ARMOUR_CHAOS, Set.of())) / 100.0 : defender.flat(StatKeys.ARMOUR_ELEMENTAL, type.tags()) / 100.0;
                 if (share > 0) {
                     taken *= 1 - Formulas.armourReduction(defender.get(StatKeys.ARMOUR) * share, taken);
                 }
@@ -692,6 +750,10 @@ public final class DamageCalculator {
                 }
                 // 2026-10-28 照 PoE2（畫家的侍從、藍焰護腕／雷鉗鐵手的磐石之拳版本）：獲得某一種傷害的 x% 為額外的另一種
                 percent += attacker.flat(tw.exilecore.item.unique.UniqueStats.gainFrom(source, extra), context);
+                // 2026-11-07 照站長「瓦爾傳奇照原作」：消耗生命的法術獲得 x% 傷害為額外物理傷害（艾瑟琳的御令）：照這個技能自己有沒有消耗生命（costs_life 標籤）
+                if (extra == DamageType.PHYSICAL && context.contains(tw.exilecore.item.unique.VaalKeys.TAG_COSTS_LIFE)) {
+                    percent += attacker.flat(tw.exilecore.item.unique.VaalKeys.DAMAGE_GAIN_IF_LIFE_COST_PHYSICAL, context);
+                }
                 if (percent > 0) {
                     final DamageType gained = asCold ? DamageType.COLD : extra;
                     summed[gained.ordinal()] += amount * percent / 100.0;
@@ -807,6 +869,12 @@ public final class DamageCalculator {
         final double attackOverride = skill.isAttack() ? attacker.flat(tw.exilecore.item.unique.UniqueStats.CRIT_ATTACK_OVERRIDE, Set.of()) : 0;
         if (attackOverride > 0) {
             return Math.min(1.0, attackOverride / 100.0);
+        }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（爆心巨錘，PoE2「This Weapon's Critical Hit Chance is 100%」）：用這把武器的攻擊暴擊率固定
+        //   （武器本地的，雙持照出手那一把；不吃增加／更多）
+        final double weaponOverride = skill.isAttack() && !weaponless(skill) ? attacker.flat(StatKeys.WEAPON_CRIT_OVERRIDE, skill.tags()) : 0;
+        if (weaponOverride > 0) {
+            return Math.min(1.0, weaponOverride / 100.0);
         }
         double baseCrit = weaponless(skill) ? WEAPONLESS_BASE_CRIT // 2026-10-27 照 PoE2：不用武器的攻擊不看武器的暴擊率
                 : skill.isAttack() ? tw.exilecore.item.unique.UniqueHits.weaponCrit(attacker, attacker.flat(StatKeys.WEAPON_CRIT, skill.tags())) // 2026-10-27（北爪護腕）

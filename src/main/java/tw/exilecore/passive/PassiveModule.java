@@ -68,6 +68,17 @@ public final class PassiveModule implements Module {
             }
         }
         tw.exilecore.item.UniquePicks.setNotables(new tw.exilecore.item.UniquePicks.Pool(notables, notableNames::get));
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2「Random 1 Keystone Passive Skill [1,33]」）：「配置隨機基石」的候選——天賦樹上的基石
+        final java.util.List<String> keystones = new java.util.ArrayList<>();
+        final java.util.Map<String, PassiveNode> keystoneNodes = new java.util.HashMap<>();
+        for (final PassiveNode node : loaded.ordered()) {
+            if (node.type() == PassiveNode.Type.KEYSTONE) {
+                keystones.add(node.id());
+                keystoneNodes.put(node.id(), node);
+            }
+        }
+        tw.exilecore.item.UniquePicks.setKeystones(new tw.exilecore.item.UniquePicks.Pool(keystones, id -> keystoneNodes.containsKey(id) ? keystoneNodes.get(id).name() : null),
+                id -> keystoneNodes.containsKey(id) ? keystoneNodes.get(id).description() : null);
         plugin.getSLF4JLogger().info("天賦樹：第 {} 版，{} 個節點，{} 個職業起點", loaded.version(), loaded.size(), loaded.starts().size());
         final java.util.List<String> missing = new java.util.ArrayList<>();
         for (final tw.exilecore.character.CharacterClass type : tw.exilecore.character.CharacterClass.values()) {

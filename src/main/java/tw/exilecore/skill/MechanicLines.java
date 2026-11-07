@@ -31,7 +31,7 @@ final class MechanicLines {
             case "corrupted_blood.chance" -> "打中你 " + n + "% 機率上一層腐化之血（物理持續傷害，每層每秒那一下的 5%，最多 10 層）";
             case "maim.chance" -> "打中你 " + n + "% 機率癱瘓（4 秒內移動速度慢 30%）";
             case "slow.taken" -> "身上的減速效果（冰緩、詛咒、癱瘓…）" + (value < 0 ? "減少 " : "增加 ") + pct + "%";
-            case "flag.cc_immune" -> "免疫所有控場（暈眩、凍結、冰緩、電擊、釘地、癱瘓、阻礙、致盲、緩速、嘲諷、擊退）";
+            case "flag.cc_immune" -> "不會被控住：暈眩、凍結、冰緩、電擊、釘地、癱瘓、阻礙照上（加傷害、引爆照算）但照樣行動；免疫嘲諷、擊退、技能的減速與定身"; // 2026-11-07 照站長「世界王、活動王上狀態不控場」；這次之前全部免疫
             case "monster.corpse_explode" -> "引爆你附近的屍體（1 秒後炸，物理傷害）";
             case "monster.cullable" -> "打牠的擊中都有撲殺（生命 10% 以下直接倒）";
             case "monster.death_blast_fire" -> "死掉時地上先畫圈，1 秒後炸開（3 格、牠普通一下 3.8 倍的火焰傷害）";

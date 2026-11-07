@@ -70,7 +70,8 @@ public final class StageAttacks implements Listener {
     static final String PRIMAL_SPIRIT = "proc_primal_spirit";
     static final String PUSTULE = "proc_domain_pustule";
     /** 2026-10-28 照 PoE2 Glacial Bolt 的 Wall：凍壁矢留下的冰晶碎掉時用冰牆自己的表炸（其他冰晶照舊 proc_crystal_burst）。 */
-    static final Map<String, String> CRYSTAL_BURST = Map.of("frozen_wall_shaft", "proc_glacial_bolt_wall");
+    static final Map<String, String> CRYSTAL_BURST = Map.of("frozen_wall_shaft", "proc_glacial_bolt_wall",
+            "midnight_zenith", "proc_crystal_midnight"); // 2026-11-07 照 PoE2 Midnight Zenith：午夜天頂的冰晶炸自己的傷害表
 
     // ---- PoE2 的固定數值 ----
     /** 震野踏：狂怒猛擊要 10 點怒氣（bear_slam_spend_X_rage_for_stronger_slam）、震波 2 → 3 公尺。 */

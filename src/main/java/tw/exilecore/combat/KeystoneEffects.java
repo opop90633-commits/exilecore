@@ -399,7 +399,8 @@ public final class KeystoneEffects implements Listener {
             // 2026-10-27：跟生命的回復一樣進 state.recoup()（禁療中不回、吃回復速度、死掉清掉；創傷信仰的上限在 PlayerStateService 套）；
             // 這次之前每一下排 4 個延遲工作直接加護盾，禁療中也照回
             state.recoup().add(tw.exilecore.character.Recoup.ES_CAPPED, es, // 2026-10-27：分開一種，上限只套這份
-                    tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, Set.of(), 0.1));
+                    tw.exilecore.stats.TreeEffectKeys.scale(sheet, tw.exilecore.stats.TreeEffectKeys.RECOUP_SPEED, Set.of(), 0.1)
+                            * tw.exilecore.character.PlayerStateService.esRecoveryRate(sheet)); // 2026-11-07：吃能量護盾回復速度
         }
     }
 

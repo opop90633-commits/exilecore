@@ -852,6 +852,8 @@ public final class SalvageMenu extends Menu {
         int count = 0;
         long gold = 0;
         final Map<String, Integer> currencies = new LinkedHashMap<>();
+        final List<tw.exilecore.economy.TradeLogRepository.Entry> log = new ArrayList<>(); // 2026-11-07：Boss 專屬與追逐級的傳奇
+        final String opId = java.util.UUID.randomUUID().toString();
         for (final Map.Entry<Integer, String> entry : selected.entrySet()) {
             final ItemStack stack = inventory.getItem(entry.getKey());
             if (!entry.getValue().equals(identity(entry.getKey(), stack))) {
@@ -871,6 +873,11 @@ public final class SalvageMenu extends Menu {
             }
             final ItemBase base = plugin.items().repository().base(data.get().base());
             final SalvageConfig.Reward reward = config.reward(base, data.get(), plugin.items().random());
+            // 2026-11-07 照站長「有辦法查出誰分解了什麼嗎」→「只記 Boss 專屬與追逐」：這種傳奇拆掉時記一筆（/ec trace 查得到）
+            if (plugin.loot() != null && plugin.loot().bossOrChaseUnique(data.get())) {
+                log.add(new tw.exilecore.economy.TradeLogRepository.Entry(opId, tw.exilecore.economy.TradeLogRepository.SALVAGE,
+                        data.get().uuid(), tw.exilecore.economy.Wallet.describe(stack), 1, player.getUniqueId(), player.getName(), null, "拆解"));
+            }
             inventory.setItem(entry.getKey(), null);
             count++;
             gold += reward.gold();
@@ -881,6 +888,18 @@ public final class SalvageMenu extends Menu {
         selected.clear();
         if (count == 0) {
             return;
+        }
+        if (!log.isEmpty() && plugin.economy() != null) {
+            final tw.exilecore.economy.TradeLogRepository tradeLog = plugin.economy().tradeLog();
+            plugin.database().async(connection -> {
+                tradeLog.insert(connection, log);
+                return null;
+            });
+            final List<String> names = new ArrayList<>();
+            for (final tw.exilecore.economy.TradeLogRepository.Entry entry : log) {
+                names.add(entry.itemDesc());
+            }
+            plugin.getSLF4JLogger().info("[salvage] {} 拆解了：{}", player.getName(), String.join("、", names));
         }
         if (gold > 0) {
             plugin.gold().earn(player, gold, tw.exilecore.economy.EconomyLedger.SALVAGE);

@@ -54,6 +54,10 @@ public final class MapDeviceMenu extends Menu {
     /** 2026-11-04 照站長「軍團也要有 Boss」：時沉領域。 */
     private static final int SLOT_LEGION = 47;
     private static final int SLOT_STATUS = 49;
+    /** 2026-11-07 照站長「地心礦坑簡化版」：星脈深坑（左鍵開、右鍵升級與排行）。 */
+    private static final int SLOT_DELVE = 48;
+    /** 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：晶淵王座（深坑首領鑰匙開，只有深坑的首領）。 */
+    private static final int SLOT_DELVE_BOSS = 50;
 
     private final MapService service;
     private int selectedSlot = -1;
@@ -198,7 +202,91 @@ public final class MapDeviceMenu extends Menu {
         drawStatus();
         drawFogTrial();
         drawLegion();
+        drawDelve();
+        drawDelveBoss(); // 2026-11-07
         set(SLOT_CLOSE, closeButton());
+    }
+
+    /** 2026-11-07 照站長「地心礦坑簡化版、新增深坑鑰匙、能組隊、排行不重置」：星脈深坑。 */
+    private void drawDelve() {
+        final Delve delve = service.events().delve();
+        final MapEventConfig.DelveSettings settings = delve.settings();
+        final CurrencyType key = delve.key();
+        if (key == null) {
+            return;
+        }
+        final int have = service.countCurrency(player, key);
+        final java.util.List<String> lore = new java.util.ArrayList<>(java.util.List.of(
+                "<gray>一層一層往下打：每層怪物等級 +" + trimNumber(settings.levelPerFloor()) + "（最多 +" + settings.maxLevelBonus() + "）、生命與傷害 +"
+                        + Math.round(settings.difficultyPerFloor() * 100) + "%",
+                "<gray>殺光一層，走進場地中間的裂口往下；每 " + settings.guardianEvery() + " 層一隻<#ff5c6a>深坑守衛",
+                "<gray>每層 <white>" + Math.round(settings.floorSeconds()) + "</white> 秒內要殺光，不然這一場結束",
+                "<#b28cff>黑暗<gray>：一直往上漲（越深越快），在附近殺怪回光；滿了每秒扣最大生命（最多扣到剩 1 點）",
+                "<gray>每過一層每個人各拿獎勵與藍晶；能組隊，每個人只能進去一次",
+                "<gray>守衛 <white>" + Math.round(service.events().delve().bossSettings().keyChance() * 100) + "%</white> 掉"
+                        + "<#7cc4ff>深坑首領鑰匙<gray>（開右邊的" + ItemRenderer.escape(service.events().delve().bossSettings().name()) + "）", // 2026-11-07
+                "",
+                "<gray>你最深：<white>第 " + delve.best(player) + " 層</white>　這次從<white>第 " + delve.startFloor(player) + " 層</white>開始",
+                "<gray>" + ItemRenderer.escape(key.name()) + "：<white>" + have + "</white> / " + settings.cost() + "<dark_gray>（地圖 Boss "
+                        + Math.round(settings.keyChance() * 100) + "% 掉）"));
+        if (have >= settings.cost()) {
+            lore.add("<green>左鍵開啟（用掉 " + settings.cost() + " 把）");
+        }
+        lore.add("<yellow>右鍵：選起始層（檢查點）、藍晶升級、排行"); // 2026-11-07 照站長「選檢查點」
+        set(SLOT_DELVE, have >= settings.cost() ? glowing(icon(Material.DEEPSLATE_DIAMOND_ORE, "<#7cc4ff>" + ItemRenderer.escape(settings.name()), lore))
+                : icon(Material.DEEPSLATE, "<gray>" + ItemRenderer.escape(settings.name()), lore));
+    }
+
+    /** 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：晶淵王座（用深坑首領鑰匙開，只有深坑的首領）。 */
+    private void drawDelveBoss() {
+        final Delve delve = service.events().delve();
+        final MapEventConfig.DelveBossSettings settings = service.events().delve().bossSettings();
+        final CurrencyType key = delve.bossKey();
+        final MapConfig.EventBoss boss = service.config().eventBoss(Delve.BOSS_KIND);
+        if (key == null || boss == null) {
+            return;
+        }
+        final int have = service.countCurrency(player, key);
+        final java.util.List<String> lore = new java.util.ArrayList<>(delveBossLines(plugin, service, boss));
+        lore.add("");
+        lore.add("<gray>" + ItemRenderer.escape(key.name()) + "：<white>" + have + "</white> / " + settings.cost() + "<dark_gray>（星脈深坑的守衛 "
+                + Math.round(settings.keyChance() * 100) + "% 掉，每個有份的人各擲一次）");
+        if (have >= settings.cost()) {
+            lore.add("<green>點一下開啟（用掉 " + settings.cost() + " 把）");
+            set(SLOT_DELVE_BOSS, glowing(icon(Material.CRYING_OBSIDIAN, "<#7cc4ff>" + ItemRenderer.escape(settings.name()), lore)));
+        } else {
+            set(SLOT_DELVE_BOSS, icon(Material.DEEPSLATE_TILES, "<gray>" + ItemRenderer.escape(settings.name()), lore));
+        }
+    }
+
+    /** 2026-11-07：晶淵王座的說明（地圖裝置、深坑選單共用）：首領、災厄級、專屬傳奇、補的藍晶。 */
+    static java.util.List<String> delveBossLines(final ExileCore plugin, final MapService service, final MapConfig.EventBoss boss) {
+        final java.util.List<String> lines = new java.util.ArrayList<>();
+        lines.add("<gray>星脈深坑的最底下，只有一隻首領：<white>" + ItemRenderer.escape(boss.boss().name()));
+        lines.add(MapService.eventBossNote(boss));
+        lines.add("<gray>招式都躲得掉：看紅圈、紅線、綠色的缺口與安全區");
+        final java.util.List<String> uniques = new java.util.ArrayList<>();
+        if (plugin.items() != null) {
+            for (final tw.exilecore.item.UniqueItem unique : plugin.items().repository().uniquesFor(boss.id(), Math.max(1, boss.level()))) {
+                uniques.add(unique.name());
+            }
+        }
+        if (!uniques.isEmpty()) {
+            lines.add("<gray>專屬傳奇（每件各自 " + trimNumber(boss.uniqueChance() * 100) + "%）：<#af6025>" + ItemRenderer.escape(String.join("、", uniques)));
+        }
+        for (final MapConfig.ExtraDrop extra : boss.extra()) {
+            if ("currency".equals(extra.kind()) && extra.chance() >= 1) {
+                final CurrencyType type = plugin.currencies() == null ? null : plugin.currencies().repository().get(extra.id());
+                if (type != null) {
+                    lines.add("<gray>打倒必掉：<white>" + extra.amount() + " 個" + ItemRenderer.escape(type.name()));
+                }
+            }
+        }
+        return lines;
+    }
+
+    private static String trimNumber(final double value) {
+        return value == Math.rint(value) ? String.valueOf((long) value) : String.valueOf(value);
     }
 
     /** 2026-11-04 照站長：時沉領域（用時沉徽記開，只有不朽統帥）。 */
@@ -707,6 +795,40 @@ public final class MapDeviceMenu extends Menu {
                     return;
                 }
                 final String problem = trial.open(player);
+                if (problem != null) {
+                    player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
+                } else {
+                    player.closeInventory();
+                }
+            }
+            case SLOT_DELVE -> {
+                final Delve delve = service.events().delve();
+                if (delve.key() == null) {
+                    return;
+                }
+                if (click.isRightClick()) {
+                    new DelveMenu(plugin, player, service, delve).open();
+                    return;
+                }
+                if (service.countCurrency(player, delve.key()) < delve.settings().cost()) {
+                    return;
+                }
+                final String problem = delve.open(player);
+                if (problem != null) {
+                    player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);
+                } else {
+                    player.closeInventory();
+                }
+            }
+            case SLOT_DELVE_BOSS -> { // 2026-11-07：晶淵王座
+                final Delve delve = service.events().delve();
+                final CurrencyType key = delve.bossKey();
+                if (key == null || service.countCurrency(player, key) < service.events().delve().bossSettings().cost()) {
+                    return;
+                }
+                final String problem = delve.openBoss(player);
                 if (problem != null) {
                     player.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
                     player.playSound(player.getLocation(), org.bukkit.Sound.ENTITY_VILLAGER_NO, 0.8f, 1f);

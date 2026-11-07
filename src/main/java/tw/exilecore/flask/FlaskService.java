@@ -203,6 +203,7 @@ public final class FlaskService {
                     final double fromEs = Math.min(state.energyShield(), left);
                     state.setEnergyShield(state.energyShield() - fromEs);
                     left -= fromEs;
+                    left = plugin.players().wardLethal(player, state, left); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：承受傷害照符文保護保底（PoE2 Runic Ward）
                     state.setLife(Math.max(0, state.life() - left));
                     state.setLastDamageTick(now);
                     if (state.life() <= 0) {
@@ -703,6 +704,9 @@ public final class FlaskService {
         uses.put(hotbarSlot, now);
         plugin.players().conditions().onFlask(player, base.kind(), now); // 2026-10-26：天賦樹「最近用過魔力藥劑」「10 秒內用過生命藥劑」
         final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        if (life && plugin.ailments() != null && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.VaalKeys.FLAG_LIFE_FLASK_REMOVES_BLEED)) {
+            plugin.ailments().cure(player, tw.exilecore.ailment.AilmentType.BLEED); // 2026-11-07 照站長「瓦爾傳奇照原作」（澤佛伊的創世紀）：使用生命藥劑時移除流血
+        }
         // 「x% 機率不消耗充能」（裝備的全域詞綴）
         final double free = Math.max(0, Math.min(1, sheet.get(tw.exilecore.stats.StatKeys.FLASK_FREE_CHANCE) / 100.0));
         if (free <= 0 || plugin.items().random().nextDouble() >= free) {

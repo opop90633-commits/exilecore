@@ -487,10 +487,12 @@ public final class ItemRenderer {
                     continue;
                 }
                 final double effect = Runes.effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
-                if (rune.on(base).isEmpty()) {
+                // 2026-11-07（艾瑟琳的華儀）：魂核也照別的部位算的，那幾條一起寫（Runes.linesOn）；這次之前只寫 rune.on(base)
+                final List<Runes.Line> runeLines = Runes.linesOn(repository, base, data, rune);
+                if (runeLines.isEmpty()) {
                     lore.add(line("<dark_gray>◈ " + escape(rune.name()) + "（嵌在這種裝備上沒有效果）")); // 2026-11-04：魂核、魔偶只在某些部位有效果
                 }
-                for (final Runes.Line runeLine : rune.on(base)) {
+                for (final Runes.Line runeLine : runeLines) {
                     lore.add(line("<#7fe0c8>◈ " + escape(Runes.scaledText(runeLine.text(), effect)) + " <dark_gray>(" + escape(rune.name()) + ")"));
                 }
                 for (final Runes.Line bonded : rune.bondedOn(base)) {
@@ -564,6 +566,14 @@ public final class ItemRenderer {
         lore.add(line("<dark_gray>物品等級 " + data.ilvl() + (data.starter() ? "・新手裝備（拆解沒有東西）" : "")));
         if (data.corrupted()) {
             lore.add(line("<#d20000>已腐化 <dark_gray>（不能再用通貨改造；符文還能嵌、還能替換）"));
+        }
+        if (data.doubleCorrupted()) {
+            lore.add(line("<#d20000>雙重腐化 <dark_gray>（雙蝕石；多一條腐化詞綴）")); // 2026-11-07 照 PoE2
+        }
+        if (data.siphonGoal() > 0) {
+            // 2026-11-07 照 PoE2 的瓦爾虹吸器
+            lore.add(line("<#d27a5a>蝕吸 <white>" + data.siphonKills() + "</white>/" + data.siphonGoal()
+                    + " <dark_gray>（戴著殺怪；到了一條詞綴降一階，其他詞綴重擲到現在～上限再多 10%）"));
         }
         if (data.fractured() != null) {
             lore.add(line("<#c9a66b>✦破裂 <dark_gray>（那一條詞綴通貨動不到，會一直留著）"));
@@ -760,6 +770,26 @@ public final class ItemRenderer {
         if (skill) {
             for (final String id : UniquePicks.picks(data, UniquePicks.SKILL, 1)) {
                 out.add(line("<#8888ff>　技能：" + escape(UniquePicks.name(UniquePicks.SKILL, id))));
+            }
+        }
+        // 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶「配置 1 個隨機的基石天賦」，瓦爾那條再一個不同的）：抽到的是哪個基石
+        for (final String id : UniquePicks.keystonePicks(data, ItemStats.modifiers(repository, data))) {
+            out.add(line("<#ff55ff>　配置基石：" + escape(UniquePicks.name(UniquePicks.KEYSTONE, id))));
+            for (final String text : UniquePicks.keystoneLines(id)) {
+                out.add(line("<dark_gray>　　" + escape(text)));
+            }
+        }
+        // 2026-11-07（艾瑟琳的華儀「嵌在這件上的魂核符文，也照隨機一種部位的效果算」）：抽到的是哪個部位
+        boolean coreSlot = false;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix != null && affix.mods().stream().anyMatch(mod -> tw.exilecore.item.unique.VaalKeys.LOCAL_CORE_EXTRA_SLOT.equals(mod.stat()))) {
+                coreSlot = true;
+            }
+        }
+        if (coreSlot) {
+            for (final String id : UniquePicks.picks(data, UniquePicks.CORE_SLOT, 1)) {
+                out.add(line("<#8888ff>　魂核也照：" + escape(UniquePicks.name(UniquePicks.CORE_SLOT, id)) + "的效果"));
             }
         }
         // 2026-11-04（不敗亡者）：隨機插槽詞綴（每個嵌著東西的孔各一份）

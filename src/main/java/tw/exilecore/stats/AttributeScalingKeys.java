@@ -203,6 +203,15 @@ public final class AttributeScalingKeys {
         final double life = Math.max(0, sheet.get(StatKeys.LIFE_MAX));
         perIncrease(sheet, SPELL_DAMAGE_PER_100_LIFE, life, 100, StatKeys.DAMAGE, Set.of(Tags.SPELL, Tags.NON_CHANNELLING), "最大生命");
         perIncrease(sheet, SPELL_CRIT_PER_100_LIFE, life, 100, StatKeys.CRIT_CHANCE, Set.of(Tags.SPELL, Tags.NON_CHANNELLING), "最大生命");
+        // 2026-11-07 照站長「瓦爾傳奇照原作」：獻祭之心的瓦爾詞綴——每 100 最大生命增加非引導法術的異常狀態幅度（跟天賦樹「異常狀態幅度」同五種），
+        // 每 100 最大魔力增加非引導法術的暴擊率、傷害；這次之前只有照生命的兩條（damage.spell_per_100_mana 連引導法術都算，不一樣）
+        final Set<String> nonChannelSpell = Set.of(Tags.SPELL, Tags.NON_CHANNELLING);
+        for (final String magnitude : List.of(StatKeys.IGNITE_MAGNITUDE, StatKeys.BLEED_MAGNITUDE, StatKeys.POISON_MAGNITUDE, StatKeys.CHILL_EFFECT, StatKeys.SHOCK_EFFECT)) {
+            perIncrease(sheet, tw.exilecore.item.unique.VaalKeys.AILMENT_MAGNITUDE_SPELL_PER_100_LIFE, life, 100, magnitude, nonChannelSpell, "最大生命");
+        }
+        final double mana = Math.max(0, sheet.get(StatKeys.MANA_MAX));
+        perIncrease(sheet, tw.exilecore.item.unique.VaalKeys.CRIT_SPELL_PER_100_MANA, mana, 100, StatKeys.CRIT_CHANCE, nonChannelSpell, "最大魔力");
+        perIncrease(sheet, tw.exilecore.item.unique.VaalKeys.DAMAGE_NONCHANNEL_SPELL_PER_100_MANA, mana, 100, StatKeys.DAMAGE, nonChannelSpell, "最大魔力");
         final double blockCap = DamageCalculator.blockCap(sheet); // 2026-10-27：最多 90%（PoE2）
         perIncrease(sheet, DAMAGE_PER_BLOCK, Math.max(0, Math.min(blockCap, sheet.get(StatKeys.BLOCK_CHANCE))), 1, StatKeys.DAMAGE, Set.of(), "格擋率");
     }

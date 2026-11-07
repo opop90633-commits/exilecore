@@ -283,6 +283,25 @@ values:
   ticket_delirium: 15000
   ticket_abyss: 15000
   legion_emblem: 3000              # 2026-11-04 照站長：時沉徽記（5 個開一場時沉領域；將領必掉 1）
+  # 2026-11-07 照站長：星脈深坑掉的瓦爾通貨（照 PoE2 的行情折算）
+  vaal_infuser_armour: 8000
+  vaal_infuser_weapon: 4000
+  vaal_infuser_caster: 2000
+  vaal_infuser_jewellery: 30000
+  vaal_siphoner: 3000
+  core_destabiliser: 8000
+  extraction_orb: 8000
+  ancient_infuser: 10000
+  vaal_cultivation_orb: 12000
+  crystal_corruption: 35000
+  architect_orb: 60000
+  rune_thesis_quipolatl: 150000
+  rune_thesis_jiquani: 150000
+  rune_thesis_guatelitzi: 150000
+  rune_thesis_citaqualotl: 150000
+  delve_key: 1500                  # 2026-11-07 照站長：深坑鑰匙（1 把開一場星脈深坑；地圖 Boss 15%）
+  azurite: 20                      # 2026-11-07 照站長：藍晶（深坑每過一層給，買深坑升級）
+  delve_boss_key: 4000             # 2026-11-07 照站長：深坑首領鑰匙（1 把開一場晶淵王座；深坑守衛 20%）
   fog_splinter: 300                # 2026-11-04 照站長：迷霧碎片（50 個開一次迷霧回廊；幻霧一次給 4–8 個）
   # 2026-10-21：先驅石板（插在完成的塔上）：完成塔必掉 1 片、地圖事件 3%、地圖 Boss 2%；以前沒寫價值，拆解只有 0 金幣
   # 2026-10-21：4500 → 1000（掉得比需要的多，拆解不要變成金幣來源；石板改成 3 次用完）

@@ -24,9 +24,24 @@ public final class UniquePicks {
     public static final String NOTABLE = "notable";
     /** 玩家能學的主動技能（信仰稜鏡）。 */
     public static final String SKILL = "skill";
+    /** 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2「Random 1 Keystone Passive Skill [1,33]」）：天賦樹上的基石（PassiveModule 接上）。 */
+    public static final String KEYSTONE = "keystone";
+    /**
+     * 2026-11-07（艾瑟琳的華儀，PoE2「as though it was also a [Random socketable equipment type]」）：魂核符文的部位代號
+     * （{@link Runes#SLOT_KEYS} 去掉胸甲，加上軍用武器 weapon、法杖類 caster）。固定的，不用接。
+     */
+    public static final String CORE_SLOT = "core_slot";
 
     private static volatile Pool notables;
     private static volatile Pool skills;
+    private static volatile Pool keystones;
+    /** 2026-11-07：基石的說明行（顯示用；沒接上回傳 null）。 */
+    private static volatile Function<String, List<String>> keystoneLines;
+
+    /** 2026-11-07：{@link #CORE_SLOT} 的候選與名稱（手套照慣例是腿甲那一欄）。 */
+    private static final java.util.Map<String, String> CORE_SLOT_NAMES = java.util.Map.of("head", "頭盔", "legs", "手套（腿甲）", "feet", "鞋子",
+            "shield", "盾", "buckler", "輕盾", "focus", "法器", "sceptre", "權杖", "weapon", "軍用武器", "caster", "法杖類");
+    private static final Pool CORE_SLOTS = new Pool(new ArrayList<>(CORE_SLOT_NAMES.keySet()), CORE_SLOT_NAMES::get);
 
     private UniquePicks() {
     }
@@ -39,8 +54,57 @@ public final class UniquePicks {
         skills = pool;
     }
 
+    /** 2026-11-07（熔肉之晶）：接上基石的候選與說明行（PassiveModule 載入天賦樹時）。 */
+    public static void setKeystones(final Pool pool, final Function<String, List<String>> lines) {
+        keystones = pool;
+        keystoneLines = lines;
+    }
+
+    /** 2026-11-07：基石的說明行（沒接上、不認得回傳空的）。 */
+    public static List<String> keystoneLines(final String id) {
+        final Function<String, List<String>> lines = keystoneLines;
+        final List<String> out = lines == null ? null : lines.apply(id);
+        return out == null ? List.of() : out;
+    }
+
     private static Pool pool(final String kind) {
+        if (KEYSTONE.equals(kind)) {
+            return keystones;
+        }
+        if (CORE_SLOT.equals(kind)) {
+            return CORE_SLOTS;
+        }
         return NOTABLE.equals(kind) ? notables : SKILL.equals(kind) ? skills : null;
+    }
+
+    /**
+     * 2026-11-07 照站長「瓦爾傳奇照原作」（熔肉之晶，PoE2「Random 1 Keystone Passive Skill [1,33]」）：這顆珠寶配置的隨機基石。
+     * 原本那條 {@link tw.exilecore.item.unique.VaalKeys#JEWEL_ALLOCATE_KEYSTONES}（n 個）抽前面的；瓦爾那條
+     * {@link tw.exilecore.item.unique.VaalKeys#JEWEL_RANDOM_KEYSTONE}（m 個）接著抽，而且原本那條被栽培換掉了也先空出它的那一個——
+     * 瓦爾抽到的一定跟原本那條（有的話、本來會有的話）不同。都照這顆的 UUID（同一顆永遠一樣）。候選沒接上回傳空的。
+     */
+    public static List<String> keystonePicks(final ItemData data, final List<tw.exilecore.stats.Modifier> mods) {
+        double original = 0;
+        double vaal = 0;
+        for (final tw.exilecore.stats.Modifier mod : mods) {
+            if (tw.exilecore.item.unique.VaalKeys.JEWEL_ALLOCATE_KEYSTONES.equals(mod.stat())) {
+                original += mod.value();
+            } else if (tw.exilecore.item.unique.VaalKeys.JEWEL_RANDOM_KEYSTONE.equals(mod.stat())) {
+                vaal += mod.value();
+            }
+        }
+        final int own = (int) Math.max(0, Math.round(original));
+        final int extra = (int) Math.max(0, Math.round(vaal));
+        if (own + extra == 0) {
+            return List.of();
+        }
+        final int skip = extra > 0 ? Math.max(own, 1) : own; // 瓦爾的從這裡開始（原本那條至少佔一個）
+        final List<String> drawn = picks(data, KEYSTONE, skip + extra);
+        final List<String> out = new ArrayList<>(drawn.subList(0, Math.min(own, drawn.size())));
+        if (drawn.size() > skip) {
+            out.addAll(drawn.subList(skip, drawn.size()));
+        }
+        return out;
     }
 
     /** 這件物品抽到的 count 個（不重複）；候選沒接上回傳空的。 */

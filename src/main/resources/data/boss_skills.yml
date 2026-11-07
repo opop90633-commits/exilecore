@@ -5441,6 +5441,196 @@ skills:
     explode: 4
     shout: "「這一個。帶走。」"
 
+  # ---- 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：晶淵之王・黯冕（星脈深坑的首領，晶淵王座）：黑暗、藍晶、深淵 ----
+  #   晶刺迸裂（腳下一路冒出來）、黯影齊射、掘穿（衝鋒）、藍晶震環、碎晶追魂（光球）；第一階段黯蝕標記、晶脈裂線（殘影）；
+  #   第二階段黑暗收攏（場地收縮）、深淵吸蝕（漩渦）、迷途礦工（召喚）；第三階段藍晶光束、永夜（全場大招）；場地危害崩落晶塊
+  delve_crystal_burst:
+    name: 晶刺迸裂
+    hint: "藍晶從腳下一路刺上來、一根比一根近：往側面走"
+    kind: slam
+    damage: 1.6
+    type: cold
+    cooldown: 8
+    range: 12
+    telegraph: 0.9
+    delay: 0.7
+    radius: 2.6
+    count: 4
+    stagger: 0.35
+    at: target
+    shout: "「站穩。底下是我的骨頭。」"
+  delve_dark_volley:
+    name: 黯影齊射
+    kind: volley
+    damage: 1.3
+    type: chaos
+    cooldown: 7
+    range: 22
+    telegraph: 1.0
+    count: 7
+    spread: 65
+    speed: 1.1
+    reach: 24
+    size: 0.7
+    explode: 1.6
+    shout: "「燈照不到的地方，都是我的手。」"
+  delve_burrow:
+    name: 掘穿
+    hint: "牠鑽進岩壁直線衝過來：看路線往旁邊閃"
+    kind: charge
+    damage: 2.2
+    type: physical
+    cooldown: 11
+    range: 26
+    telegraph: 1.1
+    speed: 1.25
+    reach: 26
+    width: 2.6
+    slow: 1.5
+    shout: "「這條路，我挖了一千年。」"
+  delve_azurite_rings:
+    name: 藍晶震環
+    hint: "藍晶震波一圈圈推出來、各留兩個缺口：站進綠色的缺口"
+    kind: ring
+    damage: 1.7
+    type: cold
+    cooldown: 15
+    range: 20
+    telegraph: 1.2
+    radius: 1.5
+    reach: 20
+    speed: 0.34
+    width: 0.9
+    count: 3
+    stagger: 1.2
+    gaps: 2
+    gap_angle: 45
+    shout: "「聽——星脈在跳。」"
+  delve_shard_seekers:
+    name: 碎晶追魂
+    hint: "三顆碎晶追著你：帶著跑，別讓它們碰到"
+    kind: orbs
+    damage: 1.7
+    type: physical
+    convert: { cold: 0.5, chaos: 0.5 }
+    cooldown: 18
+    range: 26
+    telegraph: 1.2
+    count: 3
+    speed: 0.15
+    duration: 7
+    size: 0.8
+    explode: 2.5
+    shout: "「碎掉的晶，也記得回家的路。」"
+  delve_dark_mark:
+    name: 黯蝕標記
+    hint: "被黑暗纏上的人 3.5 秒後炸開：離開隊友"
+    kind: mark
+    damage: 2.4
+    type: chaos
+    cooldown: 11
+    range: 30
+    telegraph: 1.0
+    count: 1
+    duration: 3.5
+    explode: 4
+    shout: "「你的影子比你先到了。」"
+  delve_vein_rupture:
+    name: 晶脈裂線
+    hint: "五條晶脈各畫一條紅線、一條接一條裂開：往旁邊走"
+    kind: echoes
+    damage: 1.6
+    type: cold
+    cooldown: 13
+    range: 22
+    telegraph: 1.2
+    count: 5
+    scatter: 7
+    stagger: 0.6
+    delay: 1.0
+    reach: 26
+    width: 1.0
+    shout: "「星脈裂開的聲音，你聽過嗎？」"
+  delve_closing_dark:
+    name: 黑暗收攏
+    kind: arena
+    damage: 0.35
+    type: chaos
+    cooldown: 300        # 放一次就維持到這場打完（第二階段一開始就放）
+    range: 30
+    telegraph: 1.5
+    reach: 18
+    radius: 9
+    duration: 14
+    interval: 0.5
+    shout: "「光只剩這麼一點了。到我身邊來。」"
+  delve_abyss_pull:
+    name: 深淵吸蝕
+    hint: "深淵把你往牠吸：往外跑，被吸進去會炸"
+    kind: pull
+    damage: 2.8
+    type: chaos
+    cooldown: 14
+    range: 15
+    telegraph: 1.2
+    radius: 14
+    speed: 0.12
+    duration: 3.0
+    explode: 4.5
+    shout: "「下來。再往下一點。」"
+  delve_lost_miners:
+    name: 迷途礦工
+    kind: summon
+    summon: ZOMBIE
+    count: 4
+    summon_max: 8
+    duration: 25
+    cooldown: 16
+    telegraph: 1.0
+    shout: "「他們也是循著藍光下來的。」"
+  delve_azurite_beam:
+    name: 藍晶光束
+    hint: "三道藍晶光束一起轉：待在兩道之間，跟著轉"
+    kind: beam
+    damage: 1.35
+    type: physical
+    convert: { cold: 0.6, chaos: 0.4 }
+    cooldown: 12
+    range: 18
+    telegraph: 1.6
+    count: 3
+    angle: 150
+    length: 32
+    width: 0.8
+    duration: 4.5
+    interval: 0.3
+    shout: "「看著光。最後一次。」"
+  delve_eternal_night:
+    name: 永夜
+    kind: sanctuary
+    damage: 6.75   # 2026-11-07：同其他災厄級的全場大招
+    type: chaos
+    cooldown: 34
+    range: 30
+    telegraph: 2.5
+    radius: 30
+    count: 2
+    safe: 2.5
+    scatter: 8
+    count_per_player: 1
+    shout: "「燈都熄了。只剩藍晶還亮著——站過去。」"
+  hazard_delve_falling_crystals:
+    name: 崩落晶塊
+    kind: slam
+    damage: 1.1
+    type: cold
+    telegraph: 1.0
+    delay: 0.8
+    radius: 2
+    count: 3
+    scatter: 5
+    at: target
+
 defaults:
   default: [slam, charge]
   ZOMBIE: [slam, charge, summon_zombies]

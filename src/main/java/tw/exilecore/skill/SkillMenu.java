@@ -81,7 +81,7 @@ public final class SkillMenu extends Menu {
     private boolean changed;
 
     /** 游標上拿著什麼（決定哪些格子要亮、哪些要變暗）。 */
-    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, CORRUPT_ORB, CORRUPT_OMEN, OTHER } // 2026-10-18：共鳴石；2026-11-04：必變籤
+    private enum Holding { NONE, SKILL_GEM, SUPPORT_GEM, UNCUT_SKILL, SOCKET_ORB, RESONANCE_ORB, CORRUPT_ORB, CRYSTAL_ORB, CORRUPT_OMEN, OTHER } // 2026-10-18：共鳴石；2026-11-04：必變籤
 
     /** 拿著的東西放在某一格：BEST＝放這裡（亮起來）、SWAP＝可以放，但會換下原本的、NO＝不能放（變暗）。 */
     private enum Fit { BEST, SWAP, NO }
@@ -443,6 +443,9 @@ public final class SkillMenu extends Menu {
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.RESONANCE) {
             return Holding.RESONANCE_ORB; // 2026-10-18：共鳴石點掛著的專屬輔助
         }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CRYSTAL_CORRUPT) {
+            return Holding.CRYSTAL_ORB; // 2026-11-07：晶蝕石（已腐化的技能寶石）
+        }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {
             return Holding.CORRUPT_ORB; // 2026-10-23：蝕變石腐化技能寶石
         }
@@ -648,6 +651,11 @@ public final class SkillMenu extends Menu {
                         : armedOmen != null ? Hint.best("放這裡：腐化，掛著" + ItemRenderer.escape(armedOmen.name()) + "一定有變化（等級 ±1／輔助孔 ±1／品質變動）")
                         : Hint.best("放這裡：腐化（沒變化／等級 ±1／輔助孔 ±1／品質變動，之後不能再升級、開孔、加品質）");
             }
+            case CRYSTAL_ORB -> {
+                // 2026-11-07：晶蝕石
+                return entry.granted() ? Hint.no("武器賦予的技能不是寶石") : !entry.corrupted() ? Hint.no("晶蝕石只能用在已腐化的技能寶石")
+                        : Hint.best("放這裡：再腐化一次（等級 ±1／輔助孔 ±1／品質變動），1/4 機率碎掉");
+            }
             case CORRUPT_OMEN -> {
                 // 2026-11-04：必變籤掛在面板上（不是掛在某一顆），所以點哪一格都可以
                 final String problem = GemService.corruptProblem(entry);
@@ -801,7 +809,8 @@ public final class SkillMenu extends Menu {
                 : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition)
                 : HollowForm.hosts(definition) ? HollowForm.wants()
                 : Blasphemy.hosts(definition) ? Blasphemy.wants()
-                : ChayulaHand.hosts(definition) ? ChayulaHand.wants() : "法術"; // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態；2026-10-29：咒環
+                : ChayulaHand.hosts(definition) ? ChayulaHand.wants()
+                : SoulVessel.hosts(definition) ? SoulVessel.wants() : "法術"; // 2026-11-07：靈魂容器 // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態；2026-10-29：咒環
         final SkillLoadout.Entry inner = entry.spellAt(index); // 2026-10-26：其他孔也可能放著技能寶石
         final String socketName = "第 " + (index + 1) + " 孔";
         if (holding == Holding.SKILL_GEM && heldGem != null && heldGem.entry() != null) {
@@ -824,6 +833,7 @@ public final class SkillMenu extends Menu {
                                     : DeadeyeMetas.hosts(definition) || HollowForm.hosts(definition) ? "（其他孔也能放：照孔的順序輪流用）" // 2026-10-28
                                     : Blasphemy.hosts(definition) ? "（其他孔也能放：每個詛咒各自變成光環，各保留 60 精魂）" // 2026-10-29 照 PoE2 Blasphemy
                                     : ChayulaHand.hosts(definition) ? "（其他孔也能放：每一掌全部觸發）" // 2026-10-29 照 PoE2 Hand of Chayula
+                                    : SoulVessel.hosts(definition) ? "（其他孔也能放：靈魂容器輪流用，每個不同的技能 20% 更多傷害）" // 2026-11-07 照 PoE2 Spirit Vessel
                                     : isSpellTotem(definition) ? "（其他孔也能放：圖騰照孔的順序輪流放）" : "（其他孔也能放：全部一起觸發）"),
                     holding == Holding.SUPPORT_GEM ? "<red>這一孔不放輔助寶石" : "");
         }
@@ -1269,6 +1279,11 @@ public final class SkillMenu extends Menu {
         }
         if (currency != null && currency.isSkillCurrency()) {
             apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.addSocket(player, position, currency));
+            return;
+        }
+        if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CRYSTAL_CORRUPT) {
+            // 2026-11-07 照 PoE2 的結晶腐化：已腐化的技能寶石再腐化一次，或碎掉
+            apply(event, cursor, position < 0 ? GemService.Change.fail("先點一個技能") : gems.crystallise(player, position, currency));
             return;
         }
         if (currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.CORRUPT) {

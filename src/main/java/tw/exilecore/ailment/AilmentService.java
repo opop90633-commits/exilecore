@@ -89,6 +89,8 @@ public final class AilmentService {
         boolean jumpBlocked;
         boolean madeUnaware;
         boolean unawarePending;
+        /** 2026-11-07：上次套用時是不是在鎖血（鎖血中異常照算、但不控制；進出時 tickOne 重套）。 */
+        boolean lockHeld;
         boolean visualFire;
         boolean frozenVisual;
         String marks = "";
@@ -346,7 +348,7 @@ public final class AilmentService {
     /** 不能動也不能攻擊、施放：凍結、暈眩或電擊中。 */
     public boolean isIncapacitated(final LivingEntity entity) {
         final Tracked entry = tracked.get(entity.getUniqueId());
-        return entry != null && entry.state.incapacitated(now()) && !lockControlImmune(entity); // 2026-11-05：鎖血中不算被控住（不打斷招；身上的每半秒清掉）
+        return entry != null && entry.state.incapacitated(now()) && !lockHeld(entity); // 2026-11-05：鎖血中不算被控住（不打斷招）；2026-11-07：狀態留著（isFrozen 等照算），只是不控制；同日修正：不可動搖（世界王）也算（這次之前只看鎖血，世界王被凍住會被打斷招）
     }
 
     /**
@@ -356,7 +358,7 @@ public final class AilmentService {
      */
     public boolean adoptPause(final Mob mob) {
         final Tracked entry = tracked.get(mob.getUniqueId());
-        if (entry == null || entry.player || mob.isAware() || !entry.state.incapacitated(now())) {
+        if (entry == null || entry.player || mob.isAware() || !entry.state.incapacitated(now()) || lockHeld(mob)) { // 2026-11-07：鎖血中不接手（不控制）
             return false;
         }
         if (!entry.madeUnaware) {
@@ -371,6 +373,9 @@ public final class AilmentService {
         final Tracked entry = tracked.get(entity.getUniqueId());
         if (entry == null) {
             return 1.0;
+        }
+        if (lockHeld(entity)) {
+            return 1.0; // 2026-11-07 照站長「鎖血時異常照算、但不控制」：冰緩、凍結、暈眩、電擊都不放慢
         }
         final long now = now();
         return entry.state.incapacitated(now) ? 0 : Math.max(0.05, 1.0 - entry.state.chill(now));
@@ -470,7 +475,7 @@ public final class AilmentService {
         Tracked entry = tracked.get(defender.getUniqueId());
         boolean changed = false;
         // 2026-11-03 照站長：不可動搖（flag.cc_immune，星潮祭世界 Boss）：冰緩、凍結、暈眩、電擊、癱瘓、阻礙、致盲都不吃，連累積條都不累積
-        final boolean ccImmune = ccImmune(defenderSheet) || !(defender instanceof Player) && lockControlImmune(defender); // 2026-11-05 照站長「鎖血階段完全不吃控場」：擊中也看鎖血；這次之前只看屬性表（破綻中照樣被凍住、暈住、打斷招）
+        final boolean ccImmune = ccImmune(defenderSheet) && defender instanceof Player; // 怪物（不可動搖、鎖血）照上、只有玩家的不可動搖擋；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積（2026-11-05 起擊中也看鎖血）
 
         // PoE2 昇華：所有傷害都算進點燃／冰緩／感電（燃燒使者、冬之塑造者、風暴塑造者）
         final double allDamage = fire + cold + lightning + physical + chaos;
@@ -729,7 +734,8 @@ public final class AilmentService {
             final double onCrit = result.crit() ? attack.flat(tw.exilecore.item.unique.UniqueStats.POISON_ON_CRIT, context) / 100.0 : 0; // 2026-10-26（夢鏡面具）
             final double chance = Math.max(onCrit, config.poisonChance(poisonBase, threshold, attack.flat(StatKeys.POISON_CHANCE, context),
                     attack.increased(StatKeys.POISON_CHANCE, context))
-                    * attack.more(StatKeys.POISON_CHANCE, context)); // 2026-10：輔助的「更多／更少機率」
+                    * attack.more(StatKeys.POISON_CHANCE, context)) // 2026-10：輔助的「更多／更少機率」
+                    + (playerTarget ? Math.max(0, defenderSheet.flat(tw.exilecore.item.unique.VaalKeys.POISON_CHANCE_TAKEN, Set.of())) / 100.0 : 0); // 2026-11-07 照站長「瓦爾傳奇照原作」：「+x% 被中毒的機率」加在攻擊方的機率上；這次之前沒有
             if (chance > 0 && random.nextDouble() < chance && !avoided(defenderSheet, StatKeys.AVOID_POISON, random)
                     && !StatKeys.flag(defenderSheet, StatKeys.FLAG_CHAOS_IMMUNE) // 2026-10：混沌免疫也免疫中毒
                     && !oneDamagingAilment(defender, defenderSheet)) {
@@ -1283,7 +1289,7 @@ public final class AilmentService {
             }
         } else if (hinderTicks > 0 && plugin.monsters() != null && plugin.monsters().data(target).isPresent()) {
             final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
-            if (!StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE) && !ccImmune(sheet) && !lockControlImmune(target)) { // 2026-11-03：不可動搖不吃；2026-11-05 照站長「鎖血階段完全不吃控場」
+            if (!StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !StatKeys.flag(sheet, StatKeys.FLAG_HINDER_IMMUNE)) { // 2026-11-03：不可動搖不吃；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
                 final Tracked hindered = track(target);
                 hindered.state.hinder(now() + hinderTicks);
                 update(target, hindered, now());
@@ -1724,7 +1730,7 @@ public final class AilmentService {
      * （呼叫端照 {@link AilmentConfig#pin()} 的秒數讓牠不能移動）。
      */
     public boolean pinBuildup(final LivingEntity defender, final MonsterData data, final StatSheet sheet, final double physical, final double multiplier) {
-        if (physical <= 0 || data == null || defender instanceof Player || ccImmune(sheet) || lockControlImmune(defender)) { // 2026-11-03：不可動搖不會被釘住；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (physical <= 0 || data == null || defender instanceof Player) { // 2026-11-03：不可動搖不會被釘住；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return false;
         }
         final long now = now();
@@ -1750,7 +1756,7 @@ public final class AilmentService {
      * 滿了回傳 true，呼叫端套上眩暈（{@code HitEffects}），條在 dazeTicks 內不再累積（眩暈不疊加）。
      */
     public boolean dazeBuildup(final LivingEntity defender, final MonsterData data, final StatSheet sheet, final double physical, final long dazeTicks) {
-        if (physical <= 0 || data == null || defender instanceof Player || ccImmune(sheet) || lockControlImmune(defender)) { // 2026-11-03：不可動搖不會眩暈；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (physical <= 0 || data == null || defender instanceof Player) { // 2026-11-03：不可動搖不會眩暈；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return false;
         }
         final long now = now();
@@ -1864,6 +1870,23 @@ public final class AilmentService {
             return false;
         }
         return entity.isInvulnerable() || plugin.maps() != null && plugin.maps().lockCcImmune(entity);
+    }
+
+    /**
+     * 2026-11-07 照站長「破綻時要上異常才有傷害的打法上不了 → 異常照算、但不控制」：鎖血中（{@link #lockControlImmune}）
+     * 凍結、暈眩、電擊、冰緩、阻礙、釘住、眩暈照常累積、照常算「對凍結的敵人」之類的加成與引爆，但不讓牠停下或變慢（不打斷招、照樣能躲招開破綻）。
+     */
+    private boolean lockHeld(final LivingEntity entity) {
+        return !(entity instanceof Player) && (lockControlImmune(entity) || unshakable(entity)); // 2026-11-07：世界王、活動王（不可動搖）也一樣
+    }
+
+    /** 2026-11-07：不可動搖（屬性表的 flag.cc_immune；不看鎖血——鎖血中異常照算）。 */
+    private boolean unshakable(final LivingEntity entity) {
+        if (entity instanceof Player player) {
+            return plugin.players() != null && ccImmune(plugin.players().sheet(player));
+        }
+        final MonsterData data = plugin.monsters() == null ? null : plugin.monsters().data(entity).orElse(null);
+        return data != null && ccImmune(plugin.monsters().sheet(entity, data));
     }
 
     /** 2026-11-03：同上，照 UUID（戰鬥模組的減益表只有 UUID）；找不到實體就不免疫。 */
@@ -2010,13 +2033,12 @@ public final class AilmentService {
             clear(living); // 營地是安全區：身上的異常全部消掉
             return;
         }
-        if (!(living instanceof Player) && lockControlImmune(living) && entry.state.clearControl(now)) {
-            update(living, entry, now); // 2026-11-05 照站長「鎖血階段完全不吃控場」：進鎖血前已經在身上的控場也清掉
-            if (entry.state.isEmpty(now)) {
-                tracked.remove(uuid, entry);
-                restore(living, entry);
-                return;
-            }
+        // 2026-11-07 照站長「鎖血時異常照算、但不控制」：進出鎖血時重套一次（放開或重新停住）；狀態不清掉。
+        //   這次之前（2026-11-05）進鎖血就把身上的凍結、暈眩、電擊、冰緩清掉
+        final boolean held = !(living instanceof Player) && lockControlImmune(living);
+        if (held != entry.lockHeld) {
+            entry.lockHeld = held;
+            update(living, entry, now);
         }
         final AilmentState.Ignite ignite = entry.state.ignite(now);
         if (ignite != null) {
@@ -2275,6 +2297,7 @@ public final class AilmentService {
                 rest = split.life();
             }
         }
+        rest = plugin.players().wardLethal(player, state, rest); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：承受傷害照符文保護保底（PoE2 Runic Ward）：持續傷害也算
         state.setLife(state.life() - rest);
         if (amount > 0) {
             // 2026-10-17：持續傷害也算在戰鬥中——打斷能量護盾回充、不能直接傳送走或離開競技場
@@ -2307,7 +2330,9 @@ public final class AilmentService {
         final boolean frozen = entry.state.frozen(now);
         final boolean stunned = entry.state.stun().active(now);
         final boolean electrocuted = entry.state.electrocute().active(now);
-        final boolean held = frozen || stunned || electrocuted;
+        // 2026-11-07 照站長「鎖血時異常照算、但不控制」：鎖血中的 Boss 身上有凍結、暈眩、電擊、冰緩、阻礙也照常行動（外觀、標記照顯示）
+        final boolean lockFree = !entry.player && lockHeld(living);
+        final boolean held = !lockFree && (frozen || stunned || electrocuted);
         final double chill = entry.state.chill(now);
         final double shock = entry.state.shock(now);
         final boolean burning = entry.state.ignite(now) != null;
@@ -2319,7 +2344,7 @@ public final class AilmentService {
             slowed = 0; // 2026-11-04（源於永恆，PoE2「你的速度在衝刺時不受緩速影響」）：衝刺時冰緩、癱瘓、阻礙、超重都不減速（凍結、暈眩照舊不能動）
         }
         // 2026-10-26 照 PoE2：怪物最慢降到原本速度的 25%
-        setSlow(living, entry, held ? 1.0 : entry.player ? slowed : Math.min(1 - MONSTER_MIN_SPEED, slowed));
+        setSlow(living, entry, held ? 1.0 : lockFree ? 0 : entry.player ? slowed : Math.min(1 - MONSTER_MIN_SPEED, slowed));
         if (living instanceof Player) {
             setJumpBlocked(living, entry, held);
         } else if (living instanceof Mob mob) {
@@ -2400,7 +2425,7 @@ public final class AilmentService {
             return;
         }
         final StatSheet sheet = plugin.monsters().sheet(target, data.get());
-        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) || ccImmune(sheet) || lockControlImmune(target)) { // 2026-11-03：不可動搖也不吃地面減速、冰緩；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) { // 2026-11-03：不可動搖也不吃地面減速、冰緩；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return;
         }
         final long now = now();
@@ -2430,7 +2455,7 @@ public final class AilmentService {
         final StatSheet sheet = plugin.monsters().sheet(target, plugin.monsters().data(target).get());
         final long now = now();
         final Tracked entry = track(target);
-        if (chill > 0 && !StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE) && !ccImmune(sheet) && !lockControlImmune(target)) { // 2026-11-03：不可動搖不吃冰緩（感電照常）；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (chill > 0 && !StatKeys.flag(sheet, StatKeys.FLAG_UNSLOWABLE)) { // 2026-11-03：不可動搖不吃冰緩（感電照常）；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             entry.state.applyChill(chill, now + ticks, now);
         }
         if (shock > 0) {
@@ -2454,7 +2479,7 @@ public final class AilmentService {
             return false;
         }
         final StatSheet defenderSheet = plugin.monsters().sheet(target, data.get());
-        if (ccImmune(defenderSheet) || lockControlImmune(target) || StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) || avoided(defenderSheet, StatKeys.AVOID_CHILL, plugin.items().random())) {
+        if (false /* 2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積 */ || StatKeys.flag(defenderSheet, StatKeys.FLAG_UNSLOWABLE) || avoided(defenderSheet, StatKeys.AVOID_CHILL, plugin.items().random())) {
             return false; // 2026-11-03：不可動搖不吃
         }
         final double threshold = AilmentConfig.threshold(baseThreshold(target, data.get(), defenderSheet)
@@ -2774,7 +2799,7 @@ public final class AilmentService {
      * 回傳有沒有凍住。
      */
     public boolean freezeIfPrimed(final LivingEntity entity) {
-        if (entity instanceof org.bukkit.entity.Player || !isPrimedForFreeze(entity) || ccImmune(entity)) { // 2026-11-03：不可動搖不吃
+        if (entity instanceof org.bukkit.entity.Player || !isPrimedForFreeze(entity)) { // 2026-11-03：不可動搖不吃；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return false;
         }
         final Tracked entry = tracked.get(entity.getUniqueId());
@@ -2820,7 +2845,7 @@ public final class AilmentService {
             return 0;
         }
         final MonsterData monster = plugin.monsters().data(defender).orElse(null);
-        if (monster == null || ccImmune(plugin.monsters().sheet(defender, monster)) || lockControlImmune(defender)) { // 2026-11-03：不可動搖不累積重暈；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (monster == null) { // 2026-11-03：不可動搖不累積重暈；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return 0;
         }
         final long now = now();
@@ -2867,8 +2892,7 @@ public final class AilmentService {
         }
         final long now = now();
         entry.state.electrocute().decay(now, config.electrocute().decayDelayTicks(false), config.electrocute().decayPerTick(false));
-        if (entry.state.electrocute().active(now) || entry.state.electrocute().buildup() < config.primed(data.rarity())
-                || ccImmune(plugin.monsters().sheet(entity, data)) || lockControlImmune(entity)) { // 2026-11-03：不可動搖不吃；2026-11-05 照站長「鎖血階段完全不吃控場」
+        if (entry.state.electrocute().active(now) || entry.state.electrocute().buildup() < config.primed(data.rarity())) { // 2026-11-03：不可動搖不吃；2026-11-07 照站長「鎖血時、世界王、活動王異常照算、但不控制」：狀態照上（加傷害、引爆照算），不停下來（見 lockHeld）；這次之前鎖血、不可動搖都不累積
             return false;
         }
         entry.state.electrocute().trigger(now, ticks(config.electrocute().duration(false)), 0);
@@ -3083,7 +3107,7 @@ public final class AilmentService {
             plugin.getServer().getScheduler().runTask(plugin, () -> {
                 entry.unawarePending = false;
                 if (tracked.get(mob.getUniqueId()) == entry && mob.isValid() && !mob.isDead()
-                        && entry.state.incapacitated(now()) && mob.isAware()) {
+                        && entry.state.incapacitated(now()) && mob.isAware() && !lockHeld(mob)) { // 2026-11-07：鎖血中不停
                     mob.setAware(false);
                     mob.getPersistentDataContainer().set(unawareKey, PersistentDataType.BYTE, (byte) 1);
                     entry.madeUnaware = true;
