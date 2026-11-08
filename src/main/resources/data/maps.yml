@@ -1953,4 +1953,3 @@ finals:
           - { currency: rune_augment_vorana, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
           - { currency: rune_augment_kolr, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
           - { currency: rune_augment_uhtred, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
-          - { unique: abyss_throne_belt, chance: 0.03 }   # 2026-11-08 照站長「淵座束帶補上五個版本和藥劑充能，深淵王 3% 掉」（劫盜照舊掉）

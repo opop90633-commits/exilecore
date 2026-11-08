@@ -2530,7 +2530,8 @@ abyss_throne_belt:       # 照 PoE2 的 Darkness Enthroned：兩個符文孔、�
   base: jbelt_fine        # 2026-10-26 照 PoE2 的基底（Fine Belt：精工束帶）；這次之前 jbelt_01
   rune_sockets: 2        # 2026-10-26 照 PoE2（原作兩個插槽；這次之前沒有）
   drop_level: 50
-  sources: [heist]
+  sources: [abyss_lich]   # 2026-11-08 照站長「淵座束帶從劫盜移除」：只有骨潮深坑的 Boss 掉（drop_chance 3%，每個有份的人各擲）；這次之前 [heist]（同日稍早另外在 maps.yml 的 extra 掛 3%）
+  drop_chance: 3
   veiled: [prefix, suffix]
   weight: 100
   flavour:

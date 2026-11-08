@@ -223,7 +223,9 @@ class UniqueDataTest {
                 "voices_jewel"), ids(repository.uniquesFor("fog_trial", 94)), "迷霧之主：科西斯、譫妄異域的");
         assertEquals(Set.of("fog_trial"), Set.copyOf(repository.unique("voidgaze_helm").sources()), "照站長：只在迷霧之主掉");
         assertEquals(Set.of("frost_elegy_jewel"), ids(repository.fixedChanceUniques("final", 84)));
-        assertEquals(Set.of("abyss_grudge_jewel", "binder_grasp"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）
+        assertEquals(Set.of("abyss_grudge_jewel", "binder_grasp", "abyss_throne_belt"), ids(repository.fixedChanceUniques("abyss_lich", 84))); // 2026-10-28：＋主宰之觸（同一隻 Boss）；2026-11-08：＋淵座束帶（3%，從劫盜移過來）
+        assertEquals(0.03, repository.dropChance("abyss_throne_belt"), 1e-12);
+        assertFalse(ids(repository.uniquesFor("heist", 84)).contains("abyss_throne_belt"), "2026-11-08 照站長：劫盜不掉");
         assertFalse(ids(repository.uniquesFor("abyss_lich", 84)).contains("abyss_grudge_jewel"));
         assertEquals(0.01, repository.dropChance("frost_elegy_jewel"), 1e-12);
         assertEquals(0.01, repository.dropChance("abyss_grudge_jewel"), 1e-12);
