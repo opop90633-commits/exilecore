@@ -48,6 +48,7 @@ class VaalCurrencyTest {
             final ItemData copy = armour.copy();
             CurrencyOperation.VAAL_INFUSE_ARMOUR.apply(copy, generator, random);
             assertTrue(copy.quality() > 20 && copy.quality() <= 25, "品質 +1～5");
+            assertTrue(copy.vaalInfused(), "記下灌過（只是記錄）");
             corrupted += copy.corrupted() ? 1 : 0;
         }
         assertTrue(corrupted > 60 && corrupted < 150, "約 1/6 腐化：" + corrupted);

@@ -57,7 +57,7 @@ public final class ItemData {
     private Integer corruptSockets;
     /** 2026-11-08 照站長：晶淵鑿多開的符文孔（一件只能用一次，所以只有 0 或 1）。 */
     private Integer bonusSockets;
-    /** 2026-11-08 照站長「確定沒使用灌注器的直接壓回上限」：用過瓦爾灌注器（戒指、項鍊的品質可以超過上限 10%）；null = 沒用過或舊物品。 */
+    /** 2026-11-08：用過瓦爾灌注器（品質可以超過上限 10%）；null = 沒用過或舊物品。只是記錄（品質照原作不會被壓回去）。 */
     private Boolean vaalInfused;
     /**
      * 2026-10-26 照 PoE2 的工匠石（Artificer's Orb）：這件現在有幾個符文孔（不算蝕變石多開的）；

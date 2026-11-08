@@ -43,7 +43,7 @@ class VaalInfuserMaxTest {
         for (int i = 0; i < 20; i++) {
             CurrencyOperation.vaalInfuse(full, generator, new SplittableRandom(i));
         }
-        assertEquals(30, full.quality());
+        assertEquals(30, full.quality(), "照原作：可以重複灌，最多上限 +10%");
         assertFalse(CurrencyOperation.VAAL_INFUSE_JEWELLERY.canApply(full, generator), "到 30% 就不能再用");
     }
 

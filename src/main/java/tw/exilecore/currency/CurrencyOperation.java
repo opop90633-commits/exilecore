@@ -807,6 +807,7 @@ public enum CurrencyOperation {
         final var base = generator.repository().base(data.base());
         // 2026-11-08 照站長「瓦爾催化灌注器照原作」（「僅能用於品質達到上限或以上的物品」「允許品質超過最大品質 10%」）：
         //   上限照這件自己的（裂隙指環、裂隙星魄的戒指上限更高）；這次之前一律 20% 才能用、最多 30%
+        // 2026-11-08 照站長「灌注器還是跟原作一樣」：可以重複灌，直到上限 +10%（同一天做過「一件只能灌一次」，撤回）
         if (base == null || data.corrupted() || data.mirrored() || data.sanctified() || data.starter() || !data.identified()
                 || data.quality() < qualityMax(data, generator) || data.quality() >= qualityMax(data, generator) + VAAL_OVER_MAX) {
             return false;
@@ -844,8 +845,10 @@ public enum CurrencyOperation {
 
     /** 2026-11-07：瓦爾灌注器：品質 +1～5%（最多超過上限 10%），1/6 機率同時腐化（poe2db 沒寫增加多少、腐化機率，先這樣定）。 */
     static void vaalInfuse(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+        // 2026-11-08 照站長「跟原作一樣」（poe2db：exceeding maximum quality by up to 10%）：每次 +1～5%，最多上限 +10%，可以重複灌；
+        //   同一天做過「一次直接到上限 +10%、一件一次」，撤回。記號照樣記（只是記錄，不擋）
         data.setQualityUpTo(data.quality() + 1 + random.nextInt(5), qualityMax(data, generator) + VAAL_OVER_MAX);
-        data.setVaalInfused(true); // 2026-11-08：記下用過灌注器（之後上限變低時最多留到上限 +10%）
+        data.setVaalInfused(true);
         if (random.nextDouble() < VAAL_INFUSE_CORRUPT) {
             data.setCorrupted(true);
         }

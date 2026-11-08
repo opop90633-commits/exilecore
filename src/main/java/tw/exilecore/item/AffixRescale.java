@@ -71,29 +71,10 @@ public final class AffixRescale {
             changed |= rescale(affix, rolled, loose);
         }
         changed |= rescaleImplicit(repository, base, data, loose);
-        changed |= clampJewelleryQuality(repository, base, data);
+        // 2026-11-08 照站長「照原作」：拿掉「+x% 最大品質」之後品質不壓回去（原作 Breach Ring 洗掉裂隙星魄那條，品質照樣 70%）；
+        //   同一天先做了壓回上限（clampJewelleryQuality），照原作撤回
         return changed;
     }
-
-    /**
-     * 2026-11-08 照站長「裂隙指環 60% 品質正常嗎」：戒指、項鍊的品質超過這件現在的上限（20%＋基底＋「+x% 最大品質」詞綴）時壓回去——
-     * 用過瓦爾灌注器的最多留到上限 +10%，沒用過的壓回上限。寫回物品、讀出物品時都會走到（洗掉裂隙星魄那條之後、舊物品登入時）。
-     * 這次之前拿掉「+x% 最大品質」那條，品質照樣留著（先打到 60% 再洗掉那條，兩邊都拿）。
-     */
-    static boolean clampJewelleryQuality(final ItemRepository repository, final ItemBase base, final ItemData data) {
-        if (base == null || base.slot() != ItemSlot.RING && base.slot() != ItemSlot.AMULET) {
-            return false;
-        }
-        final int cap = jewelleryQualityMax(repository, data) + (data.vaalInfused() ? VAAL_OVER_MAX : 0);
-        if (data.quality() <= cap) {
-            return false;
-        }
-        data.setQualityUpTo(cap, cap);
-        return true;
-    }
-
-    /** 2026-11-08：瓦爾灌注器能超過上限多少（同 CurrencyOperation.VAAL_OVER_MAX）。 */
-    public static final int VAAL_OVER_MAX = 10;
 
     /** 戒指、項鍊的品質上限：20%＋基底多的＋詞綴的「+x% 最大品質」（Crafting.catalystMax 用這個）。 */
     public static int jewelleryQualityMax(final ItemRepository repository, final ItemData data) {

@@ -1131,6 +1131,9 @@ public final class CodexMenu extends Menu {
         final List<Affix> all = new ArrayList<>(pool(chosen));
         all.addAll(unveiledPool(chosen, null));
         all.addAll(corruptionPool(chosen)); // 2026-10-21：蝕變石的腐化詞綴
+        // 2026-11-08 照站長「六顆增幅在遊戲內的圖鑑能看到會洗到什麼詞綴嗎」：這個部位能嵌的增幅解鎖的專屬詞綴也列出來（寫明要嵌哪一顆）
+        final java.util.Map<String, String> augmentOf = new java.util.HashMap<>();
+        all.addAll(augmentPool(chosen, augmentOf));
         for (final Affix affix : all) {
             final boolean prefix = affix.type() == AffixType.PREFIX;
             final boolean unveiled = Veiled.isUnveiled(affix.id());
@@ -1143,6 +1146,10 @@ public final class CodexMenu extends Menu {
                 lore.add("<gray>一件只會有一條，不佔前綴、後綴的位子");
             }
             lore.addAll(essenceLines(affix)); // 2026-11-03 照站長：星魄限定的詞綴寫出來；這次之前看起來跟一般詞綴一樣
+            if (augmentOf.containsKey(affix.id())) {
+                lore.add("<gray>要先嵌<white>" + ItemRenderer.escape(augmentOf.get(affix.id())) + "</white>（深淵王掉）才擲得到：嵌了以後用一般通貨洗");
+                lore.add("<gray>拿掉、換掉增幅之後這條就不會再擲到");
+            }
             if (unveiled) {
                 lore.add("<gray>一般掉落、通貨擲不到：裝備上的<white>隱匿" + (prefix ? "前綴" : "後綴") + "</white>帶去營地找盜賊首領，");
                 lore.add("<gray>三個選項選一個（隱匿詞綴從劫盜來，揭露石也能加一條）");
@@ -1162,6 +1169,26 @@ public final class CodexMenu extends Menu {
             stacks.add(icon(kindIcon(affix), kindColor(affix) + affix.rangeText(tiers.getFirst().tier()), lore));
         }
         return stacks;
+    }
+
+    /** 2026-11-08：這個基底能嵌的增幅解鎖的專屬詞綴（affixes/augments.yml）；augmentOf 填「詞綴代號 → 增幅名稱」。 */
+    private List<Affix> augmentPool(final ItemBase itemBase, final java.util.Map<String, String> augmentOf) {
+        final ItemRepository repository = plugin.items().repository();
+        final tw.exilecore.item.ItemData probe = new tw.exilecore.item.ItemData(itemBase.id(), tw.exilecore.item.Rarity.NORMAL, 1);
+        final List<Affix> list = new ArrayList<>();
+        for (final tw.exilecore.item.Runes.Rune rune : repository.runes()) {
+            if (!rune.isAugment() || !tw.exilecore.item.Runes.augmentFits(repository, itemBase, probe, rune)) {
+                continue;
+            }
+            for (final Affix affix : repository.affixes()) {
+                if (affix.spawnTags().contains(rune.id()) && !affix.tiers().isEmpty() && !affix.spawnTags().contains(ItemRepository.RETIRED_TAG)) {
+                    list.add(affix);
+                    augmentOf.put(affix.id(), rune.name());
+                }
+            }
+        }
+        list.sort(CodexOrder.AFFIXES);
+        return list;
     }
 
     /** 星魄才給得了的詞綴（affixes/essences.yml，spawn_tags 有 essence）。 */
@@ -1203,6 +1230,9 @@ public final class CodexMenu extends Menu {
     /** 詞綴種類的標題（腐化、揭露、星魄限定、前綴、後綴）。 */
     private static String kindLabel(final Affix affix) {
         final boolean prefix = affix.type() == AffixType.PREFIX;
+        if (affix.spawnTags().stream().anyMatch(tag -> tag.startsWith(tw.exilecore.item.ItemRepository.AUGMENT_TAG_PREFIX))) {
+            return "<#7fe0c8>增幅限定" + (prefix ? "前綴" : "後綴"); // 2026-11-08
+        }
         if (corruptionAffix(affix)) {
             return "<#d20000>腐化詞綴（蝕變石）";
         }
