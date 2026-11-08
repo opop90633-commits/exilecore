@@ -3292,7 +3292,7 @@ public final class SkillService {
             }
         }
         recoil(player, definition); // 往後跳（躍退射這類，2026-10）
-        shapeshift(player, definition); // 變身（德魯伊，2026-10）
+        shapeshift(player, definition, !build.isDefault()); // 變身（德魯伊，2026-10）；2026-11-08：普攻不會變回人形
         // 2026-10-26：天賦樹的條件（最近攻擊過、法術種類、印記、混沌技能的代價）
         plugin.players().conditions().onSkillUsed(player, definition.id(), definition.tags(), definition.isAttack(),
                 definition.mechanic() == Mechanic.MARK || definition.tags().contains("instant"), now);
@@ -3885,6 +3885,10 @@ public final class SkillService {
     public static final String BEAR_FORM = "熊形態";
 
     private void shapeshift(final Player player, final SkillDefinition definition) {
+        shapeshift(player, definition, true);
+    }
+
+    private void shapeshift(final Player player, final SkillDefinition definition, final boolean revert) {
         final java.util.Set<String> tags = definition.tags();
         final String name;
         final List<tw.exilecore.stats.Modifier> mods;
@@ -3908,6 +3912,12 @@ public final class SkillService {
                     tw.exilecore.stats.Modifier.increased(StatKeys.STUN_THRESHOLD, 0.5, name),
                     tw.exilecore.stats.Modifier.increased(StatKeys.AILMENT_THRESHOLD, 0.5, name));
         } else {
+            // 2026-11-08 照站長「沒在熊、狼人、飛龍形態時也能爆發」（PoE2：用不是變身的技能就變回人形）：主動放出不帶獸形標籤的技能，
+            //   形態增益拿掉（獸血沸狂暴中照舊維持獸形）；這次之前形態一律撐滿 8 秒，人形放別的技能時獸性照樣在「獸形」中爆發
+            if (revert && !definition.tags().contains(tw.exilecore.stats.Tags.PERSISTENT) && definition.mechanic() != Mechanic.AURA
+                    && buffActive(player, FORM_BUFF) && (auras == null || !auras.frenzied(player.getUniqueId()))) {
+                removeBuff(player, FORM_BUFF);
+            }
             return;
         }
         final boolean changed = !name.equals(formName(player)); // 2026-10-26（蟄甲）：這一下是不是真的換了形態

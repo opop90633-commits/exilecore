@@ -375,7 +375,7 @@ public final class HeistService implements Listener {
             if (plugin.maps().canEnter(player, instance)) {
                 player.sendMessage(plugin.text().prefixed("<#d4a017>劫盜：<white>" + ItemRenderer.escape(run.site.name())
                         + (run.grand ? "<gray>（第 " + run.wing + "/" + GRAND_WINGS + " 處）" : "")
-                        + "<gray>——" + run.chestTotal + " 個金庫箱（右鍵打開），打倒<white>" + ItemRenderer.escape(bossName)
+                        + "<gray>——" + run.chestTotal + " 個金庫箱（Shift＋右鍵打開），打倒<white>" + ItemRenderer.escape(bossName)
                         + "<gray>" + (run.grand && run.wing < GRAND_WINGS ? "就進下一處" : "打開大金庫") + "。警戒滿了會封鎖！"));
             }
         }
@@ -428,6 +428,13 @@ public final class HeistService implements Listener {
         final Player player = event.getPlayer();
         final Location eye = player.getEyeLocation();
         if (!tw.exilecore.skill.SkillMath.withinVanillaReach(eye.getX(), eye.getY(), eye.getZ(), block.getX(), block.getY(), block.getZ())) {
+            return;
+        }
+        // 2026-11-08 照站長「金庫、藍圖、劫盜的箱子要右鍵＋Shift 才能領取」：沒蹲著右鍵只擋方塊（手上的技能照放），提示要 Shift；
+        //   這次之前右鍵就開，打怪時放技能常常誤開箱子、警戒上升
+        if (!player.isSneaking()) {
+            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<gray>金庫箱：<white>Shift＋右鍵</white> 打開"));
             return;
         }
         event.setCancelled(true);

@@ -514,6 +514,7 @@ public final class PlayerStateService {
                 .findFirst().orElse(null);
         final ItemBase mainBase = mainItem == null || ownProblem.apply(mainItem) != null ? null : mainItem.base();
         final Map<String, Integer> limitedRunes = new java.util.HashMap<>(); // 2026-11-04 照 PoE2 的魂核「僅限 1」：同一顆僅限的符文嵌在好幾件上只算第一件
+        final List<Modifier> perCorrupted = new ArrayList<>(); // 2026-11-08 照站長「一起補」（阿茲里的魂核）：每件已腐化的裝備，等算完生效的裝備再乘
         for (final EquippedItem item : equipped) {
             String reason = ownProblem.apply(item);
             if (reason == null && (item.offHandWeapon() || item.base().slot() == ItemSlot.OFF_HAND)) {
@@ -536,6 +537,10 @@ public final class PlayerStateService {
                 if (modifier == null) {
                     continue;
                 }
+                if (modifier.stat().startsWith(tw.exilecore.item.Runes.PER_CORRUPTED_ITEM)) {
+                    perCorrupted.add(modifier); // 2026-11-08：迴圈後照生效的已腐化裝備件數換成真的屬性
+                    continue;
+                }
                 if (necroTalisman && item.base().slot() == tw.exilecore.item.ItemSlot.AMULET && !modifier.stat().startsWith("flag.")) {
                     final Set<String> minionTags = new java.util.HashSet<>(modifier.tags());
                     minionTags.add(Tags.MINION);
@@ -556,6 +561,9 @@ public final class PlayerStateService {
                 weaponTags = item.base().tags();
             }
         }
+        // 2026-11-08 照站長「一起補」（PoE2 Atziri's Soul Core of …：for each Corrupted Item Equipped）：生效的裝備裡已腐化的件數
+        sheet.addAll(tw.exilecore.item.Runes.perCorruptedItem(perCorrupted,
+                (int) active.stream().filter(item -> item.data() != null && item.data().corrupted()).count()));
         // 2026-10-27（傳奇）：映鏡指環（另一枚戒指再算一次）、巧匠束帶（左右手戒指的加成增加）
         sheet.addAll(tw.exilecore.item.unique.UniqueDerived.rings(sheet, active.stream()
                 .filter(item -> item.base().slot() == ItemSlot.RING).map(EquippedItem::modifiers).toList()));

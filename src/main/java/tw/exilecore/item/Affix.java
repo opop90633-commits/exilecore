@@ -162,6 +162,17 @@ public record Affix(String id, AffixType type, String group, Set<String> spawnTa
                 return tier;
             }
         }
+        // 2026-11-08 照站長「增幅詞綴原作只有一階」：資料併階之後，舊物品上記著已經不存在的階級（例如 2、3）時，改用號碼最接近的那一階
+        //   （數值照物品上記著的，不重擲）；這次之前直接丟例外，舊物品讀不出來
+        AffixTier nearest = null;
+        for (final AffixTier tier : tiers) {
+            if (nearest == null || Math.abs(tier.tier() - number) < Math.abs(nearest.tier() - number)) {
+                nearest = tier;
+            }
+        }
+        if (nearest != null) {
+            return nearest;
+        }
         throw new IllegalArgumentException("詞綴 " + id + " 沒有階級 " + number);
     }
 

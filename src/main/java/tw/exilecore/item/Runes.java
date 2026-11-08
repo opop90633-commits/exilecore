@@ -143,7 +143,7 @@ public final class Runes {
                 return own;
             }
             return switch (key) {
-                case "weapon" -> bondedWeapon;
+                case "weapon", "bow" -> bondedWeapon; // 2026-11-08：弓也是軍用武器
                 case "caster", "sceptre" -> martialOnly ? List.of() : bondedCaster;
                 default -> bondedArmour;
             };
@@ -155,7 +155,7 @@ public final class Runes {
                 return own;
             }
             return switch (key) {
-                case "weapon" -> weapon;
+                case "weapon", "bow" -> weapon; // 2026-11-08：弓也是軍用武器
                 case "caster", "sceptre" -> martialOnly ? List.of() : caster;
                 default -> armour;
             };
@@ -166,7 +166,8 @@ public final class Runes {
     public static final String CASTER_TAG = "caster";
 
     /** 2026-11-04：runes.yml 的 slots 可以寫的部位（PoE2 魂核的 Helmet／Body Armour／Gloves／Boots／Shield and Buckler；手套照慣例是腿甲）。 */
-    public static final List<String> SLOT_KEYS = List.of("head", "chest", "legs", "feet", "shield", "buckler", "focus", "sceptre");
+    public static final List<String> SLOT_KEYS = List.of("head", "chest", "legs", "feet", "shield", "buckler", "focus", "sceptre", "bow");
+    // 2026-11-08 照站長「一起補」（斯拉托的征戰魂核：Bows 那條）：＋bow（只有弓；這次之前武器只分軍用武器、法杖類、權杖）
 
     /** 2026-11-04（魔偶符文・狐狸）：FLAT 1 = 嵌在這件上的符文、魔偶的羈絆詞綴都生效（不用聖賢智慧；本地的，ItemStats 讀）。 */
     public static final String LOCAL_BONDED = "local.rune_bonded";
@@ -177,7 +178,7 @@ public final class Runes {
     /** 2026-11-04：這種防具基底在 runes.yml 的 slots 裡的代號（副手的盾、輕盾是 shield；法器之類不是盾的副手沒有）。 */
     static String slotKey(final ItemBase base) {
         if (base.isWeapon()) {
-            return base.tags().contains("sceptre") ? "sceptre" : "";
+            return base.tags().contains("sceptre") ? "sceptre" : base.tags().contains(tw.exilecore.stats.Tags.BOW) ? "bow" : ""; // 2026-11-08：＋弓
         }
         if (base.isShield()) {
             // 盾（力量、力敏、力智）、輕盾（敏捷的）、法器（智慧的）：照基底的標籤分
@@ -307,6 +308,7 @@ public final class Runes {
             case "buckler" -> "輕盾";
             case "focus" -> "法器";
             case "sceptre" -> "權杖";
+            case "bow" -> "弓";
             default -> key;
         };
     }
@@ -409,6 +411,34 @@ public final class Runes {
     public static final String THESIS_PREFIX = "thesis_";
 
     /** 2026-11-07 照站長「瓦爾傳奇照原作」（艾瑟琳的華儀）：這顆是不是魂核（core_＊ 與遠古魂核 thesis_＊；魔偶、一般符文不是）。 */
+    /**
+     * 2026-11-08 照站長「一起補」：「某某的…魂核」（PoE2 Jiquani's Soul Core of …、Atziri's Soul Core of …這類有名字的魂核，
+     * 代號 core_<人名>_<詞>）。地圖絕境的魂核獎勵、擾核石換別顆只用一般的魂核（core_<人名>），這些各自從 Boss 掉。
+     */
+    public static boolean possessiveCore(final String runeId) {
+        return runeId != null && runeId.startsWith(CORE_PREFIX) && runeId.indexOf('_', CORE_PREFIX.length()) > 0;
+    }
+
+    /**
+     * 2026-11-08 照站長「一起補」（阿茲里的魂核：for each Corrupted Item Equipped）：per_corrupted_item.<屬性> 的修飾器
+     * 換成「每件已腐化的裝備」那個屬性（數值乘件數）。PlayerStateService 第二輪裝備用。
+     */
+    public static final String PER_CORRUPTED_ITEM = "per_corrupted_item.";
+
+    public static List<tw.exilecore.stats.Modifier> perCorruptedItem(final List<tw.exilecore.stats.Modifier> modifiers, final int corrupted) {
+        final List<tw.exilecore.stats.Modifier> out = new java.util.ArrayList<>();
+        if (corrupted <= 0) {
+            return out;
+        }
+        for (final tw.exilecore.stats.Modifier modifier : modifiers) {
+            if (modifier.stat().startsWith(PER_CORRUPTED_ITEM)) {
+                out.add(new tw.exilecore.stats.Modifier(modifier.stat().substring(PER_CORRUPTED_ITEM.length()), modifier.type(),
+                        modifier.value() * corrupted, modifier.tags(), modifier.source()));
+            }
+        }
+        return out;
+    }
+
     public static boolean isSoulCore(final String runeId) {
         return runeId != null && (runeId.startsWith(CORE_PREFIX) || runeId.startsWith(THESIS_PREFIX));
     }

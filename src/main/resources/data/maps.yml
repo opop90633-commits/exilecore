@@ -325,6 +325,25 @@ event_bosses:
         - { support: balanced_verdict, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { support: sentence_stun, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { support: heavier_sentence, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { currency: rune_core_hayoxi_heatproofing, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・哈尤西的耐熱（Hayoxi's Soul Core of Heatproofing）
+        - { currency: rune_core_zalatl_insulation, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・札爾特的絕緣（Zalatl's Soul Core of Insulation）
+        - { currency: rune_core_topotante_dampening, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・塔普塔特的抑焰（Topotante's Soul Core of Dampening）
+        - { currency: rune_core_atmohua_retreat, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・艾特瑪哈的退守（Atmohua's Soul Core of Retreat）
+        - { currency: rune_core_quipolatl_flow, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・克特帕托的流轉（Quipolatl's Soul Core of Flow）
+        - { currency: rune_core_tzamoto_ferocity, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・薩摩特的兇暴（Tzamoto's Soul Core of Ferocity）
+        - { currency: rune_core_uromoti_attenuation, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・烏羅莫提的衰減（Uromoti's Soul Core of Attenuation）
+        - { currency: rune_core_opiloti_assault, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・歐派理堤的猛攻（Opiloti's Soul Core of Assault）
+        - { currency: rune_core_guatelitzi_endurance, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・瓜特利斯的堅忍（Guatelitzi's Soul Core of Endurance）
+        - { currency: rune_core_xopec_power, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・柔派克的威能（Xopec's Soul Core of Power）
+        - { currency: rune_core_estazunti_convalescence, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・艾斯塔尊提的康復（Estazunti's Soul Core of Convalescence）
+        - { currency: rune_core_tacati_affliction, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・特卡蒂的苦難（Tacati's Soul Core of Affliction）
+        - { currency: rune_core_cholotl_war, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・斯拉托的征戰（Cholotl's Soul Core of War）
+        - { currency: rune_core_citaqualotl_foulness, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・希特克拉多的污穢（Citaqualotl's Soul Core of Foulness）
+        - { currency: rune_core_xipocado_dominion, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・希波卡多的統御（Xipocado's Soul Core of Dominion）
+        - { currency: rune_core_atziri_devotion, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・阿茲里的虔誠（Atziri's Soul Core of Devotion）
+        - { currency: rune_core_atziri_vitality, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・阿茲里的活力（Atziri's Soul Core of Vitality）
+        - { currency: rune_core_atziri_alacrity, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・阿茲里的迅捷（Atziri's Soul Core of Alacrity）
+        - { currency: rune_core_atziri_inoculation, chance: 0.01 }   # 2026-11-08 照站長「一起補」：魂核符文・阿茲里的免疫（Atziri's Soul Core of Inoculation）
 
   legion:
     name: 不朽統帥・磐

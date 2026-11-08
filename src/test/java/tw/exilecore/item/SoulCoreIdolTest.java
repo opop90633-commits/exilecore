@@ -35,13 +35,14 @@ class SoulCoreIdolTest {
     void countsAndNames() {
         final long cores = repository.runes().stream().filter(rune -> rune.id().startsWith("core_")).count();
         final long idols = repository.runes().stream().filter(rune -> rune.id().startsWith("idol_")).count();
-        assertEquals(15 + 13, cores, "poe2db 混沌試煉物品的 15 顆魂核＋吉卡尼的技能等級魂核 13 顆（2026-11-08）");
+        assertEquals(15 + 13 + 19, cores, "poe2db 混沌試煉物品的 15 顆魂核＋吉卡尼的技能等級魂核 13 顆＋有名字的魂核 19 顆（2026-11-08）");
         assertEquals(31, idols, "poe2db Idol 的 31 顆魔偶");
         for (final Runes.Rune rune : repository.runes()) {
             if (rune.id().startsWith("core_")) {
                 assertTrue(rune.name().startsWith("魂核符文・"), rune.id() + "：名字要跟一般符文分得出來");
                 // 2026-11-08：吉卡尼的技能等級魂核原作寫「Weapon」（法杖類也算），不限軍用武器
-                assertTrue(rune.martialOnly() || rune.id().startsWith("core_jiquani_"), rune.id() + "：魂核只能嵌軍用武器");
+                // 2026-11-08 照站長「一起補」：有名字的魂核照原作寫的部位（只有希特克拉多的污穢是軍用武器）
+                assertTrue(rune.martialOnly() || Runes.possessiveCore(rune.id()), rune.id() + "：魂核只能嵌軍用武器");
             }
             if (rune.id().startsWith("idol_")) {
                 assertTrue(rune.name().startsWith("魔偶符文・"), rune.id());

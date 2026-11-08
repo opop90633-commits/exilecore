@@ -845,6 +845,7 @@ public enum CurrencyOperation {
     /** 2026-11-07：瓦爾灌注器：品質 +1～5%（最多超過上限 10%），1/6 機率同時腐化（poe2db 沒寫增加多少、腐化機率，先這樣定）。 */
     static void vaalInfuse(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
         data.setQualityUpTo(data.quality() + 1 + random.nextInt(5), qualityMax(data, generator) + VAAL_OVER_MAX);
+        data.setVaalInfused(true); // 2026-11-08：記下用過灌注器（之後上限變低時最多留到上限 +10%）
         if (random.nextDouble() < VAAL_INFUSE_CORRUPT) {
             data.setCorrupted(true);
         }

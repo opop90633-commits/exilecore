@@ -58,9 +58,12 @@ public final class VaalCrafting {
     /** 2026-11-07：這個符文代號是不是遠古增幅（假說；嵌上去拿不下來，萃取石也不還）。 */
     /** 2026-11-08 照站長「增幅系統」：增幅的符文代號開頭（runes.yml 的 augment_＊）。 */
     public static final String AUGMENT_PREFIX = "augment_";
+    /** 2026-11-08 照站長「一起補」（PoE2 Atziri's Soul Core of …，Socket-bound）：阿茲里的魂核（runes.yml core_atziri_＊）嵌上去拿不下來。 */
+    public static final String ATZIRI_CORE_PREFIX = "core_atziri_";
 
     public static boolean socketBound(final String runeId) {
-        return runeId != null && (runeId.startsWith(THESIS_PREFIX) || runeId.startsWith(AUGMENT_PREFIX)); // 2026-11-08：增幅（梅德偉的照料…）也嵌死
+        return runeId != null && (runeId.startsWith(THESIS_PREFIX) || runeId.startsWith(AUGMENT_PREFIX) // 2026-11-08：增幅（梅德偉的照料…）也嵌死
+                || runeId.startsWith(ATZIRI_CORE_PREFIX)); // 2026-11-08 照站長「一起補」：阿茲里的魂核原作 Socket-bound
     }
 
     /** 用在一顆通貨（魂核、石板）上：一疊只動一顆，結果進背包。 */
@@ -116,7 +119,8 @@ public final class VaalCrafting {
                 return new Outcome(List.of(thesis), "變成了遠古增幅「" + thesis.name() + "」");
             }
         }
-        final List<CurrencyType> others = runesWithPrefix(repository, CORE_PREFIX, core.id());
+        final List<CurrencyType> others = new ArrayList<>(runesWithPrefix(repository, CORE_PREFIX, core.id()));
+        others.removeIf(type -> tw.exilecore.item.Runes.possessiveCore(type.affix())); // 2026-11-08 照站長「一起補」：只換成一般的魂核（有名字的各自從 Boss 掉）
         if (others.isEmpty()) {
             return new Outcome(List.of(core), "沒有變化");
         }

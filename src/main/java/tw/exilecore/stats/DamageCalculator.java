@@ -459,6 +459,9 @@ public final class DamageCalculator {
      * 這一種傷害的抗性上限（2026-10-20）：全部抗性的上限（resist.max，預設 75）加上這一種自己的上限（resist.max.cold 這種，
      * 「+3% 冰冷抗性上限」）。物理沒有抗性，回傳 resist.max。傷害計算、角色面板、網頁都用這個（以前面板只看 resist.max）。
      */
+    /** 2026-11-08：敵人的抗性加減（攻擊者的屬性，後面接 fire／cold／lightning／chaos；負的是減抗）。 */
+    public static final String ENEMY_RESIST = "enemy_resist.";
+
     public static double resistCap(final StatSheet sheet, final DamageType type) {
         final double max = sheet.get(StatKeys.RESIST_MAX);
         return type == DamageType.PHYSICAL ? max : max + sheet.flat(StatKeys.resistMax(type), Set.of());
@@ -539,6 +542,13 @@ public final class DamageCalculator {
             }
             if (type == DamageType.CHAOS && StatKeys.flag(defender, tw.exilecore.item.unique.UniqueStats.FLAG_CHAOS_RES_ZERO)) {
                 rawResist = 0; // 2026-11-04（混沌一瞥，PoE2 Glimpse of Chaos）：混沌抗性為 0
+            }
+            if (attacker != null && type != DamageType.PHYSICAL) {
+                // 2026-11-08 照站長「一起補」（PoE2 Tacati's Soul Core of Affliction「你詛咒的敵人 -5% 混沌抗性」）：攻擊者的 enemy_resist.<種類>
+                //   （帶 vs_cursed 這類目標條件）直接加在敵人的抗性上（在上限之前，跟原作的減抗一樣）；這次之前沒有
+                final Set<String> resistContext = new HashSet<>(skillTags);
+                resistContext.addAll(type.tags());
+                rawResist += attacker.flat(ENEMY_RESIST + type.name().toLowerCase(java.util.Locale.ROOT), resistContext);
             }
             double resist = type == DamageType.PHYSICAL ? 0 : Math.min(rawResist, typeMax);
             if (attacker != null && type.isElemental() && StatKeys.flag(attacker, tw.exilecore.item.unique.UniqueStats.LOWEST_RESIST)) {

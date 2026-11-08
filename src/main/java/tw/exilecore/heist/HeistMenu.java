@@ -80,7 +80,7 @@ public final class HeistMenu extends Menu {
                 "<gray>・殺怪、開金庫箱、時間都會讓<white>警戒</white>上升（畫面上方的條）",
                 "<gray>・警戒滿了就<red>封鎖</red><gray>：增援每 " + settings.lockdown().reinforceSeconds() + " 秒來一波，",
                 "<gray>  大金庫的獎勵 ×" + format(settings.lockdown().rewardMultiplier()),
-                "<gray>・金庫箱：右鍵打開，附近的人各一份（警戒 +" + format(settings.alarm().chest()) + "）",
+                "<gray>・金庫箱：Shift＋右鍵打開，附近的人各一份（警戒 +" + format(settings.alarm().chest()) + "）",
                 "<gray>・劫盜裡掉的魔法／稀有裝備 " + Math.round(settings.veiledChance() * 100) + "% 帶隱匿詞綴",
                 "<gray>・揭露石只在劫盜掉：在有空位的裝備上加一條隱匿詞綴",
                 "<gray>・劫盜合約只在星圖裡掉（劫盜裡不掉）",

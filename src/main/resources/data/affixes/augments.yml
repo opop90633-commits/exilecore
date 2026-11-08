@@ -1,5 +1,5 @@
 # 2026-11-08 照站長「增幅系統」：PoE2 0.5 的增幅（梅德偉、卡特拉、索魯德、沃拉娜、克洛爾、烏特雷）解鎖的專屬詞綴；spawn_tags 寫 augment_＜代號＞，只有嵌著那個增幅的裝備擲得到（ItemGenerator.eligible）
-# 數值照 poe2db；梅德偉的那批 poe2db 只給一個大範圍，平均切成三階（物品等級 45／65／75，低的那段是 45）。
+# 數值照 poe2db；2026-11-08 照站長「原作也是這樣的嗎」：原作增幅的專屬詞綴每條只有一階（物品等級 65，poe2db 一條一列），全部併成一階、範圍照原作；這次之前梅德偉的那批平均切成三階（45／65／75），其他的也有分階
 # 卡特拉、克洛爾原作是手套，我們是護腿。權重一律 100。後綴名稱照本檔其他後綴寫成「之＜名稱＞」（接在基底名稱後面）。
 # 原作有、這裡沒做的（引擎沒有對應的屬性）：沃拉娜「怒氣消耗效率」「使用戰吼時回復生命」、烏特雷「技能有機率不移除充能球但仍視為已消耗」。
 
@@ -9,12 +9,10 @@ aug_medved_life_inc:
   type: prefix
   group: aug_medved_life_inc
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [14, 20] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [7, 13] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [1, 6] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1, 20] }
   mods:
     - { stat: life.max, type: INCREASED, value: "{value}" }
 
@@ -22,12 +20,10 @@ aug_medved_mana_inc:
   type: prefix
   group: aug_medved_mana_inc
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [14, 20] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [7, 13] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [1, 6] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1, 20] }
   mods:
     - { stat: mana.max, type: INCREASED, value: "{value}" }
 
@@ -35,12 +31,10 @@ aug_medved_spirit_inc:
   type: prefix
   group: aug_medved_spirit_inc
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [14, 20] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [7, 13] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [1, 6] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1, 20] }
   mods:
     - { stat: spirit.max, type: INCREASED, value: "{value}" }
 
@@ -48,12 +42,10 @@ aug_medved_self_ailment_duration:
   type: suffix
   group: aug_medved_self_ailment_duration
   spawn_tags: [augment_medved]
-  names: [之靈魂, 之靈魂, 之靈魂]
+  names: [之靈魂]
   text: "你身上的異常狀態持續時間減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [35, 50] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [20, 34] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [5, 19] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [5, 50] }
   mods:
     - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
 
@@ -61,12 +53,10 @@ aug_medved_crit_taken:
   type: suffix
   group: aug_medved_crit_taken
   spawn_tags: [augment_medved]
-  names: [之靈魂, 之靈魂, 之靈魂]
+  names: [之靈魂]
   text: "擊中你的暴擊傷害加成減少 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [70, 99] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [40, 69] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [10, 39] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [10, 99] }
   mods:
     - { stat: crit.bonus_taken, type: INCREASED, value: "-{value}" }
 
@@ -74,12 +64,10 @@ aug_medved_res_fire_chaos:
   type: suffix
   group: aug_medved_res_fire_chaos
   spawn_tags: [augment_medved]
-  names: [之靈魂, 之靈魂, 之靈魂]
+  names: [之靈魂]
   text: "+{value}% 火焰與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [22, 31] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [12, 21] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [3, 11] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [3, 31] }
   mods:
     - { stat: resist.fire, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -88,12 +76,10 @@ aug_medved_res_cold_chaos:
   type: suffix
   group: aug_medved_res_cold_chaos
   spawn_tags: [augment_medved]
-  names: [之靈魂, 之靈魂, 之靈魂]
+  names: [之靈魂]
   text: "+{value}% 冰冷與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [22, 31] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [12, 21] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [3, 11] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [3, 31] }
   mods:
     - { stat: resist.cold, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -102,12 +88,10 @@ aug_medved_res_lightning_chaos:
   type: suffix
   group: aug_medved_res_lightning_chaos
   spawn_tags: [augment_medved]
-  names: [之靈魂, 之靈魂, 之靈魂]
+  names: [之靈魂]
   text: "+{value}% 閃電與混沌抗性"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [22, 31] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [12, 21] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [3, 11] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [3, 31] }
   mods:
     - { stat: resist.lightning, type: FLAT, value: "{value}" }
     - { stat: resist.chaos, type: FLAT, value: "{value}" }
@@ -116,12 +100,10 @@ aug_medved_life_mana_flat:
   type: prefix
   group: aug_medved_life_mana_flat
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "+{life} 最大生命、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, life: [133, 189], mana: [133, 189] }
-    - { tier: 2, ilvl: 65, weight: 100, life: [76, 132], mana: [76, 132] }
-    - { tier: 3, ilvl: 45, weight: 100, life: [19, 75], mana: [19, 75] }
+    - { tier: 1, ilvl: 65, weight: 100, life: [19, 189], mana: [19, 189] }
   mods:
     - { stat: life.max, type: FLAT, value: "{life}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -130,12 +112,10 @@ aug_medved_armour_evasion_spirit:
   type: prefix
   group: aug_medved_armour_evasion_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲與閃避、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -145,12 +125,10 @@ aug_medved_armour_es_spirit:
   type: prefix
   group: aug_medved_armour_es_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲與能量護盾、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -160,12 +138,10 @@ aug_medved_evasion_es_spirit:
   type: prefix
   group: aug_medved_evasion_es_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 閃避與能量護盾、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -175,12 +151,10 @@ aug_medved_armour_spirit:
   type: prefix
   group: aug_medved_armour_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: spirit.max, type: FLAT, value: "{spirit}" }
@@ -189,12 +163,10 @@ aug_medved_evasion_spirit:
   type: prefix
   group: aug_medved_evasion_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 閃避、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: spirit.max, type: FLAT, value: "{spirit}" }
@@ -203,12 +175,10 @@ aug_medved_es_spirit:
   type: prefix
   group: aug_medved_es_spirit
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 能量護盾、+{spirit} 最大精魂"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], spirit: [17, 24] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], spirit: [9, 16] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], spirit: [1, 8] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], spirit: [1, 24] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: spirit.max, type: FLAT, value: "{spirit}" }
@@ -217,12 +187,10 @@ aug_medved_armour_evasion_mana:
   type: prefix
   group: aug_medved_armour_evasion_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲與閃避、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: evasion, type: INCREASED, value: "{value}" }
@@ -232,12 +200,10 @@ aug_medved_armour_es_mana:
   type: prefix
   group: aug_medved_armour_es_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲與能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -247,12 +213,10 @@ aug_medved_evasion_es_mana:
   type: prefix
   group: aug_medved_evasion_es_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 閃避與能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: es.max, type: INCREASED, value: "{value}" }
@@ -262,12 +226,10 @@ aug_medved_armour_mana:
   type: prefix
   group: aug_medved_armour_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 護甲、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: armour, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -276,12 +238,10 @@ aug_medved_evasion_mana:
   type: prefix
   group: aug_medved_evasion_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 閃避、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: evasion, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -290,12 +250,10 @@ aug_medved_es_mana:
   type: prefix
   group: aug_medved_es_mana
   spawn_tags: [augment_medved]
-  names: [梅德偉的, 梅德偉的, 梅德偉的]
+  names: [梅德偉的]
   text: "增加 {value}% 能量護盾、+{mana} 最大魔力"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 52], mana: [41, 57] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 36], mana: [24, 40] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [6, 20], mana: [7, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [6, 52], mana: [7, 57] }
   mods:
     - { stat: es.max, type: INCREASED, value: "{value}" }
     - { stat: mana.max, type: FLAT, value: "{mana}" }
@@ -306,11 +264,10 @@ aug_katla_ignite_magnitude:
   type: prefix
   group: aug_katla_ignite_magnitude
   spawn_tags: [augment_katla]
-  names: [卡特拉的, 卡特拉的]
+  names: [卡特拉的]
   text: "增加 {value}% 點燃幅度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [35, 50] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 34] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 50] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
 
@@ -318,11 +275,10 @@ aug_katla_bleed_magnitude:
   type: prefix
   group: aug_katla_bleed_magnitude
   spawn_tags: [augment_katla]
-  names: [卡特拉的, 卡特拉的]
+  names: [卡特拉的]
   text: "增加 {value}% 你所施加的流血幅度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [30, 42] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 29] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 42] }
   mods:
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
 
@@ -330,11 +286,10 @@ aug_katla_poison_magnitude:
   type: prefix
   group: aug_katla_poison_magnitude
   spawn_tags: [augment_katla]
-  names: [卡特拉的, 卡特拉的]
+  names: [卡特拉的]
   text: "增加 {value}% 你所施加的中毒幅度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [30, 42] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 29] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 42] }
   mods:
     - { stat: poison.magnitude, type: INCREASED, value: "{value}" }
 
@@ -342,11 +297,10 @@ aug_katla_ailment_magnitude:
   type: prefix
   group: aug_katla_ailment_magnitude
   spawn_tags: [augment_katla]
-  names: [卡特拉的, 卡特拉的]
+  names: [卡特拉的]
   text: "增加 {value}% 你所施加的異常狀態效果（點燃、流血、中毒、感電、冰緩）"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [26, 32] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 25] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 32] }
   mods:
     - { stat: ignite.magnitude, type: INCREASED, value: "{value}" }
     - { stat: bleed.magnitude, type: INCREASED, value: "{value}" }
@@ -358,11 +312,10 @@ aug_katla_faster_ailments:
   type: prefix
   group: aug_katla_faster_ailments
   spawn_tags: [augment_katla]
-  names: [卡特拉的, 卡特拉的]
+  names: [卡特拉的]
   text: "傷害型異常狀態的傷害速度加快 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [14, 20] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [8, 13] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [8, 20] }
   mods:
     - { stat: ailment.speed, type: INCREASED, value: "{value}" }
 
@@ -370,11 +323,10 @@ aug_katla_damaging_ailment_duration:
   type: suffix
   group: aug_katla_damaging_ailment_duration
   spawn_tags: [augment_katla]
-  names: [之衰敗, 之衰敗]
+  names: [之衰敗]
   text: "增加 {value}% 點燃、流血與中毒持續時間"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [20, 30] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [10, 19] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [10, 30] }
   mods:
     - { stat: ignite.duration, type: INCREASED, value: "{value}" }
     - { stat: bleed.duration, type: INCREASED, value: "{value}" }
@@ -387,7 +339,7 @@ aug_katla_leech_fast:
   names: [之衰敗]
   text: "攻擊造成的物理傷害有 {value}% 偷取為生命、最大偷取速度增加 {rate}%"
   tiers:
-    - { tier: 1, ilvl: 45, weight: 100, value: [8, 12], rate: [15, 25] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [8, 12], rate: [15, 25] }
   mods:
     - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack] }
     - { stat: leech.rate, type: INCREASED, value: "{rate}" }
@@ -399,7 +351,7 @@ aug_katla_leech_slow:
   names: [之衰敗]
   text: "攻擊造成的物理傷害有 {value}% 偷取為生命、最大偷取速度減少 {slow}%"
   tiers:
-    - { tier: 1, ilvl: 45, weight: 100, value: [8, 12], slow: [15, 25] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [8, 12], slow: [15, 25] }
   mods:
     - { stat: leech.life, type: FLAT, value: "{value}", tags: [attack] }
     - { stat: leech.rate, type: INCREASED, value: "-{slow}" }
@@ -411,7 +363,7 @@ aug_katla_leech_effect:
   names: [之衰敗]
   text: "增加 {value}% 生命偷取量"
   tiers:
-    - { tier: 1, ilvl: 45, weight: 100, value: [30, 40] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [30, 40] }
   mods:
     - { stat: leech.effect, type: INCREASED, value: "{value}" }
 
@@ -419,11 +371,10 @@ aug_katla_withered_effect:
   type: suffix
   group: aug_katla_withered_effect
   spawn_tags: [augment_katla]
-  names: [之衰敗, 之衰敗]
+  names: [之衰敗]
   text: "增加 {value}% 凋零幅度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [25, 35] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [15, 24] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 35] }
   mods:
     - { stat: withered.effect, type: INCREASED, value: "{value}" }
 
@@ -431,11 +382,10 @@ aug_katla_curse_effect:
   type: suffix
   group: aug_katla_curse_effect
   spawn_tags: [augment_katla]
-  names: [之衰敗, 之衰敗]
+  names: [之衰敗]
   text: "增加 {value}% 詛咒效果"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [22, 29] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [15, 21] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 29] }
   mods:
     - { stat: curse.effect, type: INCREASED, value: "{value}", tags: [curse] }
 
@@ -443,11 +393,10 @@ aug_katla_exposure_effect:
   type: suffix
   group: aug_katla_exposure_effect
   spawn_tags: [augment_katla]
-  names: [之衰敗, 之衰敗]
+  names: [之衰敗]
   text: "增加 {value}% 曝露效果"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [35, 50] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 34] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 50] }
   mods:
     - { stat: exposure.effect, type: INCREASED, value: "{value}" }
 
@@ -458,7 +407,7 @@ aug_katla_curse_duration:
   names: [之衰敗]
   text: "增加 {value}% 詛咒持續時間"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [50, 99] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [50, 99] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [curse] }
 
@@ -469,7 +418,7 @@ aug_katla_curse_delay:
   names: [之衰敗]
   text: "詛咒生效速度加快 {value}%"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [20, 30] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 30] }
   mods:
     - { stat: curse.delay, type: INCREASED, value: "-{value}" }
 
@@ -580,11 +529,10 @@ aug_vorana_rage_max:
   type: prefix
   group: aug_vorana_rage_max
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "+{value} 最大怒氣"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [8, 12] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [4, 7] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [4, 12] }
   mods:
     - { stat: rage.max, type: FLAT, value: "{value}" }
 
@@ -592,12 +540,10 @@ aug_vorana_warcry_damage:
   type: prefix
   group: aug_vorana_warcry_damage
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "增加 {value}% 戰吼的傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [50, 75] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [35, 49] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [20, 34] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 75] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [warcry] }
 
@@ -605,11 +551,10 @@ aug_vorana_warcry_power:
   type: prefix
   group: aug_vorana_warcry_power
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "增加 {value}% 戰吼計算的總強度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [35, 55] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 34] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 55] }
   mods:
     - { stat: warcry.power, type: INCREASED, value: "{value}" }
 
@@ -617,12 +562,10 @@ aug_vorana_armour_break_effect:
   type: prefix
   group: aug_vorana_armour_break_effect
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "增加 {value}% 護甲完全破碎的效果"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [40, 60] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [25, 39] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [15, 24] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 60] }
   mods:
     - { stat: armour.break_effect, type: INCREASED, value: "{value}" }
 
@@ -630,11 +573,10 @@ aug_vorana_glory_gain:
   type: prefix
   group: aug_vorana_glory_gain
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "增加 {value}% 榮耀產生"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [50, 85] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 49] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 85] }
   mods:
     - { stat: glory.gain, type: INCREASED, value: "{value}" }
 
@@ -642,11 +584,10 @@ aug_vorana_rage_cost_efficiency:   # 2026-11-08 照站長補上（CostKeys.RAGE_
   type: prefix
   group: aug_vorana_rage_cost_efficiency
   spawn_tags: [augment_vorana]
-  names: [沃拉娜的, 沃拉娜的]
+  names: [沃拉娜的]
   text: "增加 {value}% 怒氣消耗效率"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [35, 60] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 34] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 60] }
   mods:
     - { stat: skill.rage_cost_efficiency, type: INCREASED, value: "{value}" }
 
@@ -654,11 +595,10 @@ aug_vorana_warcry_life:   # 2026-11-08 照站長補上（KeystoneKeys.WARCRY_LIF
   type: suffix
   group: aug_vorana_warcry_life
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "使用戰吼時回復 {value}% 最大生命"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [4, 5] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [2, 3] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [2, 5] }
   mods:
     - { stat: warcry.life_recover, type: FLAT, value: "{value}" }
 
@@ -666,12 +606,11 @@ aug_vorana_rage_loss_delay:
   type: suffix
   group: aug_vorana_rage_loss_delay
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "固有怒氣流失延後 {value} 毫秒開始"
   # 引擎的 rage.loss_delay 是毫秒（天賦樹「延後 1 秒」寫 1000），詞綴的除數只有 10／100，所以文字寫毫秒
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [3000, 5000] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [1000, 1000] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1000, 5000] }
   mods:
     - { stat: rage.loss_delay, type: FLAT, value: "{value}" }
 
@@ -679,11 +618,10 @@ aug_vorana_rage_when_hit:
   type: suffix
   group: aug_vorana_rage_when_hit
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "被敵人擊中時獲得 {value} 點怒氣"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [6, 10] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [4, 5] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [4, 10] }
   mods:
     - { stat: rage.when_hit, type: FLAT, value: "{value}" }
 
@@ -691,11 +629,10 @@ aug_vorana_warcry_speed:
   type: suffix
   group: aug_vorana_warcry_speed
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "增加 {value}% 戰吼速度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 50] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [23, 36] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [23, 50] }
   mods:
     - { stat: warcry.speed, type: INCREASED, value: "{value}" }
 
@@ -703,11 +640,10 @@ aug_vorana_warcry_cooldown:
   type: suffix
   group: aug_vorana_warcry_cooldown
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "增加 {value}% 戰吼冷卻回復速度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [37, 50] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [23, 36] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [23, 50] }
   mods:
     - { stat: cooldown.recovery, type: INCREASED, value: "{value}", tags: [warcry] }
 
@@ -715,11 +651,10 @@ aug_vorana_warcry_area:
   type: suffix
   group: aug_vorana_warcry_area
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "增加 {value}% 戰吼技能的範圍效果"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [30, 50] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [15, 29] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 50] }
   mods:
     - { stat: skill.area, type: INCREASED, value: "{value}", tags: [warcry] }
 
@@ -727,11 +662,10 @@ aug_vorana_armour_break_duration:
   type: suffix
   group: aug_vorana_armour_break_duration
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "增加 {value}% 破甲持續時間"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [100, 150] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [50, 99] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [50, 150] }
   mods:
     - { stat: armour.break_duration, type: INCREASED, value: "{value}" }
 
@@ -739,11 +673,10 @@ aug_vorana_combo_extra:
   type: suffix
   group: aug_vorana_combo_extra
   spawn_tags: [augment_vorana]
-  names: [之狂戰士, 之狂戰士]
+  names: [之狂戰士]
   text: "擊中時有 {value}% 機率額外累積 1 層連擊"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [40, 60] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [20, 39] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [20, 60] }
   mods:
     - { stat: combo.extra_chance, type: FLAT, value: "{value}" }
 
@@ -753,12 +686,10 @@ aug_kolr_projectile_damage:
   type: prefix
   group: aug_kolr_projectile_damage
   spawn_tags: [augment_kolr]
-  names: [克洛爾的, 克洛爾的, 克洛爾的]
+  names: [克洛爾的]
   text: "增加 {value}% 投射物傷害"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [31, 40] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 30] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [11, 20] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [11, 40] }
   mods:
     - { stat: damage, type: INCREASED, value: "{value}", tags: [projectile] }
 
@@ -766,11 +697,10 @@ aug_kolr_mark_effect:
   type: prefix
   group: aug_kolr_mark_effect
   spawn_tags: [augment_kolr]
-  names: [克洛爾的, 克洛爾的]
+  names: [克洛爾的]
   text: "增加 {value}% 印記技能效果"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 100, value: [25, 39] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [15, 24] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 39] }
   mods:
     - { stat: mark.effect, type: INCREASED, value: "{value}", tags: [mark] }
 
@@ -778,12 +708,10 @@ aug_kolr_projectile_speed:
   type: prefix
   group: aug_kolr_projectile_speed
   spawn_tags: [augment_kolr]
-  names: [克洛爾的, 克洛爾的, 克洛爾的]
+  names: [克洛爾的]
   text: "增加 {value}% 投射物速度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [31, 40] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [21, 30] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [11, 20] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [11, 40] }
   mods:
     - { stat: skill.projectile_speed, type: INCREASED, value: "{value}" }
 
@@ -791,12 +719,10 @@ aug_kolr_crit_chance:
   type: suffix
   group: aug_kolr_crit_chance
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "增加 {value}% 暴擊率"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [28, 34] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [22, 27] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [16, 21] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [16, 34] }
   mods:
     - { stat: crit.chance, type: INCREASED, value: "{value}" }
 
@@ -804,11 +730,10 @@ aug_kolr_pierce_chance:
   type: suffix
   group: aug_kolr_pierce_chance
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "投射物有 {value}% 機率穿透敵人"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [51, 100] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [25, 50] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [25, 100] }
   mods:
     - { stat: skill.pierce_chance, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -816,12 +741,10 @@ aug_kolr_extra_projectile_chance:
   type: suffix
   group: aug_kolr_extra_projectile_chance
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "有 {value}% 機率多發射一發投射物"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [51, 66] }
-    - { tier: 2, ilvl: 65, weight: 100, value: [37, 50] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [23, 36] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [23, 66] }
   mods:
     - { stat: skill.projectile_chance, type: FLAT, value: "{value}" }
 
@@ -829,11 +752,10 @@ aug_kolr_chain_terrain:
   type: suffix
   group: aug_kolr_chain_terrain
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "投射物有 {value}% 機率從地形額外連鎖一次"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [20, 32] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [10, 19] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [10, 32] }
   mods:
     - { stat: skill.chain_terrain, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -841,11 +763,10 @@ aug_kolr_fork_extra:
   type: suffix
   group: aug_kolr_fork_extra
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "投射物分裂時有 {value}% 機率額外產生 1 個投射物"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [51, 100] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [25, 50] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [25, 100] }
   mods:
     - { stat: skill.fork_extra_chance, type: FLAT, value: "{value}" }
 
@@ -853,11 +774,10 @@ aug_kolr_mark_duration:
   type: suffix
   group: aug_kolr_mark_duration
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "增加 {value}% 印記技能的技能效果持續時間"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [75, 100] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [50, 74] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [50, 100] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}", tags: [mark] }
 
@@ -865,11 +785,10 @@ aug_kolr_mark_cast_speed:
   type: suffix
   group: aug_kolr_mark_cast_speed
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "增加 {value}% 印記技能的使用速度"
   tiers:
-    - { tier: 1, ilvl: 75, weight: 100, value: [24, 39] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [13, 23] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [13, 39] }
   mods:
     - { stat: cast.speed, type: INCREASED, value: "{value}", tags: [mark] }
 
@@ -877,11 +796,10 @@ aug_kolr_mark_level:
   type: suffix
   group: aug_kolr_mark_level
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "+{value} 全部印記技能等級"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 100, value: [3, 4] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [1, 2] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1, 4] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [mark] }
 
@@ -889,11 +807,10 @@ aug_kolr_projectile_level:
   type: suffix
   group: aug_kolr_projectile_level
   spawn_tags: [augment_kolr]
-  names: [之狩獵, 之狩獵]
+  names: [之狩獵]
   text: "+{value} 全部投射物技能等級"
   tiers:
-    - { tier: 1, ilvl: 65, weight: 100, value: [2, 2] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [1, 1] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [1, 2] }
   mods:
     - { stat: skill.level, type: FLAT, value: "{value}", tags: [projectile] }
 
@@ -903,12 +820,10 @@ aug_uhtred_skill_duration:
   type: suffix
   group: aug_uhtred_skill_duration
   spawn_tags: [augment_uhtred]
-  names: [之時空魔法, 之時空魔法, 之時空魔法]
+  names: [之時空魔法]
   text: "增加 {value}% 技能持續時間"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [30, 40] }
-    - { tier: 2, ilvl: 55, weight: 100, value: [20, 29] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [15, 19] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [15, 40] }
   mods:
     - { stat: skill.duration, type: INCREASED, value: "{value}" }
 
@@ -916,12 +831,10 @@ aug_uhtred_cooldown_recovery:
   type: suffix
   group: aug_uhtred_cooldown_recovery
   spawn_tags: [augment_uhtred]
-  names: [之時空魔法, 之時空魔法, 之時空魔法]
+  names: [之時空魔法]
   text: "增加 {value}% 冷卻回復速度"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [24, 30] }
-    - { tier: 2, ilvl: 55, weight: 100, value: [18, 23] }
-    - { tier: 3, ilvl: 45, weight: 100, value: [12, 17] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [12, 30] }
   mods:
     - { stat: cooldown.recovery, type: INCREASED, value: "{value}" }
 
@@ -929,12 +842,11 @@ aug_uhtred_self_ailment_duration:
   type: suffix
   group: aug_uhtred_self_ailment_duration
   spawn_tags: [augment_uhtred]
-  names: [之時空魔法, 之時空魔法]
+  names: [之時空魔法]
   text: "你身上的異常狀態持續時間減少 {value}%"
   # PoE2 原文「你身上的減益效果消退速度加快 50–69%／70–89%」：消退加快 x% ＝ 持續時間 ÷ (1 + x)，換算成持續時間減少 33–40%／41–47%（引擎只有自己身上異常狀態的持續時間）
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [41, 47] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [33, 40] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [33, 47] }
   mods:
     - { stat: ailment.self_duration, type: INCREASED, value: "-{value}" }
 
@@ -942,12 +854,10 @@ aug_uhtred_movement_slow:
   type: prefix
   group: aug_uhtred_movement_slow
   spawn_tags: [augment_uhtred]
-  names: [烏特雷的, 烏特雷的, 烏特雷的]
+  names: [烏特雷的]
   text: "增加 {value}% 移動速度、你身上減益的緩速幅度減少 {slow}%"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [30, 32], slow: [21, 25] }
-    - { tier: 2, ilvl: 70, weight: 100, value: [27, 29], slow: [16, 20] }
-    - { tier: 3, ilvl: 65, weight: 100, value: [24, 26], slow: [10, 15] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [24, 32], slow: [10, 25] }
   mods:
     - { stat: movement.speed, type: INCREASED, value: "{value}" }
     - { stat: slow.taken, type: INCREASED, value: "-{slow}" }
@@ -956,11 +866,10 @@ aug_uhtred_sprint_movement:
   type: prefix
   group: aug_uhtred_sprint_movement
   spawn_tags: [augment_uhtred]
-  names: [烏特雷的, 烏特雷的]
+  names: [烏特雷的]
   text: "衝刺時增加 {value}% 移動速度"
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [17, 23] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [10, 14] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [10, 23] }
   mods:
     - { stat: sprint.movement, type: INCREASED, value: "{value}" }
 
@@ -968,11 +877,10 @@ aug_uhtred_dodge_distance:
   type: prefix
   group: aug_uhtred_dodge_distance
   spawn_tags: [augment_uhtred]
-  names: [烏特雷的, 烏特雷的]
+  names: [烏特雷的]
   text: "閃避翻滾距離 +{value/10} 格"   # 2026-11-08 照站長：照原作的 +0.3～0.5 公尺（1 公尺 = 1 格；UniqueStats.DODGE_METRES）；這次之前換算成增加 9～14%
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [4, 5] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [3, 4] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [3, 5] }
   mods:
     - { stat: dodge.metres, type: FLAT, value: "{value/10}" }
 
@@ -980,10 +888,9 @@ aug_uhtred_charge_keep:
   type: suffix
   group: aug_uhtred_charge_keep
   spawn_tags: [augment_uhtred]
-  names: [之時空魔法, 之時空魔法]
+  names: [之時空魔法]
   text: "技能有 {value}% 機率不移除戰星，但依然視為消耗"   # 原作 Power Charge…（照恆星輔助的 ChargeService.SUP_KEEP）
   tiers:
-    - { tier: 1, ilvl: 78, weight: 100, value: [11, 15] }
-    - { tier: 2, ilvl: 45, weight: 100, value: [7, 10] }
+    - { tier: 1, ilvl: 65, weight: 100, value: [7, 15] }
   mods:
     - { stat: charge.sup.keep, type: FLAT, value: "{value}" }

@@ -559,20 +559,8 @@ public final class Crafting {
         if (repository == null || data == null) {
             return CATALYST_MAX;
         }
-        // 2026-11-08 照站長「裂痕精髓」（PoE2 Essence of the Breach）：詞綴的「+x% 最大品質」也加上去
-        double extra = 0;
-        for (final RolledAffix rolled : data.affixes()) {
-            final Affix affix = repository.affix(rolled.id());
-            if (affix == null) {
-                continue;
-            }
-            for (final tw.exilecore.item.AffixMod mod : affix.mods()) {
-                if (tw.exilecore.item.unique.UniqueStats.LOCAL_MAX_QUALITY.equals(mod.stat())) {
-                    extra += mod.toModifier(rolled.vars(), "").value();
-                }
-            }
-        }
-        return CATALYST_MAX + repository.maxQualityBonus(data.base()) + (int) Math.round(extra);
+        // 2026-11-08 照站長「裂痕精髓」（PoE2 Essence of the Breach）：詞綴的「+x% 最大品質」也加上去（2026-11-08：算法搬到 AffixRescale，讀寫物品時也照這個壓品質）
+        return tw.exilecore.item.AffixRescale.jewelleryQualityMax(repository, data);
     }
 
     // ---- 星籤 ----

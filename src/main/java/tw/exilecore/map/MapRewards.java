@@ -123,7 +123,9 @@ public final class MapRewards {
     static CurrencyType pickRune(final ExileCore plugin, final String prefix, final int level, final RandomGenerator random) {
         final List<CurrencyType> options = new ArrayList<>();
         for (final CurrencyType type : plugin.currencies().repository().all()) {
-            if (type.operation() == CurrencyOperation.RUNE && type.id().startsWith(prefix) && type.dropLevel() <= level) {
+            // 2026-11-08 照站長「一起補」：有名字的魂核（某某的…魂核）各自從 Boss 掉，不進絕境的隨機魂核；這次之前 rune_core_ 開頭都算
+            if (type.operation() == CurrencyOperation.RUNE && type.id().startsWith(prefix) && type.dropLevel() <= level
+                    && !tw.exilecore.item.Runes.possessiveCore(type.affix())) {
                 options.add(type);
             }
         }

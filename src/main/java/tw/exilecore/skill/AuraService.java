@@ -213,6 +213,12 @@ final class AuraService implements Listener {
         return names;
     }
 
+    /** 2026-11-08：這個玩家是不是正在獸血沸的狂暴中（狂暴中一直維持獸形）。 */
+    boolean frenzied(final UUID player) {
+        final FuryState state = furies.get(player);
+        return state != null && now() < state.frenzyUntil;
+    }
+
     /** 動作列上的一小段（跟怒氣、連擊排在一起）：「獸性 12/20」或「狂暴 6s」；沒有回傳空字串。 */
     String furyHud(final UUID player) {
         final FuryState state = furies.get(player);

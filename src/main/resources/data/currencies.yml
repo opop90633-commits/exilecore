@@ -3903,6 +3903,236 @@ rune_core_zantipi:
   description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
+# ---- 2026-11-08 照站長「一起補」：有名字的魂核 19 顆（runes.yml core_<人名>_<詞>；絕境之主・審判者各 1%）----
+
+rune_core_hayoxi_heatproofing:   # Hayoxi's Soul Core of Heatproofing
+  name: 魂核符文・哈尤西的耐熱
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_hayoxi_heatproofing
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：頭盔 +40% 的護甲也套用在冰冷傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_zalatl_insulation:   # Zalatl's Soul Core of Insulation
+  name: 魂核符文・札爾特的絕緣
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_zalatl_insulation
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：鞋子 +40% 的護甲也套用在閃電傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_topotante_dampening:   # Topotante's Soul Core of Dampening
+  name: 魂核符文・塔普塔特的抑焰
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_topotante_dampening
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）+40% 的護甲也套用在火焰傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_atmohua_retreat:   # Atmohua's Soul Core of Retreat
+  name: 魂核符文・艾特瑪哈的退守
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atmohua_retreat
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：胸甲 增加 40% 已裝備法器的能量護盾；法器 增加 30% 已裝備胸甲的能量護盾。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_quipolatl_flow:   # Quipolatl's Soul Core of Flow
+  name: 魂核符文・克特帕托的流轉
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_quipolatl_flow
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：頭盔 增加 8% 技能效果持續時間、增加 8% 冷卻回復速度。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_tzamoto_ferocity:   # Tzamoto's Soul Core of Ferocity
+  name: 魂核符文・薩摩特的兇暴
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_tzamoto_ferocity
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：頭盔 +4 最大怒氣。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_uromoti_attenuation:   # Uromoti's Soul Core of Attenuation
+  name: 魂核符文・烏羅莫提的衰減
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_uromoti_attenuation
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 20% 詛咒持續時間、增加 20% 中毒持續時間。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_opiloti_assault:   # Opiloti's Soul Core of Assault
+  name: 魂核符文・歐派理堤的猛攻
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_opiloti_assault
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得狂星時 50% 機率多獲得一顆狂星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_guatelitzi_endurance:   # Guatelitzi's Soul Core of Endurance
+  name: 魂核符文・瓜特利斯的堅忍
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_guatelitzi_endurance
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得恆星時 50% 機率多獲得一顆恆星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_xopec_power:   # Xopec's Soul Core of Power
+  name: 魂核符文・柔派克的威能
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_xopec_power
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得銳星時 50% 機率多獲得一顆銳星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_estazunti_convalescence:   # Estazunti's Soul Core of Convalescence
+  name: 魂核符文・艾斯塔尊提的康復
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_estazunti_convalescence
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 15% 補償效果速度；頭盔 受到的傷害有 10% 之後回復為生命。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_tacati_affliction:   # Tacati's Soul Core of Affliction
+  name: 魂核符文・特卡蒂的苦難
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_tacati_affliction
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：頭盔 你詛咒的敵人 -5% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_cholotl_war:   # Cholotl's Soul Core of War
+  name: 魂核符文・斯拉托的征戰
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_cholotl_war
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：弓 投射物有 20% 機率從地形額外連鎖一次。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_citaqualotl_foulness:   # Citaqualotl's Soul Core of Foulness
+  name: 魂核符文・希特克拉多的污穢
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_citaqualotl_foulness
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 附加 19 到 29 混沌傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_xipocado_dominion:   # Xipocado's Soul Core of Dominion
+  name: 魂核符文・希波卡多的統御
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_xipocado_dominion
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：法杖類、權杖 召喚物的指令技能增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_atziri_devotion:   # Atziri's Soul Core of Devotion
+  name: 魂核符文・阿茲里的虔誠
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atziri_devotion
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：頭盔 每件已腐化的裝備增加 1% 精魂。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來（只能換掉，不還）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_atziri_vitality:   # Atziri's Soul Core of Vitality
+  name: 魂核符文・阿茲里的活力
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atziri_vitality
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：胸甲 每件已腐化的裝備增加 1% 最大生命。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來（只能換掉，不還）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_atziri_alacrity:   # Atziri's Soul Core of Alacrity
+  name: 魂核符文・阿茲里的迅捷
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atziri_alacrity
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）每件已腐化的裝備增加 1% 技能速度。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來（只能換掉，不還）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
+rune_core_atziri_inoculation:   # Atziri's Soul Core of Inoculation
+  name: 魂核符文・阿茲里的免疫
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_atziri_inoculation
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：鞋子 每件已腐化的裝備 +2% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來（只能換掉，不還）｜絕境之主・審判者 1% 掉落"
+  flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
+
 # ---- 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（runes.yml 檔尾；只有地圖裡的軍團給，不走掉落表）----
 rune_idol_sirrius:
   name: 魔偶符文・席里斯

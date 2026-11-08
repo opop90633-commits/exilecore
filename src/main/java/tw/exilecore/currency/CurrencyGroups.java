@@ -31,6 +31,8 @@ public final class CurrencyGroups {
         CORES("魂核符文", "嵌進符文孔：只有武器（法杖類沒有）與某些防具部位有效果，有的僅限 1 顆（地圖絕境給）"), // 2026-11-05 照站長：「軍用武器」改成遊戲內通用的「武器」；這次之前寫軍用武器
         // 2026-11-08 照站長「吉卡尼的…魂核」：魂核那組 36 格放不下，增幅（深淵王）與吉卡尼的技能等級魂核（星坑 BOSS）另外一組
         AUGMENTS("增幅・吉卡尼魂核", "嵌進符文孔：增幅解鎖專屬詞綴（深淵王）；吉卡尼的魂核讓武器 +1 某一類技能等級（星坑 BOSS）"),
+        // 2026-11-08 照站長「一起補」：有名字的魂核 19 顆（某某的…魂核，絕境之主・審判者掉）；魂核那組放不下
+        NAMED_CORES("有名字的魂核", "嵌進符文孔：某某的…魂核，每顆只在寫著的部位有效果（阿茲里的嵌上去拿不下來；絕境之主・審判者掉）"),
         IDOLS("魔偶符文", "嵌進符文孔：每顆只在某個部位與權杖有效果，一個角色僅限 1 顆（地圖軍團給）"),
         // 2026-10-18；2026-10-21 加先驅石板；2026-10-26 加劫盜、活動的素材（一般通貨那組加了高階／完美通貨放不下）
         KEYS("門票・劫盜・活動", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券、插在星圖塔上的先驅石板，還有劫盜與活動的素材"),
@@ -184,6 +186,7 @@ public final class CurrencyGroups {
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
                     : type.affix() != null && (type.affix().startsWith("augment_") || type.affix().startsWith(JIQUANI_SKILL_CORES))
                     ? Group.AUGMENTS // 2026-11-08：增幅、吉卡尼的技能等級魂核（這次之前增幅在魂核那組）
+                    : type.affix() != null && tw.exilecore.item.Runes.possessiveCore(type.affix()) ? Group.NAMED_CORES // 2026-11-08 照站長「一起補」
                     : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)
                     || type.affix().startsWith("thesis_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組
                     : type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))

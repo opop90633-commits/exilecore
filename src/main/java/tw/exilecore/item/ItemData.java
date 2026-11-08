@@ -57,6 +57,8 @@ public final class ItemData {
     private Integer corruptSockets;
     /** 2026-11-08 照站長：晶淵鑿多開的符文孔（一件只能用一次，所以只有 0 或 1）。 */
     private Integer bonusSockets;
+    /** 2026-11-08 照站長「確定沒使用灌注器的直接壓回上限」：用過瓦爾灌注器（戒指、項鍊的品質可以超過上限 10%）；null = 沒用過或舊物品。 */
+    private Boolean vaalInfused;
     /**
      * 2026-10-26 照 PoE2 的工匠石（Artificer's Orb）：這件現在有幾個符文孔（不算蝕變石多開的）；
      * null = 舊物品（這次之前做出來的），照基底的孔數全開。新做出來的裝備從 0 開始，用工匠石一個一個加到基底的上限。
@@ -228,6 +230,14 @@ public final class ItemData {
     }
 
     /** 2026-11-08：晶淵鑿多開的符文孔（0 或 1）。 */
+    public boolean vaalInfused() {
+        return vaalInfused != null && vaalInfused;
+    }
+
+    public void setVaalInfused(final boolean infused) {
+        this.vaalInfused = infused ? Boolean.TRUE : null;
+    }
+
     public int bonusSockets() {
         return bonusSockets == null ? 0 : bonusSockets;
     }
@@ -479,6 +489,7 @@ public final class ItemData {
         copy.fractured = fractured;
         copy.corruptSockets = corruptSockets;
         copy.bonusSockets = bonusSockets;
+        copy.vaalInfused = vaalInfused;
         copy.runeSockets = runeSockets;
         copy.foresight = foresight;
         copy.sanctified = sanctified;
@@ -519,6 +530,7 @@ public final class ItemData {
         fractured = from.fractured;
         corruptSockets = from.corruptSockets;
         bonusSockets = from.bonusSockets;
+        vaalInfused = from.vaalInfused;
         runeSockets = from.runeSockets;
         foresight = from.foresight;
         sanctified = from.sanctified;

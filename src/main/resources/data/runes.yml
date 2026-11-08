@@ -1033,6 +1033,128 @@ runes:
     armour:
       - { text: "40% 需求轉換為智慧", stat: local.req_convert.int, type: FLAT, value: 40 }
 
+# 2026-11-08 照站長「一起補」（poe2db Soul Core 頁上有名字的魂核，吉卡尼那 13 顆以外的 19 顆）：需求等級 50，各自從絕境之主・審判者（event_bosses.ultimatum）1% 掉。
+#   部位照現有魂核的慣例：手套（Gloves）放褲子（legs）；「Martial Weapon 與 Wand or Staff」寫 weapon（法杖類照 weapon）；Bows 寫 slots.bow（2026-11-08 新增）。
+#   阿茲里的 4 顆原作 Socket-bound：嵌上去拿不下來（VaalCrafting.ATZIRI_CORE_PREFIX）；原作「腐化時一定會改變」沒做（我們的魂核不能腐化）。
+#   簡化：希波卡多那條原作是 Wand or Staff 與 Sceptres，我們寫 caster（法杖、長杖）＋slots.sceptre；歐派理堤／瓜特利斯／柔派克的法杖類也包含權杖（我們的 caster 含權杖）。
+  core_hayoxi_heatproofing:   # Hayoxi's Soul Core of Heatproofing
+    name: 魂核符文・哈尤西的耐熱
+    level: 50
+    slots:
+      head:
+        - { text: "+40% 的護甲也套用在冰冷傷害", stat: armour.elemental, type: FLAT, value: 40, tags: [cold] }
+  core_zalatl_insulation:   # Zalatl's Soul Core of Insulation
+    name: 魂核符文・札爾特的絕緣
+    level: 50
+    slots:
+      feet:
+        - { text: "+40% 的護甲也套用在閃電傷害", stat: armour.elemental, type: FLAT, value: 40, tags: [lightning] }
+  core_topotante_dampening:   # Topotante's Soul Core of Dampening
+    name: 魂核符文・塔普塔特的抑焰
+    level: 50
+    slots:
+      legs:
+        - { text: "+40% 的護甲也套用在火焰傷害", stat: armour.elemental, type: FLAT, value: 40, tags: [fire] }
+  core_atmohua_retreat:   # Atmohua's Soul Core of Retreat
+    name: 魂核符文・艾特瑪哈的退守
+    level: 50
+    slots:
+      chest:
+        - { text: "增加 40% 已裝備法器的能量護盾", stat: focus.es, type: INCREASED, value: 40 }
+      focus:
+        - { text: "增加 30% 已裝備胸甲的能量護盾", stat: body.es, type: INCREASED, value: 30 }
+  core_quipolatl_flow:   # Quipolatl's Soul Core of Flow
+    name: 魂核符文・克特帕托的流轉
+    level: 50
+    slots:
+      head:
+        - { text: "增加 8% 技能效果持續時間、增加 8% 冷卻回復速度", mods: [ { stat: skill.duration, type: INCREASED, value: 8 }, { stat: cooldown.recovery, type: INCREASED, value: 8 } ] }
+  core_tzamoto_ferocity:   # Tzamoto's Soul Core of Ferocity
+    name: 魂核符文・薩摩特的兇暴
+    level: 50
+    slots:
+      head:
+        - { text: "+4 最大怒氣", stat: rage.max, type: FLAT, value: 4 }
+  core_uromoti_attenuation:   # Uromoti's Soul Core of Attenuation
+    name: 魂核符文・烏羅莫提的衰減
+    level: 50
+    slots:
+      feet:
+        - { text: "增加 20% 詛咒持續時間、增加 20% 中毒持續時間", mods: [ { stat: skill.duration, type: INCREASED, value: 20, tags: [curse] }, { stat: poison.duration, type: INCREASED, value: 20 } ] }
+  core_opiloti_assault:   # Opiloti's Soul Core of Assault
+    name: 魂核符文・歐派理堤的猛攻
+    level: 50
+    weapon:
+      - { text: "獲得狂星時 50% 機率多獲得一顆狂星", stat: charge.extra.frenzy, type: FLAT, value: 50 }
+  core_guatelitzi_endurance:   # Guatelitzi's Soul Core of Endurance
+    name: 魂核符文・瓜特利斯的堅忍
+    level: 50
+    weapon:
+      - { text: "獲得恆星時 50% 機率多獲得一顆恆星", stat: charge.extra.endurance, type: FLAT, value: 50 }
+  core_xopec_power:   # Xopec's Soul Core of Power
+    name: 魂核符文・柔派克的威能
+    level: 50
+    weapon:
+      - { text: "獲得銳星時 50% 機率多獲得一顆銳星", stat: charge.extra.power, type: FLAT, value: 50 }
+  core_estazunti_convalescence:   # Estazunti's Soul Core of Convalescence
+    name: 魂核符文・艾斯塔尊提的康復
+    level: 50
+    slots:
+      feet:
+        - { text: "增加 15% 補償效果速度", stat: recoup.speed, type: INCREASED, value: 15 }
+      head:
+        - { text: "受到的傷害有 10% 之後回復為生命", stat: life.recoup, type: FLAT, value: 10 }
+  core_tacati_affliction:   # Tacati's Soul Core of Affliction
+    name: 魂核符文・特卡蒂的苦難
+    level: 50
+    slots:
+      head:
+        - { text: "你詛咒的敵人 -5% 混沌抗性", stat: enemy_resist.chaos, type: FLAT, value: -5, tags: [vs_cursed] }
+  core_cholotl_war:   # Cholotl's Soul Core of War
+    name: 魂核符文・斯拉托的征戰
+    level: 50
+    slots:
+      bow:
+        - { text: "投射物有 20% 機率從地形額外連鎖一次", stat: skill.chain_terrain, type: FLAT, value: 20, tags: [projectile] }
+  core_citaqualotl_foulness:   # Citaqualotl's Soul Core of Foulness
+    name: 魂核符文・希特克拉多的污穢
+    level: 50
+    martial_only: true
+    weapon:
+      - { text: "附加 19 到 29 混沌傷害", mods: [ { stat: damage.added.min, type: FLAT, value: 19, tags: [attack, chaos] }, { stat: damage.added.max, type: FLAT, value: 29, tags: [attack, chaos] } ] }
+  core_xipocado_dominion:   # Xipocado's Soul Core of Dominion
+    name: 魂核符文・希波卡多的統御
+    level: 50
+    caster:
+      - { text: "召喚物的指令技能增加 40% 傷害", stat: damage, type: INCREASED, value: 40, tags: [minion, command] }
+    slots:
+      sceptre:
+        - { text: "召喚物的指令技能增加 40% 傷害", stat: damage, type: INCREASED, value: 40, tags: [minion, command] }
+  core_atziri_devotion:   # Atziri's Soul Core of Devotion
+    name: 魂核符文・阿茲里的虔誠
+    level: 50
+    slots:
+      head:
+        - { text: "每件已腐化的裝備增加 1% 精魂", stat: per_corrupted_item.spirit.max, type: INCREASED, value: 1 }
+  core_atziri_vitality:   # Atziri's Soul Core of Vitality
+    name: 魂核符文・阿茲里的活力
+    level: 50
+    slots:
+      chest:
+        - { text: "每件已腐化的裝備增加 1% 最大生命", stat: per_corrupted_item.life.max, type: INCREASED, value: 1 }
+  core_atziri_alacrity:   # Atziri's Soul Core of Alacrity
+    name: 魂核符文・阿茲里的迅捷
+    level: 50
+    slots:
+      legs:
+        - { text: "每件已腐化的裝備增加 1% 技能速度", mods: [ { stat: per_corrupted_item.attack.speed, type: INCREASED, value: 1 }, { stat: per_corrupted_item.cast.speed, type: INCREASED, value: 1 } ] }
+  core_atziri_inoculation:   # Atziri's Soul Core of Inoculation
+    name: 魂核符文・阿茲里的免疫
+    level: 50
+    slots:
+      feet:
+        - { text: "每件已腐化的裝備 +2% 混沌抗性", stat: per_corrupted_item.resist.chaos, type: FLAT, value: 2 }
+
 # =====================================================================================================
 # 2026-11-07 照站長「星脈深坑掉 PoE2 Fate of the Vaal 的通貨」：遠古魂核（PoE2 的 Ancient Augment「…的假說」，poe2db 4 顆）。
 #   不會直接掉：只有用擾核石（Core Destabiliser）擾亂一般魂核時有機會變出來（currency/VaalCrafting）。

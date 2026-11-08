@@ -237,6 +237,12 @@ public final class LifeModule implements Module, Listener {
             return;
         }
         final Player player = event.getPlayer();
+        // 2026-11-08 照站長「打淵鯨跟鯊魚時筏上的功能性方塊要先停止使用」：只擋方塊（手上的技能照樣能放）；這次之前戰鬥中照樣開設施
+        if (action == Action.RIGHT_CLICK_BLOCK && service.combatLocked(event.getClickedBlock())) {
+            event.setUseInteractedBlock(org.bukkit.event.Event.Result.DENY);
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>戰鬥中，筏上的設施先不能用（打完再用）"));
+            return;
+        }
         if (action == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null
                 && (service.islands().interact(player, event.getClickedBlock()) || service.useStation(player, event.getClickedBlock()) || service.collectNet(player, event.getClickedBlock()))) {
             event.setCancelled(true);

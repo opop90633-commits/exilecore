@@ -2688,6 +2688,25 @@ public final class LifeService {
     // -- 設施 --
 
     /** 右鍵筏上的設施（LifeModule）；回傳是不是設施（是就取消事件）。 */
+    /**
+     * 2026-11-08 照站長「打淵鯨跟鯊魚時，筏上的功能性方塊要先停止玩家使用」：渦齒鯊、鯊王在咬的筏，或淵鯨的場地裡，
+     * 筏上的設施（研究台、淨水器、烤架、廚房、種植盆、舵、床、捕魚籠、漁網…）與原版會開介面的方塊都不能用；回傳 true = 擋下來。
+     * 這次之前鯊魚來時照樣能開設施，淵鯨場地裡右鍵設施會開原版的方塊介面（熔爐、工作台…）。
+     */
+    boolean combatLocked(final Block block) {
+        if (world == null || block == null || !world.equals(block.getWorld())) {
+            return false;
+        }
+        final Location at = block.getLocation().add(0.5, 0, 0.5);
+        if (islands.onIsland(at)) {
+            return false; // 小島是另外的玩法（島上的東西照舊）
+        }
+        if (!sharkPlots.contains(plotAt(at.getX(), at.getZ())) && !whale.inArena(at)) {
+            return false;
+        }
+        return config.itemByBlock(block.getType().name()) != null || block.getType() == netBlock() || block.getType().isInteractable();
+    }
+
     boolean useStation(final Player player, final Block block) {
         if (!lifeMode(block.getLocation()) && !sharkPlots.contains(plotAt(block.getX(), block.getZ()))) {
             return false;
