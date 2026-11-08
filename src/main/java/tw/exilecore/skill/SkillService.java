@@ -6484,6 +6484,12 @@ public final class SkillService {
                         + (built.level() - entry.level()) : " －角色等級、屬性不夠降的 " + (entry.level() - built.level())) + "）");
             }
         }
+        // 2026-11-08 照站長「骸令、骸令 II 一起掛，只有第一顆生效但面板看不出來」：同系列（I／II／III）沒生效的那幾顆寫出來；這次之前沒有提示
+        for (final java.util.Map.Entry<SupportDefinition, SupportDefinition> dup
+                : SkillBuild.sameFamilyIgnored(SupportDefinition.hostsSkill(definition) ? hostSupportsOf(entry) : supportsOf(entry), definition).entrySet()) {
+            top.add("<red>⚠ " + ItemRenderer.escape(dup.getKey().name()) + " 沒有生效：跟 " + ItemRenderer.escape(dup.getValue().name())
+                    + " 同系列，一個技能只算第一顆");
+        }
         // 2026-10-29 照站長：品質照實際生效的算（寶石＋昇華「技能寶石品質」＋天賦樹），寫出各自加了多少；這次之前只寫寶石自己的
         final StatSheet qualitySheet = plugin.players().sheet(player);
         final int ascQuality = ascendancyQuality(qualitySheet);

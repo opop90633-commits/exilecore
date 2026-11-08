@@ -101,7 +101,8 @@ class FallingThunderTest {
         assertEquals(20, bolt.pierce());
         final Set<String> tags = bolt.profile().tags();
         assertTrue(tags.contains(Tags.PROJECTILE) && tags.contains(Tags.ATTACK) && tags.contains(Tags.QUARTERSTAFF), tags.toString());
-        assertFalse(tags.contains(Tags.MELEE) || tags.contains(Tags.SLAM) || tags.contains(Tags.AREA), tags.toString());
+        assertFalse(tags.contains(Tags.MELEE) || tags.contains(Tags.SLAM), tags.toString());
+        assertTrue(tags.contains(Tags.AREA), "2026-11-08 照 PoB2：投射物那一段是範圍傷害（is_area_damage）");
         assertEquals(Map.of(DamageType.LIGHTNING, 1.0), bolt.profile().conversion());
         assertEquals(slam.profile().effectiveness(), bolt.profile().effectiveness(), 1e-9, "照猛擊那一下的傷害");
         assertEquals(5.0, more(bolt.profile()) / more(slam.profile()), 1e-9, "3 顆：更多 150% × 更多 100%");

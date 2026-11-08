@@ -792,12 +792,16 @@ public final class OriginalSkills implements Listener {
             return;
         }
         final long add = Math.round(STAFF_TICKS_PER_CHARGE * consumed * build.durationScale());
+        // 2026-11-08 照站長「第三杯西瓜奶茶傷害有問題嗎」（poe2db Charged Staff：附加的閃電傷害「最多到你的銳星上限」）：
+        //   再放一次照樣加時間，但傷害的層數最多到銳星上限；這次之前層數沒有上限（品質不移除銳星、恆星一直重放，疊到幾千層）
+        final tw.exilecore.charge.ChargeType power = charges.config().type("power");
+        final int cap = power == null ? Integer.MAX_VALUE : Math.max(1, tw.exilecore.charge.ChargeService.maxOf(power, plugin.players().sheet(player)));
         if (s.staffUntil > now) {
             s.staffUntil += add; // 照 PoE2：再放一次加時間與傷害
-            s.staffCharges += consumed;
+            s.staffCharges = Math.min(cap, s.staffCharges + consumed);
         } else {
             s.staffUntil = now + add;
-            s.staffCharges = consumed;
+            s.staffCharges = Math.min(cap, consumed);
         }
         final double min = levelValue(STAFF, STAFF_MIN, build.level(), 1) * s.staffCharges;
         final double max = levelValue(STAFF, STAFF_MAX, build.level(), 2) * s.staffCharges;

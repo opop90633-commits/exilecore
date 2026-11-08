@@ -90,7 +90,7 @@ public final class Runes {
 
         /** 2026-11-04：魂核符文（soul core）、魔偶符文（idol）：有部位專屬的加成、只能嵌軍用武器、或一個角色僅限幾顆。 */
         public boolean soulCore() {
-            return martialOnly || limit > 0 || !slots.isEmpty();
+            return martialOnly || limit > 0 || !slots.isEmpty() || id.startsWith(CORE_PREFIX); // 2026-11-08：吉卡尼的技能等級魂核只有 weapon，也是魂核
         }
 
         public Rune(final String id, final String name, final List<Line> weapon, final List<Line> armour) {
@@ -243,7 +243,9 @@ public final class Runes {
             final Map<String, List<Line>> slots = slotLines(node);
             final boolean augment = node.has("augment"); // 2026-11-08：增幅本身沒有加成（只有羈絆、解鎖專屬詞綴）
             map.put(id, new Rune(id, node.requireString("name"), (slots.isEmpty() && !augment) || node.has("weapon") ? lines(node, "weapon") : List.of(),
-                    node.has("caster") ? lines(node, "caster") : List.of(), (slots.isEmpty() && !augment) || node.has("armour") ? lines(node, "armour") : List.of(),
+                    // 2026-11-08 照站長「吉卡尼的…魂核」：魂核（core_ 開頭）只寫 weapon 也可以（防具嵌了沒效果）；這次之前沒寫 slots 一定要寫 armour
+                    node.has("caster") ? lines(node, "caster") : List.of(),
+                    (slots.isEmpty() && !augment && !(id.startsWith(CORE_PREFIX) && node.has("weapon"))) || node.has("armour") ? lines(node, "armour") : List.of(),
                     Math.max(0, node.integer("level", 0)),
                     optionalLines(bonded, "weapon"), optionalLines(bonded, "caster"), optionalLines(bonded, "armour"),
                     slots, node.bool("martial_only", false), Math.max(0, node.integer("limit", 0)), bonded == null ? Map.of() : slotLines(bonded),

@@ -1478,6 +1478,19 @@ public final class GemService {
         final String old = entry.support(socket);
         final boolean oldResonant = entry.resonant(socket);
         loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable() && !support.lineage())); // 2026-10-27：血脈輔助不留共鳴
+        // 2026-11-08 照站長「同系列只算第一顆，插的時候也提醒」：插得進去，但同系列（I／II／III）只有孔的順序第一顆生效；這次之前沒有提示
+        if (!host) {
+            final List<SupportDefinition> now = new java.util.ArrayList<>();
+            for (final String id : loadout.skill(position).supports()) {
+                if (!id.isEmpty() && config().support(id) != null) {
+                    now.add(config().support(id));
+                }
+            }
+            for (final java.util.Map.Entry<SupportDefinition, SupportDefinition> dup : SkillBuild.sameFamilyIgnored(now, definition).entrySet()) {
+                player.sendMessage(tw.exilecore.item.ItemRenderer.line("<red>⚠ " + tw.exilecore.item.ItemRenderer.escape(dup.getKey().name())
+                        + " 沒有生效：跟 " + tw.exilecore.item.ItemRenderer.escape(dup.getValue().name()) + " 同系列，一個技能只算第一顆（照孔的順序）"));
+            }
+        }
         return Change.ok(old.isEmpty() ? null : create(GemData.support(old, oldResonant), 1)); // 2026-10-18：換下來的保留共鳴
     }
 

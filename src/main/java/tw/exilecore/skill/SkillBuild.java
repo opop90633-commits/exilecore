@@ -220,6 +220,30 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
     }
 
     /** 2026-10-30 照 PoE2：輔助的系列（骸令、骸令 II 同一系列）：代號去掉結尾的 _ii／_iii。 */
+    /**
+     * 2026-11-08 照站長「同系列只算第一顆，面板上沒有提示」：掛著、能輔助這個技能、但因為同系列（I／II／III）已經有一顆在前面而沒生效的輔助，
+     * 回傳「沒生效的 → 生效的那顆」（照孔的順序）。純邏輯。
+     */
+    public static java.util.Map<SupportDefinition, SupportDefinition> sameFamilyIgnored(final List<SupportDefinition> supports,
+                                                                                        final SkillDefinition definition) {
+        final java.util.Map<SupportDefinition, SupportDefinition> ignored = new java.util.LinkedHashMap<>();
+        if (supports == null || definition == null) {
+            return ignored;
+        }
+        final java.util.Map<String, SupportDefinition> first = new java.util.HashMap<>();
+        final List<String> ids = supportIds(supports);
+        for (final SupportDefinition support : supports) {
+            if (support == null || !support.supports(definition, ids)) {
+                continue;
+            }
+            final SupportDefinition kept = first.putIfAbsent(family(support.id()), support);
+            if (kept != null) {
+                ignored.put(support, kept);
+            }
+        }
+        return ignored;
+    }
+
     public static String family(final String supportId) {
         return supportId == null ? "" : supportId.replaceFirst("_(ii|iii|iv)$", "");
     }

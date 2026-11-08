@@ -852,6 +852,72 @@ runes:
     slots:
       chest:
         - { text: "增加 5% 最大生命", stat: life.max, type: INCREASED, value: 5 }
+  # 2026-11-08 照站長「吉卡尼系列好像沒加進來」（poe2db Jiquani's Soul Core of …，0.5 的 13 顆）：武器（軍用、法杖類都算）+1 某一類技能寶石等級，需求等級 50
+  core_jiquani_automation:   # Jiquani's Soul Core of Automation
+    name: 魂核符文・吉卡尼的自動
+    level: 50
+    weapon:
+      - { text: "+1 全部圖騰技能等級", stat: skill.level, type: FLAT, value: 1, tags: [totem] }
+  core_jiquani_malediction:   # Jiquani's Soul Core of Malediction
+    name: 魂核符文・吉卡尼的咒怨
+    level: 50
+    weapon:
+      - { text: "+1 全部詛咒技能等級", stat: skill.level, type: FLAT, value: 1, tags: [curse] }
+  core_jiquani_targeting:   # Jiquani's Soul Core of Targeting
+    name: 魂核符文・吉卡尼的瞄準
+    level: 50
+    weapon:
+      - { text: "+1 全部印記技能等級", stat: skill.level, type: FLAT, value: 1, tags: [mark] }
+  core_jiquani_rallying:   # Jiquani's Soul Core of Rallying
+    name: 魂核符文・吉卡尼的號召
+    level: 50
+    weapon:
+      - { text: "+1 全部戰吼技能等級", stat: skill.level, type: FLAT, value: 1, tags: [warcry] }
+  core_jiquani_radiance:   # Jiquani's Soul Core of Radiance
+    name: 魂核符文・吉卡尼的光輝
+    level: 50
+    weapon:
+      - { text: "+1 全部捷光環技能等級", stat: skill.level, type: FLAT, value: 1, tags: [herald] }
+  core_jiquani_severing:   # Jiquani's Soul Core of Severing
+    name: 魂核符文・吉卡尼的斷斬
+    level: 50
+    weapon:
+      - { text: "+1 全部打擊技能等級", stat: skill.level, type: FLAT, value: 1, tags: [strike] }
+  core_jiquani_rippling:   # Jiquani's Soul Core of Rippling
+    name: 魂核符文・吉卡尼的漣漪
+    level: 50
+    weapon:
+      - { text: "+1 全部新星技能等級", stat: skill.level, type: FLAT, value: 1, tags: [nova] }
+  core_jiquani_quaking:   # Jiquani's Soul Core of Quaking
+    name: 魂核符文・吉卡尼的震地
+    level: 50
+    weapon:
+      - { text: "+1 全部猛擊技能等級", stat: skill.level, type: FLAT, value: 1, tags: [slam] }
+  core_jiquani_munitions:   # Jiquani's Soul Core of Munitions
+    name: 魂核符文・吉卡尼的軍械
+    level: 50
+    weapon:
+      - { text: "+1 全部榴彈技能等級", stat: skill.level, type: FLAT, value: 1, tags: [grenade] }
+  core_jiquani_snares:   # Jiquani's Soul Core of Snares
+    name: 魂核符文・吉卡尼的羅網
+    level: 50
+    weapon:
+      - { text: "+1 全部危險區域技能等級", stat: skill.level, type: FLAT, value: 1, tags: [hazard] }
+  core_jiquani_abundance:   # Jiquani's Soul Core of Abundance
+    name: 魂核符文・吉卡尼的豐饒
+    level: 50
+    weapon:
+      - { text: "+1 全部植物技能等級", stat: skill.level, type: FLAT, value: 1, tags: [plant] }
+  core_jiquani_squalls:   # Jiquani's Soul Core of Squalls
+    name: 魂核符文・吉卡尼的狂風
+    level: 50
+    weapon:
+      - { text: "+1 全部疾風技能等級", stat: skill.level, type: FLAT, value: 1, tags: [wind] }
+  core_jiquani_thundering:   # Jiquani's Soul Core of Thundering
+    name: 魂核符文・吉卡尼的雷鳴
+    level: 50
+    weapon:
+      - { text: "+1 全部風暴技能等級", stat: skill.level, type: FLAT, value: 1, tags: [storm] }
   core_zalatl:   # Soul Core of Zalatl
     name: 魂核符文・札爾特
     level: 65

@@ -29,6 +29,8 @@ public final class CurrencyGroups {
         RUNES_HIGH("高階符文", "嵌進武器、防具的符文孔：高階與完美"),
         // 2026-11-04 照站長：魂核符文 15 顆（地圖絕境給）、魔偶符文 31 顆（地圖軍團給）各一組（一頁 36 格，跟一般符文放不下）
         CORES("魂核符文", "嵌進符文孔：只有武器（法杖類沒有）與某些防具部位有效果，有的僅限 1 顆（地圖絕境給）"), // 2026-11-05 照站長：「軍用武器」改成遊戲內通用的「武器」；這次之前寫軍用武器
+        // 2026-11-08 照站長「吉卡尼的…魂核」：魂核那組 36 格放不下，增幅（深淵王）與吉卡尼的技能等級魂核（星坑 BOSS）另外一組
+        AUGMENTS("增幅・吉卡尼魂核", "嵌進符文孔：增幅解鎖專屬詞綴（深淵王）；吉卡尼的魂核讓武器 +1 某一類技能等級（星坑 BOSS）"),
         IDOLS("魔偶符文", "嵌進符文孔：每顆只在某個部位與權杖有效果，一個角色僅限 1 顆（地圖軍團給）"),
         // 2026-10-18；2026-10-21 加先驅石板；2026-10-26 加劫盜、活動的素材（一般通貨那組加了高階／完美通貨放不下）
         KEYS("門票・劫盜・活動", "開終局、極境、巔峰、事件巔峰、金庫之主的碎片與入場券、插在星圖塔上的先驅石板，還有劫盜與活動的素材"),
@@ -180,13 +182,18 @@ public final class CurrencyGroups {
             case VAAL_INFUSE_ARMOUR, VAAL_INFUSE_WEAPON, VAAL_INFUSE_JEWELLERY, VAAL_INFUSE_CASTER, ARCHITECT, EXTRACT, CULTIVATE,
                  SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT, BONUS_RUNE_SOCKET -> Group.VAAL; // 2026-11-07：瓦爾通貨；2026-11-08：晶淵鑿
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
+                    : type.affix() != null && (type.affix().startsWith("augment_") || type.affix().startsWith(JIQUANI_SKILL_CORES))
+                    ? Group.AUGMENTS // 2026-11-08：增幅、吉卡尼的技能等級魂核（這次之前增幅在魂核那組）
                     : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)
-                    || type.affix().startsWith("thesis_") || type.affix().startsWith("augment_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組；2026-11-08：增幅也是
+                    || type.affix().startsWith("thesis_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組
                     : type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))
                     ? Group.RUNES_HIGH : Group.RUNES; // 2026-10-26：符文自己兩組（照階級）
             default -> Group.BASIC;
         };
     }
+
+    /** 2026-11-08：吉卡尼的技能等級魂核（runes.yml core_jiquani_<類>；魂核符文・吉卡尼本身是 core_jiquani，不算）。 */
+    static final String JIQUANI_SKILL_CORES = "core_jiquani_";
 
     /** 2026-10-26：攻擊類的星魄（代號去掉 lesser_／greater_／perfect_ 之後）。 */
     static final java.util.Set<String> ATTACK_ESSENCES = java.util.Set.of("essence_torment", "essence_blaze", "essence_rime", "essence_thunder",

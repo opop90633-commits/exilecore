@@ -1223,8 +1223,11 @@ final class SkillExecutor {
         }
         final int count = bolt.projectiles();
         // 落點：長棍劈到地上的地方（扇形一半的距離），從那裡往前（水平）射出去
-        final Location impact = origin.feet().clone().add(facing.clone().multiply(Math.min(length, Math.max(1.0, length * 0.5))));
-        projectiles.launch(Origin.at(player, impact.subtract(0, 0.4, 0), facing.clone()), bolt);
+        final double offset = Math.min(length, Math.max(1.0, length * 0.5));
+        // 2026-11-08 照站長「跟原作一樣」（PoB2 check_for_targets_between_initiator_and_projectile_source）：你跟落點之間的敵人也會被投射物打到——
+        //   改成從你腳下（落點的高度）射出、射程多加你到落點的距離，飛到落點之後跟原本一樣；這次之前直接從落點射出，中間那段打不到
+        final Location from = origin.feet().clone().subtract(0, 0.4, 0);
+        projectiles.launch(Origin.at(player, from, facing.clone()), bolt.withExplodeAndRange(bolt.explode(), bolt.range() + offset));
         state.notice(String.format(java.util.Locale.ROOT, "<#ffe066>⚡ %s：用掉 %d 顆銳星，射出 %d 發", bolt.definition().name(), consumed, count),
                 plugin.getServer().getCurrentTick() + 30);
     }
@@ -1232,7 +1235,7 @@ final class SkillExecutor {
     /**
      * 驚雷劈這一下（build）用掉 benefit 顆銳星時射出去的投射物（純資料，測試用）：隱藏技能 falling_thunder_bolt 帶上這一下的修飾器
      * （數量、速度、分裂、連鎖照輔助），傷害換成這一下的（含輔助、品質）再照投射物那一段換表、轉換、加上銳星的更多；
-     * 標籤換成投射物（不是近戰、猛擊、範圍）。沒有銳星回傳 null。
+     * 標籤換成投射物（不是近戰、猛擊；2026-11-08 起保留範圍）。沒有銳星回傳 null。
      */
     static SkillBuild thunderBuild(final SkillConfig config, final SkillBuild build, final int benefit, final int characterLevel,
                                    final Set<String> weaponTags, final StatSheet sheet) {
@@ -1248,7 +1251,9 @@ final class SkillExecutor {
         final int count = thunderCount(benefit, perCharge, base.projectiles() - sub.params().projectiles().intAt(build.level()));
         final double perChargeMore = THUNDER_MORE_PER_CHARGE + build.profile().effective(sheet).flat(THUNDER_QUALITY, build.profile().tags());
         final SkillProfile profile = SkillStages.profile(build, build.profile(), THUNDER)
-                .derive(THUNDER_BOLT, Set.of(Tags.PROJECTILE), Set.of(Tags.MELEE, Tags.SLAM, Tags.AREA))
+                // 2026-11-08 照站長「驚雷劈跟原作一致嗎」：PoB2 FallingThunderPlayer 的 Projectile 那一段有 is_area_damage（吃範圍傷害），
+                //   只拿掉近戰、猛擊；這次之前連範圍也拿掉
+                .derive(THUNDER_BOLT, Set.of(Tags.PROJECTILE, Tags.AREA), Set.of(Tags.MELEE, Tags.SLAM))
                 .scaled(thunderMore(benefit, perChargeMore), "用掉銳星")
                 .withLocal(List.of(tw.exilecore.stats.Modifier.flat(ProjectileEngine.SPEED_VARIATION, THUNDER_SPEED_VARIATION, sub.name())));
         return base.withProfile(profile).withAreaAndProjectiles(base.areaScale(), count);

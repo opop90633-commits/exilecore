@@ -3603,6 +3603,162 @@ rune_core_jiquani:
   description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
+rune_core_jiquani_automation:   # 2026-11-08 照站長：Jiquani's Soul Core of Automation（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的自動
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_automation
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部圖騰技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_malediction:   # 2026-11-08 照站長：Jiquani's Soul Core of Malediction（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的咒怨
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_malediction
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部詛咒技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_targeting:   # 2026-11-08 照站長：Jiquani's Soul Core of Targeting（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的瞄準
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_targeting
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部印記技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_rallying:   # 2026-11-08 照站長：Jiquani's Soul Core of Rallying（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的號召
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_rallying
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部戰吼技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_radiance:   # 2026-11-08 照站長：Jiquani's Soul Core of Radiance（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的光輝
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_radiance
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部捷光環技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_severing:   # 2026-11-08 照站長：Jiquani's Soul Core of Severing（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的斷斬
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_severing
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部打擊技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_rippling:   # 2026-11-08 照站長：Jiquani's Soul Core of Rippling（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的漣漪
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_rippling
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部新星技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_quaking:   # 2026-11-08 照站長：Jiquani's Soul Core of Quaking（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的震地
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_quaking
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部猛擊技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_munitions:   # 2026-11-08 照站長：Jiquani's Soul Core of Munitions（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的軍械
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_munitions
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部榴彈技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_snares:   # 2026-11-08 照站長：Jiquani's Soul Core of Snares（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的羅網
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_snares
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部危險區域技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_abundance:   # 2026-11-08 照站長：Jiquani's Soul Core of Abundance（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的豐饒
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_abundance
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部植物技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_squalls:   # 2026-11-08 照站長：Jiquani's Soul Core of Squalls（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的狂風
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_squalls
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部疾風技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
+rune_core_jiquani_thundering:   # 2026-11-08 照站長：Jiquani's Soul Core of Thundering（星坑 BOSS 1%）
+  name: 魂核符文・吉卡尼的雷鳴
+  material: ECHO_SHARD
+  stack: 20
+  operation: RUNE
+  rune: core_jiquani_thundering
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 50
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部風暴技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
+
 rune_core_zalatl:
   name: 魂核符文・札爾特
   material: ECHO_SHARD

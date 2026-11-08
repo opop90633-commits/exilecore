@@ -445,6 +445,19 @@ event_bosses:
         - { currency: azurite, amount: 40, chance: 1 }   # 打倒牠補 40 個藍晶（買深坑升級）
         - { currency: rune_core_jiquani, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列的核心都放進星坑 BOSS 1% 機率掉落」：魂核符文・吉卡尼
         - { currency: rune_thesis_jiquani, chance: 0.01 }   # 遠古魂核・吉卡尼
+        - { currency: rune_core_jiquani_automation, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的自動（Jiquani's Soul Core of Automation）
+        - { currency: rune_core_jiquani_malediction, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的咒怨（Jiquani's Soul Core of Malediction）
+        - { currency: rune_core_jiquani_targeting, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的瞄準（Jiquani's Soul Core of Targeting）
+        - { currency: rune_core_jiquani_rallying, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的號召（Jiquani's Soul Core of Rallying）
+        - { currency: rune_core_jiquani_radiance, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的光輝（Jiquani's Soul Core of Radiance）
+        - { currency: rune_core_jiquani_severing, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的斷斬（Jiquani's Soul Core of Severing）
+        - { currency: rune_core_jiquani_rippling, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的漣漪（Jiquani's Soul Core of Rippling）
+        - { currency: rune_core_jiquani_quaking, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的震地（Jiquani's Soul Core of Quaking）
+        - { currency: rune_core_jiquani_munitions, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的軍械（Jiquani's Soul Core of Munitions）
+        - { currency: rune_core_jiquani_snares, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的羅網（Jiquani's Soul Core of Snares）
+        - { currency: rune_core_jiquani_abundance, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的豐饒（Jiquani's Soul Core of Abundance）
+        - { currency: rune_core_jiquani_squalls, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的狂風（Jiquani's Soul Core of Squalls）
+        - { currency: rune_core_jiquani_thundering, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的雷鳴（Jiquani's Soul Core of Thundering）
         - { currency: delve_socket_chisel, chance: 0.01 }   # 2026-11-08 照站長「新增一個通貨（多一個符文孔），在礦坑 BOSS 1% 掉落」：晶淵鑿
         - { skill: crystal_spike_burst, chance: 0.01 }   # 2026-11-08 照站長「星坑 BOSS 新增專屬的傳奇技能與輔助 1% 機率掉落」
         - { skill: shadow_volley_shafts, chance: 0.01 }
