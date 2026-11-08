@@ -845,6 +845,17 @@ public final class CodexMenu extends Menu {
         } else {
             lines.add("<gray>第 <white>" + definition.tier() + "</white> 階：未切割技能寶石等級 ≥ " + definition.tier() + " 才雕得出來");
         }
+        // 2026-11-08 照站長「遊戲內圖鑑的技能寶石也顯示品質效果」：品質 20% 時的效果與高階奇術的額外品質效果（上面角色預覽已經寫了就不重複）
+        if (lines.stream().noneMatch(line -> line.contains("加品質的效果") || line.contains("◆ 品質"))) {
+            final String quality = tw.exilecore.skill.SkillService.codexQualityText(definition);
+            if (quality != null) {
+                lines.add("<#8888ff>品質 20% 時：" + ItemRenderer.escape(quality));
+            }
+            final String advanced = tw.exilecore.skill.SkillService.codexAdvancedQualityText(definition);
+            if (advanced != null) {
+                lines.add("<#c9a7ff>品質 20% 時的額外效果（要配昇華「高階奇術」）：" + ItemRenderer.escape(advanced));
+            }
+        }
         lines.add(personal ? "<dark_gray>數值照你目前的屬性、武器算（技能 Lv." + gemLevel + "、沒有輔助、不加裝備的 +等級）"
                 : "<dark_gray>選一個角色之後，這裡會照你的屬性算出數值");
         stack.editMeta(meta -> {

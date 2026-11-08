@@ -142,7 +142,7 @@
   var KIND = { summon: '召喚', aura: '常駐', warcry: '戰吼' };
   var SLOT = { ring: '戒指', amulet: '項鍊', belt: '腰帶', main_hand: '主手', off_hand: '副手', head: '頭部', chest: '身體', legs: '腿部', feet: '腳部',
     jewel: '珠寶', flask: '藥劑', charm: '護符' };
-  var AFFIX_TYPE = { prefix: '前綴', suffix: '後綴', unveiled: '揭露', corrupted: '腐化' };
+  var AFFIX_TYPE = { prefix: '前綴', suffix: '後綴', unveiled: '揭露', corrupted: '腐化', essence: '星魄專屬', augment: '增幅專屬' }; // 2026-11-08：＋星魄、增幅
   var data = null, items = null, tab = 'skills', query = '', pick = '';
   function $(id) { return document.getElementById(id); }
   function el(tag, cls, text) {
@@ -356,7 +356,11 @@
       Object.keys(SLOT).forEach(function (s) { options.push(['s:' + s, SLOT[s]]); });
     } else if (tab === 'affixes') {
       Object.keys(SLOT).forEach(function (s) { options.push(['a:' + s, '部位：' + SLOT[s]]); });
-      options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）'], ['y:corrupted', '腐化（蝕變石）']);
+      options.push(['y:prefix', '前綴'], ['y:suffix', '後綴'], ['y:unveiled', '揭露（隱匿詞綴找盜賊首領）'], ['y:corrupted', '腐化（蝕變石）'],
+        ['y:essence', '星魄專屬（完美、腐化星魄）'], ['y:augment', '增幅專屬（嵌了增幅才洗得到）']); // 2026-11-08
+      var augSeen = {}; // 2026-11-08：每個增幅各自篩
+      rows().forEach(function (a) { if (a.type === 'augment' && a.from) { augSeen[a.from] = true; } });
+      Object.keys(augSeen).sort().forEach(function (n) { options.push(['x:' + n, n + ' 的專屬詞綴']); });
       var chipSeen = {}; // 2026-10-30：照詞綴的標籤篩
       rows().forEach(function (a) { (a.tags || []).forEach(function (t) { chipSeen[t] = true; }); });
       var chipOrder = (data && data.affixTagOrder) || [];
@@ -382,6 +386,7 @@
     if (kind === 'l') { return String(e.level > 1 ? e.level : 1) === value; }
     if (kind === 'a') { return (e.slots || []).indexOf(value) >= 0; }
     if (kind === 'y') { return e.type === value; }
+    if (kind === 'x') { return e.from === value; } // 2026-11-08：哪個增幅的
     if (kind === 'c') { return (e.tags || []).indexOf(value) >= 0; }
     return true;
   }
@@ -434,11 +439,21 @@
       if (e.level > 1) { box.appendChild(el('div', 'meta', e.level + ' 級以上的怪物才會掉')); }
       box.appendChild(el('p', null, e.text));
       if (e.flavor) { box.appendChild(el('div', 'flavour', e.flavor)); }
+      if (e.unlocks && e.unlocks.length) { // 2026-11-08：增幅解鎖的專屬詞綴
+        var ud = el('details', 'veil');
+        ud.appendChild(el('summary', null, '嵌了以後這件' + (e.augmentSlot || '裝備') + '洗得到的專屬詞綴（' + e.unlocks.length + ' 種，寫最好那一階）'));
+        var ulist = el('ul');
+        e.unlocks.forEach(function (t) { ulist.appendChild(el('li', null, t)); });
+        ud.appendChild(ulist);
+        box.appendChild(ud);
+      }
     } else if (tab === 'affixes') {
       var lowest = e.tiers.reduce(function (m, t) { return Math.min(m, t.ilvl); }, 999);
-      box.appendChild(el('div', 'meta', AFFIX_TYPE[e.type] + (e.type === 'unveiled' ? '（' + (e.affixType === 'prefix' ? '前綴' : '後綴') + '）' : '')
+      box.appendChild(el('div', 'meta', AFFIX_TYPE[e.type] + (e.type === 'unveiled' || e.type === 'essence' || e.type === 'augment' ? '（' + (e.affixType === 'prefix' ? '前綴' : '後綴') + '）' : '')
         + '　' + e.slots.map(function (x) { return SLOT[x] || x; }).join('、') + '　物品等級 ' + lowest + ' 以上'));
       if (e.type === 'unveiled') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：裝備上的隱匿詞綴帶去營地找盜賊首領三選一（揭露石也能加一條）')); }
+      if (e.type === 'essence') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：用' + (e.from || '星魄') + '（稀有物品隨機移除一條，再加這條）')); } // 2026-11-08
+      if (e.type === 'augment') { box.appendChild(el('div', 'muted', '嵌了「' + (e.from || '增幅') + '」的裝備才擲得到；之後用一般通貨（星火石、混沌石…）就洗得出來')); } // 2026-11-08
       if (e.type === 'corrupted') { box.appendChild(el('div', 'muted', '一般掉落、通貨擲不到：用蝕變石腐化時約 25% 加上一條（不能再開符文孔的裝備約 50%）；一件只會有一條，不佔前綴、後綴的位子')); }
       var table = el('ul', 'fx');
       e.tiers.forEach(function (t) { table.appendChild(el('li', null, 'T' + t.t + '　ilvl ' + t.ilvl + (t.name ? '・' + t.name : '') + '　' + t.text)); });
@@ -499,7 +514,7 @@
     if (ui.sources && ui.sources.length) {
       var src = el('div', 'src');
       src.appendChild(el('b', null, '哪裡會掉'));
-      src.appendChild(document.createTextNode('：' + ui.sources.join('、')));
+      src.appendChild(document.createTextNode('：' + ui.sources.join('、') + (ui.dropChance ? '（每次擊殺、每個有份的人各自 ' + ui.dropChance + '%）' : ''))); // 2026-11-08：固定機率
       box.appendChild(src);
     }
   }

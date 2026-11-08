@@ -225,12 +225,43 @@ public final class CodexData {
                 c.addProperty("text", plain(type.description()));
                 c.addProperty("flavor", plain(type.flavor()));
                 c.addProperty("level", type.dropLevel());
+                // 2026-11-08 照站長「六顆增幅能洗到什麼詞綴」：增幅寫出解鎖的專屬詞綴（前綴、後綴，最好那一階的範圍）
+                final tw.exilecore.item.Runes.Rune rune = type.operation() == tw.exilecore.currency.CurrencyOperation.RUNE && type.affix() != null
+                        && plugin.items() != null ? plugin.items().repository().rune(type.affix()) : null;
+                if (rune != null && rune.isAugment()) {
+                    final JsonArray unlocks = new JsonArray();
+                    for (final tw.exilecore.item.Affix affix : plugin.items().repository().affixes()) {
+                        if (!affix.spawnTags().contains(rune.id()) || affix.tiers().isEmpty()) {
+                            continue;
+                        }
+                        tw.exilecore.item.AffixTier best = affix.tiers().getFirst();
+                        for (final tw.exilecore.item.AffixTier tier : affix.tiers()) {
+                            if (tier.ilvl() > best.ilvl()) {
+                                best = tier;
+                            }
+                        }
+                        unlocks.add((affix.type() == tw.exilecore.item.AffixType.PREFIX ? "前綴　" : "後綴　") + plain(affix.rangeText(best.tier())));
+                    }
+                    c.addProperty("augmentSlot", tw.exilecore.item.Runes.slotName(rune.augment()));
+                    c.add("unlocks", unlocks);
+                }
                 currencies.add(c);
             }
         }
         root.add("currencies", currencies);
         if (plugin.items() != null) {
-            affixes(root, plugin.items().repository());
+            // 2026-11-08 照站長「網頁的圖鑑更新有缺失的地方」：星魄專屬的詞綴標出是哪顆星魄給的
+            final java.util.Map<String, List<String>> essences = new java.util.HashMap<>();
+            if (plugin.currencies() != null) {
+                for (final CurrencyType type : plugin.currencies().repository().all()) {
+                    if (type.operation() == tw.exilecore.currency.CurrencyOperation.ESSENCE && type.affix() != null) {
+                        for (final String id : type.affix().split(",")) {
+                            essences.computeIfAbsent(id.trim(), ignored -> new java.util.ArrayList<>()).add(type.name());
+                        }
+                    }
+                }
+            }
+            affixes(root, plugin.items().repository(), essences);
             uniqueInfo(plugin, root, plugin.items().repository());
         }
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
@@ -241,9 +272,19 @@ public final class CodexData {
      * 以及規劃器沒有的傳奇（珠寶、藥劑、護符：規劃器只放穿得上身的）。
      */
     static void affixes(final JsonObject root, final tw.exilecore.item.ItemRepository repository) {
+        affixes(root, repository, java.util.Map.of());
+    }
+
+    /**
+     * 2026-11-08 照站長「網頁的圖鑑更新有缺失的地方」：再分出星魄專屬（type essence，essences 是詞綴 → 給它的星魄名稱）
+     * 與增幅解鎖的（type augment：嵌了那個增幅的裝備才擲得到）；這次之前星魄專屬的混在一般前後綴裡，增幅的沒有列。
+     */
+    static void affixes(final JsonObject root, final tw.exilecore.item.ItemRepository repository, final java.util.Map<String, List<String>> essences) {
         final List<tw.exilecore.item.ItemBase> bases = tw.exilecore.gui.CodexMenu.codexBases(repository);
         final JsonArray list = new JsonArray();
         for (final tw.exilecore.item.Affix affix : repository.affixes()) {
+            final tw.exilecore.item.Runes.Rune augment = augmentOf(repository, affix);
+            final boolean essence = affix.spawnTags().contains(tw.exilecore.item.ItemRepository.ESSENCE_TAG);
             final boolean normal = tw.exilecore.gui.CodexMenu.normalAffix(affix);
             final boolean unveiled = !normal && tw.exilecore.gui.CodexMenu.unveiledAffix(affix);
             final boolean corrupted = !normal && !unveiled && tw.exilecore.gui.CodexMenu.corruptionAffix(affix); // 2026-10-21
@@ -253,7 +294,8 @@ public final class CodexData {
             final java.util.Set<String> slots = new java.util.LinkedHashSet<>();
             final JsonArray baseNames = new JsonArray();
             for (final tw.exilecore.item.ItemBase base : bases) {
-                if (corrupted ? tw.exilecore.item.ItemGenerator.corruptionFits(affix, base) : affix.canSpawnOn(base)) {
+                if (augment != null ? tw.exilecore.item.Runes.augmentFits(repository, base, null, augment)
+                        : corrupted ? tw.exilecore.item.ItemGenerator.corruptionFits(affix, base) : affix.canSpawnOn(base)) {
                     slots.add(base.slot().name().toLowerCase(Locale.ROOT));
                     baseNames.add(base.name());
                 }
@@ -265,7 +307,13 @@ public final class CodexData {
             a.addProperty("id", affix.id());
             final List<tw.exilecore.item.AffixTier> tiers = affix.tiers();
             a.addProperty("name", plain(affix.rangeText(tiers.getFirst().tier())));
-            a.addProperty("type", corrupted ? "corrupted" : unveiled ? "unveiled" : affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
+            a.addProperty("type", corrupted ? "corrupted" : unveiled ? "unveiled" : augment != null ? "augment" : essence ? "essence"
+                    : affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
+            if (augment != null) {
+                a.addProperty("from", augment.name()); // 2026-11-08：哪個增幅解鎖的
+            } else if (essence) {
+                a.addProperty("from", String.join("、", essences.getOrDefault(affix.id(), List.of()))); // 2026-11-08：哪顆星魄給的
+            }
             a.addProperty("affixType", affix.type() == tw.exilecore.item.AffixType.PREFIX ? "prefix" : "suffix");
             final JsonArray slotArray = new JsonArray();
             slots.forEach(slotArray::add);
@@ -325,6 +373,19 @@ public final class CodexData {
         root.add("uniquesExtra", extra);
     }
 
+    /** 2026-11-08：這條詞綴是哪個增幅解鎖的（spawn_tags 寫增幅的符文代號）；不是回傳 null。 */
+    private static tw.exilecore.item.Runes.Rune augmentOf(final tw.exilecore.item.ItemRepository repository, final tw.exilecore.item.Affix affix) {
+        for (final String tag : affix.spawnTags()) {
+            if (tag.startsWith(tw.exilecore.item.ItemRepository.AUGMENT_TAG_PREFIX)) {
+                final tw.exilecore.item.Runes.Rune rune = repository.rune(tag);
+                if (rune != null && rune.isAugment()) {
+                    return rune;
+                }
+            }
+        }
+        return null;
+    }
+
     /**
      * 2026-10-22：每件傳奇的圖鑑資訊（跟遊戲裡傳奇圖鑑一樣）：追逐級、哪裡會掉、隱匿詞綴（幾條、能揭露成哪些）。
      * 傳奇的樣子用規劃器的 items.json，這裡照代號補上。
@@ -345,6 +406,10 @@ public final class CodexData {
                 }
             }
             u.add("sources", sources);
+            final double chance = repository.dropChance(unique.id()); // 2026-11-08：固定機率掉的（drop_chance，每個有份的人各擲）
+            if (chance > 0) {
+                u.addProperty("dropChance", Math.round(chance * 10000) / 100.0);
+            }
             final tw.exilecore.item.ItemBase base = repository.base(unique.base());
             final JsonArray veiled = new JsonArray();
             final List<tw.exilecore.item.AffixType> types = repository.uniqueVeiled(unique.id());

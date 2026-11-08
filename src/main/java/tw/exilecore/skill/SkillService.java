@@ -1013,6 +1013,14 @@ public final class SkillService {
     }
 
     /** 2026-10-28 照 PoE2：星矢主要寶石自己的數值（吃其他孔的迅返、長留：幻影的冷卻、持續時間）；面板上沒有回傳 null。 */
+    /** 2026-11-08：面板上這個技能的寶石等級（沒放回傳 1）。 */
+    public int entryLevel(final Player player, final String skillId) {
+        final PlayerState state = plugin.players().get(player);
+        final int position = state.skills().find(skillId);
+        final SkillLoadout.Entry entry = position < 0 ? null : state.skills().skill(position);
+        return entry == null ? 1 : Math.max(1, entry.level());
+    }
+
     public SkillBuild deadeyeHost(final Player player, final String hostId) {
         final PlayerState state = plugin.players().get(player);
         final SkillDefinition hostDefinition = config.skill(hostId);
@@ -3268,47 +3276,7 @@ public final class SkillService {
         if (shockedGround > 0 && detonateAt != null && plugin.random().nextDouble() * 100 < shockedGround) {
             procs().castAt(player, StageLeftovers.TEMPEST_GROUND, definition.id(), detonateAt);
         }
-        // 2026-10：幻弓影：弓的攻擊過一下由身旁的幻影再射一次（傷害少很多）
-        if (definition.isAttack() && definition.weapons().contains("bow") && !definition.hidden() && definition.cooldown() <= 0
-                && StatKeys.flag(state.sheet(), StatKeys.FLAG_MIRAGE)) {
-            final SkillBuild mirage = build.withProfile(build.profile().scaled(0.7, "幻影")); // 2026-10-26 照 PoE2 Mirage Archer：更少 30%（這次之前少 60%）
-            final org.bukkit.util.Vector facing = SkillTargets.facing(player);
-            final org.bukkit.Location from = player.getLocation().add(new org.bukkit.util.Vector(-facing.getZ(), 0, facing.getX()).multiply(1.5));
-            // 2026-10：幻影要射向放的那一刻準心指的地方（以前用玩家的水平朝向從旁邊 1.5 格平行射出：
-            // 不管上下的角度、也不管鎖定的目標，單發的箭打不到同一個地方，偏一格半而且往下瞄時從頭頂飛過去）
-            // 2026-10-28 修正：準心的射線也算敵人（這次之前只看方塊：準心對著怪時，點落在怪後面的牆上，幻影從旁邊 1.5 格朝那點射，
-            //   箭從怪旁邊擦過去）；準心指到的敵人當作幻影的目標
-            final org.bukkit.Location eye = player.getEyeLocation();
-            final org.bukkit.util.RayTraceResult ray = player.getWorld().rayTrace(eye, eye.getDirection(), MIRAGE_AIM_RANGE,
-                    org.bukkit.FluidCollisionMode.NEVER, true, 0.3,
-                    entity -> entity instanceof org.bukkit.entity.LivingEntity && !(entity instanceof Player) && !entity.equals(player)
-                            && !(entity instanceof org.bukkit.entity.ArmorStand));
-            final org.bukkit.entity.LivingEntity crosshair = ray != null && ray.getHitEntity() instanceof org.bukkit.entity.LivingEntity hit ? hit : null;
-            final java.util.UUID aim = preferred != null ? preferred.getUniqueId() : crosshair != null ? crosshair.getUniqueId() : null;
-            final org.bukkit.util.Vector point = ray != null && ray.getHitPosition() != null ? ray.getHitPosition()
-                    : eye.toVector().add(eye.getDirection().multiply(MIRAGE_AIM_RANGE));
-            // 2026-10-28 照 PoE2 Mirage Archer 的品質（幻影持續時間 +(0—1) 秒）：你停手之後幻影再照攻擊間隔多射幾秒（下一次弓攻擊就重來）
-            final long linger = Math.round(Math.max(0, qualityFlat(player, MIRAGE_ARCHER, tw.exilecore.stats.GemQualityKeys.DURATION_FLAT)) * 20);
-            final long gap = Math.max(4, Math.round(build.intervalTicks(sheet)));
-            final long sequence = mirageSequence.merge(player.getUniqueId(), 1L, Long::sum);
-            for (long delay = 10; delay <= 10 + linger; delay += gap) {
-                final boolean extra = delay > 10;
-                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-                    if (extra && mirageSequence.getOrDefault(player.getUniqueId(), 0L) != sequence) {
-                        return; // 又射了一次：這一輪的延續作廢
-                    }
-                    if (player.isOnline() && player.getWorld().equals(from.getWorld())) {
-                        tw.exilecore.skill.Fx.spawn(from.getWorld(), org.bukkit.Particle.END_ROD, from.clone().add(0, 1, 0), 12, 0.2, 0.5, 0.2, 0.01);
-                        final org.bukkit.entity.LivingEntity mirageTarget = aim == null ? null : living(player, aim);
-                        // 有鎖定的敵人就朝牠（牠可能動了），沒有就朝放的時候準心指的點
-                        final Origin origin = mirageTarget != null && mirageTarget.isValid()
-                                ? Origin.towards(player, from, mirageTarget)
-                                : Origin.at(player, from, point.clone().subtract(from.toVector().add(new org.bukkit.util.Vector(0, 1.2, 0))));
-                        executor.executeFrom(origin, mirage, mirageTarget);
-                    }
-                }, delay);
-            }
-        }
+        // 2026-11-08 照站長「幻弓影照 0.5 原作重做」：舊版（弓的攻擊過一下由身旁的幻影再射一次）拿掉，改成主要寶石、翻滾時留下幻影（AscGranted.dodged）
         if (ammoSkill(definition)) {
             useAmmo(player, runtime, state, definition, build, sheet, now);
         }
@@ -4054,8 +4022,6 @@ public final class SkillService {
      * 沒算怪物的減免、持續傷害）。召喚技能算召喚物：一隻的每秒傷害 × 同時最多幾隻（名字後面寫「召喚物 ×N」）。
      * 回傳「按鍵、名字、每秒傷害」，同一個技能綁在好幾個鍵只算一次。
      */
-    /** 幻弓影：找準心指的點最遠幾格。 */
-    private static final double MIRAGE_AIM_RANGE = 48;
 
     /**
      * 一個技能每秒打幾下：一輪是「複擊的每一下各一次攻擊間隔」再加「最後一下的間隔與冷卻比較長的那個」。
@@ -5793,9 +5759,6 @@ public final class SkillService {
         return List.of(tw.exilecore.stats.Modifier.increased(StatKeys.DAMAGE, quality * 0.01, source));
     }
 
-    /** 2026-10-28 照 PoE2 Mirage Archer 的品質：每個玩家第幾次弓攻擊（幻影延續看的是不是最新那一次）。 */
-    private final Map<java.util.UUID, Long> mirageSequence = new HashMap<>();
-    static final String MIRAGE_ARCHER = "phantom_bow_shade";
 
     /** 2026-10-28：使用技能的動作期間的增益（震野踏、震野雙錘品質的暈眩門檻）。 */
     static final String ACTION_STUN_BUFF = "action.stun_threshold";
@@ -5958,6 +5921,10 @@ public final class SkillService {
             case StatKeys.DEBUFF_DURATION -> "減益持續時間 +" + trimNumber(value) + " 秒";
             case StatKeys.META_ENERGY_GAIN -> "獲得的能量增加 " + trimNumber(value * 100) + "%";
             case tw.exilecore.stats.GemQualityKeys.CHAIN_MORE_PER_REMAINING -> "每剩一次連鎖，擊中傷害更多 " + trimNumber(value) + "%"; // 2026-10-30 照 PoE2 Arc
+            // 2026-11-08 照站長「子母榴彈、天罰巨鎚的品質沒有顯示進階奇術的」：這兩個新屬性的說明（這次之前寫不出來，整行沒顯示）
+            case tw.exilecore.stats.GemQualityKeys.GLORY_NOT_CONSUME_CHANCE -> trimNumber(value) + "% 機率不消耗榮耀";
+            case "asc.mirage_seconds" -> "幻影持續時間 +" + trimNumber(value) + " 秒"; // 2026-11-08：幻弓影的額外品質效果
+            case tw.exilecore.stats.GemQualityKeys.DETONATION_TIME -> "引爆時間" + (value < 0 ? "減少 " : "增加 ") + trimNumber(Math.abs(value) * 100) + "%";
             case tw.exilecore.stats.GemQualityKeys.META_TRIGGERED_DAMAGE -> "插槽法術被觸發時傷害增加 " + trimNumber(value) + "%"; // 2026-10-30 照 PoE2 Cast on Minion Death
             case ChayulaHand.CURSE_DURATION -> "插槽詛咒的持續時間增加 " + trimNumber(value) + "%"; // 2026-10-29 照 PoE2 Hand of Chayula
             case ChayulaHand.MARK_EFFECT -> "插槽印記的效果增加 " + trimNumber(value) + "%";
@@ -6029,7 +5996,7 @@ public final class SkillService {
         final List<SupportDefinition> list = new ArrayList<>();
         final List<tw.exilecore.stats.Modifier> carried = new ArrayList<>();
         for (final SupportDefinition support : supportsOf(host)) {
-            if (hostDefinition != null && DeadeyeMetas.MIRAGE.equals(hostDefinition.id()) && RefSupportRules.proxyExcluded(support.id())) {
+            if (hostDefinition != null && DeadeyeMetas.mirageHost(hostDefinition.id()) && RefSupportRules.proxyExcluded(support.id())) { // 2026-11-08：幻弓影也是
                 continue; // 2026-10-30 照 PoE2：幻影代放的技能不吃迅鋒、衝勢這類（已經掛上去的也不生效）
             }
             if (hostDefinition != null && RefSupportRules.metaHostRefusal(support.id(), hostDefinition.id()) != null && !support.worksOnHost()) {
@@ -6538,6 +6505,12 @@ public final class SkillService {
                         : "<dark_gray>◆ 額外的品質效果（要配昇華「高階奇術」）：" + ItemRenderer.escape(advanced));
             }
         }
+        if (quality == null && totalQuality <= 0) {
+            // 2026-11-08 照站長「沒品質的時候也顯示」：灰字寫品質 20% 時的效果（一般的＋高階奇術的）
+            final List<String> preview = new ArrayList<>();
+            GemService.qualityPreview(definition, preview, "<dark_gray>◆ ");
+            top.addAll(preview);
+        }
         if (entry.corrupted()) {
             top.add("<#d20000>◆ 已腐化 <dark_gray>（不能再升級、開孔、加品質）");
         }
@@ -6642,7 +6615,8 @@ public final class SkillService {
         final List<String> lines = new ArrayList<>();
         final PlayerState state = plugin.players().get(player);
         final StatSheet sheet = plugin.players().sheet(player);
-        final int level = grantedLevel(player);
+        final boolean archer = DeadeyeMetas.ARCHER.equals(host.id()); // 2026-11-08：幻弓影是技能寶石（照寶石等級），不是昇華賦予的
+        final int level = archer ? (entry == null ? 1 : entry.level()) : grantedLevel(player);
         final List<SkillBuild> socketed = deadeyeSocketed(player, host.id());
         if (socketed.isEmpty()) {
             lines.add("<red>孔裡要放" + DeadeyeMetas.wants(host) + "的技能寶石（/skills 點它，拿技能寶石點一個孔），沒放就沒有效果");
@@ -6664,10 +6638,10 @@ public final class SkillService {
         } else {
             final SkillBuild hostBuild = build(state, sheet, host, entry);
             final StatSheet effective = hostBuild.profile().effective(sheet);
-            final double duration = Math.max(4, levelValue(host.id(), "asc.mirage_seconds", level) + hostBuild.qualityFlat("asc.mirage_seconds")) // 2026-10-30 照 PoE2：品質 +(0—1) 秒
+            final double duration = Math.max(archer ? 5 : 4, levelValue(host.id(), "asc.mirage_seconds", level) + hostBuild.qualityFlat("asc.mirage_seconds")) // 2026-10-30 照 PoE2：品質 +(0—1) 秒
                     * DeadeyeMetas.durationFactor(effective, hostBuild.profile().tags());
-            final double cooldown = DeadeyeMetas.MIRAGE_COOLDOWN * DeadeyeMetas.cooldownFactor(effective, hostBuild.profile().tags());
-            lines.add(String.format(Locale.ROOT, "<#c9a7ff>幻影<gray>：持續 <white>%s</white> 秒、冷卻 <white>%s</white> 秒，用孔裡的%s",
+            final double cooldown = (archer ? DeadeyeMetas.ARCHER_COOLDOWN : DeadeyeMetas.MIRAGE_COOLDOWN) * DeadeyeMetas.cooldownFactor(effective, hostBuild.profile().tags());
+            lines.add(String.format(Locale.ROOT, "<#c9a7ff>幻影<gray>：" + (archer ? "翻滾時留下，" : "") + "持續 <white>%s</white> 秒、冷卻 <white>%s</white> 秒，用孔裡的%s",
                     ModifierText.number(Math.round(duration * 100) / 100.0), ModifierText.number(Math.round(cooldown * 100) / 100.0),
                     ItemRenderer.escape(deadeyeNames(socketed))));
         }
@@ -6730,7 +6704,7 @@ public final class SkillService {
         }
         final List<String> lines = new ArrayList<>();
         lines.add("<#e7c56b>" + ItemRenderer.escape(spell.name()) + "<gray>（由" + ItemRenderer.escape(host.name())
-                + (DeadeyeMetas.MIRAGE.equals(host.id()) ? "的幻影使用、傷害更少 " + ModifierText.number(DeadeyeMetas.MIRAGE_LESS) + "%" // 2026-10-28 照 PoE2
+                + (DeadeyeMetas.mirageHost(host.id()) ? "的幻影使用、傷害更少 " + ModifierText.number(DeadeyeMetas.ARCHER.equals(host.id()) ? DeadeyeMetas.ARCHER_LESS : DeadeyeMetas.MIRAGE_LESS) + "%" // 2026-10-28 照 PoE2；2026-11-08：幻弓影 30%
                         : HollowForm.hosts(host) ? "的幻影使用、傷害更少 " + ModifierText.number(HollowForm.LESS_DAMAGE) + "%、攻擊速度更少 "
                         + ModifierText.number(HollowForm.LESS_ATTACK_SPEED) + "%" // 2026-10-28 照 PoE2 Hollow Form
                         : Blasphemy.hosts(host) ? "變成光環一直詛咒你身邊的敵人、詛咒效果更少 " // 2026-10-29 照 PoE2 Blasphemy

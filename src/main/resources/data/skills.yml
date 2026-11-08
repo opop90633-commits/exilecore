@@ -7095,19 +7095,25 @@ skills:
 
   phantom_bow_shade:
     name: 幻弓影
-    description: 精魂技能：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 30%）。保留 60 精魂。
+    # 2026-11-08 照站長「幻弓影照 0.5 原作重做」（PoE2 0.5 Mirage Archer：Meta，weaponTypes Bow／Crossbow／Spear，保留 60 精魂；
+    #   While active, dodge rolling will create a Mirage that uses socketed ranged Attacks for a short duration, then vanish；
+    #   幻影之體冷卻 10 秒、持續 5.05～7 秒、傷害更少 30%；孔裡規則同幻影神射 SupportMirageArcherPlayer）：主要寶石，效果在 AscGranted.dodged／DeadeyeMetas。
+    #   這次之前是舊版：身旁跟著一個弓手幻影，你用弓攻擊時它過一下也射一次（傷害少 30%）；effects 是 flag.mirage
+    description: 主要寶石（要拿弓、弩或矛）：孔裡放遠程投射物攻擊（可以放好幾個，輪流用；你自己不能用孔裡的攻擊）。開著的時候翻滾，在翻滾的起點留下一個幻影（5～7 秒，冷卻 10 秒），幻影在持續時間內一直對附近的敵人用孔裡的攻擊，傷害更少 30%：引導技能照引導時間放，有冷卻的照冷卻（每個幻影自己算）；孔裡的攻擊不能消耗戰星。其他孔的輔助套在孔裡的攻擊上，冷卻恢復、延長持續時間套在幻影上。保留 60 精魂。
     icon: PHANTOM_MEMBRANE   # 2026-10：原本 SPECTRAL_ARROW（箭矢會被原版弓當成彈藥、望遠鏡右鍵會拉近，影響施放）
     type: spell
     tier: 8   # 2026-10-27 照 PoE2（Mirage Archer 第 8 階）；這次之前 11
-    tags: [persistent, buff, duration]   # 2026-10-26 照 PoE2（poe2db 寶石標籤）加 persistent（常駐增益：可靠的計畫這類「常駐增益」的加成看它）；這次之前 []   # 2026-10-29 照 PoE2 寶石標籤補 buff、duration（原作的 Meta 不補：我們的 meta 標籤代表「孔裡放技能寶石」的宿主）
+    tags: [persistent, buff, duration, cooldown]   # 2026-11-08：＋cooldown（幻影之體有冷卻，迅返掛得上）
     tags_remove: [area]   # 2026-10-29 照 PoE2 寶石標籤（Mirage Archer）：自動規則加的拿掉／原作有的補上
+    weapons: [bow, crossbow, spear]   # 2026-11-08 照 PoE2 Mirage Archer weaponTypes；這次之前只有弓的攻擊會觸發
     mechanic: aura
     aura:
       reserve: 60          # 2026-10：45 → 60（照 PoE2 的 Mirage Archer）
       radius: 8
       allies: false
-      effects:
-        - { stat: flag.mirage, type: FLAT, value: 1 }
+      effects: []
+    level_modifiers:   # 2026-11-08 照 PoE2（poe2db Mirage Archer 1–40 級：幻影 5.05 → 6 → 7 秒）
+      - { stat: asc.mirage_seconds, type: FLAT, value: [5.05, 5.1, 5.15, 5.2, 5.25, 5.3, 5.35, 5.4, 5.45, 5.5, 5.55, 5.6, 5.65, 5.7, 5.75, 5.8, 5.85, 5.9, 5.95, 6.0, 6.05, 6.1, 6.15, 6.2, 6.25, 6.3, 6.35, 6.4, 6.45, 6.5, 6.55, 6.6, 6.65, 6.7, 6.75, 6.8, 6.85, 6.9, 6.95, 7.0] }
     # 2026-10-26 照 PoE2：常駐技能即時開關、沒有冷卻（這次之前寫 cast_time 0.5、cooldown 1.5；光環本來就不吃施法時間與冷卻）
     mana: 0
     visual: aura_precision

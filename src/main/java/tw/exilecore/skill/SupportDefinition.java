@@ -184,7 +184,7 @@ public record SupportDefinition(String id, String name, String description, Stri
         }
         // 2026-10-30 照 PoE2（SupportMirageDeadeye 讓孔裡的技能變成 UsedByProxy；迅鋒、衝勢、法術回響…的 excluded_types 有 UsedByProxy）：
         // 幻影代放的技能掛不上；這次之前掛得上，迅鋒的移動條件對幻影沒作用，只剩更多 40% 技能速度
-        if (host != null && DeadeyeMetas.MIRAGE.equals(host.id()) && RefSupportRules.proxyExcluded(id)) {
+        if (host != null && DeadeyeMetas.mirageHost(host.id()) && RefSupportRules.proxyExcluded(id)) { // 2026-11-08：幻弓影也是
             return name + "不能掛在" + host.name() + "上（幻影代放的技能不能用）";
         }
         // 2026-10-30 照 PoE2：觸發型主要寶石（暴擊引星…加 Triggered）擋 Triggered 的輔助（蓄詠…）、法術圖騰（加 UsedByProxy）擋 UsedByProxy 的；

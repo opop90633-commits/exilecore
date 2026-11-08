@@ -31,6 +31,16 @@ public final class DeadeyeMetas {
     public static final String CALLED_SHOTS = "called_shots";
     /** 幻影銳眼。 */
     public static final String MIRAGE = "mirage_deadeye";
+    /**
+     * 2026-11-08 照站長「幻弓影照 0.5 原作重做」（PoE2 0.5 Mirage Archer：MetaMirageArcherPlayer、SupportMirageArcherPlayer）：
+     * 主要寶石（技能寶石，保留 60 精魂），孔裡放遠程攻擊（規則跟幻影銳眼一樣）；翻滾時留下幻影（冷卻 10 秒、5.05～7 秒），
+     * 幻影在持續時間內一直用孔裡的攻擊，傷害更少 30%。要拿弓、弩或矛。這次之前是舊版：你用弓攻擊時身旁的幻影過一下也射一次。
+     */
+    public static final String ARCHER = "phantom_bow_shade";
+    /** 幻弓影的幻影傷害更少（%；poe2db Mirage Archer「造成 30% 更少傷害」）。 */
+    public static final double ARCHER_LESS = 30;
+    /** 幻弓影的幻影冷卻（秒；poe2db Mirage Archer 的幻影之體 10 秒）。 */
+    public static final double ARCHER_COOLDOWN = 10;
 
     /**
      * 預告射擊自己的冷卻（秒；PoE2「Applies a socketed Mark to 1 Enemy every five seconds」，buff ascendancy_deadeye_marks_cooldown
@@ -51,7 +61,12 @@ public final class DeadeyeMetas {
 
     /** 這個技能是不是星矢的主要寶石（孔裡放技能）。 */
     public static boolean hosts(final SkillDefinition skill) {
-        return skill != null && (CALLED_SHOTS.equals(skill.id()) || MIRAGE.equals(skill.id()));
+        return skill != null && (CALLED_SHOTS.equals(skill.id()) || MIRAGE.equals(skill.id()) || ARCHER.equals(skill.id()));
+    }
+
+    /** 2026-11-08：會留下幻影、用孔裡遠程攻擊的主要寶石（幻影銳眼、幻弓影）。 */
+    public static boolean mirageHost(final String skillId) {
+        return MIRAGE.equals(skillId) || ARCHER.equals(skillId);
     }
 
     /** 這顆技能能不能放進 host 的孔；可以回傳 null，不行回傳原因（接在技能名字後面）。 */
@@ -71,7 +86,7 @@ public final class DeadeyeMetas {
             }
             return null;
         }
-        if (host != null && MIRAGE.equals(host.id())) {
+        if (host != null && mirageHost(host.id())) { // 2026-11-08：幻弓影跟幻影銳眼同一套規則（SupportMirageArcherPlayer）
             if (!inner.isAttack() || !inner.tags().contains(Tags.PROJECTILE) || inner.tags().contains(Tags.MELEE)) {
                 return "只能放遠程的投射物攻擊";
             }
@@ -152,8 +167,15 @@ public final class DeadeyeMetas {
      * 幻影用的那一下：傷害更少 50%、不能消耗戰星（銳星、怒星、磐星）。
      */
     public static SkillBuild mirageBuild(final SkillBuild attack) {
-        return attack.withProfile(attack.profile().scaled(1 - MIRAGE_LESS / 100.0, "幻影神射")
-                .withLocal(java.util.List.of(Modifier.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, 1, "幻影神射"))));
+        return mirageBuild(attack, MIRAGE);
+    }
+
+    /** 2026-11-08：同上，照主要寶石（幻弓影更少 30%）。 */
+    public static SkillBuild mirageBuild(final SkillBuild attack, final String hostId) {
+        final boolean archer = ARCHER.equals(hostId);
+        final String source = archer ? "幻弓影" : "幻影神射";
+        return attack.withProfile(attack.profile().scaled(1 - (archer ? ARCHER_LESS : MIRAGE_LESS) / 100.0, source)
+                .withLocal(java.util.List.of(Modifier.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, 1, source))));
     }
 
     /** 冷卻倍率（冷卻時間 ÷ 冷卻回復速度；跟 SkillBuild 一樣夾在一成）。 */

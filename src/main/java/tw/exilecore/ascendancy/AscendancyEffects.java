@@ -50,6 +50,14 @@ public final class AscendancyEffects implements Listener {
 
     private static AscendancyEffects instance;
 
+    /** 2026-11-08 照站長「幻弓影照 0.5 原作重做」：翻滾了（DodgeRoll 呼叫）：幻弓影留下幻影。 */
+    public static void dodged(final Player player) {
+        final AscendancyEffects effects = instance;
+        if (effects != null && effects.granted != null) {
+            effects.granted.dodged(player);
+        }
+    }
+
     final ExileCore plugin;
     final Map<UUID, AscState> states = new HashMap<>();
     final Map<UUID, EnemyState> enemies = new HashMap<>();

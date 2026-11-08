@@ -177,6 +177,7 @@ public final class DodgeRoll implements Listener {
         if (plugin.skills() != null && plugin.skills().triggers() != null) {
             plugin.skills().triggers().dodge(player, BASE_METRES * distance); // 2026-10：翻滾觸發（2026-10-26：帶翻滾距離，翻滾引星照格給能量）
             plugin.skills().supportMechanics().lineage().dodged(player); // 2026-10-27 照 PoE2 連膛：翻滾時裝子彈
+            tw.exilecore.ascendancy.AscendancyEffects.dodged(player); // 2026-11-08 照 PoE2 0.5 Mirage Archer：翻滾時留下幻弓影的幻影
         }
     }
 

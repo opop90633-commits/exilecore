@@ -31,6 +31,16 @@ class CodexAffixTest {
         for (final String slot : new String[] {"flask", "charm", "jewel", "main_hand", "chest", "ring"}) {
             assertTrue(slots.contains(slot), "詞綴裡要有部位 " + slot + "：" + slots);
         }
+        // 2026-11-08 照站長：星魄專屬、增幅專屬的詞綴也要列（標出是哪顆星魄、哪個增幅）
+        final Set<String> types = new HashSet<>();
+        for (final JsonElement each : affixes) {
+            types.add(each.getAsJsonObject().get("type").getAsString());
+            if (each.getAsJsonObject().get("type").getAsString().equals("augment")) {
+                assertTrue(each.getAsJsonObject().get("from").getAsString().startsWith("增幅・"), each.toString());
+                assertTrue(each.getAsJsonObject().getAsJsonArray("slots").size() > 0, each.toString());
+            }
+        }
+        assertTrue(types.containsAll(Set.of("prefix", "suffix", "unveiled", "corrupted", "essence", "augment")), types.toString());
         final String dump = System.getProperty("codex.dump");
         if (dump != null) {
             Files.writeString(Path.of(dump), root.toString());

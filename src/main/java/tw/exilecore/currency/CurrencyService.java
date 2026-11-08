@@ -133,6 +133,54 @@ public final class CurrencyService {
         return lines;
     }
 
+    /**
+     * 2026-11-08 照站長「六顆增幅有哪邊能顯示分別能洗到什麼詞綴」：嵌了這個增幅之後那件裝備擲得到的專屬詞綴（affixes/augments.yml），
+     * 前綴、後綴各一段，每條寫最好那一階的範圍與最低需求的物品等級。不是增幅回傳空的。
+     */
+    List<Component> augmentLore(final CurrencyType type) {
+        if (type.operation() != CurrencyOperation.RUNE || type.affix() == null || items == null) {
+            return List.of();
+        }
+        final tw.exilecore.item.Runes.Rune rune = items.repository().rune(type.affix());
+        if (rune == null || !rune.isAugment()) {
+            return List.of();
+        }
+        final List<Component> prefixes = new ArrayList<>();
+        final List<Component> suffixes = new ArrayList<>();
+        for (final tw.exilecore.item.Affix affix : items.repository().affixes()) {
+            if (!affix.spawnTags().contains(rune.id()) || affix.tiers().isEmpty()) {
+                continue;
+            }
+            int best = affix.tiers().getFirst().tier();
+            int bestLevel = -1;
+            int lowest = Integer.MAX_VALUE;
+            for (final tw.exilecore.item.AffixTier tier : affix.tiers()) {
+                lowest = Math.min(lowest, tier.ilvl());
+                if (tier.ilvl() > bestLevel) {
+                    bestLevel = tier.ilvl();
+                    best = tier.tier();
+                }
+            }
+            final String text = ItemRenderer.escape(affix.rangeText(best).replaceAll("<[^>]*>", ""))
+                    + (affix.tiers().size() > 1 ? "<dark_gray>（" + affix.tiers().size() + " 階，物品等級 " + lowest + " 起）" : "<dark_gray>（物品等級 " + lowest + " 起）");
+            (affix.type() == tw.exilecore.item.AffixType.PREFIX ? prefixes : suffixes).add(ItemRenderer.line("<#a8d8ff>  " + text));
+        }
+        if (prefixes.isEmpty() && suffixes.isEmpty()) {
+            return List.of();
+        }
+        final List<Component> lines = new ArrayList<>();
+        lines.add(ItemRenderer.line("<#7fe0c8>嵌了以後，這件" + tw.exilecore.item.Runes.slotName(rune.augment()) + "用一般通貨洗得到的專屬詞綴（最好的那一階）："));
+        if (!prefixes.isEmpty()) {
+            lines.add(ItemRenderer.line("<gray> 前綴（" + prefixes.size() + "）"));
+            lines.addAll(prefixes);
+        }
+        if (!suffixes.isEmpty()) {
+            lines.add(ItemRenderer.line("<gray> 後綴（" + suffixes.size() + "）"));
+            lines.addAll(suffixes);
+        }
+        return lines;
+    }
+
     private static void bondedGroup(final List<Component> lines, final String where, final List<tw.exilecore.item.Runes.Line> group) {
         if (group.isEmpty()) {
             return;
@@ -189,6 +237,7 @@ public final class CurrencyService {
             }
             lore.add(ItemRenderer.line("<gray>" + ItemRenderer.escape(type.description())));
             lore.addAll(bondedLore(type)); // 2026-11-02：符文的羈絆詞綴（照 runes.yml 的 bonded）
+            lore.addAll(augmentLore(type)); // 2026-11-08 照站長：增幅解鎖的專屬詞綴
             lore.addAll(essenceLore(type)); // 2026-11-07 照站長：星魄直接寫出給的那一階的數值
             if (!type.flavor().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));

@@ -569,6 +569,9 @@ public final class GemService {
                     lines.add("<dark_gray>額外的品質效果（高階奇術）：" + ItemRenderer.escape(advanced));
                 }
             }
+        } else if (data.entry() != null && config().skill(data.entry().skillId()) != null) {
+            // 2026-11-08 照站長「沒品質的時候也顯示」：還沒加品質的寶石，灰字寫品質 20% 時的效果（一般的＋高階奇術的）
+            qualityPreview(config().skill(data.entry().skillId()), lines, "<dark_gray>");
         }
         if (data.entry() != null && data.entry().corrupted()) {
             lines.add("<#d20000>已腐化 <dark_gray>（不能再升級、開孔、加品質；輔助照樣能換）"); // 2026-10-23
@@ -1703,6 +1706,19 @@ public final class GemService {
         player.sendMessage(plugin.text().prefixed("<#8888ff>" + ItemRenderer.escape(skillName(entry)) + " 品質 " + next + "%"
                 + (text == null ? "" : "<gray>（" + ItemRenderer.escape(text) + "）")));
         return Change.ok(null);
+    }
+
+    /** 2026-11-08 照站長：沒有品質時的預覽（品質 20% 時的一般效果、高階奇術的額外效果）。 */
+    static void qualityPreview(final SkillDefinition definition, final List<String> lines, final String colour) {
+        final String text = SkillService.qualityText(definition, 20);
+        if (text == null) {
+            return;
+        }
+        lines.add(colour + "（加品質的效果）" + ItemRenderer.escape(text));
+        final String advanced = SkillService.advancedQualityText(definition, 20);
+        if (advanced != null) {
+            lines.add(colour + "（品質 20% 時，額外的品質效果要配昇華「高階奇術」）" + ItemRenderer.escape(advanced));
+        }
     }
 
     /** 琢星稜鏡一次加多少品質。 */

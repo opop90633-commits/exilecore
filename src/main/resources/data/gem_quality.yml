@@ -346,8 +346,8 @@ fallen_servant_star:   # Cast on Minion Death（2026-10-28 照 PoE2：(0—20)% 
   - { stat: meta.energy_gain, type: INCREASED, per: 1.0 }   # 獲得的能量（MetaGems.energyModifiers）
 scythe_prayer_star:   # Reaper's Invocation（2026-10-28 照 PoE2：(0—20)% 增加獲得的能量；這次之前照通用規則每 1% 增加 0.5% 光環效果）
   - { stat: meta.energy_gain, type: INCREASED, per: 1.0 }   # 獲得的能量（MetaGems.energyModifiers）
-phantom_bow_shade:   # Mirage Archer（2026-10-28 照 PoE2：幻影持續時間 +(0—1) 秒（你停手之後幻影再多射一會兒）；這次之前照通用規則）
-  - { stat: skill.base_duration_flat, type: FLAT, per: 0.05 }   # SkillService 的幻影
+phantom_bow_shade:   # Mirage Archer（2026-11-08 照 PoE2 0.5：(0—40)% 增加保留效率；幻影持續時間 +(0—1) 秒移到高階奇術（advanced）；這次之前一般品質是幻影持續時間）
+  - { stat: aura.reservation, type: INCREASED, per: -2.0 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 light_bend_mirror:   # Mirror of Refraction（2026-10-28 照 PoE2：每面鏡子多複製 (0—2) 發投射物（無條件捨去）；這次之前照通用規則）
   - { stat: mirror.copies, type: FLAT, per: 0.1 }   # ProjectileEngine
 molten_crack_stomp:   # Fury of the Mountain（2026-10-28 照 PoE2：擊中時獲得 +(0—2) 怒氣；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -704,6 +704,9 @@ blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2)
   - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
+  phantom_bow_shade:   # Mirage Archer：幻影持續時間 +(0—1) 秒、(0—40)% 增加保留效率（2026-11-08 照 poe2db 額外的品質效果）
+    - { stat: asc.mirage_seconds, type: FLAT, per: 0.05 }   # AscGranted.spawnMirage
+    - { stat: aura.reservation, type: INCREASED, per: -2.0 }
   heaven_punish_maul:   # Hammer of the Gods：(0—50)% 機率不消耗榮耀（2026-11-08 照站長：PoB2 altQualityStats chance_to_not_consume_glory_% 2.5；這次之前沒寫，一般的品質效果再算一次）
     - { stat: glory.not_consume_chance, type: FLAT, per: 2.5 }   # SupportMechanics.used
   mother_child_grenade:   # Cluster Grenade：(0—40)% 減少引爆時間（2026-11-08 照站長：PoB2 altQualityStats skill_detonation_time_+% -2；這次之前沒寫）

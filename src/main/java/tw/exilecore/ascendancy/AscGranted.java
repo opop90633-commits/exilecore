@@ -52,6 +52,20 @@ final class AscGranted implements Listener {
     private final ExileCore plugin;
 
     /** 一個玩家（賦予的技能）的狀態。 */
+    /** 2026-11-08：一個主要寶石的幻影（幻影銳眼、幻弓影各一個）。 */
+    private static final class Mirage {
+        long until;
+        long ready;
+        int index;
+        int generation; // 2026-10-28：第幾個幻影（舊幻影排好的下一步作廢）
+        final Map<String, Long> cooldowns = new HashMap<>(); // 2026-10-28 照 PoE2：這個幻影自己的冷卻（技能代號 → 好的 tick）
+        Location at;
+    }
+
+    private static Mirage mirage(final Own own, final String hostId) {
+        return DeadeyeMetas.ARCHER.equals(hostId) ? own.archer : own.deadeye;
+    }
+
     private static final class Own {
         int temper;
         int[] motes = new int[3];
@@ -62,12 +76,8 @@ final class AscGranted implements Listener {
         long sprintEnd;
         long calledNext;
         int calledIndex; // 2026-10-28：預告射擊孔裡好幾個印記時輪流
-        long mirageUntil;
-        long mirageReady;
-        int mirageIndex;
-        int mirageGeneration; // 2026-10-28：第幾個幻影（舊幻影排好的下一步作廢）
-        final Map<String, Long> mirageCooldowns = new HashMap<>(); // 2026-10-28 照 PoE2：這個幻影自己的冷卻（技能代號 → 好的 tick）
-        Location mirageAt;
+        final Mirage deadeye = new Mirage(); // 2026-11-08：幻影銳眼的幻影（這次之前是 Own 上的 mirage＊ 欄位）
+        final Mirage archer = new Mirage(); // 2026-11-08 照站長「幻弓影照 0.5 原作重做」：幻弓影的幻影（翻滾時留下）
         long alignNext;
         String alignSkill;
         long alignUntil;
@@ -527,7 +537,8 @@ final class AscGranted implements Listener {
             case "rose_jade_lord" -> own.archonUntil - now;
             case "calamity_descent" -> own.apocalypseUntil - now;
             case "sand_spirit_trick" -> own.clone == null ? 0 : own.cloneUntil - now;
-            case DeadeyeMetas.MIRAGE -> own.mirageUntil - now;
+            case DeadeyeMetas.MIRAGE -> own.deadeye.until - now;
+            case DeadeyeMetas.ARCHER -> own.archer.until - now; // 2026-11-08
             case "rift_dive" -> own.purple > 0 ? own.purpleUntil - now : 0;
             case "destiny_attune" -> own.alignSkill != null ? own.alignUntil - now : 0;
             default -> 0;
@@ -616,21 +627,8 @@ final class AscGranted implements Listener {
             // 幻影在持續時間內一直用孔裡的遠程攻擊（傷害更少 50%；tickPlayer）。冷卻、持續時間吃其他孔的迅返、長留與身上的加成。
             // 這次之前孔裡不能放技能：幻影重複你接下來的投射物攻擊，冷卻固定 10 秒、持續時間不吃加成
             if (on(player, DeadeyeMetas.MIRAGE) && build.profile().tags().contains(Tags.ATTACK) && build.profile().tags().contains(Tags.PROJECTILE)
-                    && !build.profile().tags().contains(Tags.MELEE) && now >= own.mirageReady && own.mirageUntil <= now
-                    && plugin.skills() != null && mirageWeapon(player, state)
-                    && !plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE).isEmpty()) {
-                final SkillBuild host = plugin.skills().deadeyeHost(player, DeadeyeMetas.MIRAGE);
-                final StatSheet effective = host == null ? null : host.profile().effective(state.sheet());
-                final Set<String> context = host == null ? Set.of() : host.profile().tags();
-                final double seconds = Math.max(4, level(player, DeadeyeMetas.MIRAGE, "asc.mirage_seconds"))
-                        * DeadeyeMetas.durationFactor(effective, context);
-                own.mirageAt = player.getLocation().clone();
-                own.mirageUntil = now + DeadeyeMetas.ticks(seconds);
-                own.mirageReady = now + DeadeyeMetas.ticks(DeadeyeMetas.MIRAGE_COOLDOWN * DeadeyeMetas.cooldownFactor(effective, context));
-                own.mirageCooldowns.clear();
-                final int generation = ++own.mirageGeneration;
-                effects.later(6, () -> mirageStep(player, generation));
-                tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, own.mirageAt.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
+                    && !build.profile().tags().contains(Tags.MELEE)) {
+                spawnMirage(player, own, DeadeyeMetas.MIRAGE, now);
             }
         }
         switch (id) {
@@ -2030,31 +2028,73 @@ final class AscGranted implements Listener {
     }
 
     /**
-     * 2026-10-28 照 PoE2 Mirage Deadeye：幻影的下一步——照孔的順序挑一個（這個幻影自己的冷卻好了的）攻擊，朝最近的敵人用；
-     * 引導／蓄力的先站著引導（疊滿、有完美時機的在完美時機放開），幻影先消失就沒放出去。
+     * 2026-11-08 照站長「幻弓影照 0.5 原作重做」（PoE2 Mirage Archer：While active, dodge rolling will create a Mirage）：翻滾時
+     * 幻弓影開著、拿著弓／弩／矛、孔裡有能用的攻擊、幻影冷卻好了，就在你翻滾的起點留下幻影（DodgeRoll 呼叫）。
      */
-    private void mirageStep(final Player player, final int generation) {
+    public void dodged(final Player player) {
+        final Own own = owns.computeIfAbsent(player.getUniqueId(), ignored -> new Own());
+        spawnMirage(player, own, DeadeyeMetas.ARCHER, now());
+    }
+
+    /**
+     * 幻影銳眼（你發射遠程投射物攻擊時）、幻弓影（翻滾時）留下幻影：冷卻好了、拿著對的武器、孔裡有攻擊才留。
+     * 持續時間照主要寶石的等級表（asc.mirage_seconds）＋品質，吃長留與持續時間加成；冷卻 10 秒吃迅返與冷卻回復。
+     */
+    private void spawnMirage(final Player player, final Own own, final String hostId, final long now) {
+        final Mirage m = mirage(own, hostId);
+        final PlayerState state = plugin.players().get(player);
+        if (!on(player, hostId) || now < m.ready || m.until > now || plugin.skills() == null || !mirageWeapon(player, state, hostId)
+                || plugin.skills().deadeyeSocketed(player, hostId).isEmpty()) {
+            return;
+        }
+        final SkillBuild host = plugin.skills().deadeyeHost(player, hostId);
+        final StatSheet effective = host == null ? null : host.profile().effective(state.sheet());
+        final Set<String> context = host == null ? Set.of() : host.profile().tags();
+        final boolean archer = DeadeyeMetas.ARCHER.equals(hostId);
+        final double base = archer
+                ? plugin.skills().levelValue(hostId, "asc.mirage_seconds", plugin.skills().entryLevel(player, hostId))
+                + (host == null ? 0 : host.qualityFlat("asc.mirage_seconds"))
+                : level(player, DeadeyeMetas.MIRAGE, "asc.mirage_seconds");
+        final double seconds = Math.max(archer ? 5 : 4, base) * DeadeyeMetas.durationFactor(effective, context);
+        m.at = player.getLocation().clone();
+        m.until = now + DeadeyeMetas.ticks(seconds);
+        m.ready = now + DeadeyeMetas.ticks((archer ? DeadeyeMetas.ARCHER_COOLDOWN : DeadeyeMetas.MIRAGE_COOLDOWN) * DeadeyeMetas.cooldownFactor(effective, context));
+        m.cooldowns.clear();
+        final int generation = ++m.generation;
+        effects.later(6, () -> mirageStep(player, hostId, generation));
+        tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, m.at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
+    }
+
+    /**
+     * 2026-10-28 照 PoE2 Mirage Deadeye：幻影的下一步——照孔的順序挑一個（這個幻影自己的冷卻好了的）攻擊，朝最近的敵人用；
+     * 引導／蓄力的先站著引導（疊滿、有完美時機的在完美時機放開），幻影先消失就沒放出去。2026-11-08：幻弓影也用這套。
+     */
+    private void mirageStep(final Player player, final String hostId, final int generation) {
         final Own o = owns.get(player.getUniqueId());
-        if (o == null || o.mirageGeneration != generation || plugin.skills() == null) {
+        if (o == null || plugin.skills() == null) {
+            return;
+        }
+        final Mirage m = mirage(o, hostId);
+        if (m.generation != generation) {
             return;
         }
         final long now = now();
-        if (!player.isOnline() || o.mirageUntil <= now || o.mirageAt == null || o.mirageAt.getWorld() != player.getWorld()
-                || !on(player, DeadeyeMetas.MIRAGE) || !mirageWeapon(player, plugin.players().get(player))) {
-            o.mirageUntil = Math.min(o.mirageUntil, now);
+        if (!player.isOnline() || m.until <= now || m.at == null || m.at.getWorld() != player.getWorld()
+                || !on(player, hostId) || !mirageWeapon(player, plugin.players().get(player), hostId)) {
+            m.until = Math.min(m.until, now);
             return;
         }
-        final List<SkillBuild> attacks = plugin.skills().deadeyeSocketed(player, DeadeyeMetas.MIRAGE);
+        final List<SkillBuild> attacks = plugin.skills().deadeyeSocketed(player, hostId);
         SkillBuild attack = null;
         long wait = 5;
-        if (!attacks.isEmpty() && !effects.enemiesNear(player, o.mirageAt, DeadeyeMetas.MIRAGE_RANGE).isEmpty()) {
+        if (!attacks.isEmpty() && !effects.enemiesNear(player, m.at, DeadeyeMetas.MIRAGE_RANGE).isEmpty()) {
             long soonest = Long.MAX_VALUE;
             for (int i = 0; i < attacks.size(); i++) {
-                final SkillBuild candidate = attacks.get(Math.floorMod(o.mirageIndex + i, attacks.size()));
-                final Long ready = o.mirageCooldowns.get(candidate.definition().id());
+                final SkillBuild candidate = attacks.get(Math.floorMod(m.index + i, attacks.size()));
+                final Long ready = m.cooldowns.get(candidate.definition().id());
                 if (ready == null || ready <= now) {
                     attack = candidate;
-                    o.mirageIndex += i + 1;
+                    m.index += i + 1;
                     break;
                 }
                 soonest = Math.min(soonest, ready - now);
@@ -2064,61 +2104,64 @@ final class AscGranted implements Listener {
             }
         }
         if (attack == null) {
-            effects.later(wait, () -> mirageStep(player, generation));
+            effects.later(wait, () -> mirageStep(player, hostId, generation));
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);
         final tw.exilecore.skill.SkillService.MirageRelease release = plugin.skills().mirageRelease(player, attack);
-        final SkillBuild fired = DeadeyeMetas.mirageBuild(release.build());
+        final SkillBuild fired = DeadeyeMetas.mirageBuild(release.build(), hostId);
         if (attack.cooldownTicks() > 0) {
-            o.mirageCooldowns.put(attack.definition().id(), now + release.holdTicks() + attack.cooldownTicks());
+            m.cooldowns.put(attack.definition().id(), now + release.holdTicks() + attack.cooldownTicks());
         }
         final long gap = Math.max(4, Math.round(attack.intervalTicks(sheet)));
         if (release.holdTicks() > 0) {
-            final Location at = o.mirageAt.clone().add(0, 1.2, 0);
+            final Location at = m.at.clone().add(0, 1.2, 0);
             for (long t = 0; t < release.holdTicks(); t += 5) {
                 effects.later(t, () -> {
-                    if (o.mirageGeneration == generation && o.mirageUntil > now()) {
+                    if (m.generation == generation && m.until > now()) {
                         tw.exilecore.skill.Fx.spawn(at.getWorld(), Particle.ENCHANT, at, 6, 0.3, 0.4, 0.3, 0.3);
                     }
                 });
             }
-            effects.later(release.holdTicks(), () -> mirageFire(player, generation, fired));
-            effects.later(release.holdTicks() + 4, () -> mirageStep(player, generation));
+            effects.later(release.holdTicks(), () -> mirageFire(player, hostId, generation, fired));
+            effects.later(release.holdTicks() + 4, () -> mirageStep(player, hostId, generation));
         } else {
-            mirageFire(player, generation, fired);
-            effects.later(gap, () -> mirageStep(player, generation));
+            mirageFire(player, hostId, generation, fired);
+            effects.later(gap, () -> mirageStep(player, hostId, generation));
         }
     }
 
     /**
      * 2026-11-01 照 PoE2 Mirage Deadeye（weaponTypes：Bow、Crossbow、Spear）：拿著弓、弩或矛才會留下幻影，換成別的武器幻影就散掉
-     * （skills.yml 的 weapons；開技能時 SkillService 也擋）。這次之前什麼武器都行。
+     * （skills.yml 的 weapons；開技能時 SkillService 也擋）。這次之前什麼武器都行。2026-11-08：幻弓影也是。
      */
-    private boolean mirageWeapon(final Player player, final PlayerState state) {
-        final SkillDefinition mirage = plugin.skills() == null ? null : plugin.skills().config().skill(DeadeyeMetas.MIRAGE);
+    private boolean mirageWeapon(final Player player, final PlayerState state, final String hostId) {
+        final SkillDefinition mirage = plugin.skills() == null ? null : plugin.skills().config().skill(hostId);
         return mirage == null || state == null || mirage.usableWith(state.weaponTags());
     }
 
     /** 幻影放出那一下（朝幻影最近的敵人）；幻影已經消失就不放。 */
-    private void mirageFire(final Player player, final int generation, final SkillBuild fired) {
+    private void mirageFire(final Player player, final String hostId, final int generation, final SkillBuild fired) {
         final Own o = owns.get(player.getUniqueId());
         final long now = now();
-        if (o == null || o.mirageGeneration != generation || o.mirageUntil <= now || o.mirageAt == null || !player.isOnline()
-                || o.mirageAt.getWorld() != player.getWorld()) {
+        if (o == null) {
             return;
         }
-        final List<LivingEntity> near = effects.enemiesNear(player, o.mirageAt, DeadeyeMetas.MIRAGE_RANGE);
+        final Mirage m = mirage(o, hostId);
+        if (m.generation != generation || m.until <= now || m.at == null || !player.isOnline() || m.at.getWorld() != player.getWorld()) {
+            return;
+        }
+        final List<LivingEntity> near = effects.enemiesNear(player, m.at, DeadeyeMetas.MIRAGE_RANGE);
         if (near.isEmpty()) {
             return;
         }
         LivingEntity target = near.getFirst();
         for (final LivingEntity enemy : near) {
-            if (enemy.getLocation().distanceSquared(o.mirageAt) < target.getLocation().distanceSquared(o.mirageAt)) {
+            if (enemy.getLocation().distanceSquared(m.at) < target.getLocation().distanceSquared(m.at)) {
                 target = enemy;
             }
         }
-        final Location from = o.mirageAt.clone();
+        final Location from = m.at.clone();
         plugin.skills().recast(player, fired, from, target.getLocation().toVector().subtract(from.toVector()).normalize(), target);
         // 2026-10-31：霆落矛改成投射物，幻影擲的矛停下來時自己插地（SkillService.lanceLanded）；
         // 這次之前（2026-10-30）這裡呼叫 proxyLanded 插在目標腳下
