@@ -92,6 +92,9 @@ public final class CurrencyPouch {
             try {
                 final String raw = part.substring(0, equals).trim();
                 final String id = tw.exilecore.currency.CurrencyRepository.resolve(raw); // 2026-10-27：拿掉的通貨併進現在的那種
+                if (tw.exilecore.currency.RetiredCurrencies.retired(id)) {
+                    continue; // 2026-11-08 照站長：刪掉的通貨（萬燈夜素材、舊催化劑）讀進來就丟掉
+                }
                 final int amount = Integer.parseInt(part.substring(equals + 1).trim());
                 pouch.set(id, id.equals(raw) ? amount : pouch.amount(id) + Math.max(0, amount));
             } catch (final NumberFormatException e) {

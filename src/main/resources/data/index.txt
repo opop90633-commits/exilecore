@@ -64,4 +64,5 @@ data/anticheat.yml
 data/cards.yml
 data/gem_quality.yml
 data/affixes/essences.yml
+data/affixes/augments.yml
 data/slots.yml

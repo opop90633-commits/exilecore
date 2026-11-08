@@ -806,6 +806,11 @@ public record SupportDefinition(String id, String name, String description, Stri
             if (Tags.META.equals(tag) && !metaHost(skill)) {
                 continue; // 2026-10-26：英靈圖騰補了 meta 標籤（照 PoE2），能量輔助、骰運還是不能掛在圖騰上
             }
+            if (Commandables.TAG.equals(tag) && Commandables.commandable(skill.id())) {
+                // 2026-11-08 照站長「召喚骸骨重卒原作能吃骸令 II 嗎」：照 PoB2（Bidding：requireSkillTypes CommandableMinion 或 CommandsMinions）
+                //   可以下指令的召喚技能（六種骷髏、砲手、鴉群、三位巨靈）也掛得上，效果只給指令；這次之前只有技能標籤寫 command 的掛得上（骷髏、砲手、鴉群掛不上）
+                return true;
+            }
             if (skill.tags().contains(tag) || skill.weapons().contains(tag)) { // 2026-10：也可以寫武器（crossbow：弩的技能）
                 return true;
             }

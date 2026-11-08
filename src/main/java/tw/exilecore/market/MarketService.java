@@ -146,9 +146,10 @@ public final class MarketService {
 
     /** 啟動時（主執行緒）：把資料庫裡的上架、收入、掛單讀進來。 */
     public void load() throws SQLException {
-        final List<MarketRepository.ListingRow> listingRows = plugin.database().sync(repository::loadListings);
-        final List<MarketRepository.ProceedRow> proceedRows = plugin.database().sync(repository::loadProceeds);
-        final List<MarketRepository.OrderRow> orderRows = plugin.database().sync(repository::loadOrders);
+        final List<MarketRepository.ListingRow> listingRows = new ArrayList<>(plugin.database().sync(repository::loadListings));
+        final List<MarketRepository.ProceedRow> proceedRows = new ArrayList<>(plugin.database().sync(repository::loadProceeds));
+        final List<MarketRepository.OrderRow> orderRows = new ArrayList<>(plugin.database().sync(repository::loadOrders));
+        retireCurrencies(listingRows, proceedRows, orderRows);
         listings.clear();
         proceeds.clear();
         for (final ExchangeBook.Order order : List.copyOf(book.all())) {
@@ -162,6 +163,13 @@ public final class MarketService {
             } catch (final RuntimeException e) {
                 broken++;
                 plugin.getSLF4JLogger().error("市集：上架 {}（{}）的物品讀不出來，先不顯示（資料庫裡保留）", row.id(), row.sellerName(), e);
+                continue;
+            }
+            if (plugin.currencies() != null && plugin.currencies().retired(item)) {
+                // 2026-11-08 照站長：賣的是刪掉的通貨（萬燈夜素材、舊催化劑）→ 上架整筆刪掉，不補償
+                final String listingId = row.id();
+                plugin.database().async(connection -> repository.deleteListing(connection, listingId));
+                plugin.getSLF4JLogger().info("市集：上架 {}（{}）賣的是刪掉的通貨，刪掉", row.id(), row.sellerName());
                 continue;
             }
             // 上架中的舊物品：舊版畫的重畫、舊版的傳奇照目前的定義補正（買到的跟看到的一樣；2026-10-26 起補正過的寫回資料庫）
@@ -201,6 +209,80 @@ public final class MarketService {
         }
         plugin.getSLF4JLogger().info("市集：{} 件上架、{} 筆收入待領、{} 張掛單{}", listings.size(), proceeds.size(), book.all().size(),
                 broken > 0 ? "（" + broken + " 件讀不出來）" : "");
+    }
+
+    /**
+     * 2026-11-08 照站長「通貨裡的萬聖節素材全刪除」「這些舊的也幫我刪除」：市集裡跟刪掉的通貨（{@link tw.exilecore.currency.RetiredCurrencies}）有關的，
+     * 啟動讀資料時一次處理掉（寫回資料庫，下次啟動就沒有了）：
+     * <ul>
+     *   <li>收入是這些通貨的：刪掉。</li>
+     *   <li>交易所掛單：付出的是這些通貨的直接取消；想要這些通貨、付出的是別種的取消，還沒成交的部分退成收入（下次上線自動領）。</li>
+     *   <li>用這些通貨標價的上架：改成基準通貨，照拿掉前的參考價值換算（至少 1 個）。</li>
+     * </ul>
+     * 傳進來的清單直接改（處理掉的拿掉、退回的收入加進去）。
+     */
+    private void retireCurrencies(final List<MarketRepository.ListingRow> listingRows, final List<MarketRepository.ProceedRow> proceedRows,
+                                  final List<MarketRepository.OrderRow> orderRows) throws SQLException {
+        final List<String> deadProceeds = new ArrayList<>();
+        final List<String> deadOrders = new ArrayList<>();
+        final List<MarketRepository.ProceedRow> refunds = new ArrayList<>();
+        final List<MarketRepository.ListingRow> repriced = new ArrayList<>();
+        final Instant now = Instant.now();
+        proceedRows.removeIf(row -> {
+            if (tw.exilecore.currency.RetiredCurrencies.retired(row.currencyId())) {
+                deadProceeds.add(row.id());
+                return true;
+            }
+            return false;
+        });
+        orderRows.removeIf(row -> {
+            final boolean giveDead = tw.exilecore.currency.RetiredCurrencies.retired(row.give());
+            if (!giveDead && !tw.exilecore.currency.RetiredCurrencies.retired(row.want())) {
+                return false;
+            }
+            deadOrders.add(row.id());
+            final int remaining = row.giveAmount() - row.taken();
+            if (!giveDead && remaining > 0) {
+                refunds.add(new MarketRepository.ProceedRow(UUID.randomUUID().toString(), row.account(), row.give(), remaining, "exchange",
+                        "萬燈夜素材、舊催化劑從遊戲拿掉，掛單取消退回", now));
+            }
+            return true;
+        });
+        final String anchor = config().reference().anchor();
+        final long anchorValue = Math.max(1, config().value(anchor));
+        for (int i = 0; i < listingRows.size(); i++) {
+            final MarketRepository.ListingRow row = listingRows.get(i);
+            final Long old = tw.exilecore.currency.RetiredCurrencies.VALUES.get(row.priceCurrency());
+            if (old == null) {
+                continue;
+            }
+            final int amount = (int) Math.max(1, Math.min(Integer.MAX_VALUE, Math.round((double) old * row.priceAmount() / anchorValue)));
+            final MarketRepository.ListingRow fresh = new MarketRepository.ListingRow(row.id(), row.account(), row.sellerName(), row.item(),
+                    row.itemUuid(), row.searchText(), anchor, amount, row.listedAt());
+            listingRows.set(i, fresh);
+            repriced.add(fresh);
+        }
+        if (deadProceeds.isEmpty() && deadOrders.isEmpty() && repriced.isEmpty()) {
+            return;
+        }
+        plugin.database().sync(connection -> {
+            if (!deadProceeds.isEmpty()) {
+                repository.deleteProceeds(connection, deadProceeds);
+            }
+            for (final String id : deadOrders) {
+                repository.deleteOrder(connection, id);
+            }
+            for (final MarketRepository.ProceedRow refund : refunds) {
+                repository.insertProceed(connection, refund);
+            }
+            for (final MarketRepository.ListingRow row : repriced) {
+                repository.updatePrice(connection, row.id(), row.priceCurrency(), row.priceAmount(), row.listedAt());
+            }
+            return null;
+        });
+        proceedRows.addAll(refunds);
+        plugin.getSLF4JLogger().info("市集：刪掉的通貨處理完——{} 筆收入刪掉、{} 張掛單取消（{} 筆退成收入）、{} 件上架改用 {} 標價",
+                deadProceeds.size(), deadOrders.size(), refunds.size(), repriced.size(), anchor);
     }
 
     /** 卡住的操作寫進資料庫之後：那些操作建立的上架、收入、掛單可以用了。 */

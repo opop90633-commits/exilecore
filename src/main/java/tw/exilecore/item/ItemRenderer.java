@@ -480,6 +480,8 @@ public final class ItemRenderer {
                 }
                 if (unique) {
                     lore.addAll(picksLore(repository, data)); // 2026-11-04（妄想症、信仰稜鏡）：抽到的是哪些
+                } else {
+                    lore.addAll(keystoneLore(repository, data)); // 2026-11-08（譫妄星魄）：抽到的基石
                 }
             }
         }
@@ -763,6 +765,18 @@ public final class ItemRenderer {
         if (lines != null) {
             for (final Component line : lines) {
                 out.add(plain(line));
+            }
+        }
+        return out;
+    }
+
+    /** 2026-11-08 照站長「譫妄精髓」：詞綴（local.keystone_pick）抽到的是哪個基石、效果。 */
+    private static List<net.kyori.adventure.text.Component> keystoneLore(final ItemRepository repository, final ItemData data) {
+        final List<net.kyori.adventure.text.Component> out = new ArrayList<>();
+        for (final String id : UniquePicks.affixKeystones(repository, data)) {
+            out.add(line("<#ff55ff>　配置基石：" + escape(UniquePicks.name(UniquePicks.KEYSTONE, id))));
+            for (final String text : UniquePicks.keystoneLines(id)) {
+                out.add(line("<dark_gray>　　" + escape(text)));
             }
         }
         return out;

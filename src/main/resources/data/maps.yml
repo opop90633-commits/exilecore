@@ -264,6 +264,7 @@ event_bosses:
         - { support: faceless_blind, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { support: oblivion_chaos, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { support: mist_spread, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
+        - { currency: essence_delirium, chance: 0.01 }   # 2026-11-08 照站長「譫妄精隨塞迷霧 BOSS 1% 機率掉落」
 
   ultimatum:
     name: 審判者・衡
@@ -442,6 +443,13 @@ event_bosses:
       unique_chance: 0.01   # 2026-11-07 照站長「把暮色瓣落、遺忘看守都放進這隻裡面」：uniques.yml 的 sources 寫 delve_boss 的每一件各自 1%
       extra:
         - { currency: azurite, amount: 40, chance: 1 }   # 打倒牠補 40 個藍晶（買深坑升級）
+        - { currency: rune_core_jiquani, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列的核心都放進星坑 BOSS 1% 機率掉落」：魂核符文・吉卡尼
+        - { currency: rune_thesis_jiquani, chance: 0.01 }   # 遠古魂核・吉卡尼
+        - { skill: crystal_spike_burst, chance: 0.01 }   # 2026-11-08 照站長「星坑 BOSS 新增專屬的傳奇技能與輔助 1% 機率掉落」
+        - { skill: shadow_volley_shafts, chance: 0.01 }
+        - { support: azurite_resonance, chance: 0.01 }
+        - { support: burrow_through, chance: 0.01 }
+        - { support: eternal_night, chance: 0.01 }
 
 maps:
   wreck_bay:
@@ -1484,6 +1492,7 @@ finals:
           - { support: holy_light_focus, chance: 0.01 }
           - { skill: morning_light_column, chance: 0.01 }
           - { skill: altar_niche_blessing, chance: 0.01 }
+          - { currency: essence_horror, chance: 0.01 }   # 2026-11-08 照站長「極恐精髓塞神龕 BOSS 1% 機率掉落」
 
   strongbox_mimic:
     name: 千鎖寶庫
@@ -1635,6 +1644,7 @@ finals:
           - { skill: fissure_hand, chance: 0.01 }
           - { skill: fissure_spread, chance: 0.01 }
           - { base: jring_breach_refined, chance: 0.05 }   # 2026-11-06 照站長：1% → 5%；2026-11-04 照站長「裂痕王新增 1% 掉落的精煉裂隙指環」（魔法或稀有、未鑑定；這次之前精煉裂隙指環在劫盜掉）
+          - { currency: essence_breach, chance: 0.01 }   # 2026-11-08 照站長「裂痕精隨塞裂痕 BOSS 1% 機率掉落」
 
   exile_king:
     name: 無名者競技場
@@ -1936,3 +1946,11 @@ finals:
           - { skill: bone_crack_leyline, chance: 0.01 }
           - { skill: deep_chasm_hand, chance: 0.01 }
           - { base: jamulet_absent, chance: 0.05 }   # 2026-11-06 照站長：1% → 5%；2026-11-05 照站長「空無墜飾放進深淵王裡」（賦予的技能掉落時隨機定；同日稍早在裂隙之主）
+          - { currency: essence_abyss, chance: 0.01 }   # 2026-11-08 照站長「深淵精髓塞深淵 BOSS 1% 機率掉落」
+          - { currency: rune_augment_medved, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { currency: rune_augment_katla, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { currency: rune_augment_thrud, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { currency: rune_augment_vorana, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { currency: rune_augment_kolr, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { currency: rune_augment_uhtred, chance: 0.05 }   # 2026-11-08 照站長「（增幅）新增這幾個，放進深淵 BOSS 5% 機率掉落」
+          - { unique: abyss_throne_belt, chance: 0.03 }   # 2026-11-08 照站長「淵座束帶補上五個版本和藥劑充能，深淵王 3% 掉」（劫盜照舊掉）

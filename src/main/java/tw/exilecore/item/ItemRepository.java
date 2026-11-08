@@ -394,6 +394,8 @@ public final class ItemRepository {
 
     /** 2026-10-26：星魄專屬的詞綴（affixes/essences.yml，PoE2 完美、腐化精髓的那條）：不會自然擲出，只有星魄給得了。 */
     public static final String ESSENCE_TAG = "essence";
+    /** 2026-11-08 照站長「增幅系統」：增幅解鎖的專屬詞綴的 spawn_tags（＝增幅的符文代號 augment_＊）。 */
+    public static final String AUGMENT_TAG_PREFIX = "augment_";
 
     /**
      * 交叉檢查：每條詞綴至少能出現在一個基底上，否則多半是標籤打錯；
@@ -404,6 +406,9 @@ public final class ItemRepository {
             final boolean local = checkLocal("詞綴 " + affix.id(), affix.mods());
             if (affix.spawnTags().contains(UniqueItem.SPAWN_TAG) || affix.spawnTags().contains(RETIRED_TAG)) {
                 continue; // 傳奇詞綴只在那件傳奇上；停用的詞綴不會再擲出來（只留給舊物品）
+            }
+            if (affix.spawnTags().stream().anyMatch(tag -> tag.startsWith(AUGMENT_TAG_PREFIX))) {
+                continue; // 2026-11-08 增幅解鎖的專屬詞綴（affixes/augments.yml）：只有嵌著那個增幅的裝備擲得到（ItemGenerator.eligible），不對基底
             }
             if (affix.spawnTags().contains(CORRUPTION_TAG)) {
                 // 2026-10-21：腐化詞綴：spawn_tags（corruption 以外）、require_tags 要對得到至少一個基底（蝕變石照這些挑）
@@ -442,7 +447,8 @@ public final class ItemRepository {
         for (final AffixMod mod : mods) {
             if (!mod.isLocal() || ItemStats.UNVEILED_MAGNITUDE.equals(mod.stat()) || LocalMods.REQUIREMENTS.equals(mod.stat())
                     || ItemGenerator.MAX_PREFIXES.equals(mod.stat()) || ItemGenerator.MAX_SUFFIXES.equals(mod.stat()) // 2026-10-26：前後綴上限（ItemGenerator）
-                    || tw.exilecore.item.unique.UniqueStats.LOCAL_ITEM.contains(mod.stat())) { // 2026-10-26：傳奇的符文效果、屬性需求
+                    || tw.exilecore.item.unique.UniqueStats.LOCAL_ITEM.contains(mod.stat()) // 2026-10-26：傳奇的符文效果、屬性需求
+                    || mod.stat().startsWith(ItemStats.MOD_MAGNITUDE) || Runes.LOCAL_RUNE_AS.equals(mod.stat())) { // 2026-11-08：增幅（索魯德）的詞綴大小、淵座束帶的視為部位
                 continue; // 「增加 x% 已揭露詞綴的幅度」「減少屬性需求」：不是武器本身的數值（防具也能出），ItemStats 自己處理
             }
             any = true;

@@ -206,7 +206,10 @@ final class Channelling {
         if (!drain(player, charging, spec, held)) {
             return true;
         }
-        final int rage = charging.empowered != null ? channel.rageWhenEmpowered(channel.rageDue(held)) : channel.rageDue(held);
+        final int rawRage = charging.empowered != null ? channel.rageWhenEmpowered(channel.rageDue(held)) : channel.rageDue(held);
+        // 2026-11-08 照站長（增幅・沃拉娜的殘殺「怒氣消耗效率」）：引導扣的怒氣 ÷ (1 ＋ 消耗效率 ＋ 怒氣消耗效率)；這次之前照原數扣
+        final int rage = rawRage <= 0 ? rawRage : (int) Math.round(rawRage / tw.exilecore.stats.CostKeys.divisor(
+                tw.exilecore.stats.CostKeys.rageEfficiency(plugin.players().get(player).sheet(), build.definition().tags())));
         if (rage > 0) {
             if (service.resources().rage(player) < rage) {
                 final PlayerState state = plugin.players().get(player);

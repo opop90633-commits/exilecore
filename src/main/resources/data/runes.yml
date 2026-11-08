@@ -1471,3 +1471,63 @@ runes:
           - { text: "+5% 全部技能的品質", stat: skill.quality, type: FLAT, value: 5 }
         sceptre:
           - { text: "召喚物增加 30% 範圍效果", stat: skill.area, type: INCREASED, value: 30, tags: [minion] }
+
+  # 2026-11-08 照站長「增幅系統」（PoE2 0.5 的增幅 Augment；「沿用現有的符文孔」）：augment 寫只能嵌的部位（手套照慣例是褲子 legs）。
+  #   本身沒有加成；嵌了以後那件裝備擲得到 affixes/augments.yml 裡 spawn_tags 寫這個代號的專屬詞綴（一般通貨就洗得出來，ItemGenerator.eligible）。
+  #   羈絆詞綴（原作的命定詞綴）一樣只有昇華・聖賢智慧（或魔偶符文・狐狸）才有效果。嵌死了：換掉不還（VaalCrafting.socketBound）。
+  #   淵座束帶「視為某部位」的也嵌得進去（Runes.augmentFits）。代號（augment_＊）也是專屬詞綴的 spawn_tags。深淵王（骨潮深坑）各 5% 掉。
+  augment_medved:   # Medved's Tending（梅德偉的照料）：胸甲，靈魂詞綴
+    name: 增幅・梅德偉的照料
+    level: 65
+    limit: 1
+    augment: chest
+    bonded:
+      slots:
+        chest:
+          - { text: "增加 3% 最大生命、增加 3% 最大魔力", mods: [ { stat: life.max, type: INCREASED, value: 3 }, { stat: mana.max, type: INCREASED, value: 3 } ] }
+  augment_katla:   # Katla's Gloom（卡特拉的愁悵）：手套（褲子），衰敗詞綴
+    name: 增幅・卡特拉的愁悵
+    level: 65
+    limit: 1
+    augment: legs
+    bonded:
+      slots:
+        legs:   # 原作：減少 25% 你身上的非傷害型異常狀態效果（我們照冰緩、感電兩種）
+          - { text: "減少 25% 你身上的冰緩與感電效果", mods: [ { stat: chill.effect_on_self, type: INCREASED, value: -25 }, { stat: shock.effect_on_self, type: INCREASED, value: -25 } ] }
+  augment_thrud:   # Thrud's Might（索魯德的強權）：武器，毀滅詞綴
+    name: 增幅・索魯德的強權
+    level: 65
+    limit: 1
+    augment: weapon
+    bonded:
+      weapon:
+        - { text: "+5% 全部元素抗性", mods: [ { stat: resist.fire, type: FLAT, value: 5 }, { stat: resist.cold, type: FLAT, value: 5 }, { stat: resist.lightning, type: FLAT, value: 5 } ] }
+      caster:
+        - { text: "+5% 全部元素抗性", mods: [ { stat: resist.fire, type: FLAT, value: 5 }, { stat: resist.cold, type: FLAT, value: 5 }, { stat: resist.lightning, type: FLAT, value: 5 } ] }
+  augment_vorana:   # Vorana's Carnage（沃拉娜的殘殺）：頭盔，狂戰士詞綴
+    name: 增幅・沃拉娜的殘殺
+    level: 65
+    limit: 1
+    augment: head
+    bonded:
+      slots:
+        head:
+          - { text: "近戰擊中時獲得 2 點怒氣", stat: rage.on_hit, type: FLAT, value: 2, tags: [melee] }
+  augment_kolr:   # Kolr's Hunt（克洛爾的狩獵）：手套（褲子），射手詞綴
+    name: 增幅・克洛爾的狩獵
+    level: 65
+    limit: 1
+    augment: legs
+    bonded:
+      slots:
+        legs:
+          - { text: "增加 20% 投射物傷害", stat: damage, type: INCREASED, value: 20, tags: [projectile] }
+  augment_uhtred:   # Uhtred's Sidereus（烏特雷的星空）：鞋子，時空術師詞綴
+    name: 增幅・烏特雷的星空
+    level: 65
+    limit: 1
+    augment: feet
+    bonded:
+      slots:
+        feet:   # 原作 +10% 冷卻回復速度（照珠寶「冷卻回復」的寫法：冷卻減少）
+          - { text: "增加 10% 冷卻回復速度", stat: skill.cooldown, type: INCREASED, value: -10 }

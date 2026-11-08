@@ -49,7 +49,7 @@ public final class Runes {
      */
     public record Rune(String id, String name, List<Line> weapon, List<Line> caster, List<Line> armour, int level,
                        List<Line> bondedWeapon, List<Line> bondedCaster, List<Line> bondedArmour,
-                       Map<String, List<Line>> slots, boolean martialOnly, int limit, Map<String, List<Line>> bondedSlots) {
+                       Map<String, List<Line>> slots, boolean martialOnly, int limit, Map<String, List<Line>> bondedSlots, String augment) {
         public Rune {
             weapon = List.copyOf(weapon);
             caster = caster == null || caster.isEmpty() ? weapon : List.copyOf(caster);
@@ -60,6 +60,23 @@ public final class Runes {
             slots = slots == null ? Map.of() : Map.copyOf(slots);
             limit = Math.max(0, limit);
             bondedSlots = bondedSlots == null ? Map.of() : Map.copyOf(bondedSlots);
+            augment = augment == null || augment.isBlank() ? null : augment;
+        }
+
+        /** 2026-11-04 照 PoE2 的魂核：沿用的建構方式（不是增幅）。 */
+        public Rune(final String id, final String name, final List<Line> weapon, final List<Line> caster, final List<Line> armour, final int level,
+                    final List<Line> bondedWeapon, final List<Line> bondedCaster, final List<Line> bondedArmour,
+                    final Map<String, List<Line>> slots, final boolean martialOnly, final int limit, final Map<String, List<Line>> bondedSlots) {
+            this(id, name, weapon, caster, armour, level, bondedWeapon, bondedCaster, bondedArmour, slots, martialOnly, limit, bondedSlots, null);
+        }
+
+        /**
+         * 2026-11-08 照站長「增幅系統」（PoE2 0.5 的增幅：梅德偉的照料…）：只能嵌在這個部位（{@link #SLOT_KEYS} 或 weapon＝任何武器；
+         * 淵座束帶「視為某部位」也算），嵌了解鎖 affixes/augments.yml 裡 spawn_tags 寫這個代號的專屬詞綴（ItemGenerator.eligible），
+         * 本身沒有加成、只有羈絆詞綴（聖賢智慧）；嵌死了，換掉不還（VaalCrafting.socketBound）。null = 不是增幅。
+         */
+        public boolean isAugment() {
+            return augment != null;
         }
 
         public Rune(final String id, final String name, final List<Line> weapon, final List<Line> caster, final List<Line> armour, final int level,
@@ -119,6 +136,19 @@ public final class Runes {
          * 法杖類 caster）給的加成，跟 {@link #on} 的規則一樣：部位專屬的先，沒有的話權杖、法杖類照 caster（只限軍用武器的沒有），
          * 軍用武器照 weapon，其他（防具、盾、法器）照 armour。
          */
+        /** 2026-11-08（淵座束帶「視為某部位」）：照部位代號的羈絆詞綴（規則同 {@link #onSlot}）。 */
+        public List<Line> bondedOnSlot(final String key) {
+            final List<Line> own = bondedSlots.get(key);
+            if (own != null) {
+                return own;
+            }
+            return switch (key) {
+                case "weapon" -> bondedWeapon;
+                case "caster", "sceptre" -> martialOnly ? List.of() : bondedCaster;
+                default -> bondedArmour;
+            };
+        }
+
         public List<Line> onSlot(final String key) {
             final List<Line> own = slots.get(key);
             if (own != null) {
@@ -211,13 +241,72 @@ public final class Runes {
             final YamlNode bonded = node.node("bonded"); // 2026-10-27 照 PoE2：羈絆詞綴（可以不寫）
             // 2026-11-04 照 PoE2 的魂核：slots（部位專屬的加成）、martial_only（只能嵌軍用武器）、limit（一個角色僅限幾顆，0 = 不限）；有 slots 的 armour 可以不寫
             final Map<String, List<Line>> slots = slotLines(node);
-            map.put(id, new Rune(id, node.requireString("name"), slots.isEmpty() || node.has("weapon") ? lines(node, "weapon") : List.of(),
-                    node.has("caster") ? lines(node, "caster") : List.of(), slots.isEmpty() || node.has("armour") ? lines(node, "armour") : List.of(),
+            final boolean augment = node.has("augment"); // 2026-11-08：增幅本身沒有加成（只有羈絆、解鎖專屬詞綴）
+            map.put(id, new Rune(id, node.requireString("name"), (slots.isEmpty() && !augment) || node.has("weapon") ? lines(node, "weapon") : List.of(),
+                    node.has("caster") ? lines(node, "caster") : List.of(), (slots.isEmpty() && !augment) || node.has("armour") ? lines(node, "armour") : List.of(),
                     Math.max(0, node.integer("level", 0)),
                     optionalLines(bonded, "weapon"), optionalLines(bonded, "caster"), optionalLines(bonded, "armour"),
-                    slots, node.bool("martial_only", false), Math.max(0, node.integer("limit", 0)), bonded == null ? Map.of() : slotLines(bonded)));
+                    slots, node.bool("martial_only", false), Math.max(0, node.integer("limit", 0)), bonded == null ? Map.of() : slotLines(bonded),
+                    augmentSlot(node)));
         }
         return map;
+    }
+
+    /** 2026-11-08：增幅只能嵌的部位（augment：head／chest／legs／feet／shield…或 weapon）；沒寫回傳 null。 */
+    private static String augmentSlot(final YamlNode node) {
+        final String slot = node.string("augment", null);
+        if (slot == null) {
+            return null;
+        }
+        if (!"weapon".equals(slot) && !SLOT_KEYS.contains(slot)) {
+            throw new IllegalArgumentException(node.path() + ".augment：不認得的部位 " + slot + "（weapon 或 " + String.join("、", SLOT_KEYS) + "）");
+        }
+        return slot;
+    }
+
+    /** 2026-11-08（淵座束帶，PoE2 Darkness Enthroned「此物品會被視為胸甲／頭盔／手套／鞋子／盾牌，自插槽中的物品獲得加成」）：local.rune_as 的 1～5。 */
+    public static final String LOCAL_RUNE_AS = "local.rune_as";
+    /** 2026-11-08：{@link #LOCAL_RUNE_AS} 的數值對到的部位（1 胸甲、2 頭盔、3 手套＝褲子、4 鞋子、5 盾牌）。 */
+    public static final List<String> RUNE_AS_SLOTS = List.of("chest", "head", "legs", "feet", "shield");
+
+    /** 2026-11-08：這件物品「視為」哪個部位（淵座束帶）；沒有回傳 null。 */
+    public static String treatedAs(final ItemRepository repository, final ItemData data) {
+        if (repository == null || data == null) {
+            return null;
+        }
+        final int kind = (int) Math.round(localFlat(repository, data, LOCAL_RUNE_AS));
+        return kind >= 1 && kind <= RUNE_AS_SLOTS.size() ? RUNE_AS_SLOTS.get(kind - 1) : null;
+    }
+
+    /** 2026-11-08：增幅能不能嵌在這件上（部位對、或淵座束帶視為那個部位）。 */
+    public static boolean augmentFits(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
+        if (rune == null || !rune.isAugment() || base == null) {
+            return false;
+        }
+        final String as = treatedAs(repository, data);
+        if (as != null) {
+            return rune.augment().equals(as);
+        }
+        if ("weapon".equals(rune.augment())) {
+            return base.isWeapon();
+        }
+        return rune.augment().equals(slotKey(base)) || "shield".equals(rune.augment()) && base.isShield();
+    }
+
+    /** 2026-11-08：增幅部位的中文。 */
+    public static String slotName(final String key) {
+        return switch (key) {
+            case "weapon" -> "武器";
+            case "head" -> "頭盔";
+            case "chest" -> "胸甲";
+            case "legs" -> "褲子";
+            case "feet" -> "鞋子";
+            case "shield" -> "盾牌";
+            case "buckler" -> "輕盾";
+            case "focus" -> "法器";
+            case "sceptre" -> "權杖";
+            default -> key;
+        };
     }
 
     /** 2026-11-04：slots 底下各部位的加成（可以沒有）。 */
@@ -372,7 +461,8 @@ public final class Runes {
      * 改那件武器自己數值的（攻速、物理增加、附加傷害、本地暴擊傷害加成）沒有武器可改，拿掉。
      */
     public static List<Line> linesOn(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
-        final List<Line> own = rune.on(base);
+        final String as = treatedAs(repository, data); // 2026-11-08（淵座束帶）：照「視為」的那個部位給
+        final List<Line> own = as != null ? rune.onSlot(as) : rune.on(base);
         if (!isSoulCore(rune.id())) {
             return own;
         }
@@ -412,6 +502,9 @@ public final class Runes {
     public static String socketProblem(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
         if (rune == null || base == null) {
             return null;
+        }
+        if (rune.isAugment()) { // 2026-11-08 照站長「增幅系統」
+            return augmentFits(repository, base, data, rune) ? null : "這個增幅只能嵌在" + slotName(rune.augment()) + "上";
         }
         if (!isSoulCore(rune.id()) && localFlat(repository, data, tw.exilecore.item.unique.VaalKeys.LOCAL_ONLY_SOUL_CORES) > 0) {
             return "這件物品只能鑲嵌魂核符文（魂核、遠古魂核）";
@@ -518,7 +611,8 @@ public final class Runes {
                 continue;
             }
             final double effect = effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
-            for (final Line line : rune.bondedOn(base)) {
+            final String as = treatedAs(repository, data); // 2026-11-08（淵座束帶）
+            for (final Line line : as != null ? rune.bondedOnSlot(as) : rune.bondedOn(base)) {
                 for (final AffixMod mod : line.mods()) {
                     final Modifier modifier = mod.toModifier(Map.of(), "羈絆：" + rune.name());
                     list.add(effect == 1 ? modifier
@@ -564,6 +658,9 @@ public final class Runes {
     public static boolean uselessOn(final ItemRepository repository, final ItemBase base, final ItemData data, final Rune rune) {
         if (base != null && rune != null && isSoulCore(rune.id()) && !base.isJewellery() && !linesOn(repository, base, data, rune).isEmpty()) {
             return false;
+        }
+        if (rune != null && treatedAs(repository, data) != null) {
+            return linesOn(repository, base, data, rune).isEmpty(); // 2026-11-08（淵座束帶）：照視為的部位看有沒有加成（魂核也能嵌）
         }
         return uselessOn(base, rune);
     }

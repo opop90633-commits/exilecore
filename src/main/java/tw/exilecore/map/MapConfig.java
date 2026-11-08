@@ -540,7 +540,7 @@ public final class MapConfig {
         final YamlNode drops = node.node("drops");
         final List<ExtraDrop> extra = new ArrayList<>();
         for (final YamlNode item : drops.list("extra")) {
-            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency"; // 2026-11-04：base（指定基底）
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : item.has("unique") ? "unique" : "currency"; // 2026-11-04：base（指定基底）
             final String id = item.requireString(kind).trim();
             extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
         }
@@ -806,7 +806,7 @@ public final class MapConfig {
                 final YamlNode node = bosses.node(id);
                 final List<ExtraDrop> extra = new ArrayList<>();
                 for (final YamlNode item : node.node("drops").list("extra")) {
-                    final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency";
+                    final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : item.has("unique") ? "unique" : "currency";
                     extra.add(new ExtraDrop(kind, item.requireString(kind).trim(), Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
                 }
                 // 2026-11-04 照站長「絕境 Boss 塞試煉大師的傳奇，機率 1%」：drops.unique_chance——uniques.yml 的 sources 寫這個代號的傳奇每一件各自擲
@@ -1014,7 +1014,7 @@ public final class MapConfig {
         final YamlNode drops = node.node("drops");
         final List<ExtraDrop> extra = new ArrayList<>();
         for (final YamlNode item : drops.list("extra")) {
-            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : "currency"; // 2026-11-04：base（指定基底）
+            final String kind = item.has("support") ? "support" : item.has("skill") ? "skill" : item.has("base") ? "base" : item.has("unique") ? "unique" : "currency"; // 2026-11-04：base（指定基底）
             final String id = item.requireString(kind).trim();
             extra.add(new ExtraDrop(kind, id, Math.max(1, item.integer("amount", 1)), clamp01(item.decimal("chance", 1))));
         }

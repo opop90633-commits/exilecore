@@ -202,6 +202,10 @@ public final class Stash {
     public void setCurrency(final String rawId, final int amount) {
         // 2026-10-27：拿掉的通貨（星紋蝕刻器）讀進來併進現在的那種（礪鋒石）
         final String id = tw.exilecore.currency.CurrencyRepository.resolve(rawId);
+        if (tw.exilecore.currency.RetiredCurrencies.retired(id)) {
+            currency.remove(id); // 2026-11-08 照站長：刪掉的通貨（萬燈夜素材、舊催化劑）不收，下次存檔就不見了
+            return;
+        }
         if (!id.equals(rawId)) {
             if (amount > 0) {
                 currency.merge(id, amount, Integer::sum);

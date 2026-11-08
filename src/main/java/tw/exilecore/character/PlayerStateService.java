@@ -1357,6 +1357,20 @@ public final class PlayerStateService {
             // 2026-10（PoE2）：蒸餾是「配置這個核心」，天賦樹上已經點了就不再多給一份；2026-11-04：掙扎吶喊的每一個各自看
             modifiers = withoutAllocatedInstils(state, data.get(), modifiers);
         }
+        // 2026-11-08 照站長「譫妄精髓」（PoE2 Essence of Delirium「分配一個隨機核心天賦」）：詞綴抽到的基石，天賦樹上沒點的當作配置了
+        final List<String> keystones = tw.exilecore.item.UniquePicks.affixKeystones(plugin.items().repository(), data.get());
+        if (!keystones.isEmpty() && plugin.passives() != null && plugin.passives().tree() != null) {
+            modifiers = new ArrayList<>(modifiers);
+            for (final String id : keystones) {
+                final tw.exilecore.passive.PassiveNode keystone = plugin.passives().tree().node(id);
+                if (keystone == null || keystone.type() != tw.exilecore.passive.PassiveNode.Type.KEYSTONE || state.passives().contains(id)) {
+                    continue;
+                }
+                for (final Modifier mod : keystone.modifiers()) {
+                    modifiers.add(new Modifier(mod.stat(), mod.type(), mod.value(), mod.tags(), "妄念星魄：" + keystone.name()));
+                }
+            }
+        }
         if (offHandSceptre) {
             // 副手的權杖只給精魂、詞綴與賦予的技能；武器本身的傷害、攻速、暴擊（本地）不算（攻擊用主手的獸魂符）
             // 2026-10-27 雙持（巨人之血）：副手武器本身的數值只在副手出手時算（DualWield，算屬性表時另外取）

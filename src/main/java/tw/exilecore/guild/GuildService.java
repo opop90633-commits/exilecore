@@ -1616,6 +1616,7 @@ public final class GuildService {
             for (final org.bukkit.inventory.ItemStack stack : stash.page(page)) {
                 try {
                     any |= stack != null && plugin.items().refresh(stack);
+                    any |= stack != null && plugin.currencies() != null && plugin.currencies().retired(stack) && plugin.currencies().refresh(stack); // 2026-11-08：刪掉的通貨清掉
                 } catch (final RuntimeException ignored) {
                     // 一件補不了就跳過，不能讓整個公會倉庫打不開
                 }

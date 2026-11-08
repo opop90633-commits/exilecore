@@ -157,7 +157,7 @@ class ExclusiveDropTest {
                 assertFalse(skills.supportsUpTo(3).contains(support), support.id() + "：未切割輔助寶石切不出來");
             }
         }
-        assertEquals(15 + 21 + 2 + 9, exclusive, /* 2026-11-04：＋三隻事件 Boss 各三顆 */ "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆＋七隻事件巔峰 Boss 各三顆、淵鯨再兩顆（2026-10-18）");
+        assertEquals(15 + 21 + 2 + 9 + 3, exclusive, /* 2026-11-08：＋星坑 Boss 三顆；2026-11-04：＋三隻事件 Boss 各三顆 */ "四個終局各一顆＋兩顆極境專屬＋八顆巔峰（覺醒之主・虛星）專屬（2026-10-15：＋碎界擴散）＋星骸之海的淵鯨一顆＋七隻事件巔峰 Boss 各三顆、淵鯨再兩顆（2026-10-18）");
         assertEquals(List.of("ebb_flow_resonance", "dark_current_pull", "whale_exhale"), skills.supportsFrom("abyss_whale").stream().map(SupportDefinition::id).toList()); // 2026-10-18：＋暗流拖曳、鯨息
         for (final String finalId : FINALS) {
             final List<SupportDefinition> own = skills.supportsFrom(finalId);

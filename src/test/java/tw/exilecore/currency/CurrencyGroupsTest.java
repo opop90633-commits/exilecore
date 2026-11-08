@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** 通貨袋、倉庫通貨頁的分組：每一組放得進一頁（45 格）。 */
@@ -28,7 +29,7 @@ class CurrencyGroupsTest {
         assertTrue(CurrencyGroups.overfull(currencies.all()).isEmpty());
         assertEquals(CurrencyGroups.Group.BASIC, CurrencyGroups.of(currencies.get("glimmer_orb")));
         assertEquals(CurrencyGroups.Group.ESSENCE, CurrencyGroups.of(currencies.get("essence_body")));
-        assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.of(currencies.get("catalyst_resist")));
+        assertEquals(CurrencyGroups.Group.MECHANIC, CurrencyGroups.of(currencies.get("catalyst_fire")));
         // 2026-10-26：星籤自己一組（照 PoE2 每種通貨分開之後一頁放不下）；這次之前跟催化劑同一組
         assertEquals(CurrencyGroups.Group.OMEN, CurrencyGroups.of(currencies.get("omen_sinistral")));
         assertEquals(CurrencyGroups.Group.ESSENCE, CurrencyGroups.of(currencies.get("perfect_essence_body")));
@@ -58,7 +59,7 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.RUNES, CurrencyGroups.of(currencies.get("rune_iron_lesser")));
         assertEquals(CurrencyGroups.Group.RUNES_HIGH, CurrencyGroups.of(currencies.get("rune_vision_perfect")));
         assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES).size());
-        assertEquals(15 + 4, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.CORES).size()); // 2026-11-07：＋遠古魂核 4 顆；2026-11-04：魂核符文一組
+        assertEquals(15 + 4 + 6, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.CORES).size()); // 2026-11-08：＋增幅 6 顆； 2026-11-07：＋遠古魂核 4 顆；2026-11-04：魂核符文一組
         assertEquals(31, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.IDOLS).size()); // 2026-11-04：魔偶符文一組
         assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES_HIGH).size());
         // 未切割寶石（2026-10 算通貨）：技能寶石 1–21 級、輔助寶石 1–3 階各一種
@@ -75,8 +76,9 @@ class CurrencyGroupsTest {
         // 2026-11-02：多一片傳奇石板（殘酷霸權，PoE2 Cruel Hegemony）
         // 2026-11-03：星潮祭的貝殼、珍珠（event_ 開頭，自動分進這組）
         // 2026-11-07：深坑鑰匙、藍晶（星脈深坑）
-        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1 + 2 + 2, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
-        assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_candy")));
+        // 2026-11-08：萬燈夜的萬燈糖、魂燈芯刪掉了（-2）
+        assertEquals(7 + 4 + 3 + 9 + 4 + 4 + 1 + 2 + 2 - 2, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.KEYS).size());
+        assertNull(currencies.get("event_candy"));
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_shell")));
         assertEquals(CurrencyGroups.Group.KEYS, CurrencyGroups.of(currencies.get("event_pearl")));
         // 一打開先看有東西的那組；都沒有看一般通貨

@@ -275,6 +275,10 @@ public final class CurrencyService {
      * @return 有沒有改到物品
      */
     public boolean refresh(final ItemStack stack) {
+        if (retired(stack)) {
+            stack.setAmount(0); // 2026-11-08 照站長：刪掉的通貨（萬燈夜素材、舊催化劑）直接清掉，不補償
+            return true;
+        }
         final Optional<CurrencyType> type = read(stack);
         if (type.isEmpty()) {
             return false;
@@ -298,6 +302,12 @@ public final class CurrencyService {
             return true;
         }
         return tag(stack, type.get());
+    }
+
+    /** 2026-11-08：是不是已經刪掉的通貨（{@link RetiredCurrencies}；currencies.yml 已經沒有，read 讀不到）。 */
+    public boolean retired(final ItemStack stack) {
+        return stack != null && !stack.isEmpty()
+                && RetiredCurrencies.retired(stack.getPersistentDataContainer().get(currencyKey, PersistentDataType.STRING));
     }
 
     public Optional<CurrencyType> read(final ItemStack stack) {

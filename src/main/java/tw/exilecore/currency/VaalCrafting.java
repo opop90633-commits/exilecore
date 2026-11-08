@@ -56,8 +56,11 @@ public final class VaalCrafting {
     }
 
     /** 2026-11-07：這個符文代號是不是遠古增幅（假說；嵌上去拿不下來，萃取石也不還）。 */
+    /** 2026-11-08 照站長「增幅系統」：增幅的符文代號開頭（runes.yml 的 augment_＊）。 */
+    public static final String AUGMENT_PREFIX = "augment_";
+
     public static boolean socketBound(final String runeId) {
-        return runeId != null && runeId.startsWith(THESIS_PREFIX);
+        return runeId != null && (runeId.startsWith(THESIS_PREFIX) || runeId.startsWith(AUGMENT_PREFIX)); // 2026-11-08：增幅（梅德偉的照料…）也嵌死
     }
 
     /** 用在一顆通貨（魂核、石板）上：一疊只動一顆，結果進背包。 */

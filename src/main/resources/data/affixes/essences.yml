@@ -430,3 +430,38 @@ ess_phys_as_chaos:
     - { tier: 1, ilvl: 57, weight: 1, value: [10, 15] }
   mods:
     - { stat: taken.physical_as_chaos, type: FLAT, value: "{value}" }
+
+# 2026-11-08 照站長「裂痕／譫妄／深淵／極恐精髓塞各自的 Boss，1% 掉落」：PoE2 的腐化精髓（Essence of the Breach／Delirium／Horror；
+#   Essence of the Abyss 沒有自己的詞綴，換成隱匿詞綴，見 currencies.yml 的 essence_abyss）
+ess_breach_quality:
+  type: prefix
+  group: local_max_quality
+  spawn_tags: [essence, ring, amulet]
+  names: [裂隙的]
+  text: "+{value}% 最大品質"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [20, 20] }
+  mods:
+    - { stat: local.max_quality, type: FLAT, value: "{value}" }
+
+ess_delirium_keystone:
+  type: prefix
+  group: essence_random_keystone
+  spawn_tags: [essence, body]
+  names: [妄念的]
+  text: "配置 1 個隨機的基石天賦"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, seed: [1, 9999] }   # seed 決定抽到第幾個基石（不顯示、不是修飾器的數值；神聖石重骰會換一個）
+  mods:
+    - { stat: local.keystone_pick, type: FLAT, value: 1 }
+
+ess_horror_socketed:
+  type: suffix
+  group: local_socketed_item_effect
+  spawn_tags: [essence, leggings, boots]   # 2026-11-08：原作的手套 = 我們的褲子
+  names: [極恐的]
+  text: "嵌在這件物品上的符文效果增加 {value}%"
+  tiers:
+    - { tier: 1, ilvl: 65, weight: 1, value: [60, 60] }
+  mods:
+    - { stat: local.rune_effect, type: INCREASED, value: "{value}" }

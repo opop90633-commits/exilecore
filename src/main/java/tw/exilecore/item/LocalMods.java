@@ -135,6 +135,7 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
         }
         if (data.identified()) {
             final double unveiledScale = 1 + ItemStats.unveiledMagnitude(repository, data); // 比例（0.8 = 80%）
+            final Map<Catalyst, Double> magnitudes = ItemStats.magnitudes(repository, data); // 2026-11-08（索魯德的強權）
             for (final RolledAffix rolled : data.affixes()) {
                 final Affix affix = repository.affix(rolled.id());
                 if (affix == null) {
@@ -145,6 +146,10 @@ public record LocalMods(double physical, double attackSpeed, double crit, Map<Da
                         Modifier modifier = mod.toModifier(rolled.vars(), affix.id(), rolled.fixedScale()); // 2026-11-01：腐化的固定值倍率
                         if (unveiledScale != 1 && Veiled.isUnveiled(rolled.id())) {
                             modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * unveiledScale, modifier.tags(), modifier.source());
+                        }
+                        final double magnitude = ItemStats.magnitudeScale(magnitudes, modifier);
+                        if (magnitude != 1) {
+                            modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * magnitude, modifier.tags(), modifier.source());
                         }
                         all.add(modifier);
                     }

@@ -60,6 +60,43 @@ public final class UniquePicks {
         keystoneLines = lines;
     }
 
+    /** 2026-11-08（譫妄精髓）：詞綴上決定抽哪個基石的變數。 */
+    public static final String KEYSTONE_SEED = "seed";
+
+    /** 2026-11-08（譫妄精髓）：第 value 個基石（value % 基石數，照代號排序）；候選沒接上回傳 null。 */
+    public static String keystoneAt(final int value) {
+        final Pool pool = keystones;
+        if (pool == null || pool.ids().isEmpty()) {
+            return null;
+        }
+        return pool.ids().get(Math.floorMod(value, pool.ids().size()));
+    }
+
+    /** 2026-11-08（譫妄精髓）：這件物品詞綴抽到的基石（local.keystone_pick；照詞綴順序）。 */
+    public static List<String> affixKeystones(final ItemRepository repository, final ItemData data) {
+        final List<String> out = new ArrayList<>();
+        if (repository == null || data == null) {
+            return out;
+        }
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final AffixMod mod : affix.mods()) {
+                if (tw.exilecore.item.unique.UniqueStats.LOCAL_KEYSTONE_PICK.equals(mod.stat())) {
+                    // 抽第幾個看這條詞綴擲到的 seed（文字不顯示）；沒有 seed 的照物品 UUID
+                    final Integer seed = rolled.vars().get(KEYSTONE_SEED);
+                    final String id = keystoneAt(seed != null ? seed : data.uuid() == null ? 0 : data.uuid().hashCode());
+                    if (id != null && !out.contains(id)) {
+                        out.add(id);
+                    }
+                }
+            }
+        }
+        return out;
+    }
+
     /** 2026-11-07：基石的說明行（沒接上、不認得回傳空的）。 */
     public static List<String> keystoneLines(final String id) {
         final Function<String, List<String>> lines = keystoneLines;

@@ -260,6 +260,8 @@ skills:
   mask_scatter: b   # 2026-11-04 事件 Boss 專屬
   phalanx_breach: r   # 2026-11-04 事件 Boss 專屬
   volley_of_ages: g   # 2026-11-04 事件 Boss 專屬
+  crystal_spike_burst: b   # 2026-11-08 星坑 Boss 專屬
+  shadow_volley_shafts: g   # 2026-11-08 星坑 Boss 專屬
   star_spell_totem: r
   critical_guide_star: b
   curse_ring: b   # 2026-10-29 照 PoE2 Blasphemy（咒環，智慧）
@@ -451,6 +453,9 @@ supports:
   sentence_stun: r   # 2026-11-04 事件 Boss 專屬
   heavier_sentence: b   # 2026-11-04 事件 Boss 專屬
   faceless_blind: g   # 2026-11-04 事件 Boss 專屬
+  burrow_through: g   # 2026-11-08 星坑 Boss 專屬
+  eternal_night: g   # 2026-11-08 星坑 Boss 專屬
+  azurite_resonance: b   # 2026-11-08 星坑 Boss 專屬
   oblivion_chaos: b   # 2026-11-04 事件 Boss 專屬
   mist_spread: b   # 2026-11-04 事件 Boss 專屬
   time_stilled: b   # 2026-11-04 事件 Boss 專屬

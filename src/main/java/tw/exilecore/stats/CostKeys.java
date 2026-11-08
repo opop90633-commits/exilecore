@@ -24,6 +24,8 @@ public final class CostKeys {
     public static final String MANA_COST_EFFICIENCY = "skill.mana_cost_efficiency";
     /** INCREASED：生命消耗效率（只算生命）。 */
     public static final String LIFE_COST_EFFICIENCY = "skill.life_cost_efficiency";
+    /** 2026-11-08 照站長（增幅・沃拉娜的殘殺「增加 x% 怒氣消耗效率」）：INCREASED：怒氣消耗效率（只算怒氣）。 */
+    public static final String RAGE_COST_EFFICIENCY = "skill.rage_cost_efficiency";
 
     /** 效率最低算到減少 90%（消耗最多 10 倍），不會除以 0 或變負的。 */
     private static final double MIN_DIVISOR = 0.1;
@@ -44,6 +46,11 @@ public final class CostKeys {
     /** 生命消耗的效率（消耗效率 ＋ 生命消耗效率）。 */
     public static double lifeEfficiency(final StatSheet sheet, final Set<String> tags) {
         return sheet == null ? 0 : sheet.increased(COST_EFFICIENCY, tags) + sheet.increased(LIFE_COST_EFFICIENCY, tags);
+    }
+
+    /** 2026-11-08：怒氣消耗的效率（消耗效率 ＋ 怒氣消耗效率）。 */
+    public static double rageEfficiency(final StatSheet sheet, final Set<String> tags) {
+        return sheet == null ? 0 : sheet.increased(COST_EFFICIENCY, tags) + sheet.increased(RAGE_COST_EFFICIENCY, tags);
     }
 
     /** 其他消耗（怒氣…）的效率：只吃消耗效率。 */

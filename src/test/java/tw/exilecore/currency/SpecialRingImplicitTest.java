@@ -38,7 +38,7 @@ class SpecialRingImplicitTest {
         assertEquals(0, items.maxQualityBonus("jring_dusk"));
         final ItemData ring = generator.generate(items.base("jring_breach"), Rarity.NORMAL, 60, new SplittableRandom(3));
         ring.setIdentified(true);
-        final CurrencyType resist = currencies.get("catalyst_resist");
+        final CurrencyType resist = currencies.get("catalyst_fire"); // 2026-11-08：抗性催化劑（舊）刪掉了
         final int max = Crafting.catalystMax(items, ring);
         assertEquals(40, max);
         for (int i = 0; i < 20; i++) {

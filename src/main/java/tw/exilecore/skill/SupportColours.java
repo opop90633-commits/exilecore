@@ -53,7 +53,7 @@ public final class SupportColours {
                     + "split_totem_ii steady_guard_ii iron_grit_ii tread_quake merged_orbit split_wound unflinching_will never_broken dig_weakness "
                     + "stand_fast land_uplift_ii front_line_ii",
             GREEN, // PoE2 RePoE 綠色
-            "faceless_blind " // 2026-11-04 事件 Boss 專屬
+            "faceless_blind burrow_through eternal_night " // 2026-11-04 事件 Boss 專屬；2026-11-08 星坑 Boss 專屬
                     + "minion_speed chain full_stars hug_range hug_range_ii conduction slay_cut_ii electrocute "
                     + "poison_temper_iii quick_strike swift_bolt_iii split_shot thunder_pass far_pierce_ii "
                     + "light_split blazing_volt pierce thunder_smite rapid_corrode_iii "
@@ -77,7 +77,7 @@ public final class SupportColours {
                     + "volt_load clever_break flawless_form breach_hit chase_strike_iii withdraw_strike_iii redeploy_ii bounce_shot_iii "
                     + "rise_again_iii slow_vigor light_shadow unrest_stir shadowless_step good_chance_ii",
             BLUE, // PoE2 RePoE 藍色
-            "heavier_sentence oblivion_chaos mist_spread time_stilled " // 2026-11-04 事件 Boss 專屬
+            "heavier_sentence oblivion_chaos mist_spread time_stilled azurite_resonance " // 2026-11-04 事件 Boss 專屬；2026-11-08 星坑 Boss 專屬（藍晶共振）
                     + "grudge_cinder quake_zone decay_infuse frost_grudge_howl chill_through condense_power charged_chant fine_control abyss_floor_chill element_corps "
                     + "purify_essence quick_chant ice_seal zone_expand mana_draw twin_chant "
                     // 自己歸類（法術、冰冷、混沌、召喚、詛咒、光環、銳星、暴擊率）

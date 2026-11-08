@@ -226,6 +226,13 @@ public final class UniqueStats {
     public static final String LOCAL_RUNE_EFFECT = "local.rune_effect";
     /** 2026-11-04（瑪哈薩多的陰謀，PoE2 Mahuxotl's Machination）：INCREASED：嵌在這件上的魂核符文（core_＊）效果增加 x%（Runes.effect 讀）。 */
     public static final String LOCAL_CORE_EFFECT = "local.core_effect";
+    /** 2026-11-08 照站長「裂痕精髓」（PoE2 Essence of the Breach「+20% 最大品質」）：FLAT：這件的品質上限多 x%（Crafting.catalystMax 讀）。 */
+    public static final String LOCAL_MAX_QUALITY = "local.max_quality";
+    /**
+     * 2026-11-08 照站長「譫妄精髓」（PoE2 Essence of Delirium「分配一個隨機核心天賦」，胸甲）：FLAT：抽到天賦樹上第幾個基石
+     * （數值 % 基石數；UniquePicks.keystoneAt）。穿著時給那個基石的效果（天賦樹上已經點了的不重複給；PlayerStateService.collect）。
+     */
+    public static final String LOCAL_KEYSTONE_PICK = "local.keystone_pick";
     /** 2026-11-04（混沌一瞥，PoE2 Glimpse of Chaos）：FLAG：你的混沌抗性是 0（DamageCalculator、角色面板）。 */
     public static final String FLAG_CHAOS_RES_ZERO = "flag.chaos_res_zero";
     /** 2026-11-04（背信忘義，PoE2 Perfidy）：FLAT：x% 機率避免擊中的某一種傷害（後面接 physical／fire／cold／lightning／chaos；DamageCalculator 擲）。 */
@@ -492,7 +499,7 @@ public final class UniqueStats {
 
     /** 這件物品自己的（local.）屬性：不進角色屬性表，由 Runes、ItemStats 讀物品的詞綴。 */
     public static final Set<String> LOCAL_ITEM = union(Set.of(LOCAL_RUNE_EFFECT, LOCAL_RUNE_AS_SHIELD, LOCAL_REQUIREMENT_STR,
-            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT, LOCAL_CORE_EFFECT, LOCAL_MODIFIABLE_CORRUPTED, LOCAL_INSTIL_EXTRA, LOCAL_SOCKET_MODS),
+            LOCAL_REQUIREMENT_DEX, LOCAL_REQUIREMENT_INT, LOCAL_CORE_EFFECT, LOCAL_MODIFIABLE_CORRUPTED, LOCAL_MAX_QUALITY, LOCAL_KEYSTONE_PICK, tw.exilecore.item.Runes.LOCAL_RUNE_AS, LOCAL_INSTIL_EXTRA, LOCAL_SOCKET_MODS),
             VaalKeys.LOCAL); // 2026-11-07：瓦爾傳奇的本地屬性
 
     private static Set<String> union(final Set<String> a, final Set<String> b) {
@@ -512,6 +519,7 @@ public final class UniqueStats {
         keys.addAll(VaalKeys.STATS); // 2026-11-07：瓦爾傳奇、遠古魂核的新屬性鍵
         keys.addAll(VaalKeys.LOCAL);
         keys.addAll(WardenKeys.STATS); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：遺忘看守的新屬性鍵
+        keys.add(tw.exilecore.item.Runes.LOCAL_RUNE_AS); // 2026-11-08（淵座束帶）：視為哪個部位
         for (final tw.exilecore.stats.DamageType from : tw.exilecore.stats.DamageType.values()) {
             keys.add(AVOID_HIT + from.tag()); // 2026-11-04（背信忘義）
             // 2026-10-27（舞影外套）：受到的某種傷害增加／減少（減益用的 debuff.taken.類型，傷害計算照類型讀）

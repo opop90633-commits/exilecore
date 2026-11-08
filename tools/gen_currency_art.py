@@ -729,9 +729,11 @@ CATALYST = [  # 圓底燒瓶
     '......oooo......',
     '................',
 ]
+# 2026-11-08 照站長：抗性、暴擊、元素、物理與混沌催化劑（舊）刪掉了（這次之前 'catalyst_resist': 'e0a020'、'catalyst_crit': 'f0d82a'、
+#   'catalyst_elemental': '3ab0e0'、'catalyst_phys_chaos': '8a3ac8'）
 CATALYSTS = {  # 代號: 液體顏色（瓶子固定淡藍玻璃）
-    'catalyst_resist': 'e0a020', 'catalyst_life': 'd0303a', 'catalyst_attack': 'c86a2a', 'catalyst_caster': '6a5ae0',
-    'catalyst_crit': 'f0d82a', 'catalyst_elemental': '3ab0e0', 'catalyst_phys_chaos': '8a3ac8', 'catalyst_attribute': '5fbf5f',
+    'catalyst_life': 'd0303a', 'catalyst_attack': 'c86a2a', 'catalyst_caster': '6a5ae0',
+    'catalyst_attribute': '5fbf5f',
     'catalyst_speed': '3ac0a0', 'catalyst_defence': '8a8aa0',
 }
 # 2026-10-21：石板（以前星籤畫在這上面，2026-10-27 星籤改畫成籤，見下面的 OMEN_TAG；現在只剩先驅石板用）。

@@ -55,6 +55,7 @@ class StonefistTest {
     static final Set<String> KEPT = Set.of("unveiled_d_armour_attack", "unveiled_d_armour_spell", "unveiled_d_armour_minion",
             "unveiled_d_armour_thorns", "unveiled_d_curse_area", "unveiled_d_bleed_chance", "unveiled_d_poison_chance",
             "unveiled_d_ailment_effect", "unveiled_d_gloves_extra_frenzy",
+            "ess_horror_socketed", // 2026-11-08 極恐星魄：本地的符文效果（磐石之拳沒有符文孔）
             // 2026-11-03 照站長＋PoB2：補的手套→護腿褻瀆詞綴
             "unveiled_d_leggings_immobilise", "unveiled_d_leggings_cast_full_life", "unveiled_d_leggings_incision",
             "unveiled_d_leggings_arcane_surge_crit",

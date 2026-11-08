@@ -8402,6 +8402,47 @@ skills:
       - { stat: freeze.buildup, type: INCREASED, value: 30 }
       - { stat: maim.chance, type: FLAT, value: 20 }
 
+  # 2026-11-08 照站長「星坑 BOSS 新增專屬的傳奇技能與輔助 1% 機率掉落」：晶淵之王・黯冕（delve_boss）專屬，自己設計的主題寶石（藍晶、黯影）
+  crystal_spike_burst:   # 數值照 morning_light_column（同一種做法的終局專屬，PoE2 基準 Comet）
+    name: 晶刺迸裂
+    description: 準心指的地方，地底爆出一叢藍晶刺；一半物理、一半冰冷，凍結累積得快。晶淵之王專屬。
+    icon: AMETHYST_SHARD
+    type: spell
+    tier: 14
+    source: delve_boss
+    tags: [spell, area, physical, cold]
+    mechanic: impact
+    impact: { range: 24, delay: 0.6, radius: [3.0, 3.4] }
+    damage: [[14, 21], [18, 28], [25, 38], [33, 49], [41, 63], [51, 77], [63, 94], [76, 113], [90, 135], [106, 160], [125, 188], [146, 219], [171, 255], [198, 297], [229, 343], [264, 396], [305, 457], [351, 527], [404, 606], [464, 697], [534, 801], [613, 920], [704, 1056], [809, 1213], [929, 1394], [1067, 1601], [1227, 1840], [1411, 2117], [1624, 2436], [1870, 2806], [2156, 3234], [2487, 3731], [2872, 4308], [3320, 4980], [3841, 5762], [4450, 6675], [5161, 7741], [5993, 8989], [6967, 10451], [8110, 12165]]
+    damage_types: { physical: 0.5, cold: 0.5 }
+    cast_time: 1.1
+    effectiveness: 0.59
+    mana: [10, 12, 14, 16, 18, 21, 24, 27, 31, 35, 40, 44, 50, 55, 61, 68, 76, 84, 93, 102, 113, 124, 137, 150, 165, 181, 199, 218, 238, 261, 285, 312, 340, 371, 405, 441, 480, 523, 569, 619]
+    visual: falling_star
+    modifiers:
+      - { stat: spell.base_crit, type: FLAT, value: 9 }
+      - { stat: freeze.buildup, type: INCREASED, value: 40 }
+
+  shadow_volley_shafts:   # 數值照 volley_of_ages（同一種做法的終局專屬）：一次 5 支，每支 ×0.5
+    name: 黯影齊射
+    description: 拉一次弓，扇形射出 5 支黯影箭；一半物理轉為混沌，打中的敵人留下 1 層凋零。晶淵之王專屬。
+    icon: ECHO_SHARD
+    type: attack
+    tier: 14
+    source: delve_boss
+    tags: [attack, projectile, chaos, physical]
+    weapons: [bow]
+    mechanic: projectile
+    projectile: { arrow: true, speed: 3.2, range: 40 }
+    convert: { chaos: 0.5 }
+    attack_speed: 1.0
+    effectiveness: [0.4, 0.44, 0.48, 0.53, 0.57, 0.61, 0.66, 0.69, 0.73, 0.77, 0.81, 0.84, 0.89, 0.93, 0.98, 1.02, 1.08, 1.13, 1.19, 1.25, 1.31, 1.38, 1.45, 1.51, 1.59, 1.67, 1.75, 1.84, 1.94, 2.03, 2.13, 2.24, 2.35, 2.47, 2.6, 2.73, 2.86, 3.0, 3.15, 3.31]
+    mana: [6, 7, 8, 9, 10, 11, 12, 14, 15, 17, 19, 21, 23, 25, 27, 29, 32, 35, 37, 40, 44, 47, 51, 55, 59, 63, 68, 73, 78, 83, 89, 95, 102, 109, 116, 124, 132, 141, 150, 159]
+    visual: venom_etch_arrow
+    modifiers:
+      - { stat: skill.projectiles, type: FLAT, value: 4 }   # 5 支
+      - { stat: withered.on_hit, type: FLAT, value: 1 }
+
   # ---- 2026-10：主要寶石（照 PoE2 的 Meta Gem：法術圖騰、Cast on X）----
   # 主要寶石本身不打人，用的是插在它裡面的所有法術（2026-10-22；以前是面板上「它後面那一格」；2026-10-26／27 照 PoE2 每一孔都能放）；其他孔的輔助都套在它們上面。
   # meta 區塊：kind（totem 法術圖騰；crit／ailment／dodge／barrier／minion_death／melee_kill／spell_cast 常駐、保留精魂）、

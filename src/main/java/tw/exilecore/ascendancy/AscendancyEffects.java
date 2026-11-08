@@ -303,7 +303,7 @@ public final class AscendancyEffects implements Listener {
         int rage = 0;
         final double rageCost = flat(sheet, AscKeys.RAGE_COST);
         if (rageCost > 0 && definition.mechanic() != tw.exilecore.skill.Mechanic.AURA && !definition.hidden()) {
-            rage = (int) Math.round(rageCost / tw.exilecore.stats.CostKeys.divisor(tw.exilecore.stats.CostKeys.otherEfficiency(sheet, definition.tags()))); // 2026-10-27 照 PoE2：怒氣消耗也吃消耗效率
+            rage = (int) Math.round(rageCost / tw.exilecore.stats.CostKeys.divisor(tw.exilecore.stats.CostKeys.rageEfficiency(sheet, definition.tags()))); // 2026-10-27 照 PoE2：怒氣消耗也吃消耗效率；2026-11-08：＋怒氣消耗效率（增幅・沃拉娜）
             if (plugin(effects).skills() != null && plugin(effects).skills().resources().rage(player) < rage) {
                 return new Cost((int) Math.round(mana), flame, rage, flask, "怒氣不足（怒之泉湧：" + definition.name() + "要 " + rage + " 怒氣）");
             }

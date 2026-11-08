@@ -73,8 +73,8 @@ class CraftingTest {
                     || type.operation() == CurrencyOperation.OMEN ? type.dropWeight() : 0, "機制的通貨怪物不掉");
         }
         // 2026-10-26 照 PoE2 0.5：19 種精髓各分次級、一般、高階（57），15 種有完美、狂亂星魄 1、我們自己的移速與能盾 2 = 75；這次之前 16
-        assertEquals(79, essences); // 2026-11-06：＋4 顆完美精髓（混／火／冰／電抗），這次之前 75； 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
-        assertEquals(Catalyst.values().length, catalysts, "每一種催化劑一顆（13 種 PoE2 的＋4 種舊的）");
+        assertEquals(83, essences); // 2026-11-08：＋裂隙、妄念、深淵、極恐星魄（腐化）； 2026-11-06：＋4 顆完美精髓（混／火／冰／電抗），這次之前 75； 2026-10：＋能盾星魄；2026-10-15：＋炎擊、霜擊、雷擊星魄
+        assertEquals(Catalyst.values().length - 4, catalysts, "每一種催化劑一顆（13 種 PoE2 的；2026-11-08 舊的 4 種刪掉了，Catalyst 留著給已經加過品質的飾品用）");
         assertEquals(26, omens); // 2026-10-26 照 PoE2 每種通貨分開、補上改造裝備用的星籤；這次之前 6
     }
 
@@ -235,7 +235,8 @@ class CraftingTest {
 
     @Test
     void catalystScalesOneCategory() {
-        final CurrencyType resist = currencies.get("catalyst_resist");
+        // 2026-11-08：抗性催化劑（舊）刪掉了，改用火焰催化劑（火焰抗性也算火焰那一類）
+        final CurrencyType resist = currencies.get("catalyst_fire");
         final ItemData ring = generator.generate(items.base("iron_ring"), Rarity.RARE, 60, new SplittableRandom(8));
         ring.setIdentified(true);
         ring.affixes().clear();
@@ -244,7 +245,7 @@ class CraftingTest {
         assertTrue(resist.canApply(ring, generator));
         Crafting.applyCatalyst(resist, ring);
         Crafting.applyCatalyst(resist, ring);
-        assertEquals("resist", ring.catalyst());
+        assertEquals("fire", ring.catalyst());
         // 2026-10-27 照 PoE2：稀有物品每顆催化劑 +1%（這次之前 +5%，兩顆是 10）
         assertEquals(2, ring.quality());
         double fire = 0;
@@ -257,7 +258,7 @@ class CraftingTest {
             }
         }
         assertEquals(40.8, fire, 1e-9, "抗性 ×1.02");
-        assertEquals(60, life, 1e-9, "生命不受抗性催化劑影響");
+        assertEquals(60, life, 1e-9, "生命不受火焰催化劑影響");
         // 換種類：品質重來
         Crafting.applyCatalyst(currencies.get("catalyst_life"), ring);
         assertEquals("life", ring.catalyst());

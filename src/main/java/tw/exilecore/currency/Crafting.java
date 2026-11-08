@@ -257,6 +257,9 @@ public final class Crafting {
         if (base.isMap()) {
             return "星魄不能用在地圖上";
         }
+        if (abyssEssence(type)) {
+            return abyssProblem(type, data, generator, base);
+        }
         final Affix affix = essenceAffix(generator, type, base, null);
         if (affix == null) {
             return "設定錯了：找不到詞綴 " + type.affix();
@@ -385,6 +388,11 @@ public final class Crafting {
      */
     public static boolean applyEssence(final CurrencyType type, final ItemData data, final ItemGenerator generator, final RandomGenerator random,
                                        final CurrencyType omen) {
+        if (abyssEssence(type)) {
+            tw.exilecore.item.Veiled.replaceWithVeiled(data, generator, random); // 2026-11-08（深淵星魄）
+            data.setIdentified(true);
+            return false;
+        }
         final Affix affix = essenceAffix(generator, type, generator.repository().base(data.base()), random);
         final CurrencyType.EssenceTier essenceTier = type.essenceTier();
         boolean omenUsed = false;
@@ -459,6 +467,31 @@ public final class Crafting {
         return best != null ? best : worst;
     }
 
+    /**
+     * 2026-11-08 照站長「深淵精髓塞深淵 BOSS」（PoE2 Essence of the Abyss）：原作是隨機移除一條、加上「深淵領主印記」，
+     * 之後褻瀆（我們的揭露石／隱匿詞綴）時印記一定換成褻瀆詞綴。我們直接換成一條隱匿詞綴（帶去營地揭露，三選一），
+     * 少走一步、結果一樣：affix 寫隱匿詞綴的就是這種。
+     */
+    static boolean abyssEssence(final CurrencyType type) {
+        return type.affix() != null && type.affix().contains(tw.exilecore.item.Veiled.VEILED_PREFIX);
+    }
+
+    private static String abyssProblem(final CurrencyType type, final ItemData data, final ItemGenerator generator, final ItemBase base) {
+        if (data.rarity() != Rarity.RARE) {
+            return type.name() + "只能用在稀有物品上（隨機移除一條，換成一條隱匿詞綴）";
+        }
+        if (!tw.exilecore.item.Veiled.hasUnveiledFor(base, generator.repository())) {
+            return base.slot().displayName() + "沒有隱匿詞綴可以出";
+        }
+        if (tw.exilecore.item.Veiled.hasSpecial(data)) {
+            return "這件已經有隱匿或揭露詞綴了（一件只能有一條）";
+        }
+        if (tw.exilecore.item.Veiled.replaceable(data, generator).isEmpty()) {
+            return "沒有能移除的詞綴（破裂的拿不掉）";
+        }
+        return null;
+    }
+
     /** 完美、腐化星魄：那條詞綴最好的一階（星魄專屬的詞綴只有一階）。 */
     static AffixTier bestTier(final Affix affix) {
         AffixTier best = affix.tiers().getFirst();
@@ -517,7 +550,23 @@ public final class Crafting {
 
     /** 2026-11-04 照 PoE2 的裂隙指環：這件飾品的品質上限（20 + 基底的 max_quality_bonus）。 */
     public static int catalystMax(final tw.exilecore.item.ItemRepository repository, final ItemData data) {
-        return CATALYST_MAX + (repository == null || data == null ? 0 : repository.maxQualityBonus(data.base()));
+        if (repository == null || data == null) {
+            return CATALYST_MAX;
+        }
+        // 2026-11-08 照站長「裂痕精髓」（PoE2 Essence of the Breach）：詞綴的「+x% 最大品質」也加上去
+        double extra = 0;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final tw.exilecore.item.AffixMod mod : affix.mods()) {
+                if (tw.exilecore.item.unique.UniqueStats.LOCAL_MAX_QUALITY.equals(mod.stat())) {
+                    extra += mod.toModifier(rolled.vars(), "").value();
+                }
+            }
+        }
+        return CATALYST_MAX + repository.maxQualityBonus(data.base()) + (int) Math.round(extra);
     }
 
     // ---- 星籤 ----

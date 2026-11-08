@@ -125,6 +125,8 @@ public final class KeystoneKeys {
     public static final String WARCRY_MIN_POWER = "warcry.min_power";
     /** FLAT %：戰吼時回復 x% 最大生命與魔力。 */
     public static final String WARCRY_RESTORE = "warcry.restore";
+    /** 2026-11-08 照站長（增幅・沃拉娜的殘殺「使用戰吼時回復 x% 最大生命」）：FLAT %：只回生命（KeystoneEffects.onWarcry）。 */
+    public static final String WARCRY_LIFE_RECOVER = "warcry.life_recover";
     /** 旗標：戰吼時解除你身上的點燃。 */
     public static final String WARCRY_REMOVE_IGNITE = "flag.warcry_remove_ignite";
     /** FLAT 秒：戰吼使範圍內的敵人衰弱（PoE2 Debilitate：造成的傷害減少 10%、移動速度減少 20%）。 */

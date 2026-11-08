@@ -156,6 +156,39 @@ public final class Veiled {
         return isVeiled(affixId) || isUnveiled(affixId);
     }
 
+    /** 2026-11-08（深淵星魄）：可以被換成隱匿詞綴的那幾條（破裂的、隱匿／揭露的不算）。 */
+    public static List<RolledAffix> replaceable(final ItemData data, final ItemGenerator generator) {
+        final List<RolledAffix> list = new ArrayList<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = generator.repository().affix(rolled.id());
+            if (affix != null && (affix.type() == AffixType.PREFIX || affix.type() == AffixType.SUFFIX)
+                    && !isSpecial(rolled.id()) && !data.isFractured(rolled)) {
+                list.add(rolled);
+            }
+        }
+        return list;
+    }
+
+    /**
+     * 2026-11-08 照站長「深淵精髓塞深淵 BOSS」（PoE2 Essence of the Abyss：隨機移除一條，加上深淵領主印記，褻瀆時印記換成褻瀆詞綴）：
+     * 隨機拿掉一條（{@link #replaceable}），換成同一型（前綴／後綴）的隱匿詞綴。回傳有沒有換。
+     */
+    public static boolean replaceWithVeiled(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+        final List<RolledAffix> candidates = replaceable(data, generator);
+        if (candidates.isEmpty() || hasSpecial(data)) {
+            return false;
+        }
+        final RolledAffix removed = candidates.get(random.nextInt(candidates.size()));
+        final AffixType type = generator.repository().affix(removed.id()).type();
+        final Affix veiled = generator.repository().affix(type == AffixType.PREFIX ? VEILED_PREFIX : VEILED_SUFFIX);
+        if (veiled == null || veiled.tiers().isEmpty()) {
+            return false;
+        }
+        data.affixes().remove(removed);
+        data.affixes().add(fresh(veiled.id(), veiled.tiers().getFirst(), random));
+        return true;
+    }
+
     /** 物品上的隱匿詞綴（照順序）。 */
     public static List<RolledAffix> veiledOn(final ItemData data) {
         final List<RolledAffix> list = new ArrayList<>();

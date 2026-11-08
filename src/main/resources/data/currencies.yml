@@ -1147,27 +1147,7 @@ event_titan_core:
   description: "打倒世界 Boss「開天者」時，每個有份的人都拿得到；在選單的「不定時活動」兌換"
   flavor: "開天者胸口的那顆星，碎了還在發光。"
 
-# ---- 萬燈夜（2026-10 萬聖節，data/festival.yml）：活動素材，到選單的「萬燈夜」兌換限定時裝、稱號 ----
-event_candy:
-  name: 萬燈糖
-  material: SUGAR
-  model: exilecore:currency/event_candy
-  stack: 1000
-  operation: NONE
-  drop_weight: 0
-  description: "萬燈夜期間地圖裡的怪掉落、搗蛋南瓜給的；在選單的「萬燈夜」兌換"
-  flavor: "包著南瓜色的糖紙，打開來還是溫的。"
-
-event_lamp_wick:
-  name: 魂燈芯
-  material: STRING
-  model: exilecore:currency/event_lamp_wick
-  stack: 100
-  operation: NONE
-  drop_weight: 0
-  description: "萬燈夜：一天點滿幽燈墓園的燈、打倒南瓜王、完成活動挑戰拿得到；在選單的「萬燈夜」兌換"
-  flavor: "從燈裡抽出來的芯，綠色的火還沒熄。"
-
+# 2026-11-08 照站長「通貨裡的萬聖節素材全刪除」：萬燈夜的萬燈糖（event_candy）、魂燈芯（event_lamp_wick）拿掉了，玩家手上的一律刪掉（RetiredCurrencies）
 # ---- 星潮祭（2026-11-03 照站長，夏日活動，data/summer_festival.yml）：活動素材，到選單的「星潮祭」兌換限定時裝、稱號 ----
 event_shell:
   name: 貝殼
@@ -2356,7 +2336,7 @@ perfect_essence_command:
   drop_level: 72
   description: "稀有物品：隨機移除一條詞綴，再加「權杖：增加 15～20% 光環效果」"
   flavor: "舉起來的時候，身後的影子都站直了。"
-# 腐化星魄（2026-10-26，照 PoE2 的 Essence of Hysteria；Delirium、Horror、Insanity、Abyss、Breach 要的機制我們還沒有，先不做；2026-11-06 補上完美火抗、冰抗、電抗、混抗）
+# 腐化星魄（2026-10-26，照 PoE2 的 Essence of Hysteria；2026-11-06 補上完美火抗、冰抗、電抗、混抗；2026-11-08 補上裂痕、譫妄、深淵、極恐，見下面；Insanity 要附魔，我們沒有）
 essence_hysteria:
   name: 狂亂星魄
   material: GLOW_INK_SAC
@@ -2369,6 +2349,61 @@ essence_hysteria:
   drop_level: 65
   description: "稀有物品：隨機移除一條詞綴，再加「照部位一條：頭盔 +1 召喚物技能等級、胸甲物理荊棘、褲子暴擊傷害加成、鞋子 30% 移動速度、戒指魔力回復、項鍊傷害回復為生命、腰帶暈眩門檻、盾格擋、法器能量護盾回充、箭袋弓技能傷害」"
   flavor: "被深淵咬過一口的星魄，裡面的光在亂撞。"
+
+# 2026-11-08 照站長「裂痕精隨塞裂痕 BOSS、譫妄精隨塞迷霧 BOSS、深淵精髓塞深淵 BOSS、極恐精髓塞神龕 BOSS，都 1% 機率掉落」：PoE2 的腐化精髓。
+#   只從那隻 Boss 掉（maps.yml 的 drops.extra），寶箱、精髓怪不掉（pick_weight 0）。
+essence_breach:
+  name: 裂隙星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_breach_quality
+  essence_tier: corrupted
+  applies_to: { rarity: [RARE] }
+  pick_weight: 0
+  drop_weight: 0
+  drop_level: 65
+  description: "稀有戒指、項鍊：隨機移除一條詞綴，再加「+20% 最大品質」（催化劑能打到 40%）｜穿界裂隙的 Boss 掉落"
+  flavor: "從裂縫邊緣刮下來的一點光，放在戒指上就不肯走。"
+essence_delirium:
+  name: 妄念星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_delirium_keystone
+  essence_tier: corrupted
+  applies_to: { rarity: [RARE] }
+  pick_weight: 0
+  drop_weight: 0
+  drop_level: 65
+  description: "稀有胸甲：隨機移除一條詞綴，再加「配置 1 個隨機的基石天賦」（穿著時當作點了那個基石）｜迷霧之主・無面掉落"
+  flavor: "霧裡看見的那條路，醒來以後還記得怎麼走。"
+essence_abyss:
+  name: 深淵星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: veiled_prefix, veiled_suffix   # 不是一般的詞綴：隨機移除一條，換成同一型的隱匿詞綴（Crafting.abyssEssence；原作的深淵領主印記，褻瀆時換成褻瀆詞綴）
+  essence_tier: corrupted
+  applies_to: { rarity: [RARE] }
+  pick_weight: 0
+  drop_weight: 0
+  drop_level: 65
+  description: "稀有物品：隨機移除一條詞綴，換成一條隱匿詞綴（帶去營地找盜賊首領揭露；一件只能有一條）｜骨潮深坑的 Boss 掉落"
+  flavor: "深淵領主在上面按了一下，留下的印子還是溫的。"
+essence_horror:
+  name: 極恐星魄
+  material: GLOW_INK_SAC
+  stack: 20
+  operation: ESSENCE
+  affix: ess_horror_socketed
+  essence_tier: corrupted
+  applies_to: { rarity: [RARE] }
+  pick_weight: 0
+  drop_weight: 0
+  drop_level: 65
+  description: "稀有褲子、鞋子：隨機移除一條詞綴，再加「嵌在這件物品上的符文效果增加 60%」｜晨曦神龕的 Boss 掉落"
+  flavor: "握著它的時候，手心的符文一直在發抖。"
 
 # 催化劑（裂隙的怪掉）：只能打在戒指、項鍊上（2026-10-26 照 PoE2：腰帶不行；這次之前腰帶也可以），品質照稀有度 +5／+2／+1（普通／魔法／稀有、傳奇，上限 20；2026-10-27 照 PoE2，這次之前一律 +5），
 #   品質變成那一類詞綴的數值加成（例如火焰催化劑 20%：火焰詞綴 ×1.2）。打不同種類的催化劑會換掉原本的，品質從那一顆加的量重新開始（2026-10-27 之前從 5）。
@@ -2505,47 +2540,8 @@ catalyst_minion:
   drop_level: 30
   description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：召喚物詞綴的數值 +品質%"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
   flavor: "磨成粉的裂隙邊緣。"   # 2026-10-26 新增（PoE2 的 Necrotic Catalyst）
-catalyst_resist:
-  name: 抗性催化劑（舊）
-  material: BLAZE_POWDER
-  stack: 20
-  operation: CATALYST
-  catalyst: resist
-  pick_weight: 0   # 2026-10-26：PoE2 沒有這種，不會再掉；手上有的照舊能用
-  drop_weight: 0
-  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：抗性詞綴的數值 +品質%（舊的催化劑，不會再掉）"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
-  flavor: "磨成粉的裂隙邊緣。"
-catalyst_crit:
-  name: 暴擊催化劑（舊）
-  material: BLAZE_POWDER
-  stack: 20
-  operation: CATALYST
-  catalyst: crit
-  pick_weight: 0   # 2026-10-26：PoE2 沒有這種，不會再掉；手上有的照舊能用
-  drop_weight: 0
-  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：暴擊率與暴擊傷害加成詞綴的數值 +品質%（舊的催化劑，不會再掉）"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
-  flavor: "磨成粉的裂隙邊緣。"
-catalyst_elemental:
-  name: 元素催化劑（舊）
-  material: BLAZE_POWDER
-  stack: 20
-  operation: CATALYST
-  catalyst: elemental
-  pick_weight: 0   # 2026-10-26：PoE2 沒有這種，不會再掉；手上有的照舊能用
-  drop_weight: 0
-  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：元素傷害（火焰、冰冷、閃電）詞綴的數值 +品質%（舊的催化劑，不會再掉）"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
-  flavor: "磨成粉的裂隙邊緣。"
-catalyst_phys_chaos:
-  name: 物理與混沌催化劑（舊）
-  material: BLAZE_POWDER
-  stack: 20
-  operation: CATALYST
-  catalyst: phys_chaos
-  pick_weight: 0   # 2026-10-26：PoE2 沒有這種，不會再掉；手上有的照舊能用
-  drop_weight: 0
-  description: "戒指、項鍊品質 +5%／+2%／+1%（普通／魔法／稀有）：物理傷害與混沌傷害詞綴的數值 +品質%（舊的催化劑，不會再掉）"   # 2026-10-27 照 PoE2：照稀有度；這次之前一律 +5%
-  flavor: "磨成粉的裂隙邊緣。"
-
+# 2026-11-08 照站長「這些舊的也幫我刪除」：抗性、暴擊、元素、物理與混沌催化劑（舊）拿掉了，玩家手上的一律刪掉（RetiredCurrencies）；
+#   已經用它們加過品質的飾品照舊有效（Catalyst 的 RESIST／CRIT…還在）
 # 星籤（流寇、祭壇掉）：拿它點一件物品掛上去，下一顆對應的通貨照星籤的規則用，用完星籤就消失（換一個星籤會蓋掉舊的）。
 #   omen.triggers：哪些操作會觸發（ESSENCE 只有完美、腐化星魄觸發）；omen.effect：
 #     FORCE_PREFIX／FORCE_SUFFIX 只加前綴／後綴、DOUBLE_ADD 加兩條、REMOVE_LOWEST 移除階級最差（T 數字最大）的（2026-10-27 照站長；這次之前需求等級最低）、KEEP_PREFIXES／KEEP_SUFFIXES 只移除後綴／前綴、
@@ -4273,6 +4269,79 @@ rune_thesis_quipolatl:
   drop_level: 65
   description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：頭盔 你的印記啟動時，隨機一個需要榮耀的技能獲得 50% 最大榮耀；手套 你的召喚物復甦時，能量護盾開始充能；胸甲 能量護盾全滿時，+75% 的護甲同時套用在混沌傷害。別的部位沒效果；嵌上去拿不下來（只能換掉）；遠古魂核一個角色僅限 1 顆（需求等級 60）"
   flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
+
+# 2026-11-08 照站長「增幅系統」：PoE2 0.5 的增幅（runes.yml 的 augment_＊）。嵌在指定部位的空符文孔，解鎖那一組專屬詞綴；深淵王各 5% 掉
+rune_augment_medved:
+  name: 增幅・梅德偉的照料
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_medved
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進胸甲的一個空的符文孔（增幅）：之後這件胸甲擲得到靈魂（生命、魔力、精魂、防禦、抗性）的專屬詞綴（用一般通貨洗）。羈絆：增加 3% 最大生命與魔力（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「在加入遠征隊之前，圓環德魯伊為所有人提供庇護。」"
+
+rune_augment_katla:
+  name: 增幅・卡特拉的愁悵
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_katla
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進褲子的一個空的符文孔（增幅）：之後這件褲子擲得到衰敗（異常幅度、偷取、凋零、詛咒、曝曬）的專屬詞綴（用一般通貨洗）。羈絆：減少 25% 你身上的冰緩與感電效果（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「數代以來，人們懼怕黯湖女巫的力量。」"
+
+rune_augment_thrud:
+  name: 增幅・索魯德的強權
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_thrud
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器的一個空的符文孔（增幅）：之後這件武器擲得到毀滅（那一類詞綴的數值增加）的專屬詞綴（用一般通貨洗）。羈絆：+5% 全部元素抗性（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「唯有力量，是索魯德唯一能給予尊重的東西。」"
+
+rune_augment_vorana:
+  name: 增幅・沃拉娜的殘殺
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_vorana
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進頭盔的一個空的符文孔（增幅）：之後這件頭盔擲得到狂戰士（怒氣、戰吼、破甲、榮耀、連擊）的專屬詞綴（用一般通貨洗）。羈絆：近戰擊中時獲得 2 點怒氣（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「沃拉娜從不招人，跟著她的人都是自己來的。」"
+
+rune_augment_kolr:
+  name: 增幅・克洛爾的狩獵
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_kolr
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進褲子的一個空的符文孔（增幅）：之後這件褲子擲得到射手（投射物、印記、穿透、連鎖、分裂）的專屬詞綴（用一般通貨洗）。羈絆：增加 20% 投射物傷害（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「重要的不是箭有沒有射中，是決心。」"
+
+rune_augment_uhtred:
+  name: 增幅・烏特雷的星空
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: augment_uhtred
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進鞋子的一個空的符文孔（增幅）：之後這件鞋子擲得到時空術師（持續時間、冷卻、移動速度、衝刺、翻滾）的專屬詞綴（用一般通貨洗）。羈絆：增加 10% 冷卻回復速度（只有昇華・聖賢智慧才有效果）。嵌上去拿不下來（只能換掉，換掉不還）；一個角色僅限 1 顆（需求等級 65）｜骨潮深坑的 Boss 掉落"
+  flavor: "「理解時間，即是領悟存在本身。」"
 
 rune_thesis_jiquani:
   name: 遠古魂核・吉卡尼

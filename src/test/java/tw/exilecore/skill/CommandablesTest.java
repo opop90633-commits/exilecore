@@ -63,6 +63,29 @@ class CommandablesTest {
     }
 
     @Test
+    void biddingFitsCommandableSkeletons() {
+        // 2026-11-08 照站長「召喚骸骨重卒原作能吃骸令 II 嗎」：PoB2 Bidding 是 CommandableMinion 或 CommandsMinions，骷髏也掛得上
+        for (final String skill : List.of(MinionAbilities.BRUTE, MinionAbilities.SNIPER, MinionAbilities.ARTILLERY)) {
+            assertNull(config.support("bone_command_ii").refusal(config.skill(skill)), skill);
+            assertNull(config.support("bone_command").refusal(config.skill(skill)), skill);
+        }
+        assertNotNull(config.support("bone_command_ii").refusal(config.skill(MinionAbilities.WARRIOR)), "骸骨戰士沒有指令");
+        // 震地咆哮（指令）更多 30%
+        final SkillBuild brute = SkillBuild.of(config, config.skill(MinionAbilities.BRUTE), 20, 100, false,
+                List.of(config.support("bone_command_ii")), Set.of(), new StatSheet());
+        assertEquals(List.of(config.support("bone_command_ii")), brute.supports(), "掛得上");
+        final StatSheet plain = new StatSheet();
+        final StatSheet bidding = plain.overlay(MinionSheets.stripMinion(MinionSheets.profile(brute).local()));
+        final tw.exilecore.stats.SkillProfile base = new tw.exilecore.stats.SkillProfile("summon_bone_heavy", Set.of(Tags.ATTACK, Tags.MELEE),
+                1.0, null, null, java.util.Map.of(), List.of());
+        final MinionService.CommandStrike roar = MinionService.commandStrike(MinionAbilities.BRUTE, base, 1.0, 20, 0, 1);
+        final double before = tw.exilecore.stats.DamageCalculator.expectedOutgoing(plain, roar.profile()).total();
+        assertTrue(before > 0);
+        assertEquals(before * 1.3, tw.exilecore.stats.DamageCalculator.expectedOutgoing(bidding, roar.profile()).total(), before * 1e-6);
+        assertEquals(0.30, bidding.increased(StatKeys.COOLDOWN_RECOVERY, Commandables.CONTEXT), 1e-9, "指令的冷卻回復增加 30%");
+    }
+
+    @Test
     void commandCostTakesYourCostModifiers() {
         // 2026-11-08 照站長：魔偶符文「指令技能減少 30% 消耗」（skill.cost INCREASED -30% [command]）、全服魔力消耗倍率都吃得到；
         //   只給召喚物的（[minion]）不算你的

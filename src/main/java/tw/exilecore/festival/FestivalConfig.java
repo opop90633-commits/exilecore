@@ -251,7 +251,7 @@ public final class FestivalConfig {
                                  final Predicate<String> skillExists) {
         final List<String> problems = new ArrayList<>();
         for (final String id : List.of(CANDY, WICK)) {
-            if (!currencyExists.test(id)) {
+            if (!currencyExists.test(id) && !tw.exilecore.currency.RetiredCurrencies.retired(id)) { // 2026-11-08：萬燈夜的素材刪掉了（活動結束）
                 problems.add("currencies.yml 沒有 " + id);
             }
         }
@@ -264,7 +264,7 @@ public final class FestivalConfig {
         }
         for (final ShopItem item : shop) {
             for (final String currency : item.cost().keySet()) {
-                if (!currencyExists.test(currency)) {
+                if (!currencyExists.test(currency) && !tw.exilecore.currency.RetiredCurrencies.retired(currency)) {
                     problems.add("shop." + item.id() + ".cost：currencies.yml 沒有 " + currency);
                 }
             }

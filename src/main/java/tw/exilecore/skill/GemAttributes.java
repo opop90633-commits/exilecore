@@ -109,7 +109,7 @@ public final class GemAttributes {
                     + "crimson_wrath awe_suppress gathered_scales unquenched_fury iron_rampart_guard earth_wall_strike magma_barrier "
                     // 自創／專屬：近戰猛擊、戰吼（架盾是盾牌賦予的，原作沒有需求，照效果算力量）
                     + "molten_soul_shriek altar_niche_blessing shackle_chain_sweep bone_crack_leyline "),
-            entry("D", "volley_of_ages " /* 2026-11-04 事件 Boss 專屬 */ + "venom_etch_arrow myriad_arrow_fall thunderclap_arrow rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
+            entry("D", "volley_of_ages " /* 2026-11-04 事件 Boss 專屬 */ + "shadow_volley_shafts " /* 2026-11-08 星坑 Boss 專屬 */ + "venom_etch_arrow myriad_arrow_fall thunderclap_arrow rime_arrow sky_rend_arrow thunder_lance_throw spinning_spear_strike "
                     + "hurricane_spear prey_kill_mark wild_beast_taming thunder_envoy thunder_call_shaft chill_fan_shafts thunderfall_spear "
                     + "spear_formation triple_stab electrocute_shaft thorn_shaft toxic_blast_shaft helix_arrow_rain flame_blast_shaft linked_lightning_arrow "
                     + "cyclone_spear snake_squall_thrust facet_light_rift thunder_bound blood_hunt blazing_sun_spear explosive_spear frost_tooth_stab "
@@ -138,7 +138,7 @@ public final class GemAttributes {
                     // 自創／專屬：法術、召喚物的指令、引星
                     + "elemental_pulse infusion_bolt arcane_heart "
                     + "element_tide bone_thorn_ring anomaly_devour_blast shield_restore_art remains_banquet servant_corpse_swap element_trace_surge hollow_star_fall annihilation_death_beam "
-                    + "thunder_prison_maze four_way_death_beam summon_tide whale_gulp_vortex morning_light_column gold_coin_hail fissure_hand fissure_spread "
+                    + "thunder_prison_maze four_way_death_beam summon_tide whale_gulp_vortex morning_light_column crystal_spike_burst gold_coin_hail fissure_hand fissure_spread "
                     + "blood_sacrifice_dais offering_blood_spear broken_looking_glass reflection_mist_pass deep_chasm_hand critical_guide_star mutation_guide_star fallen_servant_star "
                     + "curse_ring "), // 2026-10-29 照 PoE2 Blasphemy（咒環）：智慧
             // 德魯伊：原作的變身寶石是力量＋智慧（撼山爪、疾爪、血牙在原作是形態賦予的，照同一型的變身技能算）

@@ -823,6 +823,20 @@ public final class ItemGenerator {
             }
             list.add(affix);
         }
+        // 2026-11-08 照站長「增幅系統」（PoE2 0.5 的增幅：嵌了才擲得到那一組專屬詞綴）：嵌著的增幅（runes.yml 的 augment）解鎖
+        //   affixes/augments.yml 裡 spawn_tags 寫那個代號的詞綴；一般的通貨照常擲得到
+        for (final String runeId : data.runes()) {
+            final Runes.Rune rune = repository.rune(runeId);
+            if (rune == null || !rune.isAugment()) {
+                continue;
+            }
+            for (final Affix affix : repository.affixes()) {
+                if (affix.type() == type && affix.spawnTags().contains(runeId) && !usedGroups.contains(affix.group())
+                        && hasTierFor(affix, ilvl) && !list.contains(affix)) {
+                    list.add(affix);
+                }
+            }
+        }
         return list;
     }
 

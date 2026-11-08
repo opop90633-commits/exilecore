@@ -331,6 +331,7 @@ public final class ItemStats {
         }
         if (data.identified()) {
             final double unveiledScale = 1 + unveiledMagnitude(repository, data); // INCREASED 的值已經是比例（0.8 = 80%）
+            final Map<Catalyst, Double> magnitudes = magnitudes(repository, data);
             for (final RolledAffix rolled : data.affixes()) {
                 final Affix affix = repository.affix(rolled.id());
                 if (affix == null) {
@@ -343,6 +344,10 @@ public final class ItemStats {
                     Modifier modifier = mod.toModifier(rolled.vars(), source + " " + affix.id() + " T" + affix.rank(rolled.tier()), rolled.fixedScale()); // 2026-11-01：腐化的固定值倍率
                     if (unveiledScale != 1 && Veiled.isUnveiled(rolled.id())) {
                         modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * unveiledScale, modifier.tags(), modifier.source());
+                    }
+                    final double magnitude = magnitudeScale(magnitudes, modifier); // 2026-11-08（索魯德的強權）
+                    if (magnitude != 1) {
+                        modifier = new Modifier(modifier.stat(), modifier.type(), modifier.value() * magnitude, modifier.tags(), modifier.source());
                     }
                     affixMods.add(modifier);
                 }
@@ -692,6 +697,7 @@ public final class ItemStats {
         final double factor = 1 + data.quality() / 100.0;
         // 2026-10：「增加 x% 已揭露詞綴的幅度」（骷印長杖）——揭露詞綴也直接顯示加成後的數值，跟屬性表算的一樣
         final double unveiled = data.identified() ? unveiledMagnitude(repository, data) : 0;
+        final Map<Catalyst, Double> magnitudes = data.identified() ? magnitudes(repository, data) : Map.of();
         for (final RolledAffix rolled : data.affixes()) {
             final Affix affix = repository.affix(rolled.id());
             if (affix == null) {
@@ -699,7 +705,9 @@ public final class ItemStats {
             }
             final boolean boosted = catalyst != null && catalysed(affix, rolled.vars(), catalyst);
             final boolean veiledBoost = unveiled > 1e-9 && Veiled.isUnveiled(rolled.id());
-            final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1) * VIEW_BOOST.get(); // 2026-11-04：角色面板的戒指、項鍊加成
+            final double scale = (boosted ? factor : 1) * (veiledBoost ? 1 + unveiled : 1) * VIEW_BOOST.get() // 2026-11-04：角色面板的戒指、項鍊加成
+                    * affixMagnitude(magnitudes, affix, rolled); // 2026-11-08（索魯德的強權）：那一類詞綴的數值直接顯示加成後的
+
             // 2026-11-08：技能等級的詞綴乘完捨去（跟屬性表一樣，照 PoE2）
             final boolean floor = boosted && levelOnly(affix);
             final Map<String, Integer> vars = scale != 1 ? (floor ? floored(rolled.vars(), scale) : scaled(rolled.vars(), scale)) : rolled.vars();
@@ -719,6 +727,80 @@ public final class ItemStats {
         }
         prefixes.addAll(suffixes);
         return prefixes;
+    }
+
+    /**
+     * 2026-11-08 照站長「增幅系統」（索魯德的強權，PoE2 Thrud's Might「增加 x% 變動物理／火焰…詞綴的大小」）：這件物品的
+     * local.mod_magnitude.＜類別＞ 加總（比例，0.15 = 15%），類別照催化劑的分法（{@link Catalyst#matches}）。
+     */
+    public static final String MOD_MAGNITUDE = "local.mod_magnitude.";
+
+    private static final Map<String, Catalyst> MAGNITUDE_KINDS = Map.of("physical", Catalyst.PHYSICAL, "fire", Catalyst.FIRE,
+            "cold", Catalyst.COLD, "lightning", Catalyst.LIGHTNING, "elemental", Catalyst.ELEMENTAL, "chaos", Catalyst.CHAOS,
+            "mana", Catalyst.MANA, "speed", Catalyst.SPEED, "critical", Catalyst.CRIT);
+
+    /** 2026-11-08：{@link #MOD_MAGNITUDE} 後面能接的類別。 */
+    public static java.util.Set<String> magnitudeKinds() {
+        return MAGNITUDE_KINDS.keySet();
+    }
+
+    public static Map<Catalyst, Double> magnitudes(final ItemRepository repository, final ItemData data) {
+        if (repository == null || data == null || data.affixes().isEmpty()) {
+            return Map.of();
+        }
+        Map<Catalyst, Double> out = null;
+        for (final RolledAffix rolled : data.affixes()) {
+            final Affix affix = repository.affix(rolled.id());
+            if (affix == null) {
+                continue;
+            }
+            for (final AffixMod mod : affix.mods()) {
+                if (!mod.stat().startsWith(MOD_MAGNITUDE)) {
+                    continue;
+                }
+                final Catalyst kind = MAGNITUDE_KINDS.get(mod.stat().substring(MOD_MAGNITUDE.length()));
+                if (kind != null) {
+                    if (out == null) {
+                        out = new java.util.EnumMap<>(Catalyst.class);
+                    }
+                    out.merge(kind, mod.toModifier(rolled.vars(), "").value(), Double::sum);
+                }
+            }
+        }
+        return out == null ? Map.of() : out;
+    }
+
+    /** 2026-11-08：這條修飾器吃到的詞綴大小倍率（1 + 吃得到的類別加總）。 */
+    public static double magnitudeScale(final Map<Catalyst, Double> magnitudes, final Modifier mod) {
+        if (magnitudes.isEmpty() || mod.stat().startsWith(MOD_MAGNITUDE) || mod.stat().startsWith("flag.")) {
+            return 1;
+        }
+        // 武器本地的（增加 x% 物理傷害、攻擊速度、暴擊率寫成 local.＊）照物理、速度、暴擊算
+        final Catalyst local = switch (mod.stat()) {
+            case LocalMods.PHYSICAL -> Catalyst.PHYSICAL;
+            case LocalMods.ATTACK_SPEED -> Catalyst.SPEED;
+            case LocalMods.CRIT -> Catalyst.CRIT;
+            default -> null;
+        };
+        double total = 0;
+        for (final Map.Entry<Catalyst, Double> entry : magnitudes.entrySet()) {
+            if (local != null ? entry.getKey() == local : entry.getKey().matches(mod)) {
+                total += entry.getValue();
+            }
+        }
+        return 1 + total;
+    }
+
+    /** 2026-11-08：整條詞綴顯示用的倍率（取吃得最多的那個修飾器）。 */
+    private static double affixMagnitude(final Map<Catalyst, Double> magnitudes, final Affix affix, final RolledAffix rolled) {
+        if (magnitudes.isEmpty()) {
+            return 1;
+        }
+        double best = 1;
+        for (final AffixMod mod : affix.mods()) {
+            best = Math.max(best, magnitudeScale(magnitudes, mod.toModifier(rolled.vars(), "")));
+        }
+        return best;
     }
 
     /** 2026-11-08：技能等級捨去成整數（往 0 捨，負的也一樣；浮點誤差 1e-9 以內當整數）。 */

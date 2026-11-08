@@ -166,6 +166,10 @@ public final class KeystoneEffects implements Listener {
             }
             state.setMana(Math.min(state.maxMana(), state.mana() + state.maxMana() * restore / 100.0));
         }
+        final double lifeRecover = effective.flat(KeystoneKeys.WARCRY_LIFE_RECOVER, tags); // 2026-11-08（增幅・沃拉娜的殘殺）
+        if (lifeRecover > 0 && !state.ruined(now)) {
+            state.setLife(Math.min(state.maxLife(), state.life() + state.maxLife() * lifeRecover / 100.0));
+        }
         if (StatKeys.flag(effective, KeystoneKeys.WARCRY_REMOVE_IGNITE) && plugin.ailments() != null) {
             plugin.ailments().cure(player, AilmentType.IGNITE);
         }

@@ -119,7 +119,7 @@ class SkillCascadeTest {
             }
         }
         assertEquals(new TreeSet<>(List.of("whale_gulp_vortex", "blood_sacrifice_dais", "fissure_spread", "morning_light_column", "hollow_star_fall",
-                "faceless_mist", "scale_weight_drop")), shaped);
+                "faceless_mist", "scale_weight_drop", "crystal_spike_burst")), shaped); // 2026-11-08：＋晶刺迸裂（星坑 Boss 專屬）
     }
 
     @Test

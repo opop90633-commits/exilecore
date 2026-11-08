@@ -135,10 +135,6 @@ values:
   catalyst_speed: 132
   catalyst_attribute: 84
   catalyst_minion: 96                # 2026-10-26 新增
-  catalyst_resist: 108
-  catalyst_crit: 120
-  catalyst_elemental: 108
-  catalyst_phys_chaos: 96
   omen_sinistral: 220
   omen_dextral: 220
   omen_sinistral_coronation: 220                # 2026-10-26 新增
@@ -260,9 +256,7 @@ values:
   rune_swift: 400
   event_swarm_shard: 100
   event_titan_core: 3000
-  event_candy: 30                  # 2026-10 萬燈夜的素材
-  event_lamp_wick: 2500
-  event_shell: 30                  # 2026-11-03 星潮祭的素材（比照萬燈夜）
+  event_shell: 30                  # 2026-11-03 星潮祭的素材（比照萬燈夜；2026-11-08 萬燈夜的萬燈糖 30、魂燈芯 2500 拿掉了）
   event_pearl: 2500
   heist_contract: 300
   heist_blueprint: 1500

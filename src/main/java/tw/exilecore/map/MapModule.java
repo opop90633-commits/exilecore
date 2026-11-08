@@ -92,6 +92,10 @@ public final class MapModule implements Module {
                     if (plugin.items().repository().base(extra.id()) == null) { // 2026-11-04
                         problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了沒有的基底 " + extra.id() + "（不會掉）");
                     }
+                } else if ("unique".equals(extra.kind())) {
+                    if (plugin.items().repository().unique(extra.id()) == null) { // 2026-11-08
+                        problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 uniques.yml 沒有的傳奇 " + extra.id() + "（不會掉）");
+                    }
                 } else if (plugin.currencies().repository().get(extra.id()) == null) {
                     problems.add("maps.yml：巔峰 " + map.id() + " 的掉落寫了 currencies.yml 沒有的通貨 " + extra.id() + "（不會掉）");
                 }

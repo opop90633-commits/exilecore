@@ -122,6 +122,14 @@ class AffixCatalogueTest {
         // 2026-11-06 照站長＋poe2db：完美火／冰／電抗精髓的分屬性回復（KeystoneEffects 讀）、完美混抗精髓的物理轉混沌承受（UniqueDefence.reroute 讀）
         stats.addAll(List.of(tw.exilecore.stats.KeystoneKeys.RECOUP_FIRE, tw.exilecore.stats.KeystoneKeys.RECOUP_COLD,
                 tw.exilecore.stats.KeystoneKeys.RECOUP_LIGHTNING, tw.exilecore.item.unique.UniqueStats.TAKEN_PHYSICAL_AS_CHAOS));
+        // 2026-11-08 照站長：裂隙星魄的「+20% 最大品質」（Crafting.catalystMax 讀）、妄念星魄的隨機基石（PlayerStateService.collect 讀）
+        stats.addAll(List.of(tw.exilecore.item.unique.UniqueStats.LOCAL_MAX_QUALITY, tw.exilecore.item.unique.UniqueStats.LOCAL_KEYSTONE_PICK,
+                tw.exilecore.item.unique.UniqueStats.LOCAL_RUNE_EFFECT, // 極恐星魄：嵌在這件上的符文效果（Runes.effect 讀）
+                tw.exilecore.charge.ChargeService.SUP_KEEP, // 增幅・烏特雷：x% 機率不移除戰星（ChargeService 讀）
+                tw.exilecore.stats.KeystoneKeys.WARCRY_LIFE_RECOVER, tw.exilecore.item.unique.UniqueStats.DODGE_METRES)); // 增幅・沃拉娜的戰吼回復生命、烏特雷的翻滾 +格
+        for (final String kind : ItemStats.magnitudeKinds()) {
+            stats.add(ItemStats.MOD_MAGNITUDE + kind); // 2026-11-08 增幅・索魯德：這件上那一類詞綴的數值（ItemStats、LocalMods 讀）
+        }
         tags = constants(Tags.class);
         // 2026-10-30：天賦樹也用的標籤（暴擊造成的、對完全破甲、強化攻擊、祭品、觸發、招架、夥伴、危害、旗幟、植物）
         tags.addAll(List.of("crit_hit", tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR, "empowered", "offering", "triggered", "parry",

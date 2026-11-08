@@ -181,7 +181,7 @@ public final class CurrencyGroups {
                  SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT -> Group.VAAL; // 2026-11-07：瓦爾通貨
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
                     : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)
-                    || type.affix().startsWith("thesis_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組
+                    || type.affix().startsWith("thesis_") || type.affix().startsWith("augment_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組；2026-11-08：增幅也是
                     : type.affix() != null && (type.affix().endsWith("_greater") || type.affix().endsWith("_perfect"))
                     ? Group.RUNES_HIGH : Group.RUNES; // 2026-10-26：符文自己兩組（照階級）
             default -> Group.BASIC;
