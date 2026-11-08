@@ -4134,7 +4134,7 @@ vaal_infuser_armour:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 1
-  description: "品質已滿（20%）的防具、副手：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  description: "品質已達上限（一般 20%）的防具、副手：品質 +1～5%，最多超過上限 10%（一般 30%）；1/6 機率同時腐化"
   flavor: "瓦爾鍛工把自己的血也打進了甲片裡。"
 
 vaal_infuser_weapon:
@@ -4146,9 +4146,20 @@ vaal_infuser_weapon:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 1
-  description: "品質已滿（20%）的軍用武器（法杖、長杖、權杖以外）：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  description: "品質已達上限（一般 20%）的軍用武器（法杖、長杖、權杖以外）：品質 +1～5%，最多超過上限 10%（一般 30%）；1/6 機率同時腐化"
   flavor: "刃口上那道紅，不是鏽。"
 
+# 2026-11-08 照站長「新增一個通貨：腐化與非腐化裝備，點武器、頭、胸、褲、鞋能直接多一個符文孔，在礦坑 BOSS 1% 掉落；一件裝備只能用一次」
+delve_socket_chisel:
+  name: 晶淵鑿
+  material: AMETHYST_SHARD
+  stack: 10
+  operation: BONUS_RUNE_SOCKET
+  applies_to: { rarity: [NORMAL, MAGIC, RARE] }   # 2026-11-08 照站長「傳奇裝不能使用」
+  drop_weight: 0
+  drop_level: 1
+  description: "武器、頭盔、胸甲、褲子、鞋子（傳奇不行）：多一個符文孔（可以超過原本的孔數；已腐化、雙重腐化、已聖化的也能用）。一件裝備只能用一次｜晶淵之王・黯冕 1% 掉落"
+  flavor: "黯冕王座上掰下來的一角，敲進哪裡，哪裡就多一個洞。"
 vaal_infuser_jewellery:
   name: 蝕環灌注器
   material: NETHERITE_SCRAP
@@ -4158,7 +4169,7 @@ vaal_infuser_jewellery:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 1
-  description: "品質已滿（20%）的戒指、項鍊：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  description: "品質已達上限的戒指、項鍊（一般 20%；精煉裂隙指環、裂隙星魄的更高）：品質 +1～5%，最多超過上限 10%（一般 30%，上限 40% 的到 50%）；1/6 機率同時腐化"   # 2026-11-08 照站長「照原作」：上限照每件自己的
   flavor: "滴在戒圈上，戒圈就像活的一樣收緊了一點。"
 
 vaal_infuser_caster:
@@ -4170,7 +4181,7 @@ vaal_infuser_caster:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 1
-  description: "品質已滿（20%）的法杖、長杖、權杖：品質 +1～5%，最多 30%；1/6 機率同時腐化"
+  description: "品質已達上限（一般 20%）的法杖、長杖、權杖：品質 +1～5%，最多超過上限 10%（一般 30%）；1/6 機率同時腐化"
   flavor: "杖身上的紋路被灌滿之後，會自己發出低低的嗡聲。"
 
 architect_orb:

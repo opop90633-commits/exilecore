@@ -617,7 +617,15 @@ public final class AilmentService {
                         }
                         if (attacker instanceof Player triggerer && plugin.skills() != null) {
                             if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.FREEZE, skill.id()); // 主要寶石（2026-10）
-                            plugin.skills().procEvent(triggerer, skill.id(), "freeze", null, defender); // 輔助：凍結時
+                            // 2026-11-08 照站長（霜仇嘯照原作）：觸發的技能、圖騰放的凍結標起來，霜仇嘯不算
+                            final boolean proxy = skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)
+                                    || skill.tags().contains(tw.exilecore.stats.TreeMechanicKeys.TRIGGERED);
+                            plugin.skills().supportMechanics().proxyFreeze(proxy);
+                            try {
+                                plugin.skills().procEvent(triggerer, skill.id(), "freeze", null, defender); // 輔助：凍結時
+                            } finally {
+                                plugin.skills().supportMechanics().proxyFreeze(false);
+                            }
                         }
                         chargeEvent(attacker, "freeze", attack, context, defender); // 戰星（2026-10）
                     }

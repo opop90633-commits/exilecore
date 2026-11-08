@@ -105,7 +105,7 @@ public final class Crafting {
             // 2026-10：映星鏡照出來的複製品不能再動（鑑定除外——複製品本來就鑑定過了）
             return type.operation() == CurrencyOperation.MIRROR ? "這件已經是鏡像複製品，不能再複製" : "鏡像複製品不能再改造";
         }
-        if (data.sanctified() && !type.operation().allowedOnCorrupted()) {
+        if (data.sanctified() && !type.operation().allowedOnSanctified()) { // 2026-11-08：晶淵鑿也可以
             return type.operation() == CurrencyOperation.MIRROR ? "已聖化的物品不能複製" : "已聖化的物品不能再改造"; // 2026-10-26
         }
         if (type.operation() == CurrencyOperation.MIRROR) {

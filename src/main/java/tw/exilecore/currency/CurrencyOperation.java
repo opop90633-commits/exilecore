@@ -632,7 +632,7 @@ public enum CurrencyOperation {
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
-            vaalInfuse(data, random);
+            vaalInfuse(data, generator, random);
         }
     },
 
@@ -645,7 +645,7 @@ public enum CurrencyOperation {
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
-            vaalInfuse(data, random);
+            vaalInfuse(data, generator, random);
         }
     },
 
@@ -658,7 +658,26 @@ public enum CurrencyOperation {
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
-            vaalInfuse(data, random);
+            vaalInfuse(data, generator, random);
+        }
+    },
+
+    /**
+     * 2026-11-08 照站長「新增一個通貨：腐化與非腐化裝備，點武器、頭、胸、褲、鞋能直接多一個符文孔；一件裝備只能用一次」：
+     * 晶淵鑿（晶淵之王・黯冕 1% 掉）。可以超過基底的孔數（跟蝕變石多開的一樣），已腐化的也能用；映像的、新手的不行。
+     */
+    BONUS_RUNE_SOCKET {
+        @Override
+        public boolean canApply(final ItemData data, final ItemGenerator generator) {
+            final var base = generator.repository().base(data.base());
+            // 2026-11-08 照站長「傳奇裝不能使用」
+            return base != null && data.bonusSockets() == 0 && !data.mirrored() && !data.starter() && data.rarity() != tw.exilecore.item.Rarity.UNIQUE
+                    && bonusSocketTarget(base);
+        }
+
+        @Override
+        public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+            data.setBonusSockets(1);
         }
     },
 
@@ -671,7 +690,7 @@ public enum CurrencyOperation {
 
         @Override
         public void apply(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
-            vaalInfuse(data, random);
+            vaalInfuse(data, generator, random);
         }
     },
 
@@ -775,7 +794,7 @@ public enum CurrencyOperation {
         }
     };
 
-    /** 2026-11-07：瓦爾灌注器的品質上限（PoE2：最多超過上限 10%）。 */
+    /** 2026-11-07：瓦爾灌注器的品質上限（PoE2：最多超過上限 10%）；2026-11-08 起照每件自己的上限 ＋ {@link #VAAL_OVER_MAX}，這個只是一般 20% 的那種。 */
     public static final int VAAL_QUALITY_MAX = 30;
     /** 2026-11-07：瓦爾灌注器腐化物品的機率（poe2db 沒寫；社群說約 1/6）。 */
     public static final double VAAL_INFUSE_CORRUPT = 1.0 / 6;
@@ -785,8 +804,10 @@ public enum CurrencyOperation {
     /** 2026-11-07：瓦爾灌注器能不能用（kind：0 防具與副手、1 軍用武器、2 戒指與項鍊、3 法杖類）。品質要已經滿（20%）才能用。 */
     static boolean vaalInfusable(final ItemData data, final ItemGenerator generator, final int kind) {
         final var base = generator.repository().base(data.base());
+        // 2026-11-08 照站長「瓦爾催化灌注器照原作」（「僅能用於品質達到上限或以上的物品」「允許品質超過最大品質 10%」）：
+        //   上限照這件自己的（裂隙指環、裂隙星魄的戒指上限更高）；這次之前一律 20% 才能用、最多 30%
         if (base == null || data.corrupted() || data.mirrored() || data.sanctified() || data.starter() || !data.identified()
-                || data.quality() < 20 || data.quality() >= VAAL_QUALITY_MAX) {
+                || data.quality() < qualityMax(data, generator) || data.quality() >= qualityMax(data, generator) + VAAL_OVER_MAX) {
             return false;
         }
         return switch (kind) {
@@ -797,9 +818,32 @@ public enum CurrencyOperation {
         };
     }
 
-    /** 2026-11-07：瓦爾灌注器：品質 +1～5%（最多 30%），1/6 機率同時腐化（poe2db 沒寫增加多少、腐化機率，先這樣定）。 */
-    static void vaalInfuse(final ItemData data, final RandomGenerator random) {
-        data.setQualityUpTo(data.quality() + 1 + random.nextInt(5), VAAL_QUALITY_MAX);
+    /** 2026-11-08：晶淵鑿能用的部位：武器（含法杖、權杖）、頭盔、胸甲、褲子、鞋子（盾牌、副手、飾品不行）。 */
+    static boolean bonusSocketTarget(final tw.exilecore.item.ItemBase base) {
+        if (base.isWeapon()) {
+            return !base.isQuiver();
+        }
+        return switch (base.slot()) {
+            case HEAD, CHEST, LEGS, FEET -> base.isArmour();
+            default -> false;
+        };
+    }
+
+    /** 2026-11-08：瓦爾灌注器能超過上限多少（PoE2「允許物品的品質超過最大品質 10%」）。 */
+    public static final int VAAL_OVER_MAX = 10;
+
+    /** 2026-11-08：這件的品質上限（戒指、項鍊照催化劑的上限 Crafting.catalystMax；其他 20% ＋基底多的）。 */
+    static int qualityMax(final ItemData data, final ItemGenerator generator) {
+        final var base = generator.repository().base(data.base());
+        if (base != null && (base.slot() == tw.exilecore.item.ItemSlot.RING || base.slot() == tw.exilecore.item.ItemSlot.AMULET)) {
+            return Crafting.catalystMax(generator.repository(), data);
+        }
+        return 20 + generator.repository().maxQualityBonus(data.base());
+    }
+
+    /** 2026-11-07：瓦爾灌注器：品質 +1～5%（最多超過上限 10%），1/6 機率同時腐化（poe2db 沒寫增加多少、腐化機率，先這樣定）。 */
+    static void vaalInfuse(final ItemData data, final ItemGenerator generator, final RandomGenerator random) {
+        data.setQualityUpTo(data.quality() + 1 + random.nextInt(5), qualityMax(data, generator) + VAAL_OVER_MAX);
         if (random.nextDouble() < VAAL_INFUSE_CORRUPT) {
             data.setCorrupted(true);
         }
@@ -944,6 +988,11 @@ public enum CurrencyOperation {
         return this == IDENTIFY || this == RUNE;
     }
 
+    /** 2026-11-08 照站長「晶淵鑿：已聖化跟雙重腐化的也能用 1 次」：已聖化的物品還能用的（鑑定、嵌符文、晶淵鑿）。 */
+    public boolean allowedOnSanctified() {
+        return allowedOnCorrupted() || this == BONUS_RUNE_SOCKET;
+    }
+
     /**
      * 2026-11-04：這種通貨能不能用在這件（已腐化的）上：鑑定、嵌符文照舊可以；「已汙染時仍可調整」的傳奇（混沌一瞥）除了再腐化都可以
      * （再腐化各自的 canApply 會擋）。沒腐化的一律 true。已聖化的照舊不行（呼叫端另外看）。
@@ -957,7 +1006,7 @@ public enum CurrencyOperation {
      * 腐化的條件各自的 canApply 會看。已聖化的照舊不行。這次之前一律被「已腐化不能再改造」擋掉，這三顆完全用不了。
      */
     public boolean worksOnCorrupted() {
-        return this == ARCHITECT || this == SIPHON || this == CULTIVATE;
+        return this == ARCHITECT || this == SIPHON || this == CULTIVATE || this == BONUS_RUNE_SOCKET; // 2026-11-08：晶淵鑿
     }
 
     /** 2026-11-04（混沌一瞥）：這件有沒有「已汙染時仍可調整」（傳奇詞綴的 local.modifiable_corrupted）。 */

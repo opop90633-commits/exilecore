@@ -586,6 +586,30 @@ public final class GemService {
         return lines;
     }
 
+    /**
+     * 2026-11-08 照站長「引星切技能不會說它能輔助什麼」：主要寶石（引星、圖騰、幻影銳眼、幻弓影、咒環…）孔裡要放哪種技能寶石；
+     * 不是主要寶石回傳 null。這次之前只寫在技能面板的空孔上（SkillMenu）。
+     */
+    public static String socketWants(final SkillDefinition definition) {
+        if (definition == null || !SupportDefinition.hostsSkill(definition) && !SocketedWarcry.hosts(definition)) {
+            return null;
+        }
+        final boolean linked = SkillExecutor.hasFlag(definition, tw.exilecore.stats.StatKeys.FLAG_TOTEM_LINKED);
+        return linked ? "錘子的攻擊技能" : SocketedWarcry.hosts(definition) ? "人形戰吼"
+                : DeadeyeMetas.hosts(definition) ? DeadeyeMetas.wants(definition)
+                : HollowForm.hosts(definition) ? HollowForm.wants()
+                : Blasphemy.hosts(definition) ? Blasphemy.wants()
+                : ChayulaHand.hosts(definition) ? ChayulaHand.wants()
+                : SoulVessel.hosts(definition) ? SoulVessel.wants() : "法術"; // 2026-11-07：靈魂容器 // 2026-10-27：裂甲熊咆；2026-10-28：預告射擊、幻影銳眼、空無型態；2026-10-29：咒環
+    }
+
+    /** 2026-11-08：主要寶石那一行說明（孔裡放什麼）；不是主要寶石回傳 null。 */
+    public static String socketWantsLine(final SkillDefinition definition) {
+        final String wants = socketWants(definition);
+        return wants == null ? null : "<#c9a7ff>主要寶石<gray>：孔裡放<white>" + ItemRenderer.escape(wants)
+                + "</white>的技能寶石，由它幫你用（其他孔的輔助套在孔裡的技能上）";
+    }
+
     private void skillLore(final SkillLoadout.Entry entry, final List<String> lines) {
         final SkillDefinition definition = config().skill(entry.skillId());
         if (definition == null) {
@@ -602,6 +626,10 @@ public final class GemService {
         }
         if (!definition.weapons().isEmpty()) {
             lines.add("<gray>需要" + definition.weaponText());
+        }
+        final String wants = socketWantsLine(definition); // 2026-11-08
+        if (wants != null) {
+            lines.add(wants);
         }
         lines.add("<gray>需要角色等級 <white>" + config().requiredLevel(entry.level()));
         lines.addAll(GemAttributes.lines(config(), entry, null)); // 2026-10-26 照 PoE2：屬性需求（含插著的輔助寶石加的）

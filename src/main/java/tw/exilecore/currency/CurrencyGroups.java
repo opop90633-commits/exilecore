@@ -178,7 +178,7 @@ public final class CurrencyGroups {
             case OMEN -> Group.OMEN;
             case CATALYST, INSTIL -> Group.MECHANIC;
             case VAAL_INFUSE_ARMOUR, VAAL_INFUSE_WEAPON, VAAL_INFUSE_JEWELLERY, VAAL_INFUSE_CASTER, ARCHITECT, EXTRACT, CULTIVATE,
-                 SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT -> Group.VAAL; // 2026-11-07：瓦爾通貨
+                 SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT, BONUS_RUNE_SOCKET -> Group.VAAL; // 2026-11-07：瓦爾通貨；2026-11-08：晶淵鑿
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
                     : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)
                     || type.affix().startsWith("thesis_") || type.affix().startsWith("augment_")) ? Group.CORES // 2026-11-07：遠古魂核也放魂核那組；2026-11-08：增幅也是

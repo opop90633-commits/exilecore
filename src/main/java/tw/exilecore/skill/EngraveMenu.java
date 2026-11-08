@@ -308,6 +308,10 @@ final class EngraveMenu extends Menu {
                     "<red>要 Lv." + definition.tier() + " 以上的未切割技能寶石才能雕");
         }
         final List<String> lore = new ArrayList<>(service.describe(player, definition, new SkillLoadout.Entry(definition.id(), level)));
+        final String wants = GemService.socketWantsLine(definition); // 2026-11-08 照站長「引星切技能不會說它能輔助什麼」
+        if (wants != null) {
+            lore.add(wants);
+        }
         lore.add("");
         // 2026-10-28 照 PoE2：同一個技能可以放好幾顆，只有一個角色一顆的常駐、宿主會放進背包（這次之前面板上有就放進背包）
         lore.add(GemCopies.placeProblem(service.config(), state.skills(), new SkillLoadout.Entry(definition.id(), level), -1) != null

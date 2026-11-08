@@ -55,6 +55,8 @@ public final class ItemData {
     private String fractured;
     /** 蝕變石多開的符文孔（2026-10-21，PoE2 的瓦爾寶珠：可以超過上限）；null = 沒有（不寫進 JSON）。 */
     private Integer corruptSockets;
+    /** 2026-11-08 照站長：晶淵鑿多開的符文孔（一件只能用一次，所以只有 0 或 1）。 */
+    private Integer bonusSockets;
     /**
      * 2026-10-26 照 PoE2 的工匠石（Artificer's Orb）：這件現在有幾個符文孔（不算蝕變石多開的）；
      * null = 舊物品（這次之前做出來的），照基底的孔數全開。新做出來的裝備從 0 開始，用工匠石一個一個加到基底的上限。
@@ -223,6 +225,15 @@ public final class ItemData {
     /** 這條詞綴是不是破裂的（通貨移除、重骰都不能動）。 */
     public boolean isFractured(final RolledAffix rolled) {
         return fractured != null && rolled != null && fractured.equals(rolled.id());
+    }
+
+    /** 2026-11-08：晶淵鑿多開的符文孔（0 或 1）。 */
+    public int bonusSockets() {
+        return bonusSockets == null ? 0 : bonusSockets;
+    }
+
+    public void setBonusSockets(final int count) {
+        this.bonusSockets = count <= 0 ? null : count;
     }
 
     /** 蝕變石多開的符文孔。 */
@@ -467,6 +478,7 @@ public final class ItemData {
         copy.mirrored = mirrored;
         copy.fractured = fractured;
         copy.corruptSockets = corruptSockets;
+        copy.bonusSockets = bonusSockets;
         copy.runeSockets = runeSockets;
         copy.foresight = foresight;
         copy.sanctified = sanctified;
@@ -506,6 +518,7 @@ public final class ItemData {
         mirrored = from.mirrored;
         fractured = from.fractured;
         corruptSockets = from.corruptSockets;
+        bonusSockets = from.bonusSockets;
         runeSockets = from.runeSockets;
         foresight = from.foresight;
         sanctified = from.sanctified;

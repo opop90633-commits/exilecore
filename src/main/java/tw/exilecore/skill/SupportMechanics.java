@@ -932,24 +932,49 @@ public final class SupportMechanics implements Listener {
                     List.of(Modifier.flat(StatKeys.damageExtra(DamageType.COLD), bite, "冰嚙")));
         }
         // 霜仇嘯（PoE2 Bhatair's Vengeance）：凍結時每 2 點怒氣，你和身邊的隊友 15 秒內獲得 1% 傷害為額外冰冷傷害
-        final double fang = service.supportFlat(player, id, SupportKeys.SHATTER_FANG);
+        // 2026-11-08 照站長「改成跟原作一樣」：觸發的技能、圖騰放的凍結不算（AilmentService 標 proxyFreeze）；這次之前也算
+        final double fang = proxyFreeze ? 0 : service.supportFlat(player, id, SupportKeys.SHATTER_FANG);
         if (fang > 0) {
             final int rage = service.resources().rage(player);
             final double percent = Math.floor(rage / 2.0);
             if (percent > 0) {
                 final List<Modifier> mods = List.of(Modifier.flat(StatKeys.damageExtra(DamageType.COLD), percent, "霜仇"));
                 final int ticks = (int) Math.round(fang * 20);
-                service.buff(player, "shatter_fang", "霜仇", ticks, mods);
+                shatterFang(player, percent, ticks, mods);
                 if (plugin.party() != null) {
                     for (final UUID member : plugin.party().groupMembers(player.getUniqueId())) {
                         final Player ally = member.equals(player.getUniqueId()) ? null : plugin.getServer().getPlayer(member);
                         if (ally != null && ally.getWorld().equals(player.getWorld()) && ally.getLocation().distanceSquared(player.getLocation()) <= PRESENCE * PRESENCE) {
-                            service.buff(ally, "shatter_fang", "霜仇", ticks, mods);
+                            shatterFang(ally, percent, ticks, mods);
                         }
                     }
                 }
             }
         }
+    }
+
+    /** 2026-11-08：霜仇嘯：這一下是觸發的技能或圖騰放的（AilmentService 凍結時標，呼叫完放回 false）。 */
+    private boolean proxyFreeze;
+
+    public void proxyFreeze(final boolean proxy) {
+        this.proxyFreeze = proxy;
+    }
+
+    /** 2026-11-08：身上霜仇的 % 與到期的 tick（玩家 → {%, 到期}）。 */
+    private final Map<UUID, double[]> shatterFangs = new HashMap<>();
+
+    /**
+     * 2026-11-08 照站長「一直凍結的話，沒怒氣時的效果會不會一直蓋掉有怒氣的效果」：還在的霜仇比這次強就不蓋（留著原本的、照原本的時間到期），
+     * 一樣強或比較強才換上新的、重新計時；怒氣 0～1 本來就不給（不會蓋）。這次之前每次凍結都直接換成這次的 %。
+     */
+    private void shatterFang(final Player target, final double percent, final int ticks, final List<Modifier> mods) {
+        final long now = now();
+        final double[] current = shatterFangs.get(target.getUniqueId());
+        if (current != null && current[1] > now && current[0] > percent) {
+            return;
+        }
+        shatterFangs.put(target.getUniqueId(), new double[] {percent, now + ticks});
+        service.buff(target, "shatter_fang", "霜仇", ticks, mods);
     }
 
     /** 「身邊」（PoE2 的 Presence）多遠。 */
@@ -1580,6 +1605,7 @@ public final class SupportMechanics implements Listener {
 
     /** 2026-10-27：清掉這個玩家的榮耀、輔助的標記、走過的距離…（離線、換角色；這次之前只有離線，而且走過的距離、久印沒清）。 */
     void forget(final UUID id) {
+        shatterFangs.remove(id); // 2026-11-08（霜仇嘯）
         lineage.forget(id); // 2026-10-27
         extras.forget(id);
         lastAt.remove(id);

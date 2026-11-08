@@ -52,4 +52,23 @@ class MirageArcherTest {
         final String advanced = SkillService.advancedQualityText(config.skill(DeadeyeMetas.ARCHER), 20);
         assertTrue(advanced.contains("幻影持續時間 +1 秒"), advanced);
     }
+
+    @Test
+    void hostGemsSayWhatGoesInTheirSockets() {
+        // 2026-11-08 照站長「引星切技能不會說它能輔助什麼」
+        assertEquals("法術", GemService.socketWants(config.skill("critical_guide_star")));
+        assertEquals("遠程投射物攻擊", GemService.socketWants(config.skill(DeadeyeMetas.ARCHER)));
+        assertNull(GemService.socketWants(config.skill("rime_arrow")), "一般技能沒有");
+        assertTrue(GemService.socketWantsLine(config.skill("critical_guide_star")).contains("法術"));
+    }
+
+    @Test
+    void energySupportsGoOnAnEmptyInvocation() {
+        // 2026-11-08 照站長「這個引星好像也不能放這些輔助」：孔裡還沒放法術也掛得上湧能 II、返能（套在引星本身）
+        for (final String star : List.of("critical_guide_star", "roll_guide_star", "fallen_servant_star", "element_prayer_star")) {
+            assertNull(config.support("surge_power_ii").hostRefusal(config.skill(star), null), star);
+            assertNull(config.support("power_return").hostRefusal(config.skill(star), null), star);
+        }
+        assertNotNull(config.support("surge_power_ii").hostRefusal(config.skill(DeadeyeMetas.MIRAGE), null), "沒有能量的主要寶石還是不行");
+    }
 }

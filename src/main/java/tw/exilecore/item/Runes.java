@@ -216,7 +216,7 @@ public final class Runes {
 
     /** 這件物品有幾個符文孔：傳奇寫了 rune_sockets 照傳奇（2026-10），不然照基底；再加蝕變石多開的（2026-10-21，可以超過上限）。 */
     public static int slots(final ItemRepository repository, final ItemBase base, final ItemData data) {
-        final int extra = data == null ? 0 : data.corruptSockets();
+        final int extra = data == null ? 0 : data.corruptSockets() + data.bonusSockets(); // 2026-11-08：＋晶淵鑿多開的
         if (repository != null && data != null && data.unique() != null) {
             final int own = repository.uniqueRuneSockets(data.unique());
             if (own >= 0) {

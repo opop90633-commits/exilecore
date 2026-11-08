@@ -207,6 +207,11 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (ChayulaHand.hosts(host) && refusal(host) == null) {
             return null;
         }
+        // 2026-11-08 照站長「這個引星好像也不能放這些輔助（湧能 II、返能）」：能量輔助套在引星本身，孔裡還沒放法術也掛得上；
+        //   這次之前先檢查孔裡有沒有技能寶石，空的引星掛不上能量輔助（「先把技能寶石放進它的孔」）
+        if ((requires.contains("meta") || requires.contains("invocation")) && refusal(host) == null) {
+            return null;
+        }
         if (inner == null) {
             return "先把技能寶石放進它的孔";
         }

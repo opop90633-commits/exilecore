@@ -445,7 +445,7 @@ public final class CurrencyService {
 
     /** 這顆通貨現在能不能用在這件上（規則面；星籤的限制在 {@link #run} 裡）。 */
     private boolean usable(final CurrencyType type, final ItemData data) {
-        if ((!type.operation().allowedOn(data, items.repository()) || data.sanctified()) && !type.operation().allowedOnCorrupted()) { // 2026-11-04：混沌一瞥腐化了還能改
+        if ((!type.operation().allowedOn(data, items.repository()) || data.sanctified() && !type.operation().allowedOnSanctified()) && !type.operation().allowedOnCorrupted()) { // 2026-11-08：晶淵鑿已聖化也能用 // 2026-11-04：混沌一瞥腐化了還能改
             return false; // 已腐化（2026-10）、已聖化（2026-10-26）：不能再改造（鑑定、嵌符文到空孔除外）
         }
         if (type.operation() == CurrencyOperation.MIRROR) {
@@ -746,7 +746,7 @@ public final class CurrencyService {
         if (!type.get().operation().allowedOn(data.get(), items.repository())) { // 2026-11-04：混沌一瞥腐化了還能改
             return type.get().operation() == CurrencyOperation.MIRROR ? "已腐化的物品不能複製" : "已腐化的物品不能再改造";
         }
-        if (data.get().sanctified() && !type.get().operation().allowedOnCorrupted()) {
+        if (data.get().sanctified() && !type.get().operation().allowedOnSanctified()) { // 2026-11-08：晶淵鑿也可以
             return "已聖化的物品不能再改造"; // 2026-10-26
         }
         final String problem = Crafting.problem(type.get(), data.get(), items.generator());
