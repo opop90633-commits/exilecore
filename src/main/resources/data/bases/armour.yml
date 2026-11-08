@@ -6702,6 +6702,12 @@ body_str_dex_int_01:
   armour: 273   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
   evasion: 248   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
   es: 76   # 2026-11-07 照 PoE2 原值（Sacrificial Regalia）
+  # 2026-11-08 照站長「跟原作比是不是少了一條」（poe2db Sacrificial Regalia：+1 to Level of all Corrupted Skill Gems）；這次之前沒有固定詞綴
+  implicit:
+    text: "+{value} 全部已腐化技能寶石等級"
+    value: [1, 1]
+    mods:
+      - { stat: gem.corrupted_level, type: FLAT, value: "{value}" }
 
 # 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 Primal Markings（poe2db：野性標記；PoB2 Data/Bases/body.lua hidden = true）：
 #   閃避＋能量護盾胸甲，原作只有傳奇「Forgotten Warden」（遺忘看守）用，所以傳奇專用（retired：哪裡都不掉、不出現在基底清單，
