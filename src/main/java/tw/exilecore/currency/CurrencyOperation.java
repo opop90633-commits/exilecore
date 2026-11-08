@@ -730,7 +730,8 @@ public enum CurrencyOperation {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             return data.rarity() == Rarity.UNIQUE && data.unique() != null && !data.mirrored() && !data.starter()
-                    && generator.repository().unique(data.unique()) != null;
+                    && generator.repository().unique(data.unique()) != null
+                    && generator.cultivateProblem(data) == null; // 2026-11-08 照站長：瓦爾傳奇只能培養一次；沒東西能換不給用（這次之前可以一直用、沒得換也吃掉）
         }
 
         @Override

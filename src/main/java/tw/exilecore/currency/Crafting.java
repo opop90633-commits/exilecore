@@ -111,6 +111,12 @@ public final class Crafting {
         if (type.operation() == CurrencyOperation.MIRROR) {
             return mirrorProblem(data, base);
         }
+        if (type.operation() == CurrencyOperation.CULTIVATE && data.unique() != null) {
+            final String why = generator.cultivateProblem(data); // 2026-11-08：瓦爾傳奇只能培養一次
+            if (why != null) {
+                return why;
+            }
+        }
         if (base.isFlaskLike()) {
             // 2026-10：藥劑、護符最多魔法（PoE2）：只有鑑定、蛻變、增幅、改造、機會→不行、抹除、神聖、祝福這幾種能用
             // 2026-11-01 修正：星籤（必變籤這類）會被藥劑能用的通貨觸發的話，也能掛在藥劑、護符上；

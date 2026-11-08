@@ -474,6 +474,30 @@ public final class ItemGenerator {
      * 其他傳奇——變成同種類（{@link #itemClass}）的隨機一件已腐化傳奇（全域掉落的照稀有度加權，追逐級另外擲；不會是同一件），UUID、物品等級、品質留著。
      * 回傳結果說明（給聊天訊息）。
      */
+    /**
+     * 2026-11-08 照站長「蝕培石原作不能對同一個物品一直重複使用」：已腐化的瓦爾傳奇只能培養一次（換過瓦爾詞綴的就不行），
+     * 也要真的有能換的（有原本的傳奇詞綴、也有還沒出現的瓦爾詞綴）才能用，不然擋下來、不吃通貨。
+     * 回傳 null 表示能用；不是瓦爾傳奇的那條路（轉成同種類的已腐化傳奇）不看這個。
+     */
+    public String cultivateProblem(final ItemData data) {
+        final UniqueItem unique = repository.unique(data.unique());
+        final List<String> pool = unique == null ? List.of() : repository.vaalMods(unique.id());
+        if (unique == null || !data.corrupted() || pool.isEmpty()) {
+            return null;
+        }
+        if (!data.cultivatedOut().isEmpty()) {
+            return "這件已經培養過了（一件只能用一次蝕培石）";
+        }
+        boolean original = false;
+        final java.util.Set<String> present = new java.util.HashSet<>();
+        for (final RolledAffix rolled : data.affixes()) {
+            present.add(rolled.id());
+            original |= unique.affixIds().contains(rolled.id());
+        }
+        final boolean fresh = pool.stream().anyMatch(id -> !present.contains(id) && repository.affix(id) != null);
+        return original && fresh ? null : "沒有能換的詞綴";
+    }
+
     public String cultivate(final ItemData data, final RandomGenerator random) {
         final UniqueItem unique = repository.unique(data.unique());
         final List<String> pool = unique == null ? List.of() : repository.vaalMods(unique.id());
