@@ -43,7 +43,9 @@ class ThirdRingSlotTest {
         assertEquals(10, PlayerState.HOTBAR_STASH);
         assertEquals(16, PlayerState.CHARM_SLOT);
         assertEquals(19, PlayerState.RING3_SLOT);
-        assertEquals(20, PlayerState.STORED_SLOTS);
+        assertEquals(20 + 2, PlayerState.STORED_SLOTS, "2026-11-08：另一組武器的兩格接在最後（WeaponSetsTest）");
+        assertEquals(20, PlayerState.SPARE_MAIN_SLOT);
+        assertEquals(21, PlayerState.SPARE_OFF_SLOT);
     }
 
     @Test
@@ -57,7 +59,8 @@ class ThirdRingSlotTest {
         }
         assertEquals(PlayerState.RING3_SLOT, PlayerState.gearIndex(PlayerState.RING3));
         final PlayerState state = new PlayerState(UUID.randomUUID());
-        assertEquals(PlayerState.GEAR_SLOTS.length, state.gearSet(0).length, "裝備組也有第三個戒指");
+        // 2026-11-09：後面再接第 II 組武器的主手、副手（PlayerState.GEAR_PRESET_SLOTS）
+        assertEquals(PlayerState.GEAR_SLOTS.length + 2, state.gearSet(0).length, "裝備組也有第三個戒指（再接第 II 組武器）");
         assertEquals(PlayerState.STORED_SLOTS, state.jewellery().length);
     }
 

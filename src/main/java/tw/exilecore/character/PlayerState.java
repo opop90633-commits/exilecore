@@ -40,7 +40,14 @@ public final class PlayerState {
      */
     public static final int RING3_SLOT = CHARM_SLOT + CHARM_SLOTS;
     /** 存檔裡這一串的總長度：裝備欄 + 收起來的快捷列 6 格 + 護符欄 + 第三個戒指欄。 */
-    public static final int STORED_SLOTS = JEWELLERY_SLOTS.length + 6 + CHARM_SLOTS + 1;
+    public static final int STORED_SLOTS = JEWELLERY_SLOTS.length + 6 + CHARM_SLOTS + 1 + 2;
+    /**
+     * 2026-11-08 照站長「武器切換系統」（PoE2 的武器組）：沒在用的那一組武器的主手、副手（接在第三個戒指欄後面；舊存檔讀進來是空的）。
+     * 正在用的那一組一律放在 {@link Gear#MAIN}／{@link Gear#OFF}，切換時兩組對調（{@link WeaponSets}）；這兩格不生效。
+     * 這次之前只有一組武器。
+     */
+    public static final int SPARE_MAIN_SLOT = CHARM_SLOT + CHARM_SLOTS + 1;
+    public static final int SPARE_OFF_SLOT = SPARE_MAIN_SLOT + 1;
     /** 「+1 戒指欄位」（2026-10-26，展露之指）：大於 0 時開第三個戒指欄。 */
     public static final String RING_EXTRA_STAT = "slot.ring_extra";
     /**
@@ -71,7 +78,14 @@ public final class PlayerState {
     private final Map<String, ItemStack> jewels = new LinkedHashMap<>();
     /** 裝備組（2026-10，月卡福利）：沒在用的組放的裝備（不生效）；正在用的那一組就是 {@link #jewellery}，這裡那一格是空的。 */
     public static final int GEAR_SETS = 5;
-    private final ItemStack[][] gearSets = new ItemStack[GEAR_SETS][GEAR_SLOTS.length];
+    /**
+     * 2026-11-09 照站長「月卡能記錄裝備與天賦組的嗎」：裝備組每一組多記第 II 組武器的主手、副手（接在 {@link #GEAR_SLOTS} 後面；
+     * 第 {@link Gear#MAIN}／{@link Gear#OFF} 格一律是第 I 組的）。這次之前只記正在用的那一組武器。
+     */
+    public static final int PRESET_SET2_MAIN = GEAR_SLOTS.length;
+    public static final int PRESET_SET2_OFF = PRESET_SET2_MAIN + 1;
+    public static final int GEAR_PRESET_SLOTS = PRESET_SET2_OFF + 1;
+    private final ItemStack[][] gearSets = new ItemStack[GEAR_SETS][GEAR_PRESET_SLOTS];
     /** 天賦組（2026-10，月卡福利）：沒在用的組放在珠寶孔裡的珠寶（節點代號 → 珠寶；不生效）。正在用的那一組在 {@link #jewels}。 */
     @SuppressWarnings("unchecked")
     private final Map<String, ItemStack>[] treeJewels = new Map[GEAR_SETS];
@@ -229,6 +243,25 @@ public final class PlayerState {
         }
     }
 
+    /** 2026-11-08 照站長「武器切換系統」：正在用第幾組武器（1 或 2；存在角色進度 weaponset.active，沒有＝1）。 */
+    public static final String WEAPON_SET_KEY = "weaponset.active";
+
+    /** 正在用第幾組武器（1 或 2）。 */
+    public int activeWeaponSet() {
+        return "2".equals(progress.get(WEAPON_SET_KEY)) ? 2 : 1;
+    }
+
+    /** 2026-11-08：只換兩組武器的主手、副手（不改「正在用第幾組」；{@link WeaponSets} 用）。 */
+    void exchangeWeaponSlots() {
+        final ItemStack main = jewellery[tw.exilecore.character.Gear.MAIN];
+        final ItemStack off = jewellery[tw.exilecore.character.Gear.OFF];
+        jewellery[tw.exilecore.character.Gear.MAIN] = jewellery[SPARE_MAIN_SLOT];
+        jewellery[tw.exilecore.character.Gear.OFF] = jewellery[SPARE_OFF_SLOT];
+        jewellery[SPARE_MAIN_SLOT] = main;
+        jewellery[SPARE_OFF_SLOT] = off;
+        dirty = true;
+    }
+
     public static final String GEAR_SET_KEY = "gearset.active";
     public static final String TREE_SET_KEY = "treeset.active";
     public static final String SKILL_SET_KEY = "skillset.active";
@@ -258,14 +291,42 @@ public final class PlayerState {
         }
     }
 
-    /** 換成第 set 組：現在裝著的收進原本那一組，那一組的換上來（裝備沒有消失，只是不生效）。 */
+    /** 2026-11-09：裝備組第 set 組存的時候正在用第幾組武器（角色進度）。 */
+    public static String gearSetWeaponKey(final int set) {
+        return "gearsetws." + set;
+    }
+
+    /**
+     * 換成第 set 組：現在裝著的收進原本那一組，那一組的換上來（裝備沒有消失，只是不生效）。
+     * 2026-11-09 照站長「月卡能記錄裝備與天賦組的嗎」：兩組武器一起換——存的時候照「第 I 組、第 II 組」記（不管正在用哪一組），
+     * 換上來照現在正在用的那一組放（不改正在用第幾組；要不要切過去由呼叫的人看 {@link #gearSetWeaponKey}）；
+     * 存的時候正在用第幾組記在角色進度。這次之前只換正在用的那一組武器，另一組留在身上。
+     */
     public void switchGearSet(final int from, final int to) {
+        final int active = activeWeaponSet();
         for (int i = 0; i < GEAR_SLOTS.length; i++) {
             final int at = gearIndex(i);
             gearSets[from][i] = jewellery[at];
             jewellery[at] = gearSets[to][i];
             gearSets[to][i] = null;
         }
+        // 第 I 組在 MAIN／OFF、第 II 組在後面兩格（gearSets[from] 的 MAIN／OFF 現在是正在用的那一組）
+        final ItemStack usedMain = gearSets[from][Gear.MAIN], usedOff = gearSets[from][Gear.OFF];
+        final ItemStack spareMain = jewellery[SPARE_MAIN_SLOT], spareOff = jewellery[SPARE_OFF_SLOT];
+        gearSets[from][Gear.MAIN] = active == 1 ? usedMain : spareMain;
+        gearSets[from][Gear.OFF] = active == 1 ? usedOff : spareOff;
+        gearSets[from][PRESET_SET2_MAIN] = active == 1 ? spareMain : usedMain;
+        gearSets[from][PRESET_SET2_OFF] = active == 1 ? spareOff : usedOff;
+        progress.put(gearSetWeaponKey(from), String.valueOf(active));
+        // 換上來的：jewellery 的 MAIN／OFF 現在是那一組的第 I 組
+        final ItemStack oneMain = jewellery[Gear.MAIN], oneOff = jewellery[Gear.OFF];
+        final ItemStack twoMain = gearSets[to][PRESET_SET2_MAIN], twoOff = gearSets[to][PRESET_SET2_OFF];
+        jewellery[Gear.MAIN] = active == 1 ? oneMain : twoMain;
+        jewellery[Gear.OFF] = active == 1 ? oneOff : twoOff;
+        jewellery[SPARE_MAIN_SLOT] = active == 1 ? twoMain : oneMain;
+        jewellery[SPARE_OFF_SLOT] = active == 1 ? twoOff : oneOff;
+        gearSets[to][PRESET_SET2_MAIN] = null;
+        gearSets[to][PRESET_SET2_OFF] = null;
         dirty = true;
     }
 

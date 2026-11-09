@@ -51,8 +51,12 @@ import java.util.Set;
  *   "binds": [技能的位置 | -1 × 10],         按鍵格（左、右、蹲左、蹲右、數字鍵 3–8）
  *   "extra": [{ "stat", "type", "value", "tags", "source" }],      快照記的稱號、公會、贊助、分身獎勵
  *   "supportsFor": 2,                       要比較輔助寶石的技能位置（可以不寫）
- *   "instilFor": -1                         要比較項鍊注入哪個核心（蒸餾情緒）：看哪個技能位置的傷害，-1 = 傷害最高的那個（可以不寫）
+ *   "instilFor": -1,                        要比較項鍊注入哪個核心（蒸餾情緒）：看哪個技能位置的傷害，-1 = 傷害最高的那個（可以不寫）
+ *   "weaponSet": 1,                         2026-11-09：正在用第幾組武器（gear 的武器、副手是這一組；tree 裡含這一組的武器組天賦）
+ *   "spare": [主手 | null, 副手 | null],      另一組武器
+ *   "wsNodes": { "1": [...], "2": [...] }    兩組的武器組天賦；技能的 "ws": 1／2 是綁哪一組（沒寫＝不指定）
  * }
+ * 沒有 weaponSet 的舊格式照常讀（進度裡有 weaponset.／wsnodes.／skillws. 的照進度）。
  * </pre>
  * 讀進來的部分（{@link #parse}）是純函式，可以單元測試；算的部分要插件的模組。
  */
@@ -61,7 +65,12 @@ public final class BuildCalc {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     /** 進度只收這些開頭的鍵（算加成用得到的）。 */
     static final List<String> PROGRESS_PREFIXES = List.of("q.", "boss.", "trial.", "asc", "attr.",
-            "minion_count."); // 2026-11-08：每個召喚技能帶幾隻（技能面板「設定召喚物數量」）；這次之前沒帶，網頁每個召喚技能都當 1 隻、精魂少算
+            "minion_count.", // 2026-11-08：每個召喚技能帶幾隻（技能面板「設定召喚物數量」）；這次之前沒帶，網頁每個召喚技能都當 1 隻、精魂少算
+            // 2026-11-09 照站長「網頁天賦規劃器和網頁 DPS 計算器也補上兩組」：正在用第幾組武器、兩組的武器組天賦、技能綁哪一組
+            "weaponset.", "wsnodes.", "skillws.");
+    /** 2026-11-09：「gear」後面接著沒在用那一組武器的主手、副手（{@link #withWeaponSets}）。 */
+    static final int SPARE_MAIN = PlayerState.GEAR_SLOTS.length;
+    static final int SPARE_OFF = SPARE_MAIN + 1;
     static final int MAX_EXTRA = 400;
     static final int MAX_PROGRESS = 400;
     static final int MAX_JEWELS = 40;
@@ -193,6 +202,7 @@ public final class BuildCalc {
             }
         }
         // 技能面板
+        final Map<String, Integer> skillSets = new LinkedHashMap<>();
         final SkillLoadout loadout = new SkillLoadout();
         final List<Integer> positions = new ArrayList<>();
         final JsonArray skillArray = json.has("skills") && json.get("skills").isJsonArray() ? json.getAsJsonArray("skills") : new JsonArray();
@@ -233,6 +243,9 @@ public final class BuildCalc {
             final int level1 = s.has("level") ? s.get("level").getAsInt() : 1;
             final int position = loadout.add(new SkillLoadout.Entry(definition.id(), level1, sockets, supports));
             positions.set(i, position);
+            if (s.has("ws") && s.get("ws").isJsonPrimitive()) {
+                skillSets.put(definition.id(), s.get("ws").getAsInt()); // 2026-11-09：綁哪一組武器
+            }
         }
         if (json.has("binds") && json.get("binds").isJsonArray()) {
             final JsonArray binds = json.getAsJsonArray("binds");
@@ -268,8 +281,149 @@ public final class BuildCalc {
             final int index = json.get("instilFor").getAsInt();
             instilFor = index >= 0 && index < positions.size() && positions.get(index) >= 0 ? positions.get(index) : -1;
         }
-        return new Build(characterClass, level, new LinkedHashSet<>(decoded.nodes()), progress, gear, jewels, loadout, extra, supportsFor,
+        final Set<String> passives = new LinkedHashSet<>(decoded.nodes());
+        // 2026-11-09 照站長「網頁 DPS 計算器也補上兩組」：武器組（另一組的武器接在 gear 後面；武器組天賦、綁定寫進進度）
+        final JsonArray spare = json.has("spare") && json.get("spare").isJsonArray() ? json.getAsJsonArray("spare") : null;
+        if (spare != null) {
+            gear.add(spare.size() > 0 ? item(spare.get(0)) : null);
+            gear.add(spare.size() > 1 ? item(spare.get(1)) : null);
+        }
+        if (json.has("weaponSet")) {
+            progress.keySet().removeIf(key -> key.startsWith("weaponset.") || key.startsWith("wsnodes.") || key.startsWith("skillws."));
+            final int active = json.get("weaponSet").isJsonPrimitive() && json.get("weaponSet").getAsInt() == 2 ? 2 : 1;
+            progress.put(PlayerState.WEAPON_SET_KEY, String.valueOf(active));
+            if (json.has("wsNodes") && json.get("wsNodes").isJsonObject()) {
+                final JsonObject ws = json.getAsJsonObject("wsNodes");
+                for (int set = 1; set <= 2; set++) {
+                    final List<String> ids = strings(ws, String.valueOf(set), 512);
+                    if (!ids.isEmpty()) {
+                        progress.put(tw.exilecore.character.WeaponSets.nodesKey(set), String.join(",", ids));
+                    }
+                }
+            }
+            skillSets.forEach((id, set) -> {
+                if (set == 1 || set == 2) {
+                    progress.put(tw.exilecore.character.WeaponSets.skillKey(id), String.valueOf(set));
+                }
+            });
+        }
+        cleanWeaponSets(tree, passives, progress);
+        return new Build(characterClass, level, passives, progress, gear, jewels, loadout, extra, supportsFor,
                 instilFor, parseEnemy(json));
+    }
+
+    /**
+     * 2026-11-09：武器組天賦照遊戲的規則整理（純函式）：不認得的、起點、珠寶孔拿掉；正在用那一組的要在天賦裡（不在就拿掉）；
+     * 另一組的如果已經是一般節點就當一般節點。
+     */
+    static void cleanWeaponSets(final PassiveTree tree, final Set<String> passives, final Map<String, String> progress) {
+        final int active = "2".equals(progress.get(PlayerState.WEAPON_SET_KEY)) ? 2 : 1;
+        final Set<String> mine = validNodes(tree, tw.exilecore.character.WeaponSets.nodes(progress, active));
+        mine.retainAll(passives);
+        final Set<String> theirs = validNodes(tree, tw.exilecore.character.WeaponSets.nodes(progress, tw.exilecore.character.WeaponSets.other(active)));
+        for (final java.util.Iterator<String> it = theirs.iterator(); it.hasNext(); ) {
+            final String id = it.next();
+            if (passives.contains(id) && !mine.contains(id)) {
+                it.remove(); // 已經是一般節點
+            }
+        }
+        putNodes(progress, active, mine);
+        putNodes(progress, tw.exilecore.character.WeaponSets.other(active), theirs);
+    }
+
+    private static Set<String> validNodes(final PassiveTree tree, final Set<String> ids) {
+        final Set<String> out = new LinkedHashSet<>();
+        for (final String id : ids) {
+            final tw.exilecore.passive.PassiveNode node = tree == null ? null : tree.node(id);
+            if (node != null && !node.isStart() && !node.isSocket()) {
+                out.add(id);
+            }
+        }
+        return out;
+    }
+
+    private static void putNodes(final Map<String, String> progress, final int set, final Set<String> nodes) {
+        if (nodes.isEmpty()) {
+            progress.remove(tw.exilecore.character.WeaponSets.nodesKey(set));
+        } else {
+            progress.put(tw.exilecore.character.WeaponSets.nodesKey(set), String.join(",", nodes));
+        }
+    }
+
+    /**
+     * 2026-11-09：換成另一組武器的同一個角色（純函式）：gear 的武器、副手跟後面接的另一組對調，武器組天賦換成那一組的，正在用的組換過去。
+     * 沒有另一組的武器、也沒有武器組天賦時回傳 null（不用另外算）。
+     */
+    static Build otherWeaponSet(final Build build) {
+        final Map<String, String> progress = new LinkedHashMap<>(build.progress());
+        final int active = "2".equals(progress.get(PlayerState.WEAPON_SET_KEY)) ? 2 : 1;
+        final int other = tw.exilecore.character.WeaponSets.other(active);
+        final Set<String> mine = tw.exilecore.character.WeaponSets.nodes(progress, active);
+        final Set<String> theirs = tw.exilecore.character.WeaponSets.nodes(progress, other);
+        final List<ItemData> gear = new ArrayList<>(build.gear());
+        final boolean hasSpare = gear.size() > SPARE_OFF && (gear.get(SPARE_MAIN) != null || gear.get(SPARE_OFF) != null);
+        if (!hasSpare && mine.isEmpty() && theirs.isEmpty()) {
+            return null;
+        }
+        while (gear.size() <= SPARE_OFF) {
+            gear.add(null);
+        }
+        final int main = PlayerState.gearIndex(4), off = PlayerState.gearIndex(5);
+        final ItemData oldMain = gear.get(main), oldOff = gear.get(off);
+        gear.set(main, gear.get(SPARE_MAIN));
+        gear.set(off, gear.get(SPARE_OFF));
+        gear.set(SPARE_MAIN, oldMain);
+        gear.set(SPARE_OFF, oldOff);
+        final Set<String> passives = new LinkedHashSet<>(build.passives());
+        for (final String id : mine) {
+            if (!theirs.contains(id)) {
+                passives.remove(id);
+            }
+        }
+        passives.addAll(theirs);
+        progress.put(PlayerState.WEAPON_SET_KEY, String.valueOf(other));
+        return new Build(build.characterClass(), build.level(), passives, progress, gear, build.jewels(), build.skills(), build.extra(),
+                build.supportsFor(), build.instilFor(), build.enemy());
+    }
+
+    /** 2026-11-09：這個技能綁的是另一組武器。 */
+    static boolean boundToOther(final Build build, final String skillId) {
+        final int active = "2".equals(build.progress().get(PlayerState.WEAPON_SET_KEY)) ? 2 : 1;
+        final int wanted = tw.exilecore.character.WeaponSets.binding(build.progress(), skillId);
+        return wanted != 0 && wanted != active;
+    }
+
+    /**
+     * 2026-11-09 照站長「網頁 DPS 計算器也補上兩組」：每個技能照它綁的那一組武器算（跟遊戲的角色面板一樣：綁另一組的換成另一組的武器與武器組天賦算）。
+     * 這次之前一律用 gear 那一組。
+     */
+    private List<SkillService.DpsRow> boundRows(final Build build, final Result result) {
+        final SkillService skills = plugin.skills();
+        final List<SkillService.DpsRow> current = skills.skillDps(result.state(), result.sheet(), auraView(result));
+        boolean needOther = false;
+        for (final SkillService.DpsRow row : current) {
+            needOther |= row.skillId() != null && boundToOther(build, row.skillId());
+        }
+        final Build other = needOther ? otherWeaponSet(build) : null;
+        if (other == null) {
+            return current;
+        }
+        final Result alt = evaluate(other, other.skills());
+        final List<SkillService.DpsRow> altRows = skills.skillDps(alt.state(), alt.sheet(), auraView(alt));
+        final List<SkillService.DpsRow> merged = new ArrayList<>();
+        for (final SkillService.DpsRow row : current) {
+            SkillService.DpsRow use = row;
+            if (row.skillId() != null && boundToOther(build, row.skillId())) {
+                for (final SkillService.DpsRow candidate : altRows) {
+                    if (candidate.position() == row.position() && java.util.Objects.equals(candidate.skillId(), row.skillId())) {
+                        use = candidate;
+                        break;
+                    }
+                }
+            }
+            merged.add(use);
+        }
+        return merged;
     }
 
     /**
@@ -480,8 +634,13 @@ public final class BuildCalc {
         root.add("gemProblems", gemProblems);
         final JsonArray rows = new JsonArray();
         if (skills != null) {
-            for (final SkillService.DpsRow row : skills.skillDps(result.state(), result.sheet(), auraView(result))) {
-                rows.add(rowJson(row));
+            for (final SkillService.DpsRow row : boundRows(build, result)) { // 2026-11-09：照綁的武器組
+                final JsonObject json = rowJson(row);
+                final int bound = tw.exilecore.character.WeaponSets.binding(build.progress(), row.skillId());
+                if (bound != 0) {
+                    json.addProperty("ws", bound);
+                }
+                rows.add(json);
             }
             final JsonObject auras = new JsonObject();
             final JsonArray active = new JsonArray();
@@ -505,7 +664,9 @@ public final class BuildCalc {
             }
         }
         root.add("skills", rows);
-        root.add("jewels", jewelEffects(build));
+        root.addProperty("weaponSet", "2".equals(build.progress().get(PlayerState.WEAPON_SET_KEY)) ? 2 : 1); // 2026-11-09
+        root.add("jewels", jewelEffects(build, VirtualCharacter.state(build.characterClass(), Math.min(build.level(), plugin.players().config().levelCap()),
+                build.passives(), build.progress(), new SkillLoadout()))); // 2026-11-09：巴揚地脈要看昇華
         return GSON.toJson(root).getBytes(StandardCharsets.UTF_8);
     }
 
@@ -513,7 +674,10 @@ public final class BuildCalc {
      * 珠寶孔裡的珠寶實際給了什麼（2026-10-16：網頁天賦樹上直接看得到）：每個有配、有放珠寶的孔位一筆——
      * 半徑（遺時星晶才有）、範圍內已配的節點、這顆珠寶加在角色身上的所有效果（遺時星晶的「範圍內小點各給 x」已經乘上小點數）。
      */
-    private JsonArray jewelEffects(final Build build) {
+    private JsonArray jewelEffects(final Build build, final PlayerState state) {
+        // 2026-11-09 照站長「巴揚地脈能直接影響並顯示真正的半徑嗎」：非傳奇的範圍珠寶半徑照昇華放大（範圍內的節點、效果、畫的圈都照放大後的）；
+        //   這次之前網頁一律照珠寶本身的半徑
+        final double leylines = tw.exilecore.ascendancy.AscBuild.jewelRadiusScale(plugin, state, null);
         final JsonArray out = new JsonArray();
         final PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
         final tw.exilecore.item.ItemRepository repository = plugin.items() == null ? null : plugin.items().repository();
@@ -529,7 +693,7 @@ public final class BuildCalc {
             final tw.exilecore.item.ItemBase base = repository.base(data.base());
             final List<Modifier> mods;
             try {
-                mods = tw.exilecore.passive.JewelSockets.modifiers(repository, Map.of(socket.id(), data), build.passives(), tree);
+                mods = tw.exilecore.passive.JewelSockets.modifiers(repository, Map.of(socket.id(), data), build.passives(), tree, leylines, false);
             } catch (final RuntimeException e) {
                 continue;
             }
@@ -538,9 +702,13 @@ public final class BuildCalc {
             final JsonArray inRange = new JsonArray();
             final boolean timeless = tw.exilecore.passive.TimelessJewels.isTimeless(base); // 2026-10-26：永恆珠寶（範圍 1500）
             if (base != null && (base.isRadiusJewel() || timeless)) {
-                final double radius = timeless ? tw.exilecore.passive.TimelessJewels.RADIUS
+                final double own = timeless ? tw.exilecore.passive.TimelessJewels.RADIUS
                         : tw.exilecore.passive.JewelSockets.radiusOf(tw.exilecore.item.ItemStats.modifiers(repository, data));
+                final double radius = !timeless && data.rarity() != tw.exilecore.item.Rarity.UNIQUE ? own * leylines : own;
                 jewel.addProperty("radius", radius);
+                if (radius != own) {
+                    jewel.addProperty("baseRadius", own); // 2026-11-09：珠寶本身的半徑（網頁寫「巴揚地脈 1150 → 1610」）
+                }
                 for (final tw.exilecore.passive.PassiveNode near : tw.exilecore.passive.JewelSockets.nodesInRadius(tree, socket, radius)) {
                     if (build.passives().contains(near.id())) {
                         inRange.add(near.id());
@@ -953,6 +1121,17 @@ public final class BuildCalc {
             final JsonArray tags = new JsonArray();
             definition.displayTags().stream().sorted().forEach(tags::add); // 2026-10-30：照原作寶石標籤顯示（只拿來搜尋）
             o.add("tags", tags);
+            // 2026-11-09 照站長「規劃器裡幻影神射、幻弓影沒辦法放技能」：宿主寶石孔裡能放的技能（跟遊戲一樣檢查）；這次之前網頁只能放輔助
+            if (tw.exilecore.skill.SupportDefinition.hostsSkill(definition)) {
+                final JsonArray inner = new JsonArray();
+                for (final SkillDefinition candidate : config.all()) {
+                    if (!candidate.hidden() && candidate != definition
+                            && tw.exilecore.skill.GemService.innerProblem(config, definition, candidate) == null) {
+                        inner.add(candidate.id());
+                    }
+                }
+                o.add("inner", inner);
+            }
             skills.add(o);
         }
         root.add("skills", skills);
@@ -1217,7 +1396,7 @@ public final class BuildCalc {
         final JsonArray rows = new JsonArray();
         final SkillService skills = plugin.skills();
         if (withSkills && skills != null) {
-            for (final SkillService.DpsRow row : skills.skillDps(result.state(), result.sheet(), auraView(result))) {
+            for (final SkillService.DpsRow row : boundRows(build, result)) { // 2026-11-09：照綁的武器組
                 final JsonObject r = new JsonObject();
                 r.addProperty("p", row.position());
                 r.addProperty("id", row.skillId());

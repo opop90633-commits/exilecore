@@ -2463,6 +2463,22 @@ public final class SkillService {
     }
 
     /** 真正放一次。 */
+    /**
+     * 2026-11-08 照站長「武器切換系統」（PoE2：技能可以指定用哪一組武器，放的時候自動換過去；站長要求不延遲）：
+     * 這個技能綁了另一組武器就先換組。普攻、沒綁的技能用現在那一組。回傳有沒有換。
+     */
+    boolean switchWeaponSetFor(final Player player, final PlayerState state, final Resolved pressed) {
+        if (pressed == null || pressed.isDefault() || plugin.characters() == null) {
+            return false;
+        }
+        final int wanted = tw.exilecore.character.WeaponSets.binding(state.progress(), pressed.entry().skillId());
+        if (wanted == 0 || wanted == state.activeWeaponSet()) {
+            return false;
+        }
+        plugin.characters().swapWeaponSet(player, false);
+        return true;
+    }
+
     void perform(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
         final java.util.UUID previousFx = Fx.source(player.getUniqueId()); // 2026-10：隱藏別人的技能特效
         try {
@@ -2474,6 +2490,7 @@ public final class SkillService {
 
     private void performInner(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
         final PlayerState state = plugin.players().get(player);
+        switchWeaponSetFor(player, state, resolve(state, key)); // 2026-11-08 照站長「武器切換系統」：綁了另一組武器的技能先切過去（不延遲）
         final StatSheet sheet = plugin.players().sheet(player); // 剛換武器時先重算，普攻與標籤才會跟著新武器
         final LivingEntity preferred = target != null && target.getWorld().equals(player.getWorld()) ? target : null;
         final Resolved pressed = resolve(state, key);
@@ -4284,13 +4301,80 @@ public final class SkillService {
      */
     public List<String[]> skillDps(final Player player) {
         final List<String[]> rows = new ArrayList<>();
-        for (final DpsRow row : skillDps(plugin.players().get(player), plugin.players().sheet(player), liveAuras(player))) {
+        for (final DpsRow row : skillDpsByWeaponSet(player)) {
             rows.add(new String[] {row.slot() < 0 ? "觸發" : tw.exilecore.character.HotbarLayout.of(plugin.players().get(player)).shortKeyName(row.slot()),
                     row.minions() > 0 ? row.name() + "（召喚物 ×" + row.minions() + "，暴擊 " + ModifierText.number(row.crit() * 100)
                             + "% ×" + ModifierText.number(row.multi()) + "%）" : row.name(),
                     String.valueOf(Math.round(row.dps())), String.valueOf(Math.round(row.full()))});
         }
         return rows;
+    }
+
+    /**
+     * 2026-11-08 照站長「武器切換系統」：每個技能照它綁的那一組武器算（綁了另一組的，暫時換過去算完再換回來；不存檔、不提示）。
+     * 沒有技能綁另一組時跟以前一樣。
+     */
+    List<DpsRow> skillDpsByWeaponSet(final Player player) {
+        final PlayerState state = plugin.players().get(player);
+        final List<DpsRow> current = skillDps(state, plugin.players().sheet(player), liveAuras(player));
+        final int active = state.activeWeaponSet();
+        boolean needOther = false;
+        for (final DpsRow row : current) {
+            if (otherSetRow(state, row, active)) {
+                needOther = true;
+                break;
+            }
+        }
+        if (!needOther || !state.hasCharacter()) {
+            return current;
+        }
+        // 換組會讓屬性表重算（版本變了），角色面板照版本判斷要不要重畫：同一個版本直接用上次算的，不然會一直重畫
+        final StatSheet before = plugin.players().sheet(player);
+        final OtherSetDps cached = otherSetDps.get(player.getUniqueId());
+        int bindings = 0;
+        for (final Map.Entry<String, String> entry : state.progress().entrySet()) {
+            if (entry.getKey().startsWith("skillws.")) {
+                bindings += entry.hashCode();
+            }
+        }
+        if (cached != null && cached.version() == before.version() && cached.active() == active && cached.bindings() == bindings) {
+            return cached.rows();
+        }
+        final List<DpsRow> other;
+        tw.exilecore.character.WeaponSets.swap(state);
+        try {
+            other = skillDps(state, plugin.players().sheet(player), liveAuras(player));
+        } finally {
+            tw.exilecore.character.WeaponSets.swap(state);
+        }
+        final StatSheet after = plugin.players().sheet(player);
+        final List<DpsRow> merged = new ArrayList<>();
+        for (final DpsRow row : current) {
+            DpsRow use = row;
+            if (otherSetRow(state, row, active)) {
+                for (final DpsRow alt : other) {
+                    if (alt.slot() == row.slot() && java.util.Objects.equals(alt.skillId(), row.skillId())) {
+                        use = alt;
+                        break;
+                    }
+                }
+            }
+            merged.add(use);
+        }
+        otherSetDps.put(player.getUniqueId(), new OtherSetDps(after.version(), active, bindings, List.copyOf(merged)));
+        return merged;
+    }
+
+    /** 2026-11-08：上次照綁定的武器組算的每秒傷害（屬性表版本沒變就沿用）。 */
+    private record OtherSetDps(long version, int active, int bindings, List<DpsRow> rows) {
+    }
+
+    private final Map<java.util.UUID, OtherSetDps> otherSetDps = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** 2026-11-08：這一列的技能綁的是另一組武器。 */
+    private boolean otherSetRow(final PlayerState state, final DpsRow row, final int active) {
+        final int wanted = tw.exilecore.character.WeaponSets.binding(state.progress(), row.skillId());
+        return wanted != 0 && wanted != active;
     }
 
     /**

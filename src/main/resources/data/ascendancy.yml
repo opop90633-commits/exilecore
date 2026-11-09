@@ -924,9 +924,9 @@ ascendancies:
         notable: true
         icon: NETHER_STAR
         lines:
-          - +10 天賦點數   # 2026-10-26 照站長：原作「100 天賦點數轉為武器組天賦點數」，我們沒有武器組，改成平衡等效的額外天賦點
+          - 100 天賦點數轉為武器組天賦點數   # 2026-11-08 照站長「武器切換系統」：照原作（每一組武器的武器組天賦上限 +100）；這次之前（2026-10-26）沒有武器組，改成 +10 天賦點
         stats:
-          - { stat: passive.points_extra, type: FLAT, value: 10 }
+          - { stat: passive.weapon_set_points, type: FLAT, value: 100 }
       damage_low_life:
         name: 對貧血狀態的敵人造成的傷害          # Damage vs Low Life Enemies
         icon: RED_DYE

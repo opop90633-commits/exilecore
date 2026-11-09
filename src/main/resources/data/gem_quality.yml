@@ -270,6 +270,9 @@ thunder_envoy:   # Herald of Thunder（2026-10-28 照 PoE2：落雷次數 +(0—
   - { stat: herald.thunder_hits, type: FLAT, per: 0.1 }   # AuraService
 erosion_curse_rift:   # Hexblast（2026-10-28 照 PoE2：被移除的詛咒每剩 1 秒更多 (0—10)% 傷害；這次之前照通用規則）
   - { stat: hexblast.more_per_second, type: FLAT, per: 0.5 }   # SkillExecutor.hexblast
+execute_brand:   # 2026-11-08 照站長「處決印記的品質不會影響到技能」：照它的基準 Sniper's Mark（PoB2 enemy_additional_critical_strike_multiplier_against_self 0.75）——
+  #   被標記的敵人另外增加 (0—15)% 暴擊傷害加成；這次之前照通用規則「增加傷害」（印記本身沒有傷害，等於沒作用）
+  - { stat: effect.crit.bonus_taken, type: INCREASED, per: 0.75 }   # 印記：加在逐級的上面
 prey_kill_mark:   # Sniper's Mark（2026-10-28 照 PoE2：下一次暴擊被標記的敵人另外增加 (0—15)% 暴擊傷害加成；這次之前照通用規則）
   - { stat: effect.crit.bonus_taken, type: INCREASED, per: 0.75 }   # 印記：加在逐級的上面
 rime_arrow:   # Ice Shot

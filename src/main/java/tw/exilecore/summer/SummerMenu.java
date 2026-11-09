@@ -236,7 +236,7 @@ public final class SummerMenu extends Menu {
                 if (sponsors != null) {
                     final String where = tw.exilecore.sponsor.CosmeticPreview.slotName(sponsors, item.cosmetic());
                     if (tw.exilecore.sponsor.CosmeticPreview.isEmote(sponsors, item.cosmetic())) {
-                        lore.add("<gray>動作：贊助 → 動作 綁到 F／Q／Shift＋Q（或打 /emote 名稱）"); // 2026-11-03 星潮祭的衝浪
+                        lore.add("<gray>動作：贊助 → 動作 綁到 Q／Shift＋Q（或打 /emote 名稱）"); // 2026-11-03 星潮祭的衝浪；2026-11-08：F 改成切換武器組
                     }
                     if (!where.isEmpty()) {
                         lore.add("<gray>幻化：" + where + "（贊助 → 裝備幻化 套上去）");

@@ -249,6 +249,33 @@ public final class Profiles implements Listener {
             gear.add(slot);
         }
         root.add("gear", gear);
+        // 2026-11-08 照站長「武器切換系統」：正在用第幾組、另一組的武器與副手、兩組的武器組天賦（上面 gear 的武器、副手是正在用的那一組）
+        final int activeSet = state.activeWeaponSet();
+        root.addProperty("weaponSet", activeSet);
+        final JsonArray spareGear = new JsonArray();
+        final String spareName = tw.exilecore.character.WeaponSets.setName(tw.exilecore.character.WeaponSets.other(activeSet));
+        for (final int index : new int[] {PlayerState.SPARE_MAIN_SLOT, PlayerState.SPARE_OFF_SLOT}) {
+            final ItemStack stack = state.jewellery(index);
+            final ItemSlot type = index == PlayerState.SPARE_MAIN_SLOT ? ItemSlot.MAIN_HAND : ItemSlot.OFF_HAND;
+            final JsonObject slot = new JsonObject();
+            slot.addProperty("slot", type.name().toLowerCase(Locale.ROOT));
+            slot.addProperty("label", spareName + type.displayName());
+            if (stack != null && !stack.isEmpty()) {
+                slot.add("item", item(stack, type));
+            }
+            spareGear.add(slot);
+        }
+        root.add("spareGear", spareGear);
+        final JsonObject setNodes = new JsonObject();
+        for (int set = 1; set <= 2; set++) {
+            final JsonArray names = new JsonArray();
+            for (final String id : tw.exilecore.character.WeaponSets.nodes(state.progress(), set)) {
+                final tw.exilecore.passive.PassiveNode node = tree == null ? null : tree.node(id);
+                names.add(node == null ? id : node.name());
+            }
+            setNodes.add(String.valueOf(set), names);
+        }
+        root.add("weaponSetNodes", setNodes);
         // 天賦樹珠寶
         final JsonArray jewels = new JsonArray();
         for (final Map.Entry<String, ItemStack> entry : state.jewels().entrySet()) {
@@ -455,6 +482,13 @@ public final class Profiles implements Listener {
             gear.add(itemData(state.jewellery(PlayerState.gearIndex(i))));
         }
         calc.add("gear", gear);
+        // 2026-11-09 照站長「網頁天賦規劃器和網頁 DPS 計算器也補上兩組」：沒在用那一組武器的主手、副手（正在用第幾組、兩組的武器組天賦、
+        //   技能綁哪一組在 progress 的 weaponset.／wsnodes.／skillws.）
+        final JsonArray spare = new JsonArray();
+        spare.add(itemData(state.jewellery(PlayerState.SPARE_MAIN_SLOT)));
+        spare.add(itemData(state.jewellery(PlayerState.SPARE_OFF_SLOT)));
+        calc.add("spare", spare);
+        calc.addProperty("weaponSet", state.activeWeaponSet());
         final JsonObject jewels = new JsonObject();
         for (final Map.Entry<String, ItemStack> entry : state.jewels().entrySet()) {
             final JsonElement data = itemData(entry.getValue());

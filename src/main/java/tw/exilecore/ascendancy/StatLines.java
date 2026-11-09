@@ -370,6 +370,10 @@ public final class StatLines {
             }
             return modifier.tags().isEmpty() ? null : stat + " 不能加標籤";
         }
+        if (stat.equals(tw.exilecore.character.WeaponSets.EXTRA_STAT)) {
+            // 2026-11-08 照站長「武器切換系統」：百兵宗匠的「100 天賦點數轉為武器組天賦點數」（PlayerStateService.weaponSetCap）
+            return modifier.type() == ModType.FLAT && modifier.tags().isEmpty() && modifier.value() > 0 ? null : stat + " 要用 FLAT、大於 0、不能加標籤";
+        }
         if (stat.equals(AscendancyService.EXTRA_PASSIVE_POINTS)) {
             // 2026-10-26：武器大師的額外天賦點（AscendancyModule 加進可用天賦點）
             return modifier.type() == ModType.FLAT && modifier.tags().isEmpty() && modifier.value() > 0 ? null : stat + " 要用 FLAT、大於 0、不能加標籤";

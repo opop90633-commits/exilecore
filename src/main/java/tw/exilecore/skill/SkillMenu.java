@@ -299,8 +299,13 @@ public final class SkillMenu extends Menu {
         if (gear > 0) {
             lore.add("<#e7c56b>◆ 裝備加成：<white>" + gear + "</white> 條詞綴吃得到這個技能");
         }
+        // 2026-11-08 照站長「武器切換系統」：這個技能用哪一組武器（右鍵切換：不指定 → 第 I 組 → 第 II 組）
+        final int weaponSet = tw.exilecore.character.WeaponSets.binding(state.progress(), entry.skillId());
+        lore.add("<gray>武器組：<white>" + tw.exilecore.character.WeaponSets.setName(weaponSet)
+                + (weaponSet == 0 ? "<dark_gray>（用現在那一組）" : "<dark_gray>（放的時候自動換過去）"));
         lore.add("");
         lore.add("<yellow>點一下：取消選取");
+        lore.add("<yellow>右鍵：換武器組（不指定／第 I 組／第 II 組）");
         lore.add("<yellow>Shift＋右鍵：看裝備對這個技能的加成");
         set(SLOT_SELECTED, highlight(SkillArt.decorate(icon(material(definition.icon(), Material.BOOK),
                 "<green>選取中：<#e0c080>" + ItemRenderer.escape(definition.name()) + " <gray>Lv." + entry.level() + SkillService.qualityTag(entry, SkillService.extraQuality(plugin.players().sheet(player))), lore), definition)));
@@ -1139,6 +1144,21 @@ public final class SkillMenu extends Menu {
             return;
         }
         if (slot == SLOT_SELECTED) {
+            if (click == ClickType.RIGHT && selected >= 0 && loadout.skill(selected) != null && plugin.characters() != null) {
+                // 2026-11-08 照站長「武器切換系統」：這個技能綁哪一組武器（不指定 → 第 I 組 → 第 II 組）
+                final String skillId = loadout.skill(selected).skillId();
+                final PlayerState owner = plugin.players().get(player);
+                final int next = tw.exilecore.character.WeaponSets.nextBinding(tw.exilecore.character.WeaponSets.binding(owner.progress(), skillId));
+                final String key = tw.exilecore.character.WeaponSets.skillKey(skillId);
+                if (next == 0) {
+                    plugin.characters().removeProgress(player, key);
+                } else {
+                    plugin.characters().setProgress(player, key, String.valueOf(next));
+                }
+                click(1.2f);
+                redraw();
+                return;
+            }
             if (click == ClickType.SHIFT_RIGHT && selected >= 0) {
                 final SkillLoadout.Entry entry = loadout.skill(selected);
                 final SkillDefinition definition = entry == null ? null : service.config().skill(entry.skillId());

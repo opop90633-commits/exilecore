@@ -299,7 +299,7 @@ final class SponsorMenus {
                     "<gray>套上 3D 時裝：武器、副手、頭飾、背飾、寵物（別人也看得到）", "<gray>只改外觀，數值不變；換裝備也會留著",
                     "<gray>幻化外觀：時裝幣兌換、抽獎箱抽", "", "<yellow>左鍵：打開"));
             set(SLOT_EMOTES, icon(Material.FEATHER, FASHION_COLOR + "動作",
-                    "<gray>閃身步、浪子踢球、狗熊哆嗦毛…", "<gray>綁到 F、Q 或 Shift＋Q，按了就做（別人也看得到）",
+                    "<gray>閃身步、浪子踢球、狗熊哆嗦毛…", "<gray>綁到 Q 或 Shift＋Q，按了就做（別人也看得到）",
                     "<gray>時裝幣兌換", "", "<yellow>左鍵：打開"));
             set(SLOT_CARD_SHOP, icon(Material.AMETHYST_CLUSTER, CARD_COLOR + "月卡幣兌換", "<gray>月卡稱號、限定特效、時裝幣、角色欄位",
                     "<gray>你有 " + CARD_COLOR + service.cardCoins(player) + " 月卡幣", "", "<yellow>左鍵：打開"));
@@ -1106,7 +1106,7 @@ final class SponsorMenus {
                 header.add("<gray>" + key.displayName() + "：" + (on == null ? "<dark_gray>沒綁（原本的功能）" : SponsorService.rarityTag(on)));
             }
             header.add("");
-            header.add("<dark_gray>F：戰鬥中本來就沒作用；Q：手上要拿著東西才按得出來");
+            header.add("<dark_gray>Q：手上要拿著東西才按得出來（F 是切換武器組，不能綁）"); // 2026-11-08 照站長「武器切換系統」
             header.add("<dark_gray>指令：/emote 打開這裡、/emote 動作名稱 直接做（不用綁）");
             set(4, icon(Material.FEATHER, FASHION_COLOR + "動作", header));
             int slot = 10;
@@ -1133,7 +1133,7 @@ final class SponsorMenus {
             if (owned) {
                 lore.add(key == null ? "<gray>擁有・沒綁按鍵" : "<green>綁在 " + key.displayName());
                 lore.add("");
-                lore.add("<yellow>滑鼠指著按數字鍵 1／2／3：直接綁到 F／Q／Shift＋Q（再按一次同一個鍵＝不綁）");
+                lore.add("<yellow>滑鼠指著按數字鍵 1／2：直接綁到 Q／Shift＋Q（再按一次同一個鍵＝不綁）"); // 2026-11-08：F 改成切換武器組
                 lore.add("<yellow>左鍵：換按鍵（F → Q → Shift＋Q → 不綁）");
                 lore.add("<yellow>右鍵：做一次看看");
             } else if (cosmetic.fashionPrice() > 0) {
@@ -1179,7 +1179,7 @@ final class SponsorMenus {
                 return;
             }
             if (click == ClickType.NUMBER_KEY && event.getHotbarButton() >= 0 && event.getHotbarButton() < SponsorService.EmoteKey.values().length) {
-                // 2026-10：數字鍵 1／2／3 直接綁到 F／Q／Shift＋Q（已經綁在那個鍵就拿掉）
+                // 2026-10：數字鍵 1／2 直接綁到 Q／Shift＋Q（已經綁在那個鍵就拿掉；2026-11-08 起 F 不能綁）
                 final SponsorService.EmoteKey wanted = SponsorService.EmoteKey.values()[event.getHotbarButton()];
                 final SponsorService.EmoteKey current = service.keyOf(player, cosmetic.id());
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.6f, 1.2f);

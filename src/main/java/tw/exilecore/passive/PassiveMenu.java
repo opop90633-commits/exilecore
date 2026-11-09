@@ -84,6 +84,8 @@ public final class PassiveMenu extends Menu {
     private int viewY;
     private boolean overview;
     private boolean changed;
+    /** 2026-11-08 照站長「武器切換系統」：配點模式——true＝左鍵配成正在用那一組武器的武器組天賦（天賦點那格右鍵切換）。 */
+    private boolean weaponMode;
     /** 路徑預覽：目標與要經過的節點（含目標）。 */
     private PassiveNode previewTarget;
     private List<PassiveNode> previewPath = List.of();
@@ -276,12 +278,60 @@ public final class PassiveMenu extends Menu {
                     stack = pack ? cell(tile, null, List.of()) : vanillaEmpty(tile, view);
                 } else {
                     final List<String> lore = lore(tile, view, points, gold, refundCost, freeRefunds);
-                    final String name = name(tile);
-                    stack = pack ? cell(tile, name, lore) : vanilla(tile, name, lore);
+                    // 2026-11-09 照站長「武器組天賦用顯眼點的顏色」：第 I 組亮紅、第 II 組亮青，名字前加 ⚔ 並發光；
+                    //   另一組的也標出來（切過去才生效）；這次之前跟一般天賦一樣是綠色，另一組的看不到
+                    final int wsSet = weaponSetOf(tile.node().id());
+                    final String name = wsSet == 0 ? name(tile) : WS_COLOR[wsSet] + "⚔ " + name(tile).replaceFirst("^<[^>]+>", "")
+                            + (wsSet == state.activeWeaponSet() ? "" : " <gray>（" + tw.exilecore.character.WeaponSets.setName(wsSet) + "，切過去才生效）");
+                    final ItemStack built = pack ? cell(tile, name, lore) : vanilla(tile, name, lore);
+                    if (wsSet != 0) {
+                        built.editMeta(meta -> meta.setEnchantmentGlintOverride(true));
+                    }
+                    stack = built;
                 }
                 set(row * 9 + column, stack);
             }
         }
+    }
+
+    /** 2026-11-09 照站長「巴揚地脈能直接顯示真正的半徑嗎」：範圍珠寶的實際半徑（非傳奇照昇華放大）。 */
+    private List<String> radiusLine(final ItemStack jewel) {
+        final tw.exilecore.item.ItemData data = plugin.items().read(jewel).orElse(null);
+        final tw.exilecore.item.ItemBase base = data == null ? null : plugin.items().repository().base(data.base());
+        if (base == null || !base.isRadiusJewel() || TimelessJewels.isTimeless(base)) {
+            return List.of();
+        }
+        final double own = JewelSockets.radiusOf(tw.exilecore.item.ItemStats.modifiers(plugin.items().repository(), data));
+        final double scale = data.rarity() == tw.exilecore.item.Rarity.UNIQUE ? 1
+                : tw.exilecore.ascendancy.AscBuild.jewelRadiusScale(plugin, plugin.players().get(player), null);
+        final double real = own * scale;
+        return List.of(scale > 1
+                ? "<#ffd27f>實際半徑 <white>" + JewelSockets.radiusName(real) + "（" + (int) Math.round(real) + "）<gray>＝ 珠寶 " + (int) own + " × 巴揚地脈 +" + (int) Math.round((scale - 1) * 100) + "%"
+                : "<#ffd27f>實際半徑 <white>" + JewelSockets.radiusName(real) + "（" + (int) Math.round(real) + "）");
+    }
+
+    /** 2026-11-09：武器組天賦的顏色（[1] 第 I 組亮紅、[2] 第 II 組亮青；網頁規劃器同色）。 */
+    static final String[] WS_COLOR = {"", "<#ff3b3b>", "<#2ee6ff>"};
+
+    /** 2026-11-09：這個節點是第幾組的武器組天賦（0 = 不是）。 */
+    private int weaponSetOf(final String nodeId) {
+        final PlayerState owner = plugin.players().get(player);
+        for (int set = 1; set <= 2; set++) {
+            if (tw.exilecore.character.WeaponSets.nodes(owner.progress(), set).contains(nodeId)) {
+                return set;
+            }
+        }
+        return 0;
+    }
+
+    /** 2026-11-09 照站長：選單裡按 F 換武器組（MenuListener 轉過來）。 */
+    @Override
+    protected void onSwapKey() {
+        if (plugin.characters() != null) {
+            plugin.characters().swapWeaponSet(player, true);
+        }
+        clearPreview();
+        redraw();
     }
 
     /** 2026-10-26：畫面上看到的節點（被永恆珠寶征服的換成征服後的，其他照職業變體）。 */
@@ -365,6 +415,7 @@ public final class PassiveMenu extends Menu {
             for (int i = 1; i < described.size(); i++) {
                 lore.add(described.get(i));
             }
+            lore.addAll(radiusLine(jewel)); // 2026-11-09 照站長：寫實際半徑（巴揚地脈放大後的）
         } else {
             for (final String line : node.description()) {
                 lore.add("<white>" + ItemRenderer.escape(line));
@@ -385,6 +436,11 @@ public final class PassiveMenu extends Menu {
         if (node.isStart()) {
             lore.add(own ? "<gray>你的職業起點，永遠已配置" : "<dark_gray>別的職業的起點");
         } else if (tile.state() == TreeView.NodeState.OWNED) {
+            if (tw.exilecore.character.WeaponSets.activeSetNode(plugin.players().get(player), node.id())) {
+                // 2026-11-08 照站長「武器切換系統」：武器組天賦（只在這一組武器生效）
+                lore.add("<#ffb347>⚔ " + tw.exilecore.character.WeaponSets.setName(plugin.players().get(player).activeWeaponSet())
+                        + "的武器組天賦 <dark_gray>（只在這一組武器生效）");
+            }
             if (isAttributeChoice(node)) {
                 final PlayerState owner = plugin.players().get(player);
                 final String chosen = tw.exilecore.character.PlayerStateService.chosenAttribute(owner, owner.characterClass(), node.id());
@@ -681,9 +737,19 @@ public final class PassiveMenu extends Menu {
         if (previewTarget != null) {
             info.add("<#77aaff>路徑預覽：" + previewPath.size() + " 點 → " + ItemRenderer.escape(previewTarget.name()));
         }
+        // 2026-11-08 照站長「武器切換系統」：武器組天賦（兩組各自配，用掉的點數算多的那組）
+        final int activeSet = state.activeWeaponSet();
+        final int cap = plugin.players().weaponSetCap(state);
+        info.add("<#ffb347>武器組天賦 <gray>第 I 組 <white>" + tw.exilecore.character.WeaponSets.used(state, 1) + "</white>／" + cap
+                + "　第 II 組 <white>" + tw.exilecore.character.WeaponSets.used(state, 2) + "</white>／" + cap
+                + " <dark_gray>（現在用" + tw.exilecore.character.WeaponSets.setName(activeSet) + "）");
+        info.add(weaponMode ? "<#ffb347>配點模式：武器組天賦（配成" + tw.exilecore.character.WeaponSets.setName(activeSet) + "專用；F 換組）"
+                : "<gray>配點模式：一般天賦（兩組都生效）");
         info.add("");
         info.add("<gray>左鍵配點、右鍵退點；點遠處的節點先畫出路徑");
         info.add("<yellow>左鍵：天賦總覽・網頁規劃器・匯入・說明");
+        info.add("<yellow>右鍵：切換配點模式（一般／武器組天賦）");
+        info.add("<yellow>Shift＋右鍵 或 F：換武器組（第 I 組 ↔ 第 II 組）");
         set(SLOT_INFO, glowing(icon(Material.NETHER_STAR, "<#f5b942>天賦點", info)));
         set(SLOT_OVERVIEW, overview
                 ? icon(Material.SPYGLASS, "<white>回到天賦樹", "<gray>回到剛才的位置")
@@ -713,6 +779,12 @@ public final class PassiveMenu extends Menu {
         if (click == ClickType.DOUBLE_CLICK) {
             return; // 雙擊多送的那一下不算（不然配一點會變兩點）
         }
+        // 2026-11-09 照站長「天賦樹這邊沒辦法切到第二組」：選單開著時按 F 是「跟副手對調」的點擊（不會觸發一般的 F），
+        //   在這裡換武器組；點「天賦點」Shift＋右鍵也可以換。這次之前說明寫「F 換組」但選單裡按 F 沒反應
+        if (slot == SLOT_INFO && click == ClickType.SHIFT_RIGHT) {
+            onSwapKey();
+            return;
+        }
         final boolean page = click.isShiftClick();
         final int step = page ? (slot == SLOT_UP || slot == SLOT_DOWN ? VIEW_HEIGHT : VIEW_WIDTH) : SCROLL_STEP;
         switch (slot) {
@@ -733,11 +805,20 @@ public final class PassiveMenu extends Menu {
                 redraw();
                 player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.4f, overview ? 1.2f : 1.5f);
             }
-            case SLOT_INFO -> TreeActions.summary(plugin, player, tree, () -> {
-                // 回到剛才看的位置（匯入規劃後配點可能變了：路徑預覽作廢）
-                clearPreview();
-                open();
-            });
+            case SLOT_INFO -> {
+                if (click.isRightClick()) {
+                    weaponMode = !weaponMode; // 2026-11-08 照站長「武器切換系統」
+                    clearPreview();
+                    redraw();
+                    player.playSound(player.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, weaponMode ? 1.6f : 1.0f);
+                    return;
+                }
+                TreeActions.summary(plugin, player, tree, () -> {
+                    // 回到剛才看的位置（匯入規劃後配點可能變了：路徑預覽作廢）
+                    clearPreview();
+                    open();
+                });
+            }
             case SLOT_SEARCH -> {
                 if (results.isEmpty() || click.isShiftClick()) {
                     plugin.characterMenus().promptTreeSearch(player);
@@ -869,7 +950,7 @@ public final class PassiveMenu extends Menu {
                 && !tree.canAllocate(state.passives(), start, node, PassiveState.rules(plugin, state))) {
             // 還沒連到：第一次點畫路徑，第二次點同一個目標才配
             if (node.equals(previewTarget)) {
-                result = passive.allocatePath(previewPath);
+                result = weaponMode ? allocateWeaponPath(previewPath) : passive.allocatePath(previewPath); // 2026-11-08：武器組天賦模式
                 if (result.ok()) {
                     clearPreview();
                 }
@@ -897,7 +978,7 @@ public final class PassiveMenu extends Menu {
             }
         } else {
             clearPreview();
-            result = passive.allocate(node);
+            result = weaponMode ? passive.allocateWeaponSet(node) : passive.allocate(node); // 2026-11-08：武器組天賦模式
         }
         if (result.ok()) {
             changed = true;
@@ -907,6 +988,18 @@ public final class PassiveMenu extends Menu {
             tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>" + result.message()));
         }
         redraw();
+    }
+
+    /** 2026-11-08：武器組天賦模式的整條路徑：一點一點配成正在用那一組的武器組天賦（中途失敗就停在那裡）。 */
+    private PassiveState.Result allocateWeaponPath(final List<PassiveNode> path) {
+        PassiveState.Result result = PassiveState.Result.fail("走不到那裡");
+        for (final PassiveNode step : path) {
+            result = passive.allocateWeaponSet(step);
+            if (!result.ok()) {
+                return result;
+            }
+        }
+        return result;
     }
 
     /** 這個屬性點現在算哪個屬性。 */

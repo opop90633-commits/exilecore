@@ -100,8 +100,50 @@ public final class TreeActions {
         if (character == null) {
             return plugin.web().publicUrl() + "/tree";
         }
+        final String jewels = jewelSuffix(plugin, state);
+        final String sets = weaponSetSuffix(tree, state);
         return plugin.web().publicUrl() + "/tree#" + TreeCode.encode(tree, character.characterClass().id(), state.passives(),
-                chosenAttributes(state, tree)) + jewelSuffix(plugin, state);
+                chosenAttributes(state, tree)) + (sets.isEmpty() ? jewels : (jewels.isEmpty() ? "~" : jewels) + sets);
+    }
+
+    /**
+     * 2026-11-09 照站長「從遊戲內匯出沒有連第一組跟第二組一起匯出」：規劃器網址的計算器那段（「!」＋ base64url JSON）只寫武器組
+     * （第 8 格：[正在用第幾組, 第 I 組節點的順序…, 第 II 組…]，同 planner.html 的 wsPack），其他格空的＝照網頁預設。
+     * 沒有武器組天賦、又在用第 I 組回傳空字串（網址跟以前一樣）。這次之前網址只帶正在用那一組（混在一般天賦裡）。
+     */
+    static String weaponSetSuffix(final PassiveTree tree, final PlayerState state) {
+        final int active = state.activeWeaponSet() == 2 ? 2 : 1;
+        final java.util.Set<String> one = tw.exilecore.character.WeaponSets.nodes(state.progress(), 1);
+        final java.util.Set<String> two = tw.exilecore.character.WeaponSets.nodes(state.progress(), 2);
+        if (active == 1 && one.isEmpty() && two.isEmpty()) {
+            return "";
+        }
+        final List<PassiveNode> order = tree.ordered();
+        final com.google.gson.JsonArray ords1 = new com.google.gson.JsonArray();
+        final com.google.gson.JsonArray ords2 = new com.google.gson.JsonArray();
+        for (int i = 0; i < order.size(); i++) {
+            final String id = order.get(i).id();
+            if (one.contains(id)) {
+                ords1.add(i);
+            }
+            if (two.contains(id)) {
+                ords2.add(i);
+            }
+        }
+        final com.google.gson.JsonArray ws = new com.google.gson.JsonArray();
+        ws.add(active);
+        ws.add(ords1);
+        ws.add(ords2);
+        final com.google.gson.JsonArray parts = new com.google.gson.JsonArray();
+        parts.add(0);                                    // 等級（0 = 網頁預設）
+        parts.add("");                                   // 昇華
+        parts.add(new com.google.gson.JsonArray());      // 昇華天賦
+        parts.add(new com.google.gson.JsonArray());      // 技能
+        parts.add(new com.google.gson.JsonArray());      // 按鍵
+        parts.add("");                                   // 讀進來的角色
+        parts.add(0);                                    // 敵人（預設）
+        parts.add(ws);
+        return "!" + java.util.Base64.getUrlEncoder().withoutPadding().encodeToString(parts.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     /** 規劃器網址裡裝備那段有幾格（planner.html 的 GEAR_SLOTS）；珠寶接在後面。 */
@@ -218,8 +260,13 @@ public final class TreeActions {
         }
         final TreePlan.Plan plan;
         final java.util.Map<String, String> wantedAttributes;
+        // 2026-11-09 照站長「匯入改成兩組一起帶回遊戲」：代碼「*」後面（或網址計算器那段）帶的武器組；規劃的那一組跟你現在用的不一樣就先換過去
+        final WsImport ws = wsImport(tree, code);
+        if (ws != null && ws.active() != state.activeWeaponSet() && plugin.characters() != null) {
+            plugin.characters().swapWeaponSet(player, true);
+        }
         try {
-            final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
+            final TreeCode.Decoded decoded = TreeCode.decode(tree, treeCodeOnly(code));
             wantedAttributes = decoded.attributes();
             if (!decoded.classId().equals(character.characterClass().id())) {
                 final String planClass = classNames(decoded.classId());
@@ -234,6 +281,15 @@ public final class TreeActions {
         }
         // 2026-10：規劃裡選好的屬性點（力量／敏捷／智慧）
         final java.util.Map<String, String> attributeChanges = attributeChanges(state, tree, plan.result(), wantedAttributes);
+        if (ws != null && !plan.changes()) {
+            // 配點一樣：只把武器組天賦照規劃記好（不花錢）
+            final String note = applyWeaponSets(plugin, player, ws);
+            applyAttributes(plugin, player, attributeChanges);
+            plugin.characters().save(player);
+            player.sendMessage(plugin.text().prefixed("<green>配點跟規劃一樣；武器組天賦照規劃記好了" + note));
+            back.run();
+            return;
+        }
         if (!plan.changes() && !attributeChanges.isEmpty()) {
             // 配點一樣，只有屬性點選的屬性不一樣：直接改（切換屬性本來就不花錢）
             final int changed = applyAttributes(plugin, player, attributeChanges);
@@ -263,6 +319,10 @@ public final class TreeActions {
         }
         if (!attributeChanges.isEmpty()) {
             body.add("<gray>屬性點：<white>" + attributeChanges.size() + "</white> 個照規劃選的屬性（力量／敏捷／智慧）");
+        }
+        if (ws != null) {
+            body.add("<#ffb347>武器組天賦：第 I 組 <white>" + ws.one().size() + "</white> 點、第 II 組 <white>" + ws.two().size()
+                    + "</white> 點一起照規劃記（現在用" + tw.exilecore.character.WeaponSets.setName(ws.active()) + "）");
         }
         int jewelsBack = 0;
         for (final PassiveNode node : plan.removed()) {
@@ -299,12 +359,129 @@ public final class TreeActions {
                 return;
             }
             applyAttributes(plugin, player, attributeChanges(plugin.players().get(player), tree, plan.result(), wantedAttributes));
+            final String wsNote = ws == null ? "" : applyWeaponSets(plugin, player, ws);
             plugin.characters().save(player);
             player.sendMessage(plugin.text().prefixed("<green>天賦規劃已套用：新配 " + plan.added().size() + " 點"
                     + (plan.removed().isEmpty() ? "" : "、退掉 " + plan.removed().size() + " 點")
-                    + (plan.later().isEmpty() ? "" : "<gray>（還有 " + plan.later().size() + " 點等升級）")));
+                    + (plan.later().isEmpty() ? "" : "<gray>（還有 " + plan.later().size() + " 點等升級）") + wsNote));
             back.run();
         }, back);
+    }
+
+    /** 2026-11-09：代碼帶的武器組（節點代號）。 */
+    record WsImport(int active, Set<String> one, Set<String> two) {
+    }
+
+    /** 只留天賦代碼那段（網址取 # 後面；拿掉 ~ 後面的裝備、計算器與 * 後面的武器組）。 */
+    static String treeCodeOnly(final String code) {
+        String text = code == null ? "" : code.trim();
+        final int hash = text.lastIndexOf('#');
+        if (hash >= 0) {
+            text = text.substring(hash + 1);
+        }
+        for (final char cut : new char[]{'~', '*'}) {
+            final int at = text.indexOf(cut);
+            if (at >= 0) {
+                text = text.substring(0, at);
+            }
+        }
+        return text;
+    }
+
+    /**
+     * 2026-11-09 照站長「匯入改成兩組一起帶回遊戲」：讀代碼帶的武器組——「*」後面的 base64url JSON（網頁「複製代碼」），
+     * 或網址計算器那段（「~」後面「!」之後）的第 8 格；格式 [正在用第幾組, [第 I 組節點順序…], [第 II 組…]]。沒有回 null。
+     */
+    static WsImport wsImport(final PassiveTree tree, final String code) {
+        if (code == null) {
+            return null;
+        }
+        String text = code.trim();
+        final int hash = text.lastIndexOf('#');
+        if (hash >= 0) {
+            text = text.substring(hash + 1);
+        }
+        com.google.gson.JsonArray pack = null;
+        try {
+            final int star = text.indexOf('*');
+            if (star >= 0) {
+                pack = com.google.gson.JsonParser.parseString(new String(java.util.Base64.getUrlDecoder().decode(text.substring(star + 1).trim()),
+                        java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+            } else {
+                final int tilde = text.indexOf('~');
+                final int bang = tilde < 0 ? -1 : text.indexOf('!', tilde);
+                if (bang >= 0) {
+                    final com.google.gson.JsonArray parts = com.google.gson.JsonParser.parseString(new String(java.util.Base64.getUrlDecoder()
+                            .decode(text.substring(bang + 1).trim()), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonArray();
+                    if (parts.size() > 7 && parts.get(7).isJsonArray()) {
+                        pack = parts.get(7).getAsJsonArray();
+                    }
+                }
+            }
+        } catch (final RuntimeException e) {
+            return null; // 看不懂就當沒帶（天賦代碼本身照常匯入）
+        }
+        if (pack == null || pack.isEmpty()) {
+            return null;
+        }
+        final com.google.gson.JsonArray packed = pack;
+        final List<PassiveNode> order = tree.ordered();
+        final java.util.function.Function<Integer, Set<String>> ids = index -> {
+            final Set<String> out = new java.util.LinkedHashSet<>();
+            if (packed.size() > index && packed.get(index).isJsonArray()) {
+                for (final com.google.gson.JsonElement e : packed.get(index).getAsJsonArray()) {
+                    final int k = e.getAsInt();
+                    if (k >= 0 && k < order.size() && !order.get(k).isStart() && !order.get(k).isSocket()) {
+                        out.add(order.get(k).id());
+                    }
+                }
+            }
+            return out;
+        };
+        final int active = pack.get(0).getAsInt() == 2 ? 2 : 1;
+        return new WsImport(active, ids.apply(1), ids.apply(2));
+    }
+
+    /**
+     * 把匯入的武器組天賦記進角色：正在用那一組＝規劃的那組裡、也真的配了的；另一組＝規劃的另一組（不是一般節點的）。
+     * 每組最多上限、點數不夠就先放掉另一組。回傳附加說明（沒有就空字串）。
+     */
+    private static String applyWeaponSets(final ExileCore plugin, final Player player, final WsImport ws) {
+        final PlayerState state = plugin.players().get(player);
+        final int active = state.activeWeaponSet();
+        final int cap = plugin.players().weaponSetCap(state);
+        final Set<String> allocated = state.passives();
+        final Set<String> mine = new java.util.LinkedHashSet<>();
+        for (final String id : active == 1 ? ws.one() : ws.two()) {
+            if (allocated.contains(id) && mine.size() < cap) {
+                mine.add(id);
+            }
+        }
+        final Set<String> theirs = new java.util.LinkedHashSet<>();
+        for (final String id : active == 1 ? ws.two() : ws.one()) {
+            if ((!allocated.contains(id) || mine.contains(id)) && theirs.size() < cap) {
+                theirs.add(id);
+            }
+        }
+        final Set<String> oldMine = tw.exilecore.character.WeaponSets.nodes(state.progress(), active);
+        final Set<String> oldTheirs = tw.exilecore.character.WeaponSets.nodes(state.progress(), tw.exilecore.character.WeaponSets.other(active));
+        tw.exilecore.character.WeaponSets.setNodes(state.progress(), active, mine);
+        tw.exilecore.character.WeaponSets.setNodes(state.progress(), tw.exilecore.character.WeaponSets.other(active), theirs);
+        String note = "";
+        if (plugin.players().availablePoints(state) < 0) {
+            // 另一組多出來的點數不夠：另一組放掉（正在用那一組照規劃）
+            tw.exilecore.character.WeaponSets.setNodes(state.progress(), tw.exilecore.character.WeaponSets.other(active), new java.util.LinkedHashSet<>());
+            note = "<yellow>（點數不夠放另一組的武器組天賦，另一組先空著）";
+            if (plugin.players().availablePoints(state) < 0) {
+                tw.exilecore.character.WeaponSets.setNodes(state.progress(), active, oldMine);
+                tw.exilecore.character.WeaponSets.setNodes(state.progress(), tw.exilecore.character.WeaponSets.other(active), oldTheirs);
+                return "<yellow>（武器組天賦點數不夠，照舊沒改）";
+            }
+        }
+        state.markDirty();
+        plugin.players().sheet(player);
+        return note.isEmpty() ? "<gray>（武器組天賦：第 I 組 " + tw.exilecore.character.WeaponSets.used(state, 1) + " 點、第 II 組 "
+                + tw.exilecore.character.WeaponSets.used(state, 2) + " 點）" : note;
     }
 
     /** 照樹檔的順序列出（加總的行才會跟網頁規劃器排得一樣）。 */

@@ -17,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Transformation;
@@ -35,7 +34,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 動作（2026-10，時裝的一種）：在「贊助 → 動作」把擁有的動作綁到 F、Q 或 Shift＋Q，按了就做。
+ * 動作（2026-10，時裝的一種）：在「贊助 → 動作」把擁有的動作綁到 Q 或 Shift＋Q，按了就做（2026-11-08 起 F 是切換武器組）。
  * 四個動作照「閃身步｜浪子踢球｜狗熊哆嗦毛｜搖頭晃腦」的影片（原版的人物動不了手腳，用移動、蹲、揮手、轉頭與粒子表現）：
  * <ul>
  *   <li>閃身步（sidestep）：左跨一步、收回、右跨一步、收回，留下殘影。<b>只有營地裡會真的移動</b>（贊助不影響戰鬥）。</li>
@@ -87,16 +86,7 @@ public final class Emotes implements Listener {
 
     // ---- 按鍵 ----
 
-    @EventHandler(priority = EventPriority.LOW)
-    public void onSwap(final PlayerSwapHandItemsEvent event) {
-        final Player player = event.getPlayer();
-        if (player.isSneaking()) {
-            return; // Shift＋F 是選單
-        }
-        if (fire(player, SponsorService.EmoteKey.F)) {
-            event.setCancelled(true);
-        }
-    }
+    // 2026-11-08 照站長「武器切換系統」：F 改成切換武器組（character 的 GearListener），不再觸發動作；這次之前 F 可以綁動作
 
     @EventHandler(priority = EventPriority.LOW)
     public void onDrop(final PlayerDropItemEvent event) {

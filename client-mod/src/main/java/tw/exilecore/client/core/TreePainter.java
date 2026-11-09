@@ -241,6 +241,18 @@ public final class TreePainter {
                     }
                 }
             }
+            // 2026-11-09 照站長「武器組天賦用顯眼點的顏色」：第 I 組亮紅、第 II 組亮青；正在用那一組實心粗圈，另一組虛線圈（切過去才生效）
+            final int weaponSet = model.weaponSetOf(i);
+            if (weaponSet != 0) {
+                final int ringColor = weaponSet == 2 ? TreeModel.WEAPON_SET_2 : TreeModel.WEAPON_SET_1;
+                final double ring = Math.max(r + 2.5, r * 1.5);
+                if (weaponSet == model.state.weaponSet) {
+                    canvas.dot(sx[i], sy[i], ring, ringColor);
+                    canvas.dot(sx[i], sy[i], ring - Math.max(1.2, r * 0.3), BACKGROUND);
+                } else {
+                    dashedCircle(canvas, sx[i], sy[i], ring, Math.max(1, r * 0.18), ringColor, x0, y0, x1, y1);
+                }
+            }
             if (i == view.hover) {
                 canvas.dot(sx[i], sy[i], r + Math.max(1.5, r * 0.3), 0xFFFFFFFF);
             }
@@ -289,6 +301,20 @@ public final class TreePainter {
         }
         final int segments = 48;
         for (int k = 0; k < segments; k++) {
+            final double a = 2 * Math.PI * k / segments;
+            final double b = 2 * Math.PI * (k + 1) / segments;
+            canvas.line(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, cx + Math.cos(b) * radius, cy + Math.sin(b) * radius, width, argb);
+        }
+    }
+
+    /** 2026-11-09：虛線圈（另一組的武器組天賦）。 */
+    static void dashedCircle(final UiCanvas canvas, final double cx, final double cy, final double radius, final double width, final int argb,
+                             final int x0, final int y0, final int x1, final int y1) {
+        if (radius < 2 || cx + radius < x0 || cx - radius > x1 || cy + radius < y0 || cy - radius > y1) {
+            return;
+        }
+        final int segments = 24;
+        for (int k = 0; k < segments; k += 2) {
             final double a = 2 * Math.PI * k / segments;
             final double b = 2 * Math.PI * (k + 1) / segments;
             canvas.line(cx + Math.cos(a) * radius, cy + Math.sin(a) * radius, cx + Math.cos(b) * radius, cy + Math.sin(b) * radius, width, argb);
@@ -360,6 +386,17 @@ public final class TreePainter {
             if (!replaced) {
                 for (final String line : data.explain.get(i)) {
                     lines.add("<#9fb4c7>" + line);
+                }
+            }
+        }
+        // 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：武器組天賦寫是哪一組、生效了沒
+        if (state.weaponSet > 0) {
+            final boolean one = state.weapon1.get(i);
+            final boolean two = state.weapon2.get(i);
+            for (int set = 1; set <= 2; set++) {
+                if (set == 1 ? one : two) {
+                    lines.add(TreeModel.weaponSetTag(set) + "⚔ " + TreeModel.weaponSetName(set) + "的武器組天賦"
+                            + (set == state.weaponSet ? " <dark_gray>（只在這一組武器生效）" : " <gray>（切過去才生效）"));
                 }
             }
         }

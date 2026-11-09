@@ -63,6 +63,11 @@ public final class SupportGuards {
     }
 
     /** 2026-10-27：不寫 resource.remnant、在程式裡留殘骸的技能（Snap、SkillTriggers 的素痕湧、OriginalSkills 的燼種）。 */
+    /** 2026-11-08：會留下殘骸的技能（殘骸輔助、拾息共用）。 */
+    static boolean makesRemnants(final String skillId) {
+        return remnants.contains(skillId) || CODE_REMNANTS.contains(skillId);
+    }
+
     static final Set<String> CODE_REMNANTS = Set.of("anomaly_devour_blast", "element_trace_surge", "cinder_sprout",
             "magic_spring_well", // 2026-11-01 照 PoE2 Mana Remnants（Remnant 標籤）：魔力痕跡吃殘骸輔助
             "vital_residue"); // 2026-11-02 照 PoE2 Life Remnants（Remnant 標籤）：生命痕跡吃殘骸輔助（AscGranted.spawnLifeRemnant）

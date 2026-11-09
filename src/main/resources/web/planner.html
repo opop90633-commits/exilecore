@@ -46,6 +46,11 @@
   .points { color: var(--quiet); white-space: nowrap; }
   .points b { color: var(--text); }
   .points .over { color: var(--red); }
+  /* 2026-11-09 照站長「網頁天賦規劃器也補上兩組」：武器組天賦的配點模式 */
+  .wsbar { display: flex; gap: 4px; align-items: center; font-size: 12px; color: var(--quiet); flex-wrap: wrap; }
+  .wsbar button { background: transparent; color: var(--quiet); border: 1px solid var(--line); border-radius: 4px; padding: 2px 8px; cursor: pointer; font: inherit; }
+  .wsbar button.active { color: #101018; background: #ffb347; border-color: #ffb347; }
+  .wsbar #wsInfo b { color: #ffb347; }
   main { flex: 1; display: flex; min-height: 0; }
   #canvas { flex: 1; position: relative; min-width: 0; touch-action: none; cursor: grab; }
   #canvas.dragging { cursor: grabbing; }
@@ -283,6 +288,10 @@
   <h1>星骸・天賦規劃器</h1>
   <div class="classes" id="classes"></div>
   <div class="points" id="points">載入中…</div>
+  <div class="wsbar" id="wsBar" title="武器組天賦（PoE2）：配成第 I／II 組專用的天賦只在那一組武器生效；用掉的點數＝一般＋兩組裡多的那組">
+    <span>配點：</span><button type="button" data-ws="0" class="active">一般</button><button type="button" data-ws="1">第 I 組</button><button type="button" data-ws="2">第 II 組</button>
+    <button type="button" id="wsSwap">⇄ 換武器組</button><span id="wsInfo"></span>
+  </div>
 </header>
 <div id="restoreBar" hidden>已載入上次的規劃・<button type="button" id="restoreClear">清除</button></div>
 <main>
@@ -641,8 +650,38 @@
       if (mix) out.mix = mix.slice();
       return out;
     }
+    // ---- 2026-11-09 照站長「網頁天賦規劃器也補上兩組」：武器組天賦（PoE2；跟遊戲的 WeaponSets 同一套）----
+    /** 用掉的天賦點：一般節點（allocated 裡不是正在用那一組的）＋兩組裡多的那組（PoB2：PointsUsed − min(ws1, ws2)）。 */
+    function wsUsed(allocated, mine, theirs) {
+      let common = 0;
+      for (const id of allocated) if (!mine.has(id)) common++;
+      return common + Math.max(mine.size, theirs.size);
+    }
+    /** 換到另一組：正在用那一組的拿掉（另一組也配了的留著）、另一組的加上。回傳新的 allocated。 */
+    function wsSwap(allocated, mine, theirs) {
+      const next = new Set(allocated);
+      for (const id of mine) if (!theirs.has(id)) next.delete(id);
+      for (const id of theirs) next.add(id);
+      return next;
+    }
+    /** 分享連結：[正在用第幾組, [第 I 組節點的順序…], [第 II 組…]]；第 I 組、沒有武器組天賦＝null（不寫，舊連結一樣）。 */
+    function wsPack(active, ords1, ords2) {
+      if (active !== 2 && !ords1.length && !ords2.length) return null;
+      return [active === 2 ? 2 : 1, ords1.slice().sort((a, b) => a - b), ords2.slice().sort((a, b) => a - b)];
+    }
+    function wsUnpack(p) {
+      if (!Array.isArray(p)) return null;
+      const ords = x => (Array.isArray(x) ? x : []).map(Number).filter(n => Number.isInteger(n) && n >= 0).slice(0, 512);
+      return { active: p[0] === 2 ? 2 : 1, ords1: ords(p[1]), ords2: ords(p[2]) };
+    }
+    /** 每一組最多幾點：基本（character.yml 的 weapon_set_points）＋配了的昇華天賦給的（百兵宗匠）。 */
+    function wsCap(base, byAscNode, ascNodes) {
+      let cap = Number(base) || 0;
+      for (const id of ascNodes || []) cap += Number((byAscNode || {})[id]) || 0;
+      return cap;
+    }
     return { UndoStack, Lru, hashString, packSave, unpackSave, diffRows, fmtDiff, heatColor, heatCandidates, SAVE_VERSION,
-      ENEMY_MIXES, ENEMY_DEFAULT, normEnemy, isDefaultEnemy, packEnemy, unpackEnemy, enemyJson };
+      ENEMY_MIXES, ENEMY_DEFAULT, normEnemy, isDefaultEnemy, packEnemy, unpackEnemy, enemyJson, wsUsed, wsSwap, wsPack, wsUnpack, wsCap };
   })();
   // </planner-pure>
 
@@ -677,6 +716,12 @@
   let classId = null;
   let start = null;
   let allocated = new Set();
+  /**
+   * 2026-11-09 照站長「網頁天賦規劃器也補上兩組」：武器組（跟遊戲一樣）——allocated 是一般節點＋正在用那一組的武器組天賦；
+   * nodes[1]／nodes[2] 是兩組的武器組天賦；mode 0＝配一般節點、1＝配成正在用那一組專用。gear 的第 12、13 格是另一組武器。
+   */
+  const ws = { active: 1, mode: 0, nodes: { 1: new Set(), 2: new Set() } };
+  let wsPending = null;
   /** 屬性點選的屬性（2026-10）：節點代號 → "str"／"dex"／"int"；沒在裡面的照職業的主屬性。只留已配的。 */
   let attrs = new Map();
   const ATTR_KEYS = ["str", "dex", "int"];
@@ -747,6 +792,7 @@
     const fromHash = decodeCode(hashText());
     if (fromHash) { load(fromHash); }
     else { setClass(data.classes[0].id, false); }
+    resolveWsPending(); // 2026-11-09：連結裡的武器組天賦
     render();
     centerOn(start, 1);
     startupLoad();
@@ -754,7 +800,10 @@
 
   // ---- 裝備（2026-10）----
   const GEAR_SLOTS = [["ring", "戒指"], ["ring", "戒指"], ["amulet", "項鍊"], ["belt", "腰帶"], ["main_hand", "主手"],
-    ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"], ["ring", "第三個戒指"]];
+    ["off_hand", "副手"], ["head", "頭盔"], ["chest", "胸甲"], ["legs", "褲子"], ["feet", "鞋子"], ["ring", "第三個戒指"],
+    ["main_hand", "另一組主手"], ["off_hand", "另一組副手"]];
+  // 2026-11-09 照站長「網頁天賦規劃器也補上兩組」：第 12、13 格是沒在用那一組武器的主手、副手（換武器組時跟 4、5 對調；送去算的是 spare）
+  const SPARE_MAIN = 11, SPARE_OFF = 12;
   // 2026-10-26 照 PoE2：昇華・舒展之指「+1 戒指欄位」開第三個戒指欄（GEAR_SLOTS 第 11 格，跟遊戲的 PlayerState.GEAR_SLOTS 同順序）
   const RING3 = 10;
   const RING3_NODE = "unfurled_finger";
@@ -841,8 +890,8 @@
   function gearSuffix() {
     const placed = placedJewels();
     if (!gear.some(Boolean) && !placed.length) return "";
-    // 2026-10-26：第三個戒指空著就照舊存 10 格（舊連結、遊戲給的珠寶連結都一樣讀得到）
-    const packed = (gear[RING3] ? gear : gear.slice(0, RING3)).map(packItem);
+    // 2026-10-26：第三個戒指空著就照舊存 10 格（舊連結、遊戲給的珠寶連結都一樣讀得到）；2026-11-09：有另一組武器才存 13 格
+    const packed = (gear[SPARE_MAIN] || gear[SPARE_OFF] ? gear : gear[RING3] ? gear.slice(0, RING3 + 1) : gear.slice(0, RING3)).map(packItem);
     if (placed.length) packed.push(Object.fromEntries(placed.map(([id, g]) => [id, packItem(g)])));
     return "~" + b64urlEncode(JSON.stringify(packed));
   }
@@ -940,9 +989,11 @@
   function renderGear() {
     const box = document.getElementById("gear");
     box.replaceChildren();
-    GEAR_SLOTS.forEach(([slot, label], i) => {
+    GEAR_SLOTS.forEach(([slot, label0], i) => {
       const g = gear[i];
       if (i === RING3 && !g && !ring3Open()) return; // 沒有「+1 戒指欄位」：第三個戒指欄不顯示
+      // 2026-11-09：武器組——正在用的寫「第 X 組主手」，另一組的照另一組寫
+      const label = i === 4 || i === 5 ? wsName(ws.active) + label0 : i === SPARE_MAIN ? wsName(wsOther()) + "主手" : i === SPARE_OFF ? wsName(wsOther()) + "副手" : label0;
       const b = document.createElement("button");
       b.type = "button";
       if (g && items) {
@@ -1013,7 +1064,7 @@
     if (!list) return;
     list.replaceChildren();
     const lines = [];
-    if (items) for (const g of gear) if (g) lines.push(...itemLines(g).filter(l => !l.head && !l.dead).map(l => l.text).filter(t => !t.includes("?")));
+    if (items) for (const g of gear.slice(0, SPARE_MAIN)) if (g) lines.push(...itemLines(g).filter(l => !l.head && !l.dead).map(l => l.text).filter(t => !t.includes("?")));
     const sums = sumLines(lines);
     if (!sums.length) { const li = document.createElement("li"); li.className = "empty"; li.textContent = "還沒有配裝備"; list.appendChild(li); }
     for (const line of sums) { const li = document.createElement("li"); li.textContent = line; list.appendChild(li); }
@@ -1536,6 +1587,86 @@
     return TreeRules.removal(node, allocated, seeds(), ruleCtx());
   }
 
+  // ---- 武器組（2026-11-09 照站長）----
+  function wsOther() { return ws.active === 2 ? 1 : 2; }
+  const WS_COLORS = { 1: "#ff3b3b", 2: "#2ee6ff" }; // 2026-11-09：第 I 組亮紅、第 II 組亮青（遊戲內同色）
+  function wsName(set) { return set === 2 ? "第 II 組" : "第 I 組"; }
+  function wsCapNow() {
+    let asc = [];
+    try { asc = calc.asc ? calc.ascNodes : []; } catch (e) { asc = []; }
+    return PlannerPure.wsCap(data && data.weaponSetPoints !== undefined ? data.weaponSetPoints : 24, data && data.weaponSetByAscNode, asc);
+  }
+  function pointsUsed() { return PlannerPure.wsUsed(allocated, ws.nodes[ws.active], ws.nodes[wsOther()]); }
+  function wsPack() {
+    const ords = set => [...ws.nodes[set]].map(id => byId.get(id)).filter(Boolean).map(n => n.ord);
+    return PlannerPure.wsPack(ws.active, ords(1), ords(2));
+  }
+  /** 連結裡的武器組（天賦樹載入後才對得到節點）。 */
+  function resolveWsPending() {
+    if (!wsPending || !data || !order.length) return;
+    const p = PlannerPure.wsUnpack(wsPending);
+    wsPending = null;
+    if (!p) return;
+    const ids = list => new Set(list.filter(k => k < order.length && order[k].type !== "start" && order[k].type !== "socket").map(k => order[k].id));
+    if (p.active !== ws.active) swapGear();
+    ws.active = p.active;
+    ws.nodes = { 1: ids(p.ords1), 2: ids(p.ords2) };
+    wsClean();
+    renderWsBar();
+    render();
+  }
+  /** 遊戲的角色：進度裡的 wsnodes.1／2。 */
+  function wsFromProgress(progress, active) {
+    const list = key => new Set(String(progress[key] || "").split(",").map(x => x.trim()).filter(id => byId.has(id)));
+    ws.active = active === 2 ? 2 : 1;
+    ws.nodes = { 1: list("wsnodes.1"), 2: list("wsnodes.2") };
+    wsClean();
+    renderWsBar();
+  }
+  /** 照遊戲的規則對齊：正在用那一組的要在 allocated 裡；另一組的如果已經是一般節點就當一般節點。 */
+  function wsClean() {
+    const mine = ws.nodes[ws.active], theirs = ws.nodes[wsOther()];
+    for (const id of [...mine]) if (!allocated.has(id)) mine.delete(id);
+    for (const id of [...theirs]) if (allocated.has(id) && !mine.has(id)) theirs.delete(id);
+  }
+  function swapGear() {
+    [gear[4], gear[SPARE_MAIN]] = [gear[SPARE_MAIN], gear[4]];
+    [gear[5], gear[SPARE_OFF]] = [gear[SPARE_OFF], gear[5]];
+  }
+  /** 換武器組（跟遊戲按 F 一樣）：武器對調、武器組天賦換成那一組的；連不到起點的那一組天賦拿掉。 */
+  function swapSets() {
+    const mine = ws.nodes[ws.active], theirs = ws.nodes[wsOther()];
+    allocated = PlannerPure.wsSwap(allocated, mine, theirs);
+    swapGear();
+    ws.active = wsOther();
+    const keep = reachable(allocated);
+    for (const id of [...ws.nodes[ws.active]]) if (!keep.has(id)) { allocated.delete(id); ws.nodes[ws.active].delete(id); }
+    pruneAttrs();
+    renderGear();
+    renderWsBar();
+    render();
+  }
+  function renderWsBar() {
+    const bar = document.getElementById("wsBar");
+    if (!bar) return;
+    for (const b of bar.querySelectorAll("button[data-ws]")) {
+      const k = Number(b.dataset.ws);
+      b.classList.toggle("active", ws.mode === 0 ? k === 0 : k === ws.active);
+    }
+    const cap = wsCapNow();
+    document.getElementById("wsInfo").innerHTML = "　正在用 <b>" + wsName(ws.active) + "</b>　武器組天賦 I：" + ws.nodes[1].size + "／" + cap
+      + "　II：" + ws.nodes[2].size + "／" + cap;
+  }
+  document.getElementById("wsBar").addEventListener("click", e => {
+    const b = e.target.closest("button");
+    if (!b || !data) return;
+    if (b.id === "wsSwap") { userEdit(); swapSets(); return; }
+    const k = Number(b.dataset.ws);
+    if (k === 0) { ws.mode = 0; renderWsBar(); return; }
+    ws.mode = 1;
+    if (k !== ws.active) { userEdit(); swapSets(); } else renderWsBar();
+  });
+
   // ---- 代碼（跟遊戲的 TreeCode 一樣）----
   function encodeCode() {
     const bytes = new Uint8Array(Math.ceil(order.length / 8));
@@ -1587,6 +1718,7 @@
     if (!text || !data) return null;
     let body = text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text.trim();
     if (body.includes("~")) body = body.slice(0, body.indexOf("~")); // ~ 後面是裝備（只有網頁用）
+    if (body.includes("*")) body = body.slice(0, body.indexOf("*")); // 2026-11-09：* 後面是武器組（wsFromCode）
     const parts = body.split(".");
     if (parts.length < 4 || parts.length > 6 || parts[0] !== data.code) return null; // 2026-10-29：第六段是行者之智的選擇
     if (Number(parts[1]) !== data.version) { flash("這是舊版天賦樹的代碼"); return null; }
@@ -1772,6 +1904,7 @@
     start = byId.get(info.start);
     allocated = new Set();
     attrs = new Map();
+    ws.nodes = { 1: new Set(), 2: new Set() }; // 2026-11-09：換職業＝武器組天賦也清掉
     for (const b of document.querySelectorAll("#classes button")) b.classList.toggle("active", b.dataset.id === id);
     buildAscendancyButtons();
     if (recenter) { render(); centerOn(start, view.scale); }
@@ -1952,7 +2085,7 @@
   }
   function setJewelFx(list) {
     jewelFx = {};
-    for (const j of Array.isArray(list) ? list : []) jewelFx[j.node] = { radius: j.radius || 0, inRange: new Set(j.inRange || []), lines: j.lines || [] };
+    for (const j of Array.isArray(list) ? list : []) jewelFx[j.node] = { radius: j.radius || 0, baseRadius: j.baseRadius || 0, inRange: new Set(j.inRange || []), lines: j.lines || [] }; // 2026-11-09：baseRadius（巴揚地脈放大前）
     if (conquestOff) { // 伺服器沒有 tree/timeless（舊版）：用計算器帶回來的 jewels[].conquest
       const j = (Array.isArray(list) ? list : []).find(x => x.conquest);
       const next = j ? Object.assign(j.conquest, { key: conquestKey }) : null;
@@ -2158,6 +2291,16 @@
       el("circle", { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : 26, fill: "none",
         stroke: "#55ffff", "stroke-width": 2.5 }, g);
     }
+    // 2026-11-09 照站長「武器組天賦用顯眼點的顏色」：第 I 組亮紅、第 II 組亮青（跟遊戲內一樣）；正在用那一組實線粗圈，另一組虛線圈
+    //   （這次之前兩組都是橘色，換組時顏色跟著對調看不出哪組）
+    const mineWs = ws.nodes[ws.active].has(node.id), theirsWs = ws.nodes[wsOther()].has(node.id);
+    if (mineWs || theirsWs) {
+      const set = mineWs ? ws.active : wsOther();
+      const ring = { cx: node.x * SPACING, cy: node.y * SPACING, r: node.type === "small" ? 15 : node.type === "keystone" ? 28 : 22, fill: "none",
+        stroke: WS_COLORS[set], "stroke-width": mineWs ? 4 : 2.5, opacity: mineWs ? 1 : 0.8, "pointer-events": "none" };
+      if (!mineWs) ring["stroke-dasharray"] = "4 3";
+      el("circle", ring, g);
+    }
   }
   function refreshNodes(ids) {
     const lines = new Set();
@@ -2214,7 +2357,7 @@
   }
 
   function updatePanel() {
-    const used = allocated.size;
+    const used = pointsUsed(); // 2026-11-09：一般＋兩組武器組天賦多的那組（這次之前＝配了幾個節點）
     const ppl = data.pointsPerLevel || 1;
     const maxPoints = (data.levelCap - 1) * ppl + data.bonusPoints;
     const levelNoBonus = Math.ceil(used / ppl) + 1;
@@ -2224,6 +2367,7 @@
       "已用 <b" + (over ? " class=over" : "") + ">" + used + "</b> / " + maxPoints + " 點　" +
       "需要 Lv." + Math.min(levelNoBonus, 999) + (data.bonusPoints ? "（算上 " + data.bonusPoints + " 點首殺獎勵 Lv." + levelBonus + "）" : "");
     renderTotals();
+    renderWsBar();
     try { history.replaceState(null, "", "#" + encodeCode() + fullSuffix()); } catch (e) { /* file:// 之類的不能改 */ }
     afterChange(); // 2026-11-02：復原的歷史、存在瀏覽器、熱圖過期
     refreshConquest();
@@ -2477,14 +2621,31 @@
       openJewelEditor(node); // 已配的珠寶孔：放、換、拿掉珠寶，或退掉這個孔
       return;
     }
-    userEdit();
+    const mine = ws.nodes[ws.active], theirs = ws.nodes[wsOther()];
     if (allocated.has(node.id)) {
-      for (const id of removal(node)) allocated.delete(id);
+      // 2026-11-09：退一般節點不能讓另一組的武器組天賦斷線（跟遊戲一樣）
+      if (!mine.has(node.id) && theirs.size) {
+        const otherGraph = new Set([...allocated].filter(id => !mine.has(id)).concat([...theirs]));
+        const lost = TreeRules.removal(node, otherGraph, seeds(), ruleCtx());
+        if ([...lost].some(id => theirs.has(id) && id !== node.id)) { flash("退掉會讓" + wsName(wsOther()) + "的武器組天賦斷線，先換過去退外面的"); return; }
+      }
+      userEdit();
+      for (const id of removal(node)) { allocated.delete(id); mine.delete(id); }
       pruneAttrs();
     } else {
       const path = pathTo(node);
       if (!path.length) { flash("走不到那裡"); return; }
-      for (const n of path) allocated.add(n.id);
+      if (ws.mode === 1) {
+        // 2026-11-09：配成正在用那一組的武器組天賦
+        if (path.some(n => n.type === "socket" || n.type === "start")) { flash("珠寶孔不能配成武器組天賦"); return; }
+        const cap = wsCapNow();
+        if (mine.size + path.length > cap) { flash(wsName(ws.active) + "的武器組天賦最多 " + cap + " 點"); return; }
+        userEdit();
+        for (const n of path) { allocated.add(n.id); mine.add(n.id); }
+      } else {
+        userEdit();
+        for (const n of path) { allocated.add(n.id); theirs.delete(n.id); } // 另一組配過的變成一般節點
+      }
     }
     hover = null;
     preview = { add: new Set(), remove: new Set() };
@@ -2633,7 +2794,9 @@
     } else if (isRadiusJewel(g)) {
       let smalls = 0;
       for (const id of fx.inRange) if (byId.get(id) && byId.get(id).type === "small") smalls++;
-      html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個"
+      html += "<div style='margin-top:4px;color:var(--gold)'>範圍 " + format(fx.radius) + " 格"
+        + (fx.baseRadius ? "（珠寶 " + format(fx.baseRadius) + " × 巴揚地脈 +" + Math.round((fx.radius / fx.baseRadius - 1) * 100) + "%）" : "") // 2026-11-09
+        + "：已配 " + fx.inRange.size + " 點（小點 " + smalls + " 個"
         + (smalls > 15 ? "，「也各給」最多算 15 個" : "") + "）</div>";
     }
     html += "<div style='margin-top:4px;color:var(--gold)'>實際加在角色身上：</div>"
@@ -2786,7 +2949,23 @@
       try { document.execCommand("copy"); flash(what + "已複製"); } catch (ignored) { flash("請自己複製下面的文字"); }
     }
   }
-  document.getElementById("copyCode").addEventListener("click", () => copy(encodeCode(), "代碼"));
+  // 2026-11-09 照站長「匯入改成兩組一起帶回遊戲」：複製的代碼後面接「*」＋武器組（[正在用第幾組, 第 I 組節點順序…, 第 II 組…] 的 base64url），
+  //   遊戲的 /tree import 認得；沒有武器組天賦就跟以前一樣
+  function wsCodeSuffix() {
+    const p = wsPack();
+    return p ? "*" + b64urlEncode(JSON.stringify(p)) : "";
+  }
+  /** 代碼或網址裡的武器組：「*」後面的，或網址計算器那段的第 8 格；沒有回 null。 */
+  function wsFromCode(text) {
+    const star = text.indexOf("*");
+    if (star >= 0) {
+      try { return JSON.parse(b64urlDecode(text.slice(star + 1).trim())); } catch (e) { return null; }
+    }
+    const c = calcPart(text.includes("#") ? text.slice(text.lastIndexOf("#") + 1) : text);
+    if (!c) return null;
+    try { const p = JSON.parse(b64urlDecode(c)); return Array.isArray(p[7]) ? p[7] : null; } catch (e) { return null; }
+  }
+  document.getElementById("copyCode").addEventListener("click", () => copy(encodeCode() + wsCodeSuffix(), "代碼"));
   document.getElementById("copyLink").addEventListener("click", () => copy(location.href.split("#")[0] + "#" + encodeCode() + fullSuffix(), "連結（含裝備與技能）"));
   document.getElementById("paste").addEventListener("click", () => {
     const text = prompt("貼上代碼（或整個網址）");
@@ -2795,6 +2974,8 @@
     if (!decoded) { flash("看不懂這個代碼"); return; }
     userEdit();
     load(decoded);
+    const wsIn = wsFromCode(text.trim()); // 2026-11-09：代碼帶的武器組
+    if (wsIn) { wsPending = wsIn; resolveWsPending(); }
     render();
     centerOn(start, view.scale);
   });
@@ -2950,11 +3131,13 @@
 
   // ---- 網址：#天賦代碼~裝備!計算器 ----
   function calcHash() {
-    const skills = calc.skills.map(s => [s.id, s.level, s.sockets, s.supports]);
+    const skills = calc.skills.map(s => s.ws ? [s.id, s.level, s.sockets, s.supports, s.ws] : [s.id, s.level, s.sockets, s.supports]); // 2026-11-09：第 5 個是綁哪一組武器
     const enemy = PlannerPure.packEnemy(calc.enemy); // 2026-11-02：EHP 的敵人（跟預設一樣不寫；這次之前只有前 6 個）
-    if (!skills.length && !calc.level && !calc.asc && !calc.loaded && !enemy) return "";
+    const wsPart = wsPack(); // 2026-11-09：武器組（正在用第幾組、兩組的武器組天賦）；沒有就不寫（舊連結照舊）
+    if (!skills.length && !calc.level && !calc.asc && !calc.loaded && !enemy && !wsPart) return "";
     const parts = [calc.level, calc.asc, calc.ascNodes, skills, calc.binds, calc.loaded ? calc.loaded.name : ""];
-    if (enemy) parts.push(enemy);
+    if (enemy || wsPart) parts.push(enemy || 0);
+    if (wsPart) parts.push(wsPart);
     return b64urlEncode(JSON.stringify(parts));
   }
   const initialGearText = gearText(hashText());
@@ -2982,7 +3165,8 @@
     calc.ascNodes = Array.isArray(p[2]) ? p[2].filter(x => typeof x === "string").slice(0, 64) : [];
     calc.skills = (Array.isArray(p[3]) ? p[3] : []).filter(Array.isArray).slice(0, 27).map(s => ({
       id: String(s[0]), level: clamp(Math.round(Number(s[1]) || 1), 1, 99), sockets: clamp(Math.round(Number(s[2]) || DEFAULT_SOCKETS), 1, 9),
-      supports: (Array.isArray(s[3]) ? s[3] : []).slice(0, 9).map(x => typeof x === "string" ? x : "") }));
+      supports: (Array.isArray(s[3]) ? s[3] : []).slice(0, 9).map(x => typeof x === "string" ? x : ""),
+      ws: s[4] === 1 || s[4] === 2 ? s[4] : 0 }));
     const binds = Array.isArray(p[4]) ? p[4] : [];
     calc.binds = new Array(BIND_COUNT).fill(-1).map((_, k) => {
       const v = Math.round(Number(binds[k]));
@@ -2995,7 +3179,9 @@
       calc.loaded = { name, key: "" };
       loadCharacter(name, "", false);
     }
-    calc.enemy = PlannerPure.unpackEnemy(p[6]); // 2026-11-02：舊的連結沒有第 7 個＝預設的敵人
+    calc.enemy = PlannerPure.unpackEnemy(p[6] || undefined); // 2026-11-02：舊的連結沒有第 7 個＝預設的敵人
+    wsPending = Array.isArray(p[7]) ? p[7] : null; // 2026-11-09：武器組（天賦樹載入後才對得到節點）
+    resolveWsPending();
     showEnemy();
     levelInput.value = calc.level ? String(calc.level) : "";
     renderSkills();
@@ -3093,11 +3279,15 @@
       if (skillData && !skillDef(s.id)) return;
       indexOf.set(i, skills.length);
       map.push(i);
-      skills.push({ id: s.id, level: s.level, sockets: s.sockets, supports: s.supports });
+      const one = { id: s.id, level: s.level, sockets: s.sockets, supports: s.supports };
+      if (s.ws) one.ws = s.ws; // 2026-11-09：綁哪一組武器
+      skills.push(one);
     });
     const json = {
       tree: encodeCode(), level: calcLevel(), asc, ascNodes: asc ? calc.ascNodes : [], progress: calc.progress,
-      gear: gear.map(toItemData), jewels: Object.fromEntries(placedJewels().map(([id, g]) => [id, toItemData(g)])), skills,
+      gear: gear.slice(0, SPARE_MAIN).map(toItemData), spare: [toItemData(gear[SPARE_MAIN]), toItemData(gear[SPARE_OFF])], // 2026-11-09：另一組武器
+      weaponSet: ws.active, wsNodes: { 1: [...ws.nodes[1]], 2: [...ws.nodes[2]] },
+      jewels: Object.fromEntries(placedJewels().map(([id, g]) => [id, toItemData(g)])), skills,
       binds: calc.binds.map(i => indexOf.has(i) ? indexOf.get(i) : -1), extra: calc.extra,
       enemy: PlannerPure.enemyJson(calc.enemy) // 2026-11-02：EHP 的敵人（BuildCalc.parseEnemy）
     };
@@ -3255,7 +3445,8 @@
         const name = node("td", { style: "cursor:pointer", title: "改這個技能的輔助寶石", onclick: () => {
           const i = calc.lastMap[row.position];
           if (i !== undefined) openSkillEditor(i);
-        } }, node("span", { cls: "key", text: row.key ? "按鍵 " + row.key : "沒綁按鍵" }), row.name + (row.minions ? " ×" + row.minions + " 隻" : ""));
+        } }, node("span", { cls: "key", text: row.key ? "按鍵 " + row.key : "沒綁按鍵" }), row.name + (row.minions ? " ×" + row.minions + " 隻" : ""),
+          row.ws ? node("span", { cls: "key", style: "color:#ffb347", text: "用" + wsName(row.ws) + "武器", title: "這個技能綁" + wsName(row.ws) + "武器：照那一組的武器與武器組天賦算" }) : null); // 2026-11-09
         table.append(node("tr", null, name, dps, node("td", { cls: "num", text: fmtNum(row.hit) }),
           node("td", { cls: "num", text: row.rate.toFixed(2) }), node("td", { cls: "num", text: (row.crit * 100).toFixed(1) + "%" })));
       }
@@ -3346,8 +3537,14 @@
             const v = d.binds ? d.binds[k] : -1;
             return typeof v === "number" && v >= 0 && v < calc.skills.length ? v : -1;
           });
-          if (items) { gear = GEAR_SLOTS.map((_, i) => fromItemData((d.gear || [])[i], i)); renderGear(); }
-          else pendingItemData = d.gear || [];
+          // 2026-11-09：另一組武器（spare）接在後面；正在用第幾組、兩組的武器組天賦、技能綁定照角色
+          const allGear = (d.gear || []).slice(0, SPARE_MAIN);
+          while (allGear.length < SPARE_MAIN) allGear.push(null);
+          allGear.push((d.spare || [])[0] || null, (d.spare || [])[1] || null);
+          wsFromProgress(d.progress || {}, Number(d.weaponSet) || 1);
+          calc.skills.forEach(s => { const b = (d.progress || {})["skillws." + s.id]; s.ws = b === "1" ? 1 : b === "2" ? 2 : 0; });
+          if (items) { gear = GEAR_SLOTS.map((_, i) => fromItemData(allGear[i], i)); renderGear(); }
+          else pendingItemData = allGear;
           calc.baseline = null;
           calc.wantBaseline = true;
           renderSkills();
@@ -3493,7 +3690,7 @@
       const sups = s.supports.filter(Boolean).map(socketLabel);
       const name = node("div", { cls: "nm", role: "button", tabindex: "0", title: "改等級與輔助寶石", onclick: () => openSkillEditor(i),
         onkeydown: e => { if (e.key === "Enter") openSkillEditor(i); } },
-        (def ? def.name : s.id + "（不認得）") + "　Lv." + s.level,
+        (def ? def.name : s.id + "（不認得）") + "　Lv." + s.level + (s.ws ? "　" + wsName(s.ws) + "武器" : ""), // 2026-11-09
         node("small", null, node("span", { cls: "sup", text: sups.length ? sups.join("、") : "沒有輔助" }), "　" + s.supports.filter(Boolean).length + "/" + s.sockets + " 孔"));
       const remove = node("button", { type: "button", text: "✕", title: "拿掉這個技能", onclick: () => {
         calc.skills.splice(i, 1);
@@ -3614,6 +3811,11 @@
     const levelIn = node("input", { type: "number", min: "1", max: String(maxLevel()), value: String(s.level), "aria-label": "技能等級", style: "width:64px" });
     levelIn.addEventListener("change", () => { s.level = clamp(Math.round(Number(levelIn.value)), 1, maxLevel()); skillChanged(); });
     const socketSel = node("select", { "aria-label": "輔助孔數" }, ...new Array(maxSockets()).fill(0).map((_, k) => node("option", { value: String(k + 1), text: (k + 1) + " 孔" })));
+    // 2026-11-09 照站長「網頁 DPS 計算器也補上兩組」：技能綁哪一組武器（跟遊戲的技能面板一樣；綁另一組的照那一組的武器與武器組天賦算）
+    const wsSel = node("select", { "aria-label": "武器組" }, node("option", { value: "0", text: "武器組：不指定" }),
+      node("option", { value: "1", text: "武器組：第 I 組" }), node("option", { value: "2", text: "武器組：第 II 組" }));
+    wsSel.value = String(s.ws || 0);
+    wsSel.addEventListener("change", () => { s.ws = Number(wsSel.value); skillChanged(); });
     socketSel.value = String(Math.min(s.sockets, maxSockets()));
     socketSel.addEventListener("change", () => {
       s.sockets = Number(socketSel.value);
@@ -3650,14 +3852,36 @@
     skillDlg.replaceChildren(
       node("h3", { text: (def ? def.name : s.id) + (def && def.type ? "　" : ""), title: def ? def.description : "" }, def && def.type ? node("span", { cls: "tier", style: "font-size:12px;color:var(--quiet)", text: def.type }) : null),
       def && def.description ? glossEl("div", "hint", def.description) : null,
-      node("div", { cls: "calcrow" }, node("label", null, "等級", levelIn), socketSel,
+      node("div", { cls: "calcrow" }, node("label", null, "等級", levelIn), socketSel, wsSel,
         node("span", { cls: "hint", style: "margin:0", text: "最高 Lv." + maxLevel() + "、" + maxSockets() + " 孔" })),
       node("div", { cls: "calcrow" }, node("span", { cls: "hint", style: "margin:0", text: socketPick >= 0 ? "選了第 " + (socketPick + 1) + " 孔：點下面的輔助換上去" : "點下面的輔助掛到空孔；要換掉某一顆先點那個孔" })),
+      innerPicker(s, def),
       grid,
       node("div", { cls: "calcstatus" + (supportResult && supportResult.error ? " err" : ""), text: head }),
       filter, listBox,
       node("div", { cls: "btns" }, node("button", { type: "button", cls: "primary", text: "完成", onclick: closeSkillDialog })));
     drawSupportRows(listBox, s);
+  }
+  // 2026-11-09 照站長「規劃器裡幻影神射、幻弓影沒辦法放技能」：宿主寶石（引星、幻影神射、幻弓影、圖騰…）的孔裡放技能寶石
+  //   （伺服器給能放的清單，存成 @代號/等級/1，跟遊戲存檔同格式）；這次之前網頁只能放輔助，孔裡的技能只能從遊戲讀進來
+  function innerPicker(s, def) {
+    if (!def || !Array.isArray(def.inner) || !def.inner.length) return null;
+    const choices = def.inner.map(id => skillDef(id)).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name));
+    const sel = node("select", { "aria-label": "孔裡放的技能" }, node("option", { value: "", text: "孔裡放技能寶石…（" + choices.length + " 種）" }),
+      ...choices.map(c => node("option", { value: c.id, text: c.name + (c.weapon ? "・" + c.weapon : "") })));
+    sel.addEventListener("change", () => {
+      if (!sel.value) return;
+      let at = socketPick >= 0 && socketPick < s.sockets ? socketPick : -1;
+      if (at < 0) for (let k = 0; k < s.sockets; k++) if (!s.supports[k]) { at = k; break; }
+      if (at < 0 && s.sockets < maxSockets()) { s.sockets++; at = s.sockets - 1; }
+      if (at < 0) { flash("孔滿了：先點上面一個孔，再選要放的技能"); sel.value = ""; return; }
+      while (s.supports.length < s.sockets) s.supports.push("");
+      s.supports[at] = "@" + sel.value + "/" + s.level + "/1";
+      socketPick = -1;
+      skillChanged();
+      requestSupports();
+    });
+    return node("div", { cls: "calcrow" }, sel, node("span", { cls: "hint", style: "margin:0", text: "宿主寶石：孔裡的技能用跟它一樣的等級；放在選的孔或第一個空孔" }));
   }
   function drawSupportRows(box, s) {
     const table = node("table");
@@ -3695,9 +3919,10 @@
   }
   function treeState() {
     const jewelList = Object.entries(jewels).filter(([, g]) => g);
-    const st = { classId, allocated: [...allocated], attrs: [...attrs], jewels: Object.fromEntries(jewelList), asc: calc.asc, ascNodes: calc.ascNodes.slice() };
+    const st = { classId, allocated: [...allocated], attrs: [...attrs], jewels: Object.fromEntries(jewelList), asc: calc.asc, ascNodes: calc.ascNodes.slice(),
+      ws: { active: ws.active, n1: [...ws.nodes[1]], n2: [...ws.nodes[2]] } }; // 2026-11-09：武器組天賦也能復原
     st.key = JSON.stringify([classId, st.allocated.slice().sort(), st.attrs.slice().sort(), jewelList.map(([id, g]) => [id, packItem(g)]).sort(),
-      st.asc, st.ascNodes.slice().sort()]);
+      st.asc, st.ascNodes.slice().sort(), st.ws.active, st.ws.n1.slice().sort(), st.ws.n2.slice().sort()]);
     return st;
   }
   function recordHistory() {
@@ -3722,6 +3947,7 @@
     calc.ascNodes = st.ascNodes.slice();
     allocated = new Set(st.allocated);
     attrs = new Map(st.attrs);
+    if (st.ws) { if (st.ws.active !== ws.active) swapGear(); ws.active = st.ws.active; ws.nodes = { 1: new Set(st.ws.n1), 2: new Set(st.ws.n2) }; renderWsBar(); }
     jewels = Object.assign({}, st.jewels);
     hover = null;
     preview = { add: new Set(), remove: new Set() };

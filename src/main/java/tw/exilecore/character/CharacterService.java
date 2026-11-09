@@ -103,6 +103,87 @@ public final class CharacterService {
     }
 
     /** 角色面板的裝備欄（武器、副手、防具）。 */
+    /**
+     * 2026-11-08 照站長「武器切換系統」：切到另一組武器（F 鍵、角色面板的按鈕、放綁定另一組的技能時）。
+     * 武器與武器組天賦對調、連不到起點的武器組天賦拿掉、存進度、重畫裝備、重算屬性表；照站長不延遲。回傳新的組（沒角色 0）。
+     */
+    public int swapWeaponSet(final Player player, final boolean announce) {
+        final PlayerState state = states.get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return 0;
+        }
+        final int to = WeaponSets.swap(state);
+        final tw.exilecore.passive.PassiveTree tree = plugin.passives() == null ? null : plugin.passives().tree();
+        final CharacterRecord record = state.character();
+        if (tree != null && record != null) {
+            final java.util.Set<String> removed = tree.prune(state.passives(), tree.start(record.characterClass().id()),
+                    tw.exilecore.passive.PassiveState.rules(plugin, state));
+            if (!removed.isEmpty()) {
+                // 只拿掉連不到的武器組天賦；一般節點放回去（一般節點連不連得到不歸這裡管）
+                final java.util.Set<String> mine = WeaponSets.nodes(state.progress(), to);
+                for (final String id : removed) {
+                    if (!mine.remove(id)) {
+                        state.passives().add(id);
+                    }
+                }
+                WeaponSets.setNodes(state.progress(), to, mine);
+            }
+        }
+        saveWeaponSet(player, state);
+        gear.sync(player);
+        plugin.players().sheet(player);
+        if (announce) {
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#ffd27f>⚔ 換成" + WeaponSets.setName(to) + "武器"));
+            player.playSound(player.getLocation(), org.bukkit.Sound.ITEM_ARMOR_EQUIP_CHAIN, 0.5f, 1.4f);
+        }
+        return to;
+    }
+
+    /**
+     * 2026-11-08 照站長「武器切換系統」：把背包那一格的武器／副手裝到「沒在用的那一組」（角色面板右鍵）。
+     * 兩組先對調、照一般的裝備規則裝上（雙手武器、副手搭配都照那一組檢查）、再對調回來。回傳錯誤訊息；成功 null。
+     */
+    public String equipSpare(final Player player, final int inventorySlot) {
+        final PlayerState state = states.get(player);
+        if (!state.isLoaded() || !state.hasCharacter()) {
+            return "先建立角色（/char）再裝備";
+        }
+        final org.bukkit.inventory.ItemStack stack = player.getInventory().getItem(inventorySlot);
+        final tw.exilecore.item.ItemBase base = stack == null ? null : gear.baseOf(stack);
+        if (base == null || base.slot() != tw.exilecore.item.ItemSlot.MAIN_HAND && base.slot() != tw.exilecore.item.ItemSlot.OFF_HAND) {
+            return "另一組只放武器、副手";
+        }
+        state.exchangeWeaponSlots();
+        final String problem;
+        try {
+            problem = gear.equip(player, inventorySlot);
+        } finally {
+            state.exchangeWeaponSlots();
+        }
+        gear.sync(player);
+        plugin.players().sheet(player);
+        return problem;
+    }
+
+    /** 2026-11-08：卸下「沒在用的那一組」的主手（main = true）或副手回背包。 */
+    public String unequipSpare(final Player player, final boolean main) {
+        final String problem = gear.unequip(player, main ? PlayerState.SPARE_MAIN_SLOT : PlayerState.SPARE_OFF_SLOT);
+        plugin.players().sheet(player);
+        return problem;
+    }
+
+    /** 2026-11-08：武器組的進度（正在用第幾組、兩組的武器組天賦）寫進資料庫。 */
+    public void saveWeaponSet(final Player player, final PlayerState state) {
+        setProgress(player, PlayerState.WEAPON_SET_KEY, String.valueOf(state.activeWeaponSet()));
+        for (int set = 1; set <= 2; set++) {
+            final String key = WeaponSets.nodesKey(set);
+            final String value = state.progress().get(key);
+            if (value != null) {
+                setProgress(player, key, value);
+            }
+        }
+    }
+
     public Gear gear() {
         return gear;
     }
@@ -463,6 +544,7 @@ public final class CharacterService {
             }
         }
         state.setCharacter(record, passives, loaded.progress(), loaded.skills());
+        WeaponSets.normalize(state); // 2026-11-08 照站長「武器切換系統」：武器組天賦跟配點對齊（存檔中斷、天賦被清掉過）
         trimOverBudget(player, state, tree); // 2026-10-27：配的天賦比能用的點多（昇華給的天賦點沒了）；這次之前只核對相連
         if (newTree) {
             stampTreeVersion(state, tree, true);
@@ -532,7 +614,8 @@ public final class CharacterService {
                 try {
                     final int set = Integer.parseInt(parts[0]);
                     final int slot = Integer.parseInt(parts[1]);
-                    if (set >= 0 && set < PlayerState.GEAR_SETS && slot >= 0 && slot < PlayerState.GEAR_SLOTS.length) { // 2026-10-26：第 10 格是第三個戒指
+                    // 2026-11-09：後面兩格是第 II 組武器（PlayerState.GEAR_PRESET_SLOTS）；2026-10-26：第 10 格是第三個戒指
+                    if (set >= 0 && set < PlayerState.GEAR_SETS && slot >= 0 && slot < PlayerState.GEAR_PRESET_SLOTS) {
                         state.gearSet(set)[slot] = entry.getValue();
                         continue;
                     }

@@ -537,6 +537,7 @@ final class AdminWeb {
                     throw new IllegalArgumentException("沒有這件傳奇：" + uniqueId);
                 }
                 out.put("affixes", AffixSpec.catalogFor(plugin.items().repository(), unique));
+                out.put("implicit", implicitInfo(plugin.items().repository().base(unique.base()))); // 2026-11-09：固定詞綴也能指定數值
                 return out;
             }
             final ItemBase base = baseId == null ? null : plugin.items().repository().base(baseId.trim());
@@ -545,8 +546,22 @@ final class AdminWeb {
             }
             out.put("affixes", AffixSpec.catalogFor(plugin.items().repository(), base));
             out.put("jewel", base.isJewel());
+            out.put("implicit", implicitInfo(base)); // 2026-11-09：固定詞綴也能指定數值
             return out;
         });
+    }
+
+    /** 2026-11-09 照站長「固定詞綴也要能調整數值」：基底固定詞綴的文字與每個變數的範圍（沒有回 null）。 */
+    private static Map<String, Object> implicitInfo(final ItemBase base) {
+        if (base == null || base.implicit() == null || base.implicit().vars().isEmpty()) {
+            return null;
+        }
+        final Map<String, Object> out = new LinkedHashMap<>();
+        out.put("text", base.implicit().text().replaceAll("<[^>]+>", ""));
+        final Map<String, Object> vars = new LinkedHashMap<>();
+        base.implicit().vars().forEach((name, range) -> vars.put(name, List.of(range[0], range[range.length - 1])));
+        out.put("vars", vars);
+        return out;
     }
 
     /** 可以發的東西（主執行緒：資料檔的內容）。 */

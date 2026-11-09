@@ -24,6 +24,13 @@ public final class MenuListener implements Listener {
         if (!(event.getWhoClicked() instanceof Player player)) {
             return;
         }
+        if (event.getClick() == ClickType.SWAP_OFFHAND && !menu.allowsItemMovement()) {
+            // 2026-11-09 照站長「天賦樹 Shift＋右鍵能換武器組但 F 不行」：選單裡按 F 交給選單（天賦樹、角色面板換武器組），
+            //   不當成點了那一格；這次之前一律當成碰到副手的顯示用複本，直接擋掉
+            event.setCancelled(true);
+            menu.onSwapKey();
+            return;
+        }
         if (touchesGearDisplay(player, event) && !menu.acceptsGearDisplay()) {
             // 角色面板裝備的顯示用複本（第 9 格、副手、防具）：不能放進倉庫、賣掉、丟進垃圾桶
             event.setCancelled(true);

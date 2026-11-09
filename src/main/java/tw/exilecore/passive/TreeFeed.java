@@ -33,7 +33,11 @@ import java.util.Set;
  *   <li>動作：alloc（一條路徑，從已配置的往外依序；伺服器一個一個檢查能不能配、點數夠不夠才配）、refund（退一點，照舊花金幣）、
  *       use（配了的屬性點換屬性、珠寶孔放／拿珠寶）。規則全部照 {@link PassiveState}、{@link PassiveMenu}。</li>
  * </ul>
- * 這個遊戲沒有武器組天賦點（武器大師給的是 +10 天賦點，算在剩幾點裡），所以畫面上不寫武器組點數。
+ * 2026-11-08 照站長「武器切換系統」起有武器組天賦（{@link tw.exilecore.character.WeaponSets}）。
+ * 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：狀態多帶 wsa（正在用第幾組，0 = 沒有）、wscap（每組上限）、
+ * wsu1／wsu2（兩組用量）、ws1／ws2（兩組的節點，另一組的不在 owned 裡）；動作多兩個：walloc（一條路徑配成正在用那一組的武器組天賦，
+ * 規則照 {@link PassiveState#allocateWeaponSet}）、wswap（換武器組，同 F 鍵）。舊模組不認得這些欄位、不會送這些動作，照舊能用；
+ * 新模組看到舊伺服器沒有 wsa 就不畫武器組的按鈕。這次之前模組只顯示正在用那一組（當一般節點畫），要配武器組天賦得用箱子選單。
  */
 public final class TreeFeed implements UiFeed.Source {
 
@@ -344,6 +348,9 @@ public final class TreeFeed implements UiFeed.Source {
         root.add("use", use);
         root.add("attrs", attrs);
         root.add("sets", sets(state.activeTreeSet(), card(player))); // 2026-11-02 照站長：右上的組別鈕（月卡）
+        weaponSets(root, state.activeWeaponSet(), plugin.players().weaponSetCap(state), // 2026-11-09：武器組天賦
+                tw.exilecore.character.WeaponSets.nodes(state.progress(), 1), tw.exilecore.character.WeaponSets.nodes(state.progress(), 2));
+        tools(root, TreeActions.plannerUrl(plugin, tree, player)); // 2026-11-09：右上的「網頁規劃器｜匯入代碼」
         final JsonObject over = new JsonObject();
         final Map<String, PassiveNode> conquered = TimelessJewels.conquered(plugin, state, tree);
         for (final Map.Entry<String, PassiveNode> entry : conquered.entrySet()) {
@@ -458,7 +465,64 @@ public final class TreeFeed implements UiFeed.Source {
         if (sockets > 0 || !state.jewels().isEmpty()) {
             info.add("<gray>珠寶孔 <white>" + sockets + "</white>　放了珠寶 <#c77dff>" + state.jewels().size());
         }
+        if (state.activeWeaponSet() > 0) {
+            // 2026-11-09 照站長：武器組天賦的用量（模組也照 wsu1／wsu2 畫；這行給還沒更新的舊模組看）
+            final int cap = plugin.players().weaponSetCap(state);
+            info.add("<gray>武器組天賦 <#ff3b3b>第 I 組 " + tw.exilecore.character.WeaponSets.used(state, 1) + "／" + cap
+                    + "　<#2ee6ff>第 II 組 " + tw.exilecore.character.WeaponSets.used(state, 2) + "／" + cap
+                    + "　<dark_gray>（用" + tw.exilecore.character.WeaponSets.setName(state.activeWeaponSet()) + "）");
+        }
         return info;
+    }
+
+    /**
+     * 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：純函式，把武器組天賦寫進狀態（模組畫顏色、按鈕、用量）。
+     * active 0 = 沒有武器組（不寫）。
+     */
+    static void weaponSets(final JsonObject root, final int active, final int cap, final Set<String> set1, final Set<String> set2) {
+        if (active <= 0) {
+            return;
+        }
+        root.addProperty("wsa", active);
+        root.addProperty("wscap", cap);
+        root.addProperty("wsu1", set1.size());
+        root.addProperty("wsu2", set2.size());
+        root.add("ws1", ids(set1));
+        root.add("ws2", ids(set2));
+    }
+
+    /** 2026-11-09 照站長「模組右上新增打開網頁天賦規劃器與匯入代碼」：純函式，imp（有匯入）、web（規劃器網址；網頁沒開 = 空字串）。 */
+    static void tools(final JsonObject root, final String plannerUrl) {
+        root.addProperty("imp", true);
+        root.addProperty("web", plannerUrl == null ? "" : plannerUrl);
+    }
+
+    /** 2026-11-09：匯入的代碼最長幾個字（模組那邊同樣的上限；網址帶珠寶、武器組會比較長）。 */
+    static final int MAX_IMPORT = 8000;
+
+    /** 2026-11-09：純函式，模組送來的匯入代碼（沒寫、空的、太長回傳 null）。 */
+    static String importCode(final JsonObject message) {
+        if (message == null || !message.has("code") || !message.get("code").isJsonPrimitive()) {
+            return null;
+        }
+        final String code = message.get("code").getAsString().trim();
+        return code.isEmpty() || code.length() > MAX_IMPORT ? null : code;
+    }
+
+    /**
+     * 2026-11-09：純函式，一條要配成武器組天賦的路先整條檢查（中途才失敗的話前面那幾點已經配下去了）：起點、珠寶孔不能，
+     * 這一組剩下的上限放不下整條也不行。回傳問題，沒問題回傳 null。
+     */
+    static String weaponPathProblem(final List<PassiveNode> path, final int used, final int cap, final String setName) {
+        for (final PassiveNode node : path) {
+            if (node.isStart() || node.isSocket()) {
+                return "路上有" + (node.isSocket() ? "珠寶孔" : "起點") + "：起點、珠寶孔不能配成武器組天賦（先用一般模式配到那裡）";
+            }
+        }
+        if (used + path.size() > cap) {
+            return setName + "的武器組天賦最多 " + cap + " 點（已經配了 " + used + " 點，這條要 " + path.size() + " 點）";
+        }
+        return null;
     }
 
     /** 一條路最多加總幾行（跟箱子選單一樣：多的寫「…還有 N 項」）。 */
@@ -503,7 +567,9 @@ public final class TreeFeed implements UiFeed.Source {
         final CharacterRecord character = state.character();
         return state.passives().hashCode() + ":" + plugin.players().availablePoints(state) + ":" + state.gold() + ":" + state.jewels().size()
                 + ":" + (character == null ? 0 : character.refundPoints() + "/" + character.level()) + ":" + PassiveState.ascendancyId(plugin, state)
-                + ":" + PassiveState.rules(plugin, state).hashCode() + ":" + attrSignature(state) + ":" + jewelSignature(player) + ":" + state.activeTreeSet() + ":" + card(player);
+                + ":" + PassiveState.rules(plugin, state).hashCode() + ":" + attrSignature(state) + ":" + jewelSignature(player) + ":" + state.activeTreeSet() + ":" + card(player)
+                + ":" + state.activeWeaponSet() + ":" + tw.exilecore.character.WeaponSets.nodes(state.progress(), 1).hashCode()
+                + "/" + tw.exilecore.character.WeaponSets.nodes(state.progress(), 2).hashCode() + ":" + plugin.players().weaponSetCap(state); // 2026-11-09：武器組
     }
 
     /** 配了、但還沒放珠寶的珠寶孔有沒有。 */
@@ -597,6 +663,75 @@ public final class TreeFeed implements UiFeed.Source {
                 changed.add(player.getUniqueId());
                 player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.3f);
                 return "<green>配了 " + path.size() + " 點：" + ItemRenderer.escape(path.getLast().forClass(classId(state)).name());
+            }
+            case "walloc" -> {
+                // 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：一條路徑配成正在用那一組的武器組天賦
+                //   （跟箱子選單的武器組天賦模式一樣一點一點配，PassiveState.allocateWeaponSet 檢查上限、點數、連線）
+                final List<String> ids = new ArrayList<>();
+                if (message.has("path") && message.get("path").isJsonArray()) {
+                    for (final JsonElement element : message.getAsJsonArray("path")) {
+                        if (element.isJsonPrimitive()) {
+                            ids.add(element.getAsString());
+                        }
+                    }
+                }
+                if (start == null) {
+                    return fail(player, "你還沒有角色");
+                }
+                if (state.activeWeaponSet() <= 0) {
+                    return fail(player, "沒有武器組");
+                }
+                final Object[] checked = checkPath(tree, start, state.passives(), rules, ids, ascendancy);
+                if (checked[1] != null) {
+                    return fail(player, (String) checked[1]);
+                }
+                @SuppressWarnings("unchecked") final List<PassiveNode> path = (List<PassiveNode>) checked[0];
+                final int active = state.activeWeaponSet();
+                final String problem = weaponPathProblem(path, tw.exilecore.character.WeaponSets.used(state, active),
+                        plugin.players().weaponSetCap(state), tw.exilecore.character.WeaponSets.setName(active));
+                if (problem != null) {
+                    return fail(player, problem);
+                }
+                int done = 0;
+                PassiveState.Result result = PassiveState.Result.success();
+                for (final PassiveNode step : path) {
+                    result = passive.allocateWeaponSet(step);
+                    if (!result.ok()) {
+                        break;
+                    }
+                    done++;
+                }
+                if (done > 0) {
+                    changed.add(player.getUniqueId());
+                }
+                if (!result.ok()) {
+                    return fail(player, (done > 0 ? "配了 " + done + " 點後停下：" : "") + result.message());
+                }
+                player.playSound(player.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, 0.8f, 1.5f);
+                return (active == 2 ? "<#2ee6ff>" : "<#ff3b3b>") + "⚔ " + tw.exilecore.character.WeaponSets.setName(active) + "的武器組天賦配了 "
+                        + done + " 點：" + ItemRenderer.escape(path.getLast().forClass(classId(state)).name());
+            }
+            case "import" -> {
+                // 2026-11-09 照站長「模組右上新增匯入代碼」：照遊戲裡的「匯入規劃代碼」（TreeActions.preview）：先跳確認框，
+                //   套用（或取消、出錯）之後回到模組的天賦畫面；兩組武器組天賦一起帶（代碼「*」、網址都認得）
+                final String code = importCode(message);
+                if (code == null) {
+                    return fail(player, "代碼是空的或太長了（最多 " + MAX_IMPORT + " 字）");
+                }
+                TreeActions.preview(plugin, player, tree, code, () -> openNative(plugin, player, null));
+                return null;
+            }
+            case "wswap" -> {
+                // 2026-11-09：換武器組（同 F 鍵；武器、武器組天賦一起對調）
+                if (plugin.characters() == null || state.activeWeaponSet() <= 0) {
+                    return fail(player, "沒有武器組");
+                }
+                final int to = plugin.characters().swapWeaponSet(player, false);
+                if (to <= 0) {
+                    return fail(player, "還沒有角色");
+                }
+                player.playSound(player.getLocation(), Sound.ITEM_ARMOR_EQUIP_CHAIN, 0.7f, 1.2f);
+                return (to == 2 ? "<#2ee6ff>" : "<#ff3b3b>") + "⚔ 換成" + tw.exilecore.character.WeaponSets.setName(to) + "武器";
             }
             case "refund" -> {
                 final PassiveNode node = node(tree, message, ascendancy);

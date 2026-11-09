@@ -67,6 +67,34 @@ public final class TreeSetMenu extends Menu {
         return code.isEmpty() ? null : code.toString();
     }
 
+    /** 2026-11-09 照站長「月卡能記錄天賦組的武器組天賦嗎」：天賦組第 set 組的第 ws 組武器組天賦（角色進度，節點代號用逗號隔開）。 */
+    static String weaponKey(final int set, final int ws) {
+        return "treesetws." + set + "." + ws;
+    }
+
+    private Set<String> storedWeapon(final PlayerState state, final int set, final int ws) {
+        final Set<String> out = new java.util.LinkedHashSet<>();
+        final String raw = state.progress().get(weaponKey(set, ws));
+        if (raw != null) {
+            for (final String id : raw.split(",")) {
+                if (!id.isBlank() && tree.node(id.strip()) != null) {
+                    out.add(id.strip());
+                }
+            }
+        }
+        return out;
+    }
+
+    private void storeWeapon(final PlayerState state, final int set, final int ws, final Set<String> nodes) {
+        if (nodes == null || nodes.isEmpty()) {
+            if (state.progress().containsKey(weaponKey(set, ws))) {
+                plugin.characters().removeProgress(player, weaponKey(set, ws));
+            }
+            return;
+        }
+        plugin.characters().setProgress(player, weaponKey(set, ws), String.join(",", nodes));
+    }
+
     private void store(final PlayerState state, final int set, final String code) {
         int chunk = 0;
         if (code != null) {
@@ -173,7 +201,11 @@ public final class TreeSetMenu extends Menu {
     }
 
     /** 換組前要檢查的結果：problem 不是 null 就換不了；unreachable 是套用時會退回的節點。 */
-    private record Plan(String problem, Set<String> nodes, Set<String> unreachable) {
+    private record Plan(String problem, Set<String> nodes, Set<String> unreachable, Set<String> mine, Set<String> theirs) {
+        Plan(final String problem, final Set<String> nodes, final Set<String> unreachable) {
+            this(problem, nodes, unreachable, Set.of(), Set.of());
+        }
+
         static Plan fail(final String problem) {
             return new Plan(problem, Set.of(), Set.of());
         }
@@ -261,7 +293,15 @@ public final class TreeSetMenu extends Menu {
         final Set<String> nodes = plan.nodes();
         final Set<String> unreachable = plan.unreachable();
         // 現在的收進原本那一組
-        store(state, active, TreeCode.encode(tree, character.characterClass().id(), state.passives()));
+        // 2026-11-09 照站長「月卡能記錄天賦組的武器組天賦嗎」：代碼只存一般節點，兩組的武器組天賦另外存（換回來時照當時用第幾組武器放）；
+        //   這次之前代碼存的是全部（含正在用那一組的武器組天賦），另一組的武器組天賦沒有存
+        final int weaponSet = state.activeWeaponSet();
+        final Set<String> common = new HashSet<>(state.passives());
+        common.removeAll(tw.exilecore.character.WeaponSets.nodes(state.progress(), weaponSet));
+        store(state, active, TreeCode.encode(tree, character.characterClass().id(), common));
+        for (int ws = 1; ws <= 2; ws++) {
+            storeWeapon(state, active, ws, tw.exilecore.character.WeaponSets.nodes(state.progress(), ws));
+        }
         final Map<String, ItemStack> current = new LinkedHashMap<>(state.jewels());
         final ItemStack phylactery = current.remove(JewelSockets.PHYLACTERY); // 2026-10-27：命匣是昇華天賦的孔，不跟著天賦組換
         state.jewels().clear();
@@ -270,6 +310,14 @@ public final class TreeSetMenu extends Menu {
         // 換上那一組
         state.passives().clear();
         state.passives().addAll(nodes);
+        // 2026-11-09：那一組存的武器組天賦（舊的組沒存＝全部當一般節點）
+        final Set<String> mine = new java.util.LinkedHashSet<>(plan.mine());
+        mine.retainAll(nodes);
+        tw.exilecore.character.WeaponSets.setNodes(state.progress(), weaponSet, mine);
+        tw.exilecore.character.WeaponSets.setNodes(state.progress(), tw.exilecore.character.WeaponSets.other(weaponSet), plan.theirs());
+        storeWeapon(state, set, 1, null);
+        storeWeapon(state, set, 2, null);
+        plugin.characters().saveWeaponSet(player, state);
         state.jewels().putAll(state.treeJewels(set));
         state.treeJewels(set).clear();
         if (phylactery != null) {
@@ -304,7 +352,7 @@ public final class TreeSetMenu extends Menu {
             return Plan.fail("天賦樹沒有這個職業的起點");
         }
         final String code = stored(state, set);
-        final Set<String> nodes = new HashSet<>();
+        final Set<String> nodes = new HashSet<>(); // 一般節點（2026-11-09：武器組天賦另外加）
         if (code != null) {
             try {
                 final TreeCode.Decoded decoded = TreeCode.decode(tree, code);
@@ -318,12 +366,26 @@ public final class TreeSetMenu extends Menu {
         }
         // 2026-11-03 照站長（換組被「連不到起點」擋住）：接不上的節點退掉（跟登入時 prune 一樣），其他的照換；
         //   這次之前整組換不上去，只能清掉。會接不上通常是存那一組時的昇華規則（開路者的兩條路、虛實交織、不見之途…）後來變了
-        final Set<String> unreachable = tree.prune(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state));
-        final int total = plugin.players().availablePoints(state) + state.passives().size();
-        if (nodes.size() > total) {
-            return Plan.fail("第 " + (set + 1) + " 組配了 " + nodes.size() + " 點，你現在只有 " + total + " 點");
+        // 2026-11-09：武器組天賦——正在用第幾組武器就把那一組的放進配點，另一組的另外記（換武器組時才換上）
+        final int weaponSet = state.activeWeaponSet();
+        final Set<String> mine = storedWeapon(state, set, weaponSet);
+        final Set<String> theirs = storedWeapon(state, set, tw.exilecore.character.WeaponSets.other(weaponSet));
+        theirs.removeIf(id -> nodes.contains(id) && !mine.contains(id)); // 已經是一般節點的
+        mine.removeIf(id -> nodes.contains(id)); // 同時也是一般節點的當一般節點
+        final int cap = plugin.players().weaponSetCap(state);
+        if (mine.size() > cap || theirs.size() > cap) {
+            return Plan.fail("第 " + (set + 1) + " 組的武器組天賦超過每一組 " + cap + " 點");
         }
-        return new Plan(null, nodes, unreachable);
+        final int common = nodes.size();
+        nodes.addAll(mine);
+        final Set<String> unreachable = tree.prune(nodes, start, tw.exilecore.passive.PassiveState.rules(plugin, state));
+        mine.removeAll(unreachable);
+        final int needed = common + Math.max(mine.size(), theirs.size());
+        final int total = plugin.players().availablePoints(state) + tw.exilecore.character.WeaponSets.usedPoints(state);
+        if (needed > total) {
+            return Plan.fail("第 " + (set + 1) + " 組配了 " + needed + " 點，你現在只有 " + total + " 點");
+        }
+        return new Plan(null, nodes, unreachable, mine, theirs);
     }
 
     /** 退掉的節點名稱（最多列 5 個）。 */
@@ -369,6 +431,8 @@ public final class TreeSetMenu extends Menu {
         final List<ItemStack> jewels = new ArrayList<>(state.treeJewels(set).values());
         state.treeJewels(set).clear();
         store(state, set, null);
+        storeWeapon(state, set, 1, null); // 2026-11-09：那一組的武器組天賦也清掉
+        storeWeapon(state, set, 2, null);
         for (final ItemStack jewel : jewels) {
             if (jewel != null && !jewel.isEmpty()) {
                 JewelSockets.giveBack(plugin, player, state, jewel);

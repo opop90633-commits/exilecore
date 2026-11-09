@@ -148,4 +148,32 @@ test("差異：EHP 也列", () => {
   assert.equal(P.fmtDiff(rows[0]), "+2,500（10,000 → 12,500）");
 });
 
+// 2026-11-09 照站長「網頁天賦規劃器也補上兩組」：武器組天賦（跟遊戲的 WeaponSets 同一套）
+test("武器組天賦：用掉的點＝一般＋兩組多的那組", () => {
+  const allocated = new Set(["a", "b", "w1", "w2"]);
+  assert.equal(P.wsUsed(allocated, new Set(["w1", "w2"]), new Set(["x1", "x2", "x3"])), 2 + 3, "第 II 組比較多：照 3 算");
+  assert.equal(P.wsUsed(allocated, new Set(["w1", "w2"]), new Set()), 4);
+  assert.equal(P.wsUsed(new Set(["a"]), new Set(), new Set()), 1, "沒有武器組天賦＝配了幾點");
+});
+
+test("武器組天賦：換組（兩組都配的留著）", () => {
+  const next = P.wsSwap(new Set(["a", "w1", "both"]), new Set(["w1", "both"]), new Set(["x1", "both"]));
+  assert.deepEqual([...next].sort(), ["a", "both", "x1"]);
+});
+
+test("武器組天賦：分享連結（舊連結沒有＝第 I 組、沒有武器組天賦）", () => {
+  assert.equal(P.wsPack(1, [], []), null, "沒有就不寫");
+  assert.deepEqual(P.wsPack(2, [], []), [2, [], []]);
+  assert.deepEqual(P.wsPack(1, [9, 3], [5]), [1, [3, 9], [5]]);
+  assert.deepEqual(P.wsUnpack([2, [3, "x", -1, 9], [5]]), { active: 2, ords1: [3, 9], ords2: [5] });
+  assert.equal(P.wsUnpack(undefined), null);
+  assert.equal(P.wsUnpack(0), null, "舊連結的第 8 格沒有");
+});
+
+test("武器組天賦：每一組上限＝基本＋昇華（百兵宗匠）", () => {
+  assert.equal(P.wsCap(24, { weapon_master: 100 }, ["weapon_master", "other"]), 124);
+  assert.equal(P.wsCap(24, {}, []), 24);
+  assert.equal(P.wsCap(undefined, undefined, undefined), 0);
+});
+
 console.log(count + " 個測試都通過");

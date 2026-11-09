@@ -70,6 +70,10 @@ public final class CharacterPanelMenu extends Menu {
     /** 上次整個重畫時算的增益影響（倒數重畫增益那格時沿用：屬性表沒變，影響就一樣，不用再算一張沒有增益的表）。 */
     private tw.exilecore.character.BuffImpact.Lines drawnImpact;
     private static final int SLOT_CLOSE = 49;
+    /** 2026-11-08 照站長「武器切換系統」：沒在用的那一組武器（武器、副手正下方）與切換按鈕。 */
+    private static final int SLOT_SPARE_MAIN = 29;
+    private static final int SLOT_SPARE_OFF = 33;
+    private static final int SLOT_WEAPON_SWAP = 38;
 
     public CharacterPanelMenu(final ExileCore plugin, final Player player) {
         super(plugin, player, 6, "<dark_gray>角色");
@@ -192,6 +196,7 @@ public final class CharacterPanelMenu extends Menu {
             }
         }
         drawCharms(state);
+        drawWeaponSets(state);
         set(SLOT_HELP, uiIcon("help", Material.PAPER, "<white>裝備欄",
                 "<gray>武器、副手、防具、戒指 ×2、項鍊、腰帶都裝在這裡",
                 "<gray>（昇華・舒展之指「+1 戒指欄位」：頭盔左邊多一格戒指欄）",
@@ -199,7 +204,8 @@ public final class CharacterPanelMenu extends Menu {
                 "<gray>快捷列第 9 格、防具欄顯示的是裝在這裡的東西（只是外觀）",
                 "<gray>點下方自己背包裡的裝備就會裝上（原本的換回背包）",
                 "<gray>需求（等級、屬性）不符的裝備不會生效",
-                "<gray>腰帶下面那排是護符欄：護符裝在這裡就生效（不佔背包）"));
+                "<gray>腰帶下面那排是護符欄：護符裝在這裡就生效（不佔背包）",
+                "<gray>武器、副手下面那兩格是另一組武器（F 切換；背包裡的武器右鍵裝到另一組）"));
         set(SLOT_CLOSE, closeButton());
         drawnSignature = signature();
         lastDrawTick = plugin.getServer().getCurrentTick();
@@ -383,6 +389,15 @@ public final class CharacterPanelMenu extends Menu {
         }
     }
 
+    /** 2026-11-09 照站長「F 切換另一組」：選單開著時按 F 換武器組（MenuListener 轉過來）。 */
+    @Override
+    protected void onSwapKey() {
+        if (plugin.characters() != null) {
+            plugin.characters().swapWeaponSet(player, true);
+        }
+        redraw();
+    }
+
     @Override
     protected void onClick(final int slot, final ClickType click, final InventoryClickEvent event) {
         switch (slot) {
@@ -397,6 +412,11 @@ public final class CharacterPanelMenu extends Menu {
                 }
             }
             case SLOT_PRESETS -> new tw.exilecore.sponsor.GearSetMenu(plugin, player, () -> new CharacterPanelMenu(plugin, player).open()).open();
+            case SLOT_WEAPON_SWAP -> { // 2026-11-08 照站長「武器切換系統」
+                plugin.characters().swapWeaponSet(player, true);
+                redraw();
+            }
+            case SLOT_SPARE_MAIN, SLOT_SPARE_OFF -> result(plugin.characters().unequipSpare(player, slot == SLOT_SPARE_MAIN), Sound.ENTITY_ITEM_PICKUP);
             default -> {
                 for (int i = 0; i < JEWELLERY_POSITIONS.length; i++) {
                     if (JEWELLERY_POSITIONS[i] == slot) {
@@ -418,6 +438,43 @@ public final class CharacterPanelMenu extends Menu {
                 }
             }
         }
+    }
+
+    /**
+     * 2026-11-08 照站長「武器切換系統」：另一組武器（不生效，F 或按鈕切換過來）與切換按鈕。
+     * 正在用的那一組一律畫在原本的武器、副手欄；另一組畫在它們正下方。
+     */
+    private void drawWeaponSets(final PlayerState state) {
+        final int active = state.activeWeaponSet();
+        final String spareName = tw.exilecore.character.WeaponSets.setName(tw.exilecore.character.WeaponSets.other(active));
+        final ItemStack[] spare = {state.jewellery(PlayerState.SPARE_MAIN_SLOT), state.jewellery(PlayerState.SPARE_OFF_SLOT)};
+        final int[] positions = {SLOT_SPARE_MAIN, SLOT_SPARE_OFF};
+        final ItemSlot[] slots = {ItemSlot.MAIN_HAND, ItemSlot.OFF_HAND};
+        for (int i = 0; i < 2; i++) {
+            if (spare[i] == null) {
+                set(positions[i], uiIcon(slotShape(slots[i]), Material.GRAY_STAINED_GLASS_PANE, "<gray>" + spareName + "・" + slots[i].displayName() + "欄（備用）",
+                        "<dark_gray>背包裡的" + slots[i].displayName() + "按右鍵裝到這裡", "<dark_gray>按 F 切換過去才生效"));
+                continue;
+            }
+            final ItemStack shown = spare[i].clone();
+            shown.editMeta(meta -> {
+                final List<net.kyori.adventure.text.Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+                lore.add(ItemRenderer.line(""));
+                lore.add(ItemRenderer.line("<#ffb347>" + spareName + "（備用：按 F 切換過去才生效）"));
+                lore.add(ItemRenderer.line("<yellow>左鍵：卸下回背包"));
+                meta.lore(lore);
+            });
+            set(positions[i], shown);
+        }
+        final int cap = plugin.players().weaponSetCap(state);
+        set(SLOT_WEAPON_SWAP, glowing(icon(Material.CROSSBOW, "<#ffb347>⚔ 武器組：" + tw.exilecore.character.WeaponSets.setName(active) + "（使用中）",
+                "<gray>武器、副手欄是正在用的這一組；下面兩格是" + spareName,
+                "<gray>按 <white>F</white> 或點這裡切換（不延遲）",
+                "<gray>技能面板選一個技能按右鍵：綁定第 I／II 組，放的時候自動切過去",
+                "<gray>天賦樹「天賦點」那格右鍵：切換成武器組天賦模式",
+                "<gray>武器組天賦：第 I 組 <white>" + tw.exilecore.character.WeaponSets.used(state, 1) + "</white>／" + cap
+                        + "　第 II 組 <white>" + tw.exilecore.character.WeaponSets.used(state, 2) + "</white>／" + cap,
+                "", "<yellow>左鍵：切換武器組")));
     }
 
     /** 第三個戒指欄現在沒畫出來（沒開、也沒裝東西）。 */
@@ -535,6 +592,14 @@ public final class CharacterPanelMenu extends Menu {
         final Optional<ItemData> data = plugin.items().read(clicked);
         if (data.isEmpty()) {
             return;
+        }
+        if (click == ClickType.RIGHT) {
+            // 2026-11-08 照站長「武器切換系統」：右鍵武器、副手裝到另一組（不生效，F 切換過去）
+            final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.get().base());
+            if (base != null && (base.slot() == ItemSlot.MAIN_HAND || base.slot() == ItemSlot.OFF_HAND)) {
+                result(plugin.characters().equipSpare(player, event.getSlot()), Sound.ITEM_ARMOR_EQUIP_GENERIC);
+                return;
+            }
         }
         final String problem = plugin.characters().gear().equip(player, event.getSlot());
         if (problem != null) {

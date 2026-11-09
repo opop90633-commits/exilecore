@@ -725,7 +725,7 @@ public final class Gear {
         player.sendMessage(plugin.text().prefixed("<yellow>背包和隨身背包都滿了，" + ItemRenderer.escape(name(stack)) + "掉在腳邊"));
     }
 
-    private ItemBase baseOf(final ItemStack stack) {
+    ItemBase baseOf(final ItemStack stack) { // 2026-11-08：CharacterService.equipSpare 也用
         final Optional<ItemData> data = plugin.items().read(stack);
         return data.map(value -> plugin.items().repository().base(value.base())).orElse(null);
     }

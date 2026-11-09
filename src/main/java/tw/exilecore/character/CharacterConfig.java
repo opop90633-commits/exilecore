@@ -75,6 +75,8 @@ public final class CharacterConfig {
     private final NameFilter nameFilter = new NameFilter();
     private int nameMax = 12;
     private int pointsPerLevel = 1;
+    /** 2026-11-08 照站長「武器切換系統」：每一組武器最多幾點武器組天賦（原作劇情任務的 24 點）。 */
+    private int weaponSetPoints = 24;
     /** 全服經驗加倍（character.yml 的 experience_bonus）：打怪、委託的經驗再乘這個；檔案沒寫 = 1（不加倍）。 */
     private double experienceBonus = 1.0;
     private final TreeMap<Integer, Long> experience = new TreeMap<>();
@@ -164,6 +166,7 @@ public final class CharacterConfig {
         final YamlNode filter = root.node("name_filter");
         nameFilter.configure(filter.strings("blocked"), filter.strings("reserved"), filter.strings("allow"));
         pointsPerLevel = Math.max(0, root.integer("passive_points_per_level", pointsPerLevel));
+        weaponSetPoints = Math.max(0, root.integer("weapon_set_points", weaponSetPoints)); // 2026-11-08 照站長「武器切換系統」
         final double bonus = root.decimal("experience_bonus", 1.0);
         if (!(bonus >= MIN_EXPERIENCE_BONUS && bonus <= MAX_EXPERIENCE_BONUS)) { // 也擋掉 .nan
             throw new IllegalArgumentException("character.yml：experience_bonus 要在 " + MIN_EXPERIENCE_BONUS + " 到 " + MAX_EXPERIENCE_BONUS
@@ -365,6 +368,10 @@ public final class CharacterConfig {
 
     public int nameMax() {
         return nameMax;
+    }
+
+    public int weaponSetPoints() {
+        return weaponSetPoints;
     }
 
     public int pointsPerLevel() {

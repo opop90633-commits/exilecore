@@ -58,6 +58,21 @@ final class PassiveTreeScreen extends Screen {
     /** 2026-11-02 照站長：右上的組別鈕（月卡切換天賦組、星圖天賦組）；這次之前要回箱子選單換。 */
     private final List<Button> setButtons = new ArrayList<>();
     private String setsShown = "";
+    /**
+     * 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：配點模式——0 一般、1／2 配成那一組的武器組天賦
+     * （選第 X 組時伺服器正在用的不是那組就先換武器組，跟網頁規劃器一樣）。伺服器沒給武器組（舊版）就沒有這排按鈕。
+     */
+    private int weaponMode;
+    /** 2026-11-09：送出換組、還在等伺服器換好的那一組（0 = 沒在等）；等的時候狀態更新不把配點模式改回去。 */
+    private int weaponWanted;
+    private final List<Button> weaponButtons = new ArrayList<>();
+    private String weaponShown = "";
+    /**
+     * 2026-11-09 照站長「模組右上新增打開網頁天賦規劃器與匯入代碼」：最下面一排「網頁規劃器｜匯入代碼」（只有天賦樹、伺服器有這兩個功能才有）。
+     * 這次之前要回箱子選單才打得開規劃器、匯入代碼。
+     */
+    private final List<Button> toolButtons = new ArrayList<>();
+    private String toolShown = "";
     private double[] pickRects;
     /** 2026-11-02 照站長：「整條路加起來的能力」（路徑代號 → 伺服器回的幾行），最近問過的留 64 條。 */
     private final java.util.Map<String, List<String>> summaries = new java.util.LinkedHashMap<>(16, 0.75f, true) {
@@ -156,6 +171,115 @@ final class PassiveTreeScreen extends Screen {
         }
         setsShown = "";
         placeSetButtons();
+        weaponShown = "";
+        placeWeaponButtons();
+        toolShown = "";
+        placeToolButtons();
+    }
+
+    /** 2026-11-09：「網頁規劃器｜匯入代碼」那排（放在組別鈕、配點那排下面，靠右；那兩排沒有就往上補）。 */
+    private void placeToolButtons() {
+        final int y = !weaponButtons.isEmpty() ? 96 : !setButtons.isEmpty() ? 74 : 52;
+        final String key = model.state.importable + ":" + model.state.plannerUrl + ":" + y + ":" + width;
+        if (key.equals(toolShown)) {
+            return;
+        }
+        toolShown = key;
+        for (final Button button : toolButtons) {
+            removeWidget(button);
+        }
+        toolButtons.clear();
+        if (!passive() || !model.state.importable) {
+            return;
+        }
+        final String url = model.state.plannerUrl;
+        final Button web = Button.builder(Component.literal("網頁規劃器"), b -> {
+            if (!url.isEmpty()) {
+                net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(this, url);
+            }
+        }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(url.isEmpty()
+                ? "伺服器的網頁規劃器沒有開"
+                : "用瀏覽器打開網頁天賦規劃器（帶著你現在的配點、珠寶、兩組武器組天賦）"))).build();
+        web.active = !url.isEmpty();
+        final Button paste = Button.builder(Component.literal("匯入代碼"), b -> minecraft.gui.setScreen(new ImportCodeScreen(this, kind())))
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal(
+                        "貼網頁規劃器的代碼（或整個網址）：先列出要配哪些、退哪些，確認了才套用"))).build();
+        final List<Button> row = List.of(web, paste);
+        int x = width - 8;
+        for (int i = row.size() - 1; i >= 0; i--) {
+            final Button button = row.get(i);
+            final int w = Math.max(40, font.width(button.getMessage()) + 12);
+            x -= w;
+            button.setX(x);
+            button.setY(y);
+            button.setWidth(w);
+            button.setHeight(16);
+            addRenderableWidget(button);
+            toolButtons.add(button);
+            x -= 3;
+        }
+    }
+
+    /** 2026-11-09：換武器組（武器、武器組天賦一起對調；同遊戲裡的 F 鍵）。在武器組配點模式時，模式跟著換到另一組。 */
+    private void swapWeaponSet() {
+        if (weaponMode != 0 && model.state.weaponSet > 0) {
+            weaponMode = model.state.weaponSet == 2 ? 1 : 2;
+            weaponWanted = weaponMode;
+        }
+        UiNet.send(UiWire.action(kind(), "wswap"));
+    }
+
+    /** 2026-11-09：配點模式那排按鈕（組別鈕下面、靠右）：「配點：一般｜第 I 組｜第 II 組｜⇄ 換武器組」。 */
+    private void placeWeaponButtons() {
+        final String key = model.state.weaponSet + ":" + weaponMode + ":" + width;
+        if (key.equals(weaponShown)) {
+            return;
+        }
+        weaponShown = key;
+        for (final Button button : weaponButtons) {
+            removeWidget(button);
+        }
+        weaponButtons.clear();
+        if (!passive() || model.state.weaponSet <= 0) {
+            return;
+        }
+        final List<Button> row = new ArrayList<>();
+        row.add(Button.builder(Component.literal("配點").withStyle(net.minecraft.ChatFormatting.GRAY), b -> { }).build());
+        row.getLast().active = false;
+        row.add(Button.builder(Component.literal(weaponMode == 0 ? "▶ 一般" : "一般")
+                .withStyle(weaponMode == 0 ? net.minecraft.ChatFormatting.GOLD : net.minecraft.ChatFormatting.WHITE), b -> {
+            weaponMode = 0;
+            showMessage("<gray>配點模式：一般天賦（兩組都生效）");
+        }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("一般天賦：兩組武器都生效"))).build());
+        for (int set = 1; set <= 2; set++) {
+            final int target = set;
+            final net.minecraft.network.chat.MutableComponent label = Component.literal((weaponMode == set ? "▶ ⚔ " : "⚔ ") + TreeModel.weaponSetName(set))
+                    .withColor((set == 2 ? TreeModel.WEAPON_SET_2 : TreeModel.WEAPON_SET_1) & 0xFFFFFF);
+            row.add(Button.builder(label, b -> {
+                weaponMode = target;
+                if (model.state.weaponSet != target) {
+                    weaponWanted = target;
+                    UiNet.send(UiWire.action(kind(), "wswap")); // 配那一組的武器組天賦要先換到那一組（伺服器只配正在用的那組）
+                }
+                showMessage(TreeModel.weaponSetTag(target) + "配點模式：" + TreeModel.weaponSetName(target) + "的武器組天賦（只在這一組武器生效）");
+            }).tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("左鍵配成" + TreeModel.weaponSetName(set)
+                    + "的武器組天賦（只在這一組武器生效，每組最多 " + model.state.weaponCap + " 點）"))).build());
+        }
+        row.add(Button.builder(Component.literal("⇄ 換武器組"), b -> swapWeaponSet())
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.literal("換成另一組武器（武器、武器組天賦一起換；也可以按 F）"))).build());
+        int x = width - 8;
+        for (int i = row.size() - 1; i >= 0; i--) {
+            final Button button = row.get(i);
+            final int w = Math.max(30, font.width(button.getMessage()) + 10);
+            x -= w;
+            button.setX(x);
+            button.setY(74);
+            button.setWidth(w);
+            button.setHeight(16);
+            addRenderableWidget(button);
+            weaponButtons.add(button);
+            x -= 3;
+        }
     }
 
     /** 組別鈕：在上面那排按鈕下面、靠右，「組 1 2 3…」；用中的那組按不下去，沒有月卡時其他組灰字（按了伺服器會說要月卡）。 */
@@ -223,6 +347,17 @@ final class PassiveTreeScreen extends Screen {
     void update(final TreeModel fresh) {
         this.model = fresh;
         placeSetButtons(); // 換了組、月卡到期：組別鈕跟著換
+        if (weaponWanted != 0 && fresh.state.weaponSet == weaponWanted) {
+            weaponWanted = 0; // 2026-11-09：換好了
+        } else if (weaponWanted == 0 && weaponMode != 0 && fresh.state.weaponSet > 0 && weaponMode != fresh.state.weaponSet) {
+            weaponMode = fresh.state.weaponSet; // 2026-11-09：在別的地方換了武器組：配點模式跟著現在用的那組
+        }
+        if (fresh.state.weaponSet <= 0) {
+            weaponMode = 0;
+            weaponWanted = 0;
+        }
+        placeWeaponButtons();
+        placeToolButtons(); // 2026-11-09：網址變了（配點變了）、組別鈕那排出現消失：跟著換
         // 退掉了、配好了：確認框收起來（每秒的狀態更新不收，玩家還在看）
         if (pending != null && (pending.refund() != fresh.state.owned.get(pending.node()))) {
             pending = null;
@@ -303,6 +438,8 @@ final class PassiveTreeScreen extends Screen {
 
     @Override
     public void extractRenderState(final GuiGraphicsExtractor g, final int mouseX, final int mouseY, final float delta) {
+        placeWeaponButtons(); // 2026-11-09：配點模式換了（按鈕上的 ▶ 跟著換；在這裡換，不在按鈕的回呼裡改清單）
+        placeToolButtons();
         camera.viewport(0, 0, width, height);
         final GuiCanvas canvas = new GuiCanvas(g, font);
         final int hover = overWidget(mouseX, mouseY) ? -1 : hovered(mouseX, mouseY);
@@ -321,6 +458,11 @@ final class PassiveTreeScreen extends Screen {
             info.add(model.state.title);
         }
         info.addAll(model.state.info);
+        if (passive() && model.state.weaponSet > 0) {
+            // 2026-11-09：配點模式（武器組天賦的用量伺服器的 info 已經寫了）
+            info.add(weaponMode == 0 ? "<gray>配點模式：<white>一般天賦"
+                    : TreeModel.weaponSetTag(weaponMode) + "配點模式：⚔ " + TreeModel.weaponSetName(weaponMode) + "的武器組天賦");
+        }
         if (!view.path.isEmpty()) {
             info.add("<#77aaff>路徑預覽：" + view.path.size() + " 個節點" + ("atlastree".equals(kind()) ? "，共 " + model.cost(view.path) + " 點" : ""));
         }
@@ -330,8 +472,8 @@ final class PassiveTreeScreen extends Screen {
             info.add("<red>沒有符合「" + search.getValue().replace("<", "\\<") + "」的節點");
         }
         UiPanels.panel(canvas, "<#f5b942>" + title(kind()) + "　<white>剩 " + model.state.points + " 點", info, 8, 8, Math.min(260, width / 3));
-        UiPanels.hint(canvas, "<gray>滾輪縮放・拖曳移動・<yellow>左鍵<gray>配點（遠的整條配上）・<yellow>右鍵<gray>退點・Enter 跳到下一個搜尋結果",
-                width, height);
+        UiPanels.hint(canvas, "<gray>滾輪縮放・拖曳移動・<yellow>左鍵<gray>配點（遠的整條配上）・<yellow>右鍵<gray>退點・Enter 跳到下一個搜尋結果"
+                + (passive() && model.state.weaponSet > 0 ? "・<yellow>F<gray> 換武器組" : ""), width, height);
         final long age = System.currentTimeMillis() - messageAt;
         if (age < 5000) {
             UiPanels.toast(canvas, message, width, height, age < 4000 ? 1 : (5000 - age) / 1000.0);
@@ -421,9 +563,20 @@ final class PassiveTreeScreen extends Screen {
         pending = null;
         if (done.refund()) {
             UiNet.send(UiWire.actionId(kind(), "refund", model.data.ids[done.node()]));
+        } else if ("walloc".equals(done.action())) {
+            sendWeaponPath(done.path()); // 2026-11-09：武器組天賦
         } else {
             UiNet.send(UiWire.actionPath(kind(), ids(done.path())));
         }
+    }
+
+    /** 2026-11-09：一條路徑配成正在用那一組的武器組天賦（伺服器的 walloc）。 */
+    private void sendWeaponPath(final List<Integer> path) {
+        final com.google.gson.JsonObject extra = new com.google.gson.JsonObject();
+        final com.google.gson.JsonArray array = new com.google.gson.JsonArray();
+        ids(path).forEach(array::add);
+        extra.add("path", array);
+        UiNet.send(UiWire.action(kind(), "walloc", extra));
     }
 
     // ---- 滑鼠、鍵盤 ----
@@ -571,6 +724,26 @@ final class PassiveTreeScreen extends Screen {
             showMessage(model.state.blocked.get(node) ? "<red>被解鎖條件擋住" : "<red>走不到那裡");
             return;
         }
+        if (passive() && weaponMode != 0 && model.state.weaponSet > 0) {
+            // 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：配成正在用那一組的武器組天賦
+            //   （上限、點數、珠寶孔與起點不能配由伺服器檢查；這一組比另一組多的部分才花一般天賦點）
+            if (weaponMode != model.state.weaponSet) {
+                showMessage("<gray>正在換武器組，換好再點一次");
+                return;
+            }
+            final int used = weaponMode == 2 ? model.state.weaponUsed2 : model.state.weaponUsed1;
+            if (used + path.size() > model.state.weaponCap) {
+                showMessage("<red>" + TreeModel.weaponSetName(weaponMode) + "的武器組天賦最多 " + model.state.weaponCap + " 點（已經 " + used
+                        + " 點，這條要 " + path.size() + " 點）");
+                return;
+            }
+            if (TreeGuard.pathNeedsConfirm(path.size(), ExileCoreClient.config.confirmPathPoints)) {
+                pending = TreeGuard.weaponPath(model, node, path, weaponMode);
+                return;
+            }
+            sendWeaponPath(path);
+            return;
+        }
         final int need = "atlastree".equals(kind()) ? model.cost(path) : path.size();
         if (need > model.state.points) {
             showMessage("<red>要 " + need + " 點，你有 " + model.state.points + " 點");
@@ -607,6 +780,10 @@ final class PassiveTreeScreen extends Screen {
             if (event.key() == GLFW.GLFW_KEY_F && event.hasControlDown() && search != null) {
                 setFocused(search);
                 search.setFocused(true);
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_F && !event.hasControlDown() && passive() && model.state.weaponSet > 0) {
+                swapWeaponSet(); // 2026-11-09：天賦畫面裡按 F 也換武器組（跟遊戲裡一樣）
                 return true;
             }
             if (UiNet.closeKey(this, event) || UiNet.openTree.matches(event) && passive() || UiNet.openAtlas.matches(event) && "atlastree".equals(kind())) {

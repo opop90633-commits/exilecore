@@ -468,6 +468,7 @@ public final class WebModule implements Module, Listener {
         // 2026-10：昇華職業（規劃器的昇華預覽）
         final List<PlannerData.AscendancyInfo> ascendancies = new ArrayList<>();
         int ascendancyPoints = 0;
+        final Map<String, Integer> weaponSetByAscNode = new java.util.LinkedHashMap<>(); // 2026-11-09：百兵宗匠之類給武器組天賦點的昇華天賦
         if (plugin.ascendancy() != null) {
             final tw.exilecore.ascendancy.AscendancyConfig config = plugin.ascendancy().config();
             ascendancyPoints = config.totalPoints();
@@ -479,6 +480,15 @@ public final class WebModule implements Module, Listener {
                         branches.add(new ArrayList<>());
                     }
                     final tw.exilecore.ascendancy.AscendancyConfig.Node node = cell.node();
+                    double wsPoints = 0;
+                    for (final tw.exilecore.stats.Modifier mod : node.stats()) {
+                        if (tw.exilecore.character.WeaponSets.EXTRA_STAT.equals(mod.stat())) {
+                            wsPoints += mod.value();
+                        }
+                    }
+                    if (wsPoints > 0 && node.id() != null) {
+                        weaponSetByAscNode.put(node.id(), (int) Math.round(wsPoints));
+                    }
                     // 2026-10-27 照站長：賦予的技能帶技能預覽（跟寶石圖鑑同一份資料）
                     final List<com.google.gson.JsonObject> skills = new ArrayList<>();
                     if (plugin.skills() != null) {
@@ -499,7 +509,8 @@ public final class WebModule implements Module, Listener {
             }
         }
         plannerData = PlannerData.json(tree, classes, plugin.players().config().levelCap(),
-                plugin.players().config().pointsPerLevel(), bonusPoints(), ascendancies, ascendancyPoints);
+                plugin.players().config().pointsPerLevel(), bonusPoints(), ascendancies, ascendancyPoints,
+                plugin.players().config().weaponSetPoints(), weaponSetByAscNode); // 2026-11-09：武器組天賦點
     }
 
     /** 區域 Boss、地圖 Boss 首殺、任務最多送幾點。 */

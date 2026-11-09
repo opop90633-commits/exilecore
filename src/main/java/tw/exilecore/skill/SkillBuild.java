@@ -541,15 +541,26 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
-    /** 2026-11-05 照 PoE2（Absent Amulet）：不用保留精魂（固定的與每一隻的都拿掉）。 */
+    /**
+     * 2026-11-05 照 PoE2（Absent Amulet）：技能本身不用保留精魂（固定的與每一隻的都拿掉）。
+     * 2026-11-08 照站長「如果真的能輔助的話要加 20 精魂保留」：輔助加的那一份（{@code support.spirit}，晨曦祝福的 +20）照樣保留
+     * （照保留效率等比例）；這次之前連輔助加的也歸零。
+     */
     public SkillBuild withoutReservation() {
         if (reserve <= 0 && minionReserve <= 0) {
             return this;
         }
+        final double extra = supportSpirit(supports);
+        double kept = 0;
+        if (extra > 0 && reserve > 0) {
+            final AuraSpec aura = definition.aura();
+            kept = aura == null ? Math.min(reserve, extra) // 不是光環的精魂技能（引星、常駐增益）：照輔助寫的數字
+                    : reserve * extra / (Math.max(0, aura.reserve()) + extra);
+        }
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,
                 reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
                 radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
-                deploy, totems, minions, 0, 0, auraEffect, generosity, exerts, repeats, groundDurationScale);
+                deploy, totems, minions, kept, 0, auraEffect, generosity, exerts, repeats, groundDurationScale);
     }
 
     /** 2026-10-22：換掉放下去的東西的設定（星咒圖騰：主要寶石上的持續時間輔助只加圖騰的持續時間）。 */

@@ -81,7 +81,8 @@ final class GemQualityText {
             Map.entry("magic_spring_well", "每個痕跡多 {remnant.mana} 魔力、增益增加 {effect.mana.regen}% 魔力再生"),
             Map.entry("magic_surge", "離開之後效果再延續 {mana_tempest.linger} 秒"),
             Map.entry("element_prayer_star", "最大能量 +{meta.max_energy_flat}"),
-            Map.entry("phantom_bow_shade", "幻影持續時間 +{skill.base_duration_flat} 秒（你停手之後幻影再多射這麼久）"),
+            Map.entry("phantom_bow_shade", "保留效率增加 {-aura.reservation}%"), // 2026-11-08 照站長「品質 +0 秒」：0.5 起一般品質是保留效率（gem_quality.yml）；這次之前樣板還是舊的幻影持續時間
+            Map.entry("execute_brand", "被標記的敵人另外增加 {effect.crit.bonus_taken}% 暴擊傷害加成"), // 2026-11-08 照站長：照 Sniper's Mark
             Map.entry("light_bend_mirror", "每面鏡子多複製 {i:mirror.copies} 發投射物"),
             Map.entry("armor_punch_slug", "穿透過敵人之後投射物更多 {projectile.pierced_more}% 傷害"),
             Map.entry("pestilence_sac_burst", "另外存中毒傷害的 {pestilence_sac_burst.percent}%"),

@@ -1819,7 +1819,13 @@ public final class PlayerStateService {
         if (character == null) {
             return 0;
         }
-        return config.pointsFromLevel(character.level()) + character.bonusPoints() + extraPoints(state) - state.passives().size();
+        // 2026-11-08 照站長「武器切換系統」：用掉的＝一般節點＋兩組武器組天賦裡多的那組（PoE2）；這次之前＝配了幾個節點
+        return config.pointsFromLevel(character.level()) + character.bonusPoints() + extraPoints(state) - WeaponSets.usedPoints(state);
+    }
+
+    /** 2026-11-08：每一組武器最多幾點武器組天賦（character.yml 的 weapon_set_points＋昇華百兵宗匠的 100）。 */
+    public int weaponSetCap(final PlayerState state) {
+        return config.weaponSetPoints() + (plugin.ascendancy() == null ? 0 : plugin.ascendancy().weaponSetPoints(state));
     }
 
     /** 從其他來源（任務）來的天賦點。 */

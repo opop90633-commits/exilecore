@@ -2405,13 +2405,34 @@ public final class MapService {
     private String endgameProblem(final Player player) {
         for (final MapInstance old : instances.values()) {
             if (old.state() != MapInstance.State.CLOSING && old.portalsLeft() > 0 && !old.bossKilled()
-                    && (old.usesDoors() || old.singleEntry()) && canEnter(player, old)) {
+                    && (old.usesDoors() || old.singleEntry()) && canEnter(player, old) && !spentSingleEntry(player, old)) {
                 return "你" + (plugin.party() != null && plugin.party().groupMembers(player.getUniqueId()).size() > 1 ? "的隊伍" : "")
                         + "的「" + old.label() + "」還沒打完（還剩 " + old.portalsLeft() + " 門）：開新的會把它關掉、碎片或鑰匙就白花了；"
                         + "先打完或等它關閉";
             }
         }
         return null;
+    }
+
+    /**
+     * 2026-11-08 照站長「離開深坑後好像沒辦法開新地圖」：每人只能進一次的實例（星脈深坑、極境、劫盜終局），
+     * 裡面已經沒人、而且你（隊伍）每個人都進去過了（離開、死了就出局）＝ 沒有人能再進去，不再擋開新地圖；
+     * 這次之前要等它自己關門（還剩幾門照樣算）。還有隊友沒進去過就照舊擋（開新的會把他的那份關掉）。
+     */
+    private boolean spentSingleEntry(final Player player, final MapInstance old) {
+        if (!old.singleEntry() || old.usesDoors() || !old.inside().isEmpty()) {
+            return false;
+        }
+        final java.util.Collection<UUID> group = plugin.party() != null ? plugin.party().groupMembers(player.getUniqueId()) : List.of(player.getUniqueId());
+        for (final UUID member : group.isEmpty() ? List.of(player.getUniqueId()) : group) {
+            if (!old.uberEntered(member)) {
+                final Player online = plugin.getServer().getPlayer(member);
+                if (online == null || canEnter(online, old)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private String capacityProblem() {

@@ -29,7 +29,10 @@ class AscBudgetTest {
 
     @Test
     void weaponMasterGivesTenPointsAndRefundNeedsThemBack() {
-        assertEquals(10, Ascension.extraPassivePoints(config.ascendancy("witchhunter").node("weapon_master")));
+        // 2026-11-08 照站長「武器切換系統」：百兵宗匠照原作改成「100 天賦點數轉為武器組天賦點數」，不再給一般天賦點（這次之前 +10）
+        assertEquals(0, Ascension.extraPassivePoints(config.ascendancy("witchhunter").node("weapon_master")));
+        assertTrue(config.ascendancy("witchhunter").node("weapon_master").stats().stream()
+                .anyMatch(m -> m.stat().equals(tw.exilecore.character.WeaponSets.EXTRA_STAT) && m.value() == 100));
         assertEquals(0, Ascension.extraPassivePoints(config.ascendancy("witchhunter").node("cooldown_recovery_3")));
         assertEquals(0, Ascension.refundDebt(12, 10, 0), "還有 12 點沒配：可以退");
         assertEquals(7, Ascension.refundDebt(3, 10, 0), "只剩 3 點：先退 7 點");

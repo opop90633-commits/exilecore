@@ -66,6 +66,14 @@ final class GearListener implements Listener {
         }
         if (event.getClick() == ClickType.SWAP_OFFHAND && (ownSlot || Gear.isDisplay(player.getInventory().getItemInOffHand()))) {
             blocked = true; // 背包裡按 F：會把副手的顯示用複本換出去
+            // 2026-11-09 照站長「F 切換另一組」：開著自己的背包（沒有別的選單）按 F 也換武器組；這次之前背包裡按 F 只是被擋下
+            if (event.getView().getTopInventory().getType() == org.bukkit.event.inventory.InventoryType.CRAFTING && plugin.characters() != null) {
+                plugin.getServer().getScheduler().runTask(plugin, () -> {
+                    if (player.isOnline()) {
+                        plugin.characters().swapWeaponSet(player, true);
+                    }
+                });
+            }
         }
         if (blocked) {
             event.setCancelled(true);
@@ -169,11 +177,17 @@ final class GearListener implements Listener {
         syncSoon(player);
     }
 
-    /** 換手（F）：副手放的是顯示用複本，一律不換（Shift＋F 開選單在 LootListener 先處理掉了）。 */
+    /**
+     * 換手（F）：副手放的是顯示用複本，一律不換（Shift＋F 開選單在 LootListener 先處理掉了）。
+     * 2026-11-08 照站長「武器切換系統」：F 切換武器組（第 I 組 ↔ 第 II 組，不延遲）；這次之前 F 沒有作用（或觸發綁定的動作）。
+     */
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onSwapHands(final PlayerSwapHandItemsEvent event) {
         if (active(event.getPlayer())) {
             event.setCancelled(true);
+            if (!event.getPlayer().isSneaking() && plugin.characters() != null) {
+                plugin.characters().swapWeaponSet(event.getPlayer(), true);
+            }
         }
     }
 

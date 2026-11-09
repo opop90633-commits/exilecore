@@ -453,7 +453,7 @@
     const place = { main_hand: "g-weapon", head: "g-head", off_hand: "g-off", chest: "g-chest", ring1: "g-ring1", amulet: "g-amulet",
       belt: "g-belt", ring2: "g-ring2", legs: "g-legs", feet: "g-feet" };
     for (const s of c.gear) gear.append(slotBox(s.label, s.item, place[s.slot] || ""));
-    const gearCard = el("div", { cls: "card" }, el("h3", { text: "裝備" }), gear);
+    const gearCard = el("div", { cls: "card" }, el("h3", { text: "裝備" + (c.weaponSet ? "（武器、副手是第 " + (c.weaponSet === 2 ? "II" : "I") + " 組）" : "") }), gear);
     // 2026-10：護符、藥劑、天賦樹珠寶都固定列出來（沒有的寫「沒有」，不是整段不見）
     const extra = (title, slots, empty) => {
       gearCard.append(el("h3", { text: title, style: "margin-top:14px" }));
@@ -462,6 +462,16 @@
       for (const s of slots) row.append(slotBox(s.label, s.item, ""));
       gearCard.append(row);
     };
+    // 2026-11-08 照站長「武器切換系統」：另一組武器（F 切換）與兩組的武器組天賦
+    if (c.spareGear) extra("另一組武器（第 " + (c.weaponSet === 2 ? "I" : "II") + " 組，F 切換）", c.spareGear.filter(s => s.item), "另一組沒有放武器");
+    if (c.weaponSetNodes) {
+      for (const set of ["1", "2"]) {
+        const names = c.weaponSetNodes[set] || [];
+        if (!names.length) continue;
+        gearCard.append(el("h3", { text: "第 " + (set === "2" ? "II" : "I") + " 組武器組天賦（" + names.length + " 點，只在這組武器生效）", style: "margin-top:14px" }),
+          el("div", { cls: "muted", style: "font-size:13px", text: names.join("、") }));
+      }
+    }
     if (c.charms) extra("護符（" + c.charms.filter(s => s.item).length + "／" + c.charms.length + " 格）", c.charms, "還沒有護符欄");
     if (c.flasks) extra("藥劑", c.flasks, "沒有藥劑欄");
     extra("天賦樹珠寶" + (c.jewels && c.jewels.length ? "（" + c.jewels.length + " 顆）" : ""),

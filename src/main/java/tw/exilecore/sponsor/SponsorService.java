@@ -623,6 +623,7 @@ public final class SponsorService {
         refresh(player);
         payCard(player, true);
         perks.refresh(player); // 2026-10-23：每週免費箱、到階送的時裝、終身月卡
+        migrateEmoteF(player); // 2026-11-08 照站長「武器切換系統」：F 改成切換武器組
         greet(player);
     }
 
@@ -1988,6 +1989,9 @@ public final class SponsorService {
                     values.put(EMOTE_KEY + key.name(), null);
                 }
             }
+            if (item.id().equals(value(player, LEGACY_EMOTE_F))) {
+                values.put(LEGACY_EMOTE_F, null); // 2026-11-08：舊的 F 綁定
+            }
         }
         if (taken.isEmpty()) {
             return new Granted(taken, notOwned, null);
@@ -2079,9 +2083,12 @@ public final class SponsorService {
     /** 動作的播放（SponsorModule 設定）。 */
     Emotes emotes;
 
-    /** 可以綁動作的按鍵（Shift＋F 是選單，不能綁）。 */
+    /**
+     * 可以綁動作的按鍵（Shift＋F 是選單，不能綁）。2026-11-08 照站長「武器切換系統」：F 改成切換武器組，不能再綁動作
+     * （舊的 F 綁定登入時搬到 Q／Shift＋Q，{@link #migrateEmoteF}）；這次之前有 F。
+     */
     public enum EmoteKey {
-        F("F（換手鍵）"), Q("Q（丟東西鍵）"), SNEAK_Q("Shift＋Q");
+        Q("Q（丟東西鍵）"), SNEAK_Q("Shift＋Q");
 
         private final String displayName;
 
@@ -2092,6 +2099,41 @@ public final class SponsorService {
         public String displayName() {
             return displayName;
         }
+    }
+
+    /** 2026-11-08：舊的 F 綁定（代號 sp.emk.F）。 */
+    static final String LEGACY_EMOTE_F = EMOTE_KEY + "F";
+
+    /**
+     * 2026-11-08 照站長「武器切換系統」：以前綁在 F 的動作搬到 Q（Q 沒綁時），不然 Shift＋Q（沒綁時）；兩個都綁了就取消，提示一次。
+     * 回傳搬到哪個鍵（null = 取消或本來就沒綁）。
+     */
+    EmoteKey migrateEmoteF(final Player player) {
+        if (!loaded(player)) {
+            return null;
+        }
+        final String emote = value(player, LEGACY_EMOTE_F);
+        if (emote == null) {
+            return null;
+        }
+        final EmoteKey target = emoteTarget(value(player, EMOTE_KEY + EmoteKey.Q.name()), value(player, EMOTE_KEY + EmoteKey.SNEAK_Q.name()));
+        accounts().writeProgress(player, LEGACY_EMOTE_F, null);
+        final SponsorConfig.Cosmetic cosmetic = config.cosmetics().get(emote);
+        final String name = cosmetic == null ? emote : cosmetic.name();
+        if (target != null) {
+            accounts().writeProgress(player, EMOTE_KEY + target.name(), emote);
+            player.sendMessage(plugin.text().prefixed("<gray>F 鍵改成<white>切換武器組</white>了：原本綁在 F 的動作「" + ItemRenderer.escape(name)
+                    + "」搬到 <white>" + target.displayName() + "</white>"));
+        } else {
+            player.sendMessage(plugin.text().prefixed("<gray>F 鍵改成<white>切換武器組</white>了：原本綁在 F 的動作「" + ItemRenderer.escape(name)
+                    + "」沒地方放（Q、Shift＋Q 都綁了），已經取消，<white>/emote</white> 可以重新設定"));
+        }
+        return target;
+    }
+
+    /** 2026-11-08：舊的 F 綁定搬到哪個鍵（Q 空著 → Q；Shift＋Q 空著 → Shift＋Q；都綁了 null）。純邏輯。 */
+    static EmoteKey emoteTarget(final String onQ, final String onSneakQ) {
+        return onQ == null ? EmoteKey.Q : onSneakQ == null ? EmoteKey.SNEAK_Q : null;
     }
 
     /** 這個按鍵綁的動作（沒綁、已經沒有那個動作 null）。 */

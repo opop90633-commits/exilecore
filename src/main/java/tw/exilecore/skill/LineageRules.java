@@ -227,7 +227,9 @@ public final class LineageRules {
 
     /** 會留下殘骸的技能。 */
     static boolean generatesRemnants(final SkillDefinition skill) {
-        if (REMNANT_SKILLS.contains(skill.id())) {
+        // 2026-11-08 照站長「拾息放不上素痕湧」：殘骸輔助（和骸、聚骸…）認得的那份（SupportGuards：resource.remnant 與 CODE_REMNANTS，
+        //   素痕湧、魔泉湧、生命痕跡…）也算；這次之前只看自己這份清單，素痕湧明明會留灌注殘骸卻掛不上
+        if (REMNANT_SKILLS.contains(skill.id()) || SupportGuards.makesRemnants(skill.id())) {
             return true;
         }
         for (final Modifier modifier : skill.modifiers()) {

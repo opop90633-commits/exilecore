@@ -77,6 +77,61 @@ public final class PassiveState {
             return Result.fail("天賦點不夠，升級會給");
         }
         state.passives().add(node.id());
+        becomeCommon(state, node.id()); // 2026-11-08：另一組配過這個武器組天賦的，改成一般節點（兩組都生效）
+        state.markDirty();
+        lockAttributes();
+        plugin.players().sheet(player);
+        return Result.success();
+    }
+
+    /** 2026-11-08 照站長「武器切換系統」：這個節點配成一般節點了：從兩組的武器組天賦裡拿掉（點數照一般節點算）。 */
+    private void becomeCommon(final PlayerState state, final String nodeId) {
+        boolean changed = false;
+        for (int set = 1; set <= 2; set++) {
+            final java.util.Set<String> nodes = tw.exilecore.character.WeaponSets.nodes(state.progress(), set);
+            if (nodes.remove(nodeId)) {
+                state.progress().put(tw.exilecore.character.WeaponSets.nodesKey(set), String.join(",", nodes));
+                changed = true;
+            }
+        }
+        if (changed && plugin.characters() != null) {
+            plugin.characters().saveWeaponSet(player, state);
+        }
+    }
+
+    /**
+     * 2026-11-08 照站長「武器切換系統」（PoE2 的武器組天賦）：把節點配成「正在用的那一組武器」專用（只在那一組生效）。
+     * 用掉的天賦點＝一般節點＋兩組裡多的那組，所以這一組比另一組多的時候才花一般天賦點；每一組最多 {@link tw.exilecore.character.PlayerStateService#weaponSetCap}。
+     */
+    public Result allocateWeaponSet(final PassiveNode node) {
+        final PlayerState state = state();
+        final PassiveNode start = start();
+        if (start == null) {
+            return Result.fail("你還沒有角色");
+        }
+        if (state.passives().contains(node.id())) {
+            return Result.fail(tw.exilecore.character.WeaponSets.activeSetNode(state, node.id()) ? "這一組已經配過了" : "已經是一般節點了（兩組都生效）");
+        }
+        if (node.isStart() || node.isSocket()) {
+            return Result.fail("起點、珠寶孔不能配成武器組天賦");
+        }
+        if (!tree.canAllocate(state.passives(), start, node, rules())) {
+            return Result.fail("要先連到旁邊的節點");
+        }
+        final int active = state.activeWeaponSet();
+        final int cap = plugin.players().weaponSetCap(state);
+        if (tw.exilecore.character.WeaponSets.used(state, active) >= cap) {
+            return Result.fail(tw.exilecore.character.WeaponSets.setName(active) + "的武器組天賦已經配滿 " + cap + " 點");
+        }
+        final boolean costs = tw.exilecore.character.WeaponSets.used(state, active) >= tw.exilecore.character.WeaponSets.used(state, tw.exilecore.character.WeaponSets.other(active));
+        if (costs && plugin.players().availablePoints(state) <= 0) {
+            return Result.fail("天賦點不夠（這一組比另一組多配的要花一般天賦點）");
+        }
+        state.passives().add(node.id());
+        tw.exilecore.character.WeaponSets.addActive(state, node.id());
+        if (plugin.characters() != null) {
+            plugin.characters().saveWeaponSet(player, state);
+        }
         state.markDirty();
         lockAttributes();
         plugin.players().sheet(player);
@@ -133,6 +188,17 @@ public final class PassiveState {
         if (!tree.canRefund(state.passives(), start, node, rules())) {
             return Result.fail("退掉會讓其他節點斷線，先退外面的");
         }
+        // 2026-11-08 照站長「武器切換系統」：退一般節點也不能讓另一組的武器組天賦斷線
+        final boolean weaponNode = tw.exilecore.character.WeaponSets.activeSetNode(state, node.id());
+        if (!weaponNode) {
+            final int other = tw.exilecore.character.WeaponSets.other(state.activeWeaponSet());
+            final java.util.Set<String> otherGraph = new java.util.HashSet<>(state.passives());
+            otherGraph.removeAll(tw.exilecore.character.WeaponSets.nodes(state.progress(), state.activeWeaponSet()));
+            otherGraph.addAll(tw.exilecore.character.WeaponSets.nodes(state.progress(), other));
+            if (!tree.canRefund(otherGraph, start, node, rules())) {
+                return Result.fail("退掉會讓" + tw.exilecore.character.WeaponSets.setName(other) + "的武器組天賦斷線，先切過去退外面的");
+            }
+        }
         final long cost = refundCost();
         if (character.refundPoints() <= 0 && !card() && cost > state.gold()) {
             return Result.fail(String.format(java.util.Locale.ROOT, "金幣不夠：退這一點要 %,d，你有 %,d", cost, state.gold()));
@@ -142,6 +208,12 @@ public final class PassiveState {
             return Result.fail("孔裡的珠寶放不回背包（背包與隨身背包都滿了）");
         }
         state.passives().remove(node.id());
+        if (weaponNode) {
+            tw.exilecore.character.WeaponSets.removeActive(state, node.id()); // 2026-11-08：武器組天賦
+            if (plugin.characters() != null) {
+                plugin.characters().saveWeaponSet(player, state);
+            }
+        }
         if (card()) {
             // 月卡：免費，也不用掉免費退點次數
         } else if (character.refundPoints() > 0) {

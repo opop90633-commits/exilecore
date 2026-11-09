@@ -144,6 +144,10 @@ public abstract class Menu implements InventoryHolder {
     protected void onBottomClick(final int slot, final ClickType click, final InventoryClickEvent event) {
     }
 
+    /** 2026-11-09：選單開著時按 F（預設不做事；天賦樹、角色面板拿來換武器組）。 */
+    protected void onSwapKey() {
+    }
+
     /** 選單被關掉。 */
     protected void onClose() {
     }

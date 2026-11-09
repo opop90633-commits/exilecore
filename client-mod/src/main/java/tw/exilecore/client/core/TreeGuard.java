@@ -66,6 +66,20 @@ public final class TreeGuard {
         return new Pending("alloc", node, path, lines);
     }
 
+    /**
+     * 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：整條路配成武器組天賦的確認內容（動作 walloc）。
+     * 武器組天賦只有這一組比另一組多的部分才花一般天賦點，點數交給伺服器檢查。
+     */
+    public static Pending weaponPath(final TreeModel model, final int node, final List<Integer> path, final int set) {
+        final List<String> lines = new ArrayList<>();
+        lines.add(TreeModel.weaponSetTag(set) + "⚔ 武器組天賦配點確認");
+        lines.add("<white>整條路配到「" + model.name(node) + "<white>」，配成" + TreeModel.weaponSetTag(set) + TreeModel.weaponSetName(set) + "<white>專用");
+        final int used = set == 2 ? model.state.weaponUsed2 : model.state.weaponUsed1;
+        lines.add("<gray>共 " + path.size() + " 個節點（這一組 " + used + " → " + (used + path.size()) + "／" + model.state.weaponCap + "）");
+        lines.add("<dark_gray>再按一次左鍵或按「確認」配點；點別的地方或 Esc 取消");
+        return new Pending("walloc", node, path, lines);
+    }
+
     // 2026-11-02 照站長：拿掉「滑鼠移開就取消」——從節點移到下面的確認框途中一定會經過空白，按鈕永遠點不到；
     //   改成點別的地方或 Esc 才取消（PassiveTreeScreen.clickAt）。這次之前是 cancelledByHover
 }

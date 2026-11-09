@@ -68,6 +68,20 @@ public final class GearSetMenu extends Menu {
                 lore.add("<gray>" + PlayerState.GEAR_SLOTS[i].displayName() + "：<white>"
                         + ItemRenderer.escape(data.map(ItemData::name).orElse("?")));
             }
+            // 2026-11-09 照站長「月卡能記錄裝備組的武器組嗎」：另一組武器（正在用的：身上沒在用的那一組；放著的：第 II 組）
+            final int otherSet = tw.exilecore.character.WeaponSets.other(state.activeWeaponSet());
+            final int[] spare = current ? new int[] {PlayerState.SPARE_MAIN_SLOT, PlayerState.SPARE_OFF_SLOT}
+                    : new int[] {PlayerState.PRESET_SET2_MAIN, PlayerState.PRESET_SET2_OFF};
+            for (int k = 0; k < 2; k++) {
+                final ItemStack stack = items[spare[k]];
+                if (stack == null || stack.isEmpty()) {
+                    continue;
+                }
+                count++;
+                final Optional<ItemData> data = plugin.items().read(stack);
+                lore.add("<gray>" + tw.exilecore.character.WeaponSets.setName(current ? otherSet : 2) + (k == 0 ? "主手" : "副手") + "：<white>"
+                        + ItemRenderer.escape(data.map(ItemData::name).orElse("?")));
+            }
             if (count == 0) {
                 lore.add("<dark_gray>空的");
             }
@@ -121,6 +135,12 @@ public final class GearSetMenu extends Menu {
         }
         state.switchGearSet(active, set);
         plugin.characters().setProgress(player, PlayerState.GEAR_SET_KEY, String.valueOf(set));
+        // 2026-11-09 照站長「月卡能記錄裝備組的武器組嗎」：存的那一組記下當時用第幾組武器；換上來的那一組當時用另一組的話切過去
+        plugin.characters().setProgress(player, PlayerState.gearSetWeaponKey(active), state.progress().get(PlayerState.gearSetWeaponKey(active)));
+        final String wanted = state.progress().get(PlayerState.gearSetWeaponKey(set));
+        if (wanted != null && !wanted.equals(String.valueOf(state.activeWeaponSet()))) {
+            plugin.characters().swapWeaponSet(player, false);
+        }
         final Gear gear = plugin.characters().gear();
         gear.sync(player);
         plugin.players().sheet(player);

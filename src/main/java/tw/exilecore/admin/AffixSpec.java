@@ -51,8 +51,19 @@ public final class AffixSpec {
 
     /** 這一條是旗標（不是詞綴）。 */
     public static boolean isFlag(final Entry entry) {
-        return FLAG_CORRUPTED.equals(entry.id()) || FLAG_MIRRORED.equals(entry.id());
+        return FLAG_CORRUPTED.equals(entry.id()) || FLAG_MIRRORED.equals(entry.id())
+                || FLAG_QUALITY.equals(entry.id()) || FLAG_IMPLICIT.equals(entry.id()) || entry.id().startsWith(FLAG_CATALYST_PREFIX);
     }
+
+    /**
+     * 2026-11-09 照站長「管理網頁發放要能自訂物品品質」：{@code flag.quality:value=品質}（0～{@link #QUALITY_LIMIT}，可以超過這件的上限，補償、測試用）；
+     * 戒指、項鍊另外寫 {@code flag.catalyst.<種類>}（攻擊、法術…；沒寫就沒有種類，品質沒作用）。這次之前發出去的品質一律是 0
+     */
+    public static final String FLAG_QUALITY = "flag.quality";
+    public static final String FLAG_CATALYST_PREFIX = "flag.catalyst.";
+    public static final int QUALITY_LIMIT = 100;
+    /** 2026-11-09 照站長「固定詞綴也要能調整數值」：{@code flag.implicit:變數=值}（基底的固定詞綴；值是物品上存的整數，可以超出範圍）。 */
+    public static final String FLAG_IMPLICIT = "flag.implicit";
 
     /** 拿掉旗標，只剩詞綴。 */
     public static List<Entry> affixesOf(final List<Entry> entries) {
@@ -81,6 +92,18 @@ public final class AffixSpec {
         }
         if (has(entries, FLAG_MIRRORED)) {
             data.setMirrored(true);
+        }
+        for (final Entry entry : entries) {
+            if (FLAG_QUALITY.equals(entry.id())) {
+                final int quality = Math.max(0, Math.min(QUALITY_LIMIT, entry.vars().getOrDefault("value", 0)));
+                data.setQualityUpTo(quality, quality); // 2026-11-09：照填的，不管這件的上限
+            } else if (FLAG_IMPLICIT.equals(entry.id()) && !entry.vars().isEmpty()) {
+                final Map<String, Integer> vars = new LinkedHashMap<>(data.implicitVars());
+                vars.putAll(entry.vars());
+                data.setImplicitVars(vars);
+            } else if (entry.id().startsWith(FLAG_CATALYST_PREFIX)) {
+                data.setCatalyst(entry.id().substring(FLAG_CATALYST_PREFIX.length()));
+            }
         }
     }
 

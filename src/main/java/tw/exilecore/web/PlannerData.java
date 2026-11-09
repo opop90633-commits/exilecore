@@ -126,7 +126,21 @@ public final class PlannerData {
      */
     public static byte[] json(final PassiveTree tree, final List<ClassInfo> classes, final int levelCap, final int pointsPerLevel,
                               final int bonusPoints, final List<AscendancyInfo> ascendancies, final int ascendancyPoints) {
+        return json(tree, classes, levelCap, pointsPerLevel, bonusPoints, ascendancies, ascendancyPoints, 0, Map.of());
+    }
+
+    /**
+     * 同上，再帶武器組天賦（2026-11-09 照站長「網頁天賦規劃器也補上兩組」）：每一組最多幾點（character.yml 的 weapon_set_points），
+     * 哪些昇華天賦再加多少（百兵宗匠的「100 天賦點數轉為武器組天賦點數」；昇華天賦代號 → 點數）。
+     */
+    public static byte[] json(final PassiveTree tree, final List<ClassInfo> classes, final int levelCap, final int pointsPerLevel,
+                              final int bonusPoints, final List<AscendancyInfo> ascendancies, final int ascendancyPoints,
+                              final int weaponSetPoints, final Map<String, Integer> weaponSetByAscNode) {
         final JsonObject root = new JsonObject();
+        root.addProperty("weaponSetPoints", weaponSetPoints);
+        final JsonObject wsByNode = new JsonObject();
+        weaponSetByAscNode.forEach(wsByNode::addProperty);
+        root.add("weaponSetByAscNode", wsByNode);
         root.addProperty("code", TreeCode.PREFIX);
         root.addProperty("version", tree.version());
         root.addProperty("levelCap", levelCap);

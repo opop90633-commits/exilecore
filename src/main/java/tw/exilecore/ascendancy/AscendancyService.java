@@ -102,8 +102,22 @@ public final class AscendancyService {
         return character == null ? java.util.Set.of() : treeRules(state.progress(), character.characterClass().id(), state.level());
     }
 
-    /** 2026-10-26：昇華天賦給的額外天賦點（武器大師：原作的武器組天賦點，我們沒有武器組，改成 +10 天賦點）。 */
+    /** 2026-10-26：昇華天賦給的額外天賦點（開路者、時空術士；2026-11-08 起武器大師照原作改成武器組天賦點，{@link tw.exilecore.character.WeaponSets#EXTRA_STAT}）。 */
     public static final String EXTRA_PASSIVE_POINTS = "passive.points_extra";
+
+    /** 2026-11-08 照站長「武器切換系統」：昇華給的武器組天賦點上限（百兵宗匠「100 天賦點數轉為武器組天賦點數」）。 */
+    public int weaponSetPoints(final PlayerState state) {
+        if (!state.hasCharacter()) {
+            return 0;
+        }
+        double total = 0;
+        for (final Modifier mod : ascension(state).modifiers()) {
+            if (tw.exilecore.character.WeaponSets.EXTRA_STAT.equals(mod.stat())) {
+                total += mod.value();
+            }
+        }
+        return (int) Math.round(total);
+    }
 
     public int passivePoints(final PlayerState state) {
         if (!state.hasCharacter()) {

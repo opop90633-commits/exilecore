@@ -918,6 +918,10 @@
       useAffix.checked = !!item.useAffix;
       useAffix.addEventListener('change', function () { item.useAffix = useAffix.checked; renderItems(); });
       row.appendChild(h('label', { cls: 'check' }, useAffix, item.kind === 'unique' ? '指定數值' : '指定詞綴'));
+      // 2026-11-09 照站長「發放要能自訂物品品質」：品質（0 = 不指定；可以超過上限）、戒指項鍊的品質種類
+      row.appendChild(numberInput('品質', item.quality || 0, 0, 100, function (v) { item.quality = v; renderSummary(); }, '0 = 不指定'));
+      row.appendChild(h('label', null, '品質種類', select('', '品質種類（戒指、項鍊）', [{ id: '', text: '（戒指、項鍊才要選）' }].concat(CATALYSTS.map(function (k) { return { id: k[0], text: k[1] }; })),
+        item.catalyst || '', function (v) { item.catalyst = v; renderSummary(); })));
       // 2026-10-21：已腐化、已複製
       [['corrupted', '已腐化'], ['mirrored', '已複製']].forEach(function (pair) {
         var flag = h('input', { type: 'checkbox', 'aria-label': pair[1] });
@@ -1012,6 +1016,23 @@
       return box;
     }
     if (!item.affixList) { item.affixList = []; }
+    if (info.implicit) { // 2026-11-09 照站長「固定詞綴也要能調整數值」
+      if (!item.implicitVals) { item.implicitVals = {}; }
+      var iline = h('div', { cls: 'affix-line' }, h('span', { cls: 'affix-text', text: '固定詞綴：' + info.implicit.text }));
+      Object.keys(info.implicit.vars).forEach(function (name) {
+        var range = info.implicit.vars[name];
+        var input = h('input', { type: 'number', step: 1, value: item.implicitVals[name] !== undefined ? item.implicitVals[name] : '', placeholder: range[0] + '–' + range[1],
+          'aria-label': '固定詞綴 ' + name, style: 'width:80px' });
+        input.addEventListener('input', function () {
+          item.implicitVals[name] = input.value;
+          var v = Number(input.value);
+          input.style.borderColor = input.value !== '' && (v < range[0] || v > range[1]) ? '#e05555' : '';
+          renderSummary();
+        });
+        iline.appendChild(h('label', null, name, input));
+      });
+      box.appendChild(iline);
+    }
     if (item.kind === 'unique') {
       box.appendChild(h('span', { cls: 'hint', text: '填了的數值照填的發，空的照常隨機（灰字是範圍；可以超出範圍，紅框提醒）' }));
       info.affixes.forEach(function (affix) {
@@ -1069,11 +1090,21 @@
     return box;
   }
   /** 送給伺服器的寫法：代號[@階級][:變數=值,…]，分號隔開（值換成物品上存的整數）。 */
+  // 2026-11-09：催化劑的種類（同 currencies.yml 的 catalyst）
+  var CATALYSTS = [['attack', '攻擊'], ['caster', '法術'], ['life', '生命'], ['mana', '魔力'], ['defence', '防禦'], ['physical', '物理'], ['fire', '火焰'],
+    ['cold', '冰冷'], ['lightning', '閃電'], ['chaos', '混沌'], ['speed', '速度'], ['attribute', '屬性'], ['minion', '召喚物']];
   function affixSpec(item) {
     var info = affixInfo(item);
     var parts = [];
     if (item.corrupted) { parts.push('flag.corrupted'); }
     if (item.mirrored) { parts.push('flag.mirrored'); }
+    if (item.quality > 0) { parts.push('flag.quality:value=' + Math.round(item.quality)); } // 2026-11-09
+    if (item.catalyst) { parts.push('flag.catalyst.' + item.catalyst); }
+    if (item.useAffix && info && info.implicit && item.implicitVals) { // 2026-11-09：固定詞綴的數值
+      var iv = Object.keys(item.implicitVals).filter(function (n) { return item.implicitVals[n] !== '' && isFinite(Number(item.implicitVals[n])); })
+        .map(function (n) { return n + '=' + Math.round(Number(item.implicitVals[n])); });
+      if (iv.length) { parts.push('flag.implicit:' + iv.join(',')); }
+    }
     if (!item.useAffix || !info || !item.affixList) { return parts.length ? parts.join(';') : null; }
     item.affixList.forEach(function (entry) {
       var affix = findAffix(info, entry.id);
@@ -1091,7 +1122,8 @@
   function affixSummary(item) {
     var info = affixInfo(item);
     var texts = [];
-    var flags = (item.corrupted ? ['已腐化'] : []).concat(item.mirrored ? ['已複製'] : []);
+    var flags = (item.corrupted ? ['已腐化'] : []).concat(item.mirrored ? ['已複製'] : [])
+      .concat(item.quality > 0 ? ['品質 ' + item.quality + '%' + (item.catalyst ? '（' + (CATALYSTS.filter(function (k) { return k[0] === item.catalyst; })[0] || ['', item.catalyst])[1] + '）' : '')] : []);
     if (!item.useAffix || !info || !item.affixList) { return flags.length ? '［' + flags.join('、') + '］' : ''; }
     item.affixList.forEach(function (entry) {
       var affix = findAffix(info, entry.id);

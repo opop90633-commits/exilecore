@@ -622,9 +622,12 @@ public final class AscBuild {
         return plugin.flasks() == null ? 0 : plugin.flasks().consumeIfFull(player, tw.exilecore.flask.FlaskKind.LIFE, fraction);
     }
 
-    /** 巴雅地脈：非傳奇的遺時珠寶半徑增加 x%（JewelSockets 呼叫）。 */
+    /**
+     * 巴雅地脈：非傳奇的遺時珠寶半徑增加 x%（JewelSockets 呼叫）。jewel 是 null ＝ 呼叫的地方自己判斷是不是傳奇。
+     * 2026-11-09 照站長「巴揚地脈能直接影響並顯示真正的半徑嗎」：null 也照算；這次之前 null 一律回 1，呼叫的地方都傳 null，等於從來沒作用
+     */
     public static double jewelRadiusScale(final ExileCore plugin, final PlayerState state, final ItemData jewel) {
-        if (jewel == null || jewel.rarity() == Rarity.UNIQUE) {
+        if (jewel != null && jewel.rarity() == Rarity.UNIQUE) {
             return 1;
         }
         final double increase = ascFlat(plugin, state, AscKeys.LEYLINES);

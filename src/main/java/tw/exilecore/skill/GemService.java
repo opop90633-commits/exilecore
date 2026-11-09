@@ -1395,6 +1395,11 @@ public final class GemService {
 
     /** 2026-10-22：這個技能能不能放進這種宿主寶石的孔；可以回傳 null，不行回傳原因。 */
     String innerProblem(final SkillDefinition host, final SkillDefinition inner) {
+        return innerProblem(config(), host, inner);
+    }
+
+    /** 2026-11-09：同上，給網頁規劃器列「孔裡能放哪些技能」用（不用玩家）。 */
+    public static String innerProblem(final SkillConfig config, final SkillDefinition host, final SkillDefinition inner) {
         if (inner.grantedOnly()) {
             return MetaGems.GRANTED_ONLY; // 2026-10-28 照 PoE2：武器、昇華賦予的技能不是寶石，哪一種宿主寶石都不能放
         }
@@ -1419,7 +1424,7 @@ public final class GemService {
         if (SoulVessel.hosts(host)) {
             return SoulVessel.problem(inner); // 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：靈魂容器放巨熊、狼人、飛龍的變身技能
         }
-        final MetaSpec spec = config().meta(host.id());
+        final MetaSpec spec = config.meta(host.id());
         return spec == null ? "不是宿主寶石" : MetaGems.problem(spec, inner);
     }
 

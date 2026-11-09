@@ -221,6 +221,16 @@ public final class TreeModel {
         public final int setCount;
         public final int activeSet;
         public final boolean card;
+        /**
+         * 2026-11-09 照站長「client mod 的天賦畫面也要能點武器組的組」：武器組天賦——正在用第幾組（1、2；0 = 伺服器沒給，舊伺服器不畫武器組）、
+         * 每組上限、兩組用量、兩組的節點（另一組的不在 owned 裡）。這次之前模組不知道武器組，武器組天賦當一般節點畫。
+         */
+        public final int weaponSet;
+        public final int weaponCap;
+        public final int weaponUsed1;
+        public final int weaponUsed2;
+        public final BitSet weapon1;
+        public final BitSet weapon2;
         /** 換掉名稱、說明的節點（征服、珠寶）：代號 → {名稱, 說明行…}。 */
         public final Map<String, List<String>> over;
         public final Map<String, Long> refundCost;
@@ -230,6 +240,12 @@ public final class TreeModel {
         public final String message;
         public final String search;
         public final boolean reset;
+        /**
+         * 2026-11-09 照站長「模組右上新增打開網頁天賦規劃器與匯入代碼」：伺服器有這兩個功能（imp）、規劃器網址（web；空字串 = 網頁沒開）。
+         * 舊伺服器沒有 imp：不畫這兩個按鈕。
+         */
+        public final boolean importable;
+        public final String plannerUrl;
 
         /** 背包裡的一顆珠寶：k 在哪（伺服器的代號）、名稱、說明、不能放的原因（空字串 = 可以放）。 */
         public record Jewel(String key, String name, List<String> lines, String problem) {
@@ -274,6 +290,12 @@ public final class TreeModel {
                 activeSet = 0;
                 card = false;
             }
+            weaponSet = root.has("wsa") ? root.get("wsa").getAsInt() : 0;
+            weaponCap = root.has("wscap") ? root.get("wscap").getAsInt() : 0;
+            weaponUsed1 = root.has("wsu1") ? root.get("wsu1").getAsInt() : 0;
+            weaponUsed2 = root.has("wsu2") ? root.get("wsu2").getAsInt() : 0;
+            weapon1 = bits(root, "ws1", data);
+            weapon2 = bits(root, "ws2", data);
             if (root.has("bag") && root.get("bag").isJsonArray()) {
                 final List<Jewel> list = new ArrayList<>();
                 for (final JsonElement element : root.getAsJsonArray("bag")) {
@@ -319,11 +341,38 @@ public final class TreeModel {
             message = string(root, "msg", "");
             search = root.has("search") ? root.get("search").getAsString() : null;
             reset = root.has("reset") && root.get("reset").getAsBoolean();
+            importable = root.has("imp") && root.get("imp").getAsBoolean();
+            plannerUrl = string(root, "web", "");
         }
     }
 
     public final Data data;
     public final State state;
+
+    /** 2026-11-09：第 I 組武器組天賦的顏色（亮紅；遊戲內、網頁規劃器同色）。 */
+    public static final int WEAPON_SET_1 = 0xFFFF3B3B;
+    /** 2026-11-09：第 II 組武器組天賦的顏色（亮青）。 */
+    public static final int WEAPON_SET_2 = 0xFF2EE6FF;
+
+    /** 2026-11-09：這個節點是第幾組的武器組天賦（兩組都配的算正在用那一組；0 = 不是）。 */
+    public int weaponSetOf(final int i) {
+        final boolean one = state.weapon1.get(i);
+        final boolean two = state.weapon2.get(i);
+        if (one && two) {
+            return state.weaponSet == 2 ? 2 : 1;
+        }
+        return one ? 1 : two ? 2 : 0;
+    }
+
+    /** 2026-11-09：武器組的名字（第 I 組、第 II 組）。 */
+    public static String weaponSetName(final int set) {
+        return set == 2 ? "第 II 組" : "第 I 組";
+    }
+
+    /** 2026-11-09：武器組的顏色標籤（說明文字用）。 */
+    public static String weaponSetTag(final int set) {
+        return set == 2 ? "<#2ee6ff>" : "<#ff3b3b>";
+    }
 
     public TreeModel(final Data data, final State state) {
         this.data = data;
