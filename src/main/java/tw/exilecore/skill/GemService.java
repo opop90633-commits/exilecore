@@ -1165,9 +1165,10 @@ public final class GemService {
         if (target < 0) {
             return Change.fail("技能面板滿了（最多 " + SkillLoadout.MAX_SKILLS + " 個），先取出一個");
         }
-        final String ring = ringAuraProblem(loadout, target, definition); // 2026-11-04：空座指環的光環格只放光環
-        if (ring != null) {
-            return Change.fail(ring);
+        if (SkillLoadout.ringAuraIndex(target) >= 0) {
+            // 2026-11-09 照站長「額外的光環格子可以不要把整顆寶石都放進去嗎」：光環格只指著面板上的技能，寶石不放進去；
+            //   這次之前（2026-11-04）可以放光環類的寶石
+            return Change.fail("光環格只指著面板上的技能：先把寶石放進技能面板，點那個光環選取，再點光環格");
         }
         // 2026-10-28 照 PoE2：同一個技能可以放好幾顆（面板上、主要寶石孔裡都可以），各自的輔助；只擋一個角色一顆的常駐、宿主。
         //   這次之前面板上、宿主孔裡已經有就不能放
@@ -1794,7 +1795,10 @@ public final class GemService {
         return "鑿星石";
     }
 
-    /** 2026-11-04 照站長：空座指環的光環格只能放光環類的技能，而且要戴著空座指環；不是那一格回傳 null。 */
+    /**
+     * 2026-11-04 照站長：空座指環的光環格只能放光環類的技能，而且要戴著空座指環；不是那一格回傳 null。
+     * 2026-11-09：光環格改成指著面板上的技能，這裡看能不能指（target 還是光環格的位置 RING_AURA 起）。
+     */
     static String ringAuraProblem(final SkillLoadout loadout, final int target, final SkillDefinition definition) {
         final int ring = SkillLoadout.ringAuraIndex(target);
         if (ring < 0) {
@@ -1804,7 +1808,7 @@ public final class GemService {
             return ring == 0 ? "要戴著空座指環才能用這一格" : "要戴著兩個空座指環才能用第二格光環格";
         }
         if (definition == null || definition.mechanic() != Mechanic.AURA || definition.aura() == null) {
-            return "這一格只能放光環類的技能";
+            return "光環格只能指光環類的技能";
         }
         return null;
     }

@@ -582,6 +582,36 @@ affixes:
       - { tier: 1, value: [250, 300] }   # HandWrapsCriticalMultiplier5
     mods:
       - { stat: crit.base_extra, type: FLAT, value: "{value/100}" }
+  # 2026-11-09 照站長「磐石之拳的暴擊獲得秘術增強升級後會變成拿球，好像沒有效果」（poe2db Fists of Stone 的褻瀆詞綴）：
+  #   褲子（原作手套）的四條褻瀆詞綴補上換法；這次之前沒寫在這裡，穿成磐石之拳還是原本那條
+  unveiled_d_leggings_arcane_surge_crit:   # 原本「暴擊時有 {value}% 機率獲得秘術增強」
+    text: "暴擊時 {value}% 機率獲得一顆銳星"
+    tiers:
+      - { tier: 1, value: [8, 10] }   # HandWraps：(5—10)% chance to gain a Power Charge on Critical Hit
+      - { tier: 2, value: [5, 7] }
+    mods:
+      - { stat: charge.chance.power, type: FLAT, value: "{value}" }
+  unveiled_d_leggings_cast_full_life:   # 原本「滿血時增加 {value}% 施放速度」
+    text: "滿血時增加 {value}% 攻擊速度"
+    tiers:
+      - { tier: 1, value: [20, 23] }   # HandWraps：(17—23)% increased Attack Speed when on Full Life
+      - { tier: 2, value: [17, 19] }
+    mods:
+      - { stat: attack.speed@fulllife, type: INCREASED, value: "{value}" }
+  unveiled_d_leggings_incision:   # 原本「攻擊擊中有 {value}% 機率施加切割」
+    text: "攻擊擊中時加劇目標身上存在超過 {ms/1000} 秒的流血"
+    tiers:
+      - { tier: 1, ms: [3000, 3000] }   # HandWraps：Attack Hits Aggravate any Bleeding on targets which is older than (3—4) seconds
+      - { tier: 2, ms: [4000, 4000] }
+    mods:
+      - { stat: bleed.aggravate_older, type: FLAT, value: "{ms}", tags: [attack] }
+  unveiled_d_leggings_immobilise:   # 原本「增加 {value}% 暈眩累積與凍結累積」
+    text: "對禁錮的敵人增加 {value}% 傷害"
+    tiers:
+      - { tier: 1, value: [31, 35] }   # HandWraps：(26—35)% increased Damage against Immobilised Enemies
+      - { tier: 2, value: [26, 30] }
+    mods:
+      - { stat: damage, type: INCREASED, value: "{value}", tags: [vs_immobilised] }
   unveiled_d_res_cold_chaos:   # 原本「+{value}% 冰冷與混沌抗性」
     text: "+{value}% 混沌抗性、+{max}% 最大冰冷抗性"
     tiers:

@@ -498,7 +498,13 @@ public final class CharacterRepository {
             statement.setLong(1, characterId);
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    loadout.bind(result.getInt(1), result.getInt(2));
+                    final int slot = result.getInt(1);
+                    final int ring = slot - SkillLoadout.RING_BIND_SLOT;
+                    if (ring >= 0 && ring < SkillLoadout.RING_AURA_SLOTS) {
+                        loadout.setRingAuraTarget(ring, result.getInt(2)); // 2026-11-09：光環格指著面板的哪一格（跟按鍵存在一起）
+                    } else {
+                        loadout.bind(slot, result.getInt(2));
+                    }
                 }
             }
         }
@@ -543,6 +549,18 @@ public final class CharacterRepository {
                 }
                 insert.setLong(1, characterId);
                 insert.setInt(2, slot);
+                insert.setInt(3, position);
+                insert.addBatch();
+                any = true;
+            }
+            // 2026-11-09 照站長「額外的光環格子可以不要把整顆寶石都放進去嗎」：光環格只記指著面板第幾格，按鍵格號接在按鍵後面
+            for (int ring = 0; ring < SkillLoadout.RING_AURA_SLOTS; ring++) {
+                final int position = loadout.ringAuraTarget(ring);
+                if (position < 0) {
+                    continue;
+                }
+                insert.setLong(1, characterId);
+                insert.setInt(2, SkillLoadout.RING_BIND_SLOT + ring);
                 insert.setInt(3, position);
                 insert.addBatch();
                 any = true;

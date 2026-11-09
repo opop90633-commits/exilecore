@@ -6236,6 +6236,21 @@ public final class SkillService {
         final List<String> names = new ArrayList<>();
         final List<String> merges = new ArrayList<>();
         boolean hostChanged = false;
+        // 2026-11-09 照站長「額外的光環格子可以不要把整顆寶石都放進去嗎」：舊存檔整顆放在光環格裡的寶石搬回面板空格，光環格改指著它
+        //   （下面照常檢查改版）；面板滿了的變回技能寶石放進背包（放不下的掉在腳邊），不會不見
+        final int ringBefore = ringAuraCount(loadout);
+        final List<SkillLoadout.Entry> homeless = loadout.migrateLegacyRingAuras();
+        for (final SkillLoadout.Entry entry : homeless) {
+            give.add(gems.create(GemData.skill(entry), 1));
+            names.add("光環格的 " + gems.skillName(entry) + " Lv." + entry.level() + "（光環格改成指著面板上的技能，面板滿了，變回寶石放進背包）");
+        }
+        if (ringBefore > 0 && homeless.isEmpty()) {
+            plugin.players().markDirty(player);
+            plugin.characters().save(player); // 有放不下的：下面寶石放進背包後才一起存（當機才不會兩邊都沒有）
+        }
+        if (ringBefore > homeless.size()) {
+            player.sendMessage(plugin.text().prefixed("<yellow>光環格改版：光環格裡的光環搬回技能面板（輔助、等級都在），光環格改成指著它，照樣一直開著"));
+        }
         for (int position = 0; position < SkillLoadout.MAX_SKILLS; position++) {
             SkillLoadout.Entry original = loadout.skill(position);
             if (original == null) {
@@ -6399,6 +6414,17 @@ public final class SkillService {
         // 2026-10-28：也包含賦予的技能改成照等級開孔的退還，說法改成「變動」（這次之前是「拿掉的 n 個技能／輔助」）
         player.sendMessage(plugin.text().prefixed("<yellow>技能改版：技能面板上變動的 " + names.size()
                 + " 項，退還的東西已經放進背包（" + ItemRenderer.escape(String.join("、", names)) + "）"));
+    }
+
+    /** 2026-11-09：舊存檔整顆放在光環格裡的技能有幾個。 */
+    private static int ringAuraCount(final SkillLoadout loadout) {
+        int count = 0;
+        for (int i = 0; i < SkillLoadout.RING_AURA_SLOTS; i++) {
+            if (loadout.skill(SkillLoadout.RING_AURA + i) != null) {
+                count++;
+            }
+        }
+        return count;
     }
 
     /** 2026-10-26：技能（含放在宿主孔裡的技能）掛著的所有輔助代號（通知用）。 */

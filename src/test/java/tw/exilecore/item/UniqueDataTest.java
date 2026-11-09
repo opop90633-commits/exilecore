@@ -115,6 +115,7 @@ class UniqueDataTest {
                 "rebirth_ceremony", "molten_dive_crash")) { // 2026-10-27：＋雷頌墜、縛地長杖、絲沙背心；2026-10-28：＋綺夢；2026-11-05：＋焚王獸符
             stats.add(tw.exilecore.item.unique.UniqueStats.GRANT_SKILL + skill);
         }
+        stats.add(tw.exilecore.stats.TreeNewMechanicKeys.AGGRAVATE_OLDER_THAN); // 2026-11-09（磐石之拳的褻瀆詞綴）：加劇存在超過 x 毫秒的流血
         stats.add("glory.regen"); // 2026-11-05（焚王獸符）：消耗榮耀的技能每 2 秒獲得榮耀（SupportMechanics.GLORY_REGEN）
         tags = constants(Tags.class);
         // 2026-10-28：敵人狀態的條件標籤（vs_immobilised、vs_cursed…；TargetConditions 照目標的狀態加進擊中的情境，帶這些標籤的修飾器才算）

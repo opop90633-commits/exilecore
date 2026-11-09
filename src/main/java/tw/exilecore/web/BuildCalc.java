@@ -912,7 +912,11 @@ public final class BuildCalc {
             o.addProperty("id", support.id());
             o.addProperty("name", support.name());
             o.addProperty("tier", support.tier());
-            final String refusal = support.refusal(definition);
+            // 2026-11-09 照站長「串完主動技能後缺少該技能可以攜帶的輔助寶石」：宿主寶石（幻影神射、引星…）照遊戲用 hostRefusal
+            //   （輔助套在孔裡的技能上，看孔裡第一個技能）；這次之前只看宿主自己，孔裡放了攻擊也列不出攻擊輔助
+            final String refusal = tw.exilecore.skill.SupportDefinition.hostsSkill(definition)
+                    ? support.hostRefusal(definition, entry.spells().isEmpty() ? null : config.skill(entry.spells().getFirst().skillId()))
+                    : support.refusal(definition);
             if (refusal != null) {
                 continue; // 掛不上去的不列
             }

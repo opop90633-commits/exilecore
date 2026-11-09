@@ -62,6 +62,11 @@ public final class SkillSetMenu extends Menu {
         for (int slot = 0; slot < SkillLoadout.BIND_SLOTS; slot++) {
             out.append(FIELD).append(loadout.bound(slot));
         }
+        // 2026-11-09 照站長「切換後光環格的技能會消失」：光環格指著面板第幾格接在按鍵後面（舊的字串沒有，讀起來是空的）。
+        //   這次之前只存面板 MAX_SKILLS 格，整顆放在光環格裡的寶石換組時不見
+        for (int ring = 0; ring < SkillLoadout.RING_AURA_SLOTS; ring++) {
+            out.append(FIELD).append(loadout.ringAuraTarget(ring));
+        }
         return out.toString();
     }
 
@@ -70,6 +75,8 @@ public final class SkillSetMenu extends Menu {
         if (text == null || text.isEmpty()) {
             return loadout;
         }
+        final int[] ringTargets = new int[SkillLoadout.RING_AURA_SLOTS];
+        java.util.Arrays.fill(ringTargets, -1); // 2026-11-09：按鍵那段在技能前後都可能，技能都放好了才指
         for (final String part : text.split(String.valueOf(ENTRY), -1)) {
             if (part.isEmpty()) {
                 continue;
@@ -83,6 +90,13 @@ public final class SkillSetMenu extends Menu {
                         // 壞掉的按鍵：普攻
                     }
                 }
+                for (int ring = 0; ring < SkillLoadout.RING_AURA_SLOTS && SkillLoadout.BIND_SLOTS + ring + 1 < fields.length; ring++) {
+                    try {
+                        ringTargets[ring] = Integer.parseInt(fields[SkillLoadout.BIND_SLOTS + ring + 1]);
+                    } catch (final NumberFormatException ignored) {
+                        // 壞掉的：光環格空著
+                    }
+                }
                 continue;
             }
             if (fields.length < 4) {
@@ -93,6 +107,9 @@ public final class SkillSetMenu extends Menu {
             } catch (final RuntimeException ignored) {
                 // 壞掉的一個技能：跳過
             }
+        }
+        for (int ring = 0; ring < ringTargets.length; ring++) {
+            loadout.setRingAuraTarget(ring, ringTargets[ring]); // 指著沒有技能的格子不會指上去
         }
         return loadout;
     }

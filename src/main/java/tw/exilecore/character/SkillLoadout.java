@@ -38,6 +38,12 @@ public final class SkillLoadout {
     /** 2026-11-04：存檔、讀檔的位置數（面板 ＋ 空座指環的光環格）。 */
     public static final int TOTAL_POSITIONS = MAX_SKILLS + RING_AURA_SLOTS;
 
+    /**
+     * 2026-11-09 照站長「額外的光環格子可以不要把整顆寶石都放進去嗎」：光環格改成只記「指著面板第幾格」（存在
+     * character_skill_binds 的這個按鍵格號起算，跟按鍵一起存；舊版伺服器讀到會略過）；這次之前整顆寶石放在 {@link #RING_AURA} 那格。
+     */
+    public static final int RING_BIND_SLOT = BIND_SLOTS;
+
     /** 2026-11-04：這個位置是第幾格光環格（0 起算）；不是光環格回傳 -1。 */
     public static int ringAuraIndex(final int position) {
         return position >= RING_AURA && position < RING_AURA + RING_AURA_SLOTS ? position - RING_AURA : -1;
@@ -504,6 +510,11 @@ public final class SkillLoadout {
     private int ringAuraSlots;
     private final int[] binds = new int[BIND_SLOTS];
     /**
+     * 2026-11-09 照站長「額外的光環格子可以不要把整顆寶石都放進去嗎」：光環格指著面板的第幾格（-1 = 空的）；寶石留在面板上
+     * （照常掛輔助、升級），光環格只是多一個不用按的按鍵格。這次之前寶石整顆搬進光環格（{@link #RING_AURA} 起的位置，只剩舊存檔讀進來會有）。
+     */
+    private final int[] ringTargets = new int[RING_AURA_SLOTS];
+    /**
      * 2026-10-26：身上的武器現在賦予哪些技能（技能代號 → 等級；不存檔，換裝備時由屬性表重算）。
      * 面板上標成賦予的技能不在這裡面就是「沒拿著那把武器」：留著輔助與按鍵，但不能用。
      */
@@ -516,6 +527,7 @@ public final class SkillLoadout {
 
     public SkillLoadout() {
         Arrays.fill(binds, -1);
+        Arrays.fill(ringTargets, -1);
     }
 
     /** 數字鍵（鍵盤上的 3–8）的按鍵格子；不是技能鍵回傳 -1。 */
@@ -583,6 +595,82 @@ public final class SkillLoadout {
         this.ringAuraSlots = Math.max(0, Math.min(RING_AURA_SLOTS, count));
     }
 
+    /** 2026-11-09：第 index 格光環格指著面板第幾格（-1 = 空的）。 */
+    public int ringAuraTarget(final int index) {
+        return index >= 0 && index < RING_AURA_SLOTS ? ringTargets[index] : -1;
+    }
+
+    /**
+     * 2026-11-09：讓第 index 格光環格指著面板第 position 格（-1 = 清掉，寶石不動）。那一格要有技能；另一格光環格已經指著它就改指這格
+     * （同一個光環不會兩格都指）。是不是光環由呼叫的人看（GemService.ringAuraProblem）。
+     *
+     * @return 有沒有指上去
+     */
+    public boolean setRingAuraTarget(final int index, final int position) {
+        if (index < 0 || index >= RING_AURA_SLOTS) {
+            return false;
+        }
+        if (position == -1) {
+            ringTargets[index] = -1;
+            return true;
+        }
+        if (position < 0 || position >= MAX_SKILLS || skills[position] == null) {
+            return false;
+        }
+        for (int i = 0; i < RING_AURA_SLOTS; i++) {
+            if (i != index && ringTargets[i] == position) {
+                ringTargets[i] = -1;
+            }
+        }
+        ringTargets[index] = position;
+        return true;
+    }
+
+    /** 2026-11-09：面板第 position 格被哪一格光環格指著（不管開沒開）；沒有回傳 -1。 */
+    public int ringAuraIndexOf(final int position) {
+        for (int i = 0; i < RING_AURA_SLOTS; i++) {
+            if (position >= 0 && ringTargets[i] == position) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /** 2026-11-09：面板第 position 格被開著的光環格（戴著空座指環的）指著：不用綁按鍵就開著。 */
+    public boolean ringAuraActive(final int position) {
+        final int index = ringAuraIndexOf(position);
+        return index >= 0 && index < ringAuraSlots;
+    }
+
+    /**
+     * 2026-11-09：舊存檔整顆放在光環格裡的技能搬回面板第一個空格，光環格改指著它；面板滿了的那顆從光環格拿掉、回傳
+     * （呼叫的人變回技能寶石還給玩家，不會不見）。光環格原本就指著別格時（不該發生）只搬不指。
+     *
+     * @return 面板放不下、拿出來的技能（沒有回傳空的）
+     */
+    public List<Entry> migrateLegacyRingAuras() {
+        List<Entry> homeless = List.of();
+        for (int i = 0; i < RING_AURA_SLOTS; i++) {
+            final Entry legacy = skills[RING_AURA + i];
+            if (legacy == null) {
+                continue;
+            }
+            skills[RING_AURA + i] = null;
+            final int position = add(legacy);
+            if (position < 0) {
+                if (homeless.isEmpty()) {
+                    homeless = new ArrayList<>();
+                }
+                homeless.add(legacy);
+                continue;
+            }
+            if (ringTargets[i] < 0) {
+                setRingAuraTarget(i, position);
+            }
+        }
+        return homeless;
+    }
+
     /**
      * 技能在面板上的位置；沒有回傳 -1。2026-11-05：同一個技能面板上有兩格（項鍊賦予的＋寶石）時，綁在按鍵上的那格先
      * （光環、常駐看的是綁鍵的那一格）；這次之前照面板順序第一格。
@@ -592,7 +680,7 @@ public final class SkillLoadout {
         int freeBound = -1;
         for (int i = 0; i < MAX_SKILLS; i++) {
             if (skills[i] != null && skills[i].skillId().equals(skillId)) {
-                if (isBound(i)) {
+                if (isBound(i) || ringAuraActive(i)) { // 2026-11-09：開著的光環格指著的也算綁著
                     if (!reservationFree(skills[i])) {
                         return i; // 兩格都綁著時要保留精魂的那格先（光環照這一格算保留，免得寶石那格跟著免費）
                     }
@@ -616,14 +704,7 @@ public final class SkillLoadout {
                 return i;
             }
         }
-        // 2026-11-04 照站長「光環格裡的光環確定有作用嗎」：開著的光環格也找（光環每 10 tick 檢查一次還在不在面板上，
-        //   這次之前找不到光環格裡的，開了馬上又被關掉）；沒戴空座指環的那格不算
-        for (int i = 0; i < ringAuraSlots; i++) {
-            final Entry ring = skills[RING_AURA + i];
-            if (ring != null && ring.skillId().equals(skillId)) {
-                return RING_AURA + i;
-            }
-        }
+        // 2026-11-09：光環格改成指著面板上的那一格（上面當成綁著的找）；這次之前（2026-11-04）另外找光環格裡整顆放著的
         return -1;
     }
 
@@ -779,9 +860,12 @@ public final class SkillLoadout {
         if (position < 0 || position >= TOTAL_POSITIONS) { // 2026-11-04：含空座指環的光環格
             throw new IllegalArgumentException("技能位置超出範圍：" + position);
         }
+        final Entry before = skills[position];
         skills[position] = entry;
         if (entry == null) {
             unbindPosition(position);
+        } else if (before != null && !before.skillId().equals(entry.skillId())) {
+            clearRingTargets(position); // 2026-11-09：換成別的技能：光環格不再指著它（按鍵照舊保留）
         }
     }
 
@@ -799,6 +883,15 @@ public final class SkillLoadout {
         for (int i = 0; i < BIND_SLOTS; i++) {
             if (binds[i] == position) {
                 binds[i] = -1;
+            }
+        }
+        clearRingTargets(position); // 2026-11-09：取出、拿掉的技能：光環格也清掉
+    }
+
+    private void clearRingTargets(final int position) {
+        for (int i = 0; i < RING_AURA_SLOTS; i++) {
+            if (ringTargets[i] == position) {
+                ringTargets[i] = -1;
             }
         }
     }
@@ -971,15 +1064,15 @@ public final class SkillLoadout {
             }
         }
         for (int position = 0; position < MAX_SKILLS; position++) {
-            if (skills[position] != null && !dormant(skills[position]) && seen.add(position)) {
+            if (skills[position] != null && !dormant(skills[position]) && !ringAuraActive(position) && seen.add(position)) {
                 list.add(skills[position]);
             }
         }
-        // 2026-11-04：空座指環的光環格（戴著才算，排在最後：精魂不夠時最後開）
+        // 2026-11-04：空座指環的光環格（戴著才算，排在最後：精魂不夠時最後開）；2026-11-09：改成光環格指著的面板那一格
         for (int i = 0; i < ringAuraSlots; i++) {
-            final Entry ring = skills[RING_AURA + i];
-            if (ring != null && !dormant(ring)) {
-                list.add(ring);
+            final int position = ringTargets[i];
+            if (position >= 0 && skills[position] != null && !dormant(skills[position]) && seen.add(position)) {
+                list.add(skills[position]);
             }
         }
         return list;
@@ -1002,6 +1095,7 @@ public final class SkillLoadout {
         System.arraycopy(skills, 0, copy.skills, 0, TOTAL_POSITIONS);
         copy.ringAuraSlots = ringAuraSlots;
         System.arraycopy(binds, 0, copy.binds, 0, BIND_SLOTS);
+        System.arraycopy(ringTargets, 0, copy.ringTargets, 0, RING_AURA_SLOTS); // 2026-11-09
         copy.grantedNow = grantedNow;
         return copy;
     }
@@ -1010,5 +1104,6 @@ public final class SkillLoadout {
     public void clear() {
         Arrays.fill(skills, null);
         Arrays.fill(binds, -1);
+        Arrays.fill(ringTargets, -1); // 2026-11-09
     }
 }
