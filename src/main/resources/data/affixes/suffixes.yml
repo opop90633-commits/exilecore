@@ -2019,13 +2019,13 @@ minion_regen:
   mods:
     - { stat: life.regen, type: FLAT, value: "{value/10}", tags: [minion] }
 
-# 2026-10 PoE2：權杖的臨在範圍
+# 2026-10 PoE2：權杖的存在範圍
 presence_area:
   type: suffix
   group: presence_area
   spawn_tags: [sceptre]
   names: [之星骸, 之感召, 之引領, 之外延]
-  text: "增加 {value}% 臨在範圍"
+  text: "增加 {value}% 存在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     # 2026-10-26 照 poe2db：階數、需求等級、權重、數值（4 階 → 4 階）

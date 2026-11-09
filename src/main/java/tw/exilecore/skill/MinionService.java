@@ -640,7 +640,7 @@ public final class MinionService implements Listener, MinionHooks {
         return false;
     }
 
-    /** 2026-10-26（天賦樹「夥伴在你的臨在範圍內時」）：有沒有活著的夥伴（技能帶 companion 標籤）在 radius 格內。 */
+    /** 2026-10-26（天賦樹「夥伴在你的存在範圍內時」）：有沒有活著的夥伴（技能帶 companion 標籤）在 radius 格內。 */
     public boolean companionNear(final org.bukkit.entity.Player owner, final double radius) {
         for (final Minion minion : minions) {
             if (minion.owner.equals(owner.getUniqueId()) && !minion.decoy && minion.mob.isValid() && !minion.mob.isDead()
@@ -652,7 +652,7 @@ public final class MinionService implements Listener, MinionHooks {
         return false;
     }
 
-    /** 2026-10-26（天賦樹「臨在範圍內每有一個召喚物」）：radius 格內活著的召喚物數（幻身不算）。 */
+    /** 2026-10-26（天賦樹「存在範圍內每有一個召喚物」）：radius 格內活著的召喚物數（幻身不算）。 */
     public int countNear(final org.bukkit.entity.Player owner, final double radius) {
         int count = 0;
         for (final Minion minion : minions) {

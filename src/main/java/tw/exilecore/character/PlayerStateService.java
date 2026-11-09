@@ -624,6 +624,9 @@ public final class PlayerStateService {
             tw.exilecore.ascendancy.AscBuild.grantedSkills(plugin, extra, level, granted);
             // 面板跟著角色一起存檔（定期、登出）；2026-10-27：＋武器的品質；2026-10-29：脫下武器馬上拿掉賦予的技能（角色載入好了才拿）
             state.skills().setReservationFree(reservationFree(active)); // 2026-11-05 照 PoE2 空無墜飾：賦予的技能不用保留精魂
+            // 2026-11-10 照站長「切到武器組 II 再切回來，綁在左鍵的武器賦予技能會消失」：另一組武器賦予的技能留在面板（輔助、按鍵都在），
+            //   按下去自動切過去（SkillService.switchToSpareGrant）；這次之前切組就拿掉
+            state.skills().setSpareGranted(spareGranted(state));
             state.skills().syncGranted(granted, ascendancyQuality(grantedQuality(active), weaponGranted.keySet(), granted.keySet()), state.isLoaded());
             // 2026-11-04 照站長：戴著空座指環（bases 的 aura_slot）時技能面板多一格光環格
             int ringAura = 0; // 2026-11-04 照站長：取消僅限一個，每戴一個開一格（最多 2 格）
@@ -883,6 +886,18 @@ public final class PlayerStateService {
     }
 
     // 2026-11-05 照站長「物品等級 84 的傳奇，技能等級要是 20」：賦予技能的等級都走 SkillConfig.grantedLevelFor（傳奇 84 以上 20 級）
+    /** 2026-11-10：另一組武器（沒在用的主手、副手）賦予的技能代號（不看需求；切過去需求不符的照舊在那時不能用）。 */
+    private Set<String> spareGranted(final PlayerState state) {
+        if (plugin.items() == null || plugin.skills() == null) {
+            return Set.of();
+        }
+        final List<EquippedItem> spare = new ArrayList<>();
+        collect(spare, state, state.jewellery(PlayerState.SPARE_MAIN_SLOT), ItemSlot.MAIN_HAND, false);
+        collect(spare, state, state.jewellery(PlayerState.SPARE_OFF_SLOT), ItemSlot.OFF_HAND, false);
+        spare.removeIf(item -> item.base() == null);
+        return spare.isEmpty() ? Set.of() : Set.copyOf(grantedSkills(spare).keySet());
+    }
+
     private Map<String, Integer> grantedSkills(final List<EquippedItem> active) {
         if (plugin.items() == null || plugin.skills() == null) {
             return Map.of();

@@ -1399,7 +1399,7 @@ jr_presence_radius:
   group: jr_presence_radius
   spawn_tags: [r_ruby, r_sapphire]
   names: [遺時的]
-  text: "範圍內的核心天賦也各給：增加 {value}% 臨在範圍"
+  text: "範圍內的核心天賦也各給：增加 {value}% 存在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     - { tier: 1, ilvl: 1, weight: 1000, value: [8, 12] }

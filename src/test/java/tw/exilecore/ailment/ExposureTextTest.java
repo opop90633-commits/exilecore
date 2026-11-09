@@ -20,7 +20,7 @@ class ExposureTextTest {
         final List<Debuffs.Debuff> active = List.of(
                 new Debuffs.Debuff("exposure.fire", src, 100, 0, false, null, List.of(Modifier.flat(DamageType.FIRE.mitigationStat(), -20, "曝露")), 0),
                 new Debuffs.Debuff("oil_exposure", src, 60, 0, false, null, List.of(Modifier.flat(DamageType.COLD.mitigationStat(), -10, "火油曝露")), 0),
-                new Debuffs.Debuff("other", src, 60, 0, false, null, List.of(Modifier.flat(DamageType.LIGHTNING.mitigationStat(), -10, "臨在")), 0));
+                new Debuffs.Debuff("other", src, 60, 0, false, null, List.of(Modifier.flat(DamageType.LIGHTNING.mitigationStat(), -10, "存在範圍")), 0));
         final List<String> parts = AilmentService.exposureParts(active, 20, true);
         assertEquals(2, parts.size());
         assertTrue(parts.get(0).contains("曝·火") && parts.get(0).contains("4.0s"));

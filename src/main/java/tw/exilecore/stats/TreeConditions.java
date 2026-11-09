@@ -59,13 +59,13 @@ public final class TreeConditions {
     public static final String UNARMED = "unarmed";
     /** 任何藥劑效果中（生命或魔力藥劑的回復還在進行）。 */
     public static final String ANY_FLASK = "anyflask";
-    /** 臨在範圍裡有盟友（自己的召喚物、同隊的玩家）。 */
+    /** 存在範圍裡有盟友（自己的召喚物、同隊的玩家）。 */
     public static final String ALLY = "ally";
-    /** 臨在範圍裡有稀有或傳奇敵人（含 Boss）。 */
+    /** 存在範圍裡有稀有或傳奇敵人（含 Boss）。 */
     public static final String RARE_NEARBY = "raremob";
     /** 變身中（德魯伊的熊／狼人／飛龍形態：SkillService 的形態增益還在）。 */
     public static final String SHAPESHIFTED = "shapeshifted";
-    /** 夥伴（帶 companion 標籤的召喚物：荒原狼伴、灰狼隨…）活著而且在臨在範圍裡。 */
+    /** 夥伴（帶 companion 標籤的召喚物：荒原狼伴、灰狼隨…）活著而且在存在範圍裡。 */
     public static final String COMPANION = "companion";
     /** 2026-10-26：受統治者增益影響（元素統治者、不死統治者；tw.exilecore.skill.TreeMechanics 接上）。 */
     public static final String ARCHON = "archon";
@@ -187,7 +187,7 @@ public final class TreeConditions {
     public static final String RAGE_AT_LEAST = "rage";
     /** 至少 N 個圖騰。 */
     public static final String TOTEMS_AT_LEAST = "totems";
-    /** 臨在範圍裡自己的召喚物至少 N 隻。 */
+    /** 存在範圍裡自己的召喚物至少 N 隻。 */
     public static final String MINIONS_AT_LEAST = "minions";
     /** 近距離內至少 N 隻敵人。 */
     public static final String CLOSE_ENEMIES_AT_LEAST = "closeenemies";

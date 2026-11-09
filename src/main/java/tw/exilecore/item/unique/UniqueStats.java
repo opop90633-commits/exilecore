@@ -391,7 +391,7 @@ public final class UniqueStats {
     public static final String MANA_LEECH_ALSO_ES = "flag.mana_leech_also_es";
     /** 擊殺效果觸發兩次（掃興之人）。 */
     public static final String ON_KILL_TWICE = "flag.on_kill_twice";
-    /** 你臨在範圍內被任何人殺死的敵人算是你殺的（擊殺效果；幽墓束縛）。 */
+    /** 你存在範圍內被任何人殺死的敵人算是你殺的（擊殺效果；幽墓束縛）。 */
     public static final String PRESENCE_KILLS = "flag.presence_kills";
     /** 你其他的物品稀有度加成無效（只剩這件的；幽墓束縛）。 */
     public static final String RARITY_ONLY_THIS = "flag.rarity_only_this";
@@ -414,7 +414,7 @@ public final class UniqueStats {
     public static final String PHYSICAL_ELEMENTAL_AILMENTS = "flag.physical_elemental_ailments";
     /** 攻擊的所有傷害都累積電擊（磐石之拳的奇多可之流）。 */
     public static final String ATTACK_ALL_ELECTROCUTE = "flag.attack_all_electrocute";
-    /** 擊中時 x% 機率讓臨在範圍內的隊友獲得一顆怒星／磐星／銳星（磐石之拳的意識之緣）。 */
+    /** 擊中時 x% 機率讓存在範圍內的隊友獲得一顆怒星／磐星／銳星（磐石之拳的意識之緣）。 */
     public static final String ALLY_CHARGE_ON_HIT = "charge.ally_on_hit.";
     /**
      * 受到稀有、傳奇敵人的傷害有 x% 之後慢慢回成生命（主宰之觸；原作是「暴露破綻的敵人」——它對稀有、傳奇敵人暴露弱點）。
@@ -433,7 +433,7 @@ public final class UniqueStats {
     public static final String PER_INT_UNARMED_AREA = "per_int.unarmed_area";
     /** 無法偷取魔力（磐石之拳的意識之緣）。 */
     public static final String CANNOT_LEECH_MANA = "flag.cannot_leech_mana";
-    /** 你獲得戰星時，臨在範圍內的隊友也獲得一顆（意識之緣：與存在範圍內的友方共享能量球）。 */
+    /** 你獲得戰星時，存在範圍內的隊友也獲得一顆（意識之緣：與存在範圍內的友方共享能量球）。 */
     public static final String SHARE_CHARGES = "flag.share_charges";
 
     /** 獲得某種傷害為額外另一種的屬性鍵（{@link #GAIN_FROM}）。 */

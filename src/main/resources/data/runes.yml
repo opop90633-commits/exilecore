@@ -1209,7 +1209,7 @@ runes:
 # 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（PoE2 的 Idol，poe2db「Idol」31 顆；原作是燃燒豐碑的附身怪掉的）。
 #   跟符文一樣嵌進符文孔，名字都叫「魔偶符文・某某」。照原作每一顆只在兩種東西上有加成：某個部位（頭盔、胸甲、手套＝我們的腿甲、鞋子、盾、輕盾、法器）
 #   或武器（軍用武器、法杖或長杖），以及權杖（slots 的 sceptre）；別的嵌了沒效果（不給嵌）。一個角色僅限 1 顆（limit，第二顆沒效果）——2026-11-05 照 poe2db：蛇、猿、梟、貓、狼、野豬、熊、牛這 8 顆原作沒有 Limited to，不限顆數；這次之前 31 顆全部僅限 1 顆。
-#   權杖那條原作多半是「你存在範圍內的盟友（夥伴）…」：我們寫成夥伴（minion＋companion 標籤）的加成，不看在不在臨在範圍。
+#   權杖那條原作多半是「你存在範圍內的盟友（夥伴）…」：我們寫成夥伴（minion＋companion 標籤）的加成，不看在不在存在範圍。
 #   羈絆（bonded）跟符文一樣：只有昇華・聖賢智慧才有效果；原作的「命定」就是這個。
 #   掉落：地圖裡的軍團（map_events.yml 的 legion.idol_chance：將領、軍曹、士兵各自的機率），不走掉落表（drop_weight 0）。
 #   沒做的（我們沒有那個機制）在各顆的註解。
@@ -1252,7 +1252,7 @@ runes:
       feet:
         - { text: "增加 50% 戰吼的效果", stat: warcry.effect, type: INCREASED, value: 50 }
       sceptre:
-        - { text: "夥伴在你的臨在範圍時增加 15% 傷害", stat: damage@companion, type: INCREASED, value: 15 }
+        - { text: "夥伴在你的存在範圍時增加 15% 傷害", stat: damage@companion, type: INCREASED, value: 15 }
     bonded:
       slots:
         sceptre:
@@ -1265,13 +1265,13 @@ runes:
       head:
         - { text: "增加 15% 消耗效率", stat: skill.cost_efficiency, type: INCREASED, value: 15 }
       sceptre:
-        - { text: "夥伴在你的臨在範圍時增加 15% 魔力再生速度", stat: mana.regen@companion, type: INCREASED, value: 15 }
+        - { text: "夥伴在你的存在範圍時增加 15% 魔力再生速度", stat: mana.regen@companion, type: INCREASED, value: 15 }
     bonded:
       slots:
         head:
           - { text: "保留效率增加 15%", stat: aura.reservation, type: INCREASED, value: -15 }
         sceptre:
-          - { text: "夥伴在你的臨在範圍時增加 8% 生命回復率", stat: life.recovery_rate@companion, type: INCREASED, value: 8 }
+          - { text: "夥伴在你的存在範圍時增加 8% 生命回復率", stat: life.recovery_rate@companion, type: INCREASED, value: 8 }
   idol_egrin:   # Idol of Egrin（羈絆權杖的「減少詛咒區域爆發前延遲」沒做）
     name: 魔偶符文・埃格林
     level: 50
@@ -1306,7 +1306,7 @@ runes:
       head:
         - { text: "召喚物技能的保留效率增加 8%", stat: aura.reservation, type: INCREASED, value: -8, tags: [minion] }
       sceptre:
-        - { text: "夥伴在你的臨在範圍時增加 40% 護甲、閃避與能量護盾", mods: [ { stat: armour@companion, type: INCREASED, value: 40 }, { stat: evasion@companion, type: INCREASED, value: 40 }, { stat: es.max@companion, type: INCREASED, value: 40 } ] }
+        - { text: "夥伴在你的存在範圍時增加 40% 護甲、閃避與能量護盾", mods: [ { stat: armour@companion, type: INCREASED, value: 40 }, { stat: evasion@companion, type: INCREASED, value: 40 }, { stat: es.max@companion, type: INCREASED, value: 40 } ] }
     bonded:
       slots:
         sceptre:
@@ -1322,7 +1322,7 @@ runes:
         - { text: "獲得等同於 20% 閃避值的偏斜值", stat: deflection.from_evasion, type: FLAT, value: 20 }
       sceptre:
         - { text: "夥伴增加 10% 傷害", stat: damage, type: INCREASED, value: 10, tags: [minion, companion] }
-  idol_yeena:   # Idol of Yeena（「植物首次進入臨在範圍時立即過度生長」沒做：權杖那條改成植物技能持續時間，羈絆兩邊對調）
+  idol_yeena:   # Idol of Yeena（「植物首次進入存在範圍時立即過度生長」沒做：權杖那條改成植物技能持續時間，羈絆兩邊對調）
     name: 魔偶符文・伊娜
     level: 50
     limit: 1
@@ -1399,9 +1399,9 @@ runes:
     limit: 1
     slots:
       shield:
-        - { text: "夥伴在你的臨在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
+        - { text: "夥伴在你的存在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
       buckler:
-        - { text: "夥伴在你的臨在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
+        - { text: "夥伴在你的存在範圍時增加 15% 格擋率", stat: block.chance@companion, type: INCREASED, value: 15 }
       sceptre:
         - { text: "夥伴增加 30% 範圍效果", stat: skill.area, type: INCREASED, value: 30, tags: [minion, companion] }
     bonded:
@@ -1433,13 +1433,13 @@ runes:
       - { text: "減少 25% 精魂、主要技能增加 40% 獲得的能量", mods: [ { stat: spirit.max, type: INCREASED, value: -25 }, { stat: meta.energy_gain, type: INCREASED, value: 40 } ] }
     slots:
       sceptre:
-        - { text: "減少 40% 臨在範圍、光環技能增加 25% 效果", mods: [ { stat: presence.area, type: INCREASED, value: -40 }, { stat: aura.effect, type: INCREASED, value: 25 } ] }
+        - { text: "減少 40% 存在範圍、光環技能增加 25% 效果", mods: [ { stat: presence.area, type: INCREASED, value: -40 }, { stat: aura.effect, type: INCREASED, value: 25 } ] }
     bonded:
       weapon:
         - { text: "主要技能增加 25% 最大能量、保留效率增加 25%", mods: [ { stat: meta.energy_max, type: INCREASED, value: 25 }, { stat: aura.reservation, type: INCREASED, value: -25 } ] }
       slots:
         sceptre:
-          - { text: "臨在範圍內的友方每秒回復 3% 最大生命、減少 25% 生命回復率", mods: [ { stat: presence.ally_regen, type: FLAT, value: 3 }, { stat: life.recovery_rate, type: INCREASED, value: -25 } ] }
+          - { text: "存在範圍內的友方每秒回復 3% 最大生命、減少 25% 生命回復率", mods: [ { stat: presence.ally_regen, type: FLAT, value: 3 }, { stat: life.recovery_rate, type: INCREASED, value: -25 } ] }
   idol_pharisee:   # Idol of the Pharisee（「每失去十分之一魔力獲得額外物理傷害」「貧魔時技能速度」「暫時召喚物上限 +2」沒做）
     name: 魔偶符文・偽善
     level: 50
@@ -1484,7 +1484,7 @@ runes:
         chest:
           - { text: "+12% 冰冷抗性", stat: resist.cold, type: FLAT, value: 12 }
         sceptre:
-          - { text: "夥伴在你的臨在範圍時增加 8% 攻擊速度", stat: attack.speed@companion, type: INCREASED, value: 8 }
+          - { text: "夥伴在你的存在範圍時增加 8% 攻擊速度", stat: attack.speed@companion, type: INCREASED, value: 8 }
   idol_stoat:   # Stoat Idol（胸甲「所受傷害的 5% 穿透能量護盾」沒有這個機制，改成 +5% 最大能量護盾）
     name: 魔偶符文・白鼬
     level: 50
@@ -1499,7 +1499,7 @@ runes:
         chest:
           - { text: "+12% 閃電抗性", stat: resist.lightning, type: FLAT, value: 12 }
         sceptre:
-          - { text: "夥伴在你的臨在範圍時增加 25% 傷害", stat: damage@companion, type: INCREASED, value: 25 }
+          - { text: "夥伴在你的存在範圍時增加 25% 傷害", stat: damage@companion, type: INCREASED, value: 25 }
   idol_snake:   # Snake Idol（羈絆手套「痕跡效果」沒做）
     name: 魔偶符文・蝮蛇
     level: 50
@@ -1588,7 +1588,7 @@ runes:
       legs:
         - { text: "擊中時獲得 1 點怒氣", stat: rage.on_hit, type: FLAT, value: 1 }
       sceptre:
-        - { text: "臨在範圍內的友方每秒回復 0.5% 最大生命", stat: presence.ally_regen, type: FLAT, value: 0.5 }
+        - { text: "存在範圍內的友方每秒回復 0.5% 最大生命", stat: presence.ally_regen, type: FLAT, value: 0.5 }
     bonded:
       slots:
         legs:
@@ -1652,7 +1652,7 @@ runes:
       chest:
         - { text: "嵌在這件上的符文與魔偶獲得羈絆加成", stat: local.rune_bonded, type: FLAT, value: 1 }
       sceptre:
-        - { text: "增加 50% 臨在範圍", stat: presence.area, type: INCREASED, value: 50 }
+        - { text: "增加 50% 存在範圍", stat: presence.area, type: INCREASED, value: 50 }
     bonded:
       slots:
         chest:

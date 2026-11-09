@@ -147,7 +147,7 @@ public final class MonsterListener implements Listener {
                     plugin.combat().killEffects().onMinionKill(owner, entity);
                 }
             }
-            // 2026-10-28 照 PoE2（幽墓束縛）：在你臨在範圍內被任何人殺死的敵人算是你殺的（擊殺效果）
+            // 2026-10-28 照 PoE2（幽墓束縛）：在你存在範圍內被任何人殺死的敵人算是你殺的（擊殺效果）
             if (plugin.combat().killEffects() != null) {
                 for (final Player near : entity.getWorld().getPlayers()) {
                     if (near == killer || !near.isOnline() || near.isDead() || !plugin.players().get(near).hasCharacter()) {

@@ -188,7 +188,7 @@ class TreeConditionsTest {
     @Test
     void shapeshiftCompanionAndRageTiersAreInTheTree() {
         assertNotNull(find(TreeConditions.SHAPESHIFTED, StatKeys.DAMAGE), "「變身時，增加 10% 傷害」");
-        assertNotNull(find(TreeConditions.COMPANION, StatKeys.DAMAGE), "「夥伴在你的臨在範圍內時，增加 10% 傷害」");
+        assertNotNull(find(TreeConditions.COMPANION, StatKeys.DAMAGE), "「夥伴在你的存在範圍內時，增加 10% 傷害」");
         final Modifier rage30 = find("rage30", StatKeys.ARMOUR);
         assertNotNull(rage30, "「每點怒氣增加 1% 護甲」拆成每 5 點一階");
         assertEquals(0.05, rage30.value(), 1e-9);

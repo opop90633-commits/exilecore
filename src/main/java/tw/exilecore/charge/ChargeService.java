@@ -311,7 +311,7 @@ public final class ChargeService implements Listener {
 
     /** 能量連結（Conduit）：這顆戰星給你存在範圍內的每個隊友（不給你；沒有隊友就沒了）。 */
     /**
-     * 2026-10-28 照 PoE2（磐石之拳的意識之緣）：給臨在範圍內的隊友一顆（自己不拿）。
+     * 2026-10-28 照 PoE2（磐石之拳的意識之緣）：給存在範圍內的隊友一顆（自己不拿）。
      * 擊中時擲 charge.ally_on_hit.代號 的機率（HitEffects 呼叫）。
      */
     public void grantAllies(final Player player, final String chargeId) {
@@ -371,7 +371,7 @@ public final class ChargeService implements Listener {
         final boolean grew = bag.gain(plugin.getServer().getCurrentTick(), max, durationTicks(type, sheet));
         plugin.players().conditions().onChargeGained(player, type.id(), plugin.getServer().getCurrentTick()); // 2026-10-26：天賦樹「最近獲得過銳星」
         if (!conduitPassing && tw.exilecore.stats.StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.SHARE_CHARGES)) {
-            conduit(player, type, sheet); // 2026-10-28 照 PoE2（意識之緣）：與臨在範圍內的隊友共享戰星（隊友也拿一顆）
+            conduit(player, type, sheet); // 2026-10-28 照 PoE2（意識之緣）：與存在範圍內的隊友共享戰星（隊友也拿一顆）
         }
         if (grew && bag.count() >= max && tw.exilecore.stats.StatKeys.flag(sheet, LOSE_AT_MAX + type.id())) {
             // 2026-10-24（赤焰導管）：滿了就全部失去，並讓自己感電

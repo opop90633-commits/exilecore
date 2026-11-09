@@ -2090,7 +2090,7 @@ j2_presence_area:
   group: j2_presence_area
   spawn_tags: [ruby, sapphire]
   names: [星骸的, 精煉的, 雕琢的]
-  text: "增加 {value}% 臨在範圍"
+  text: "增加 {value}% 存在範圍"
   chips: [aura]   # PoE2 的標籤（PresenceRadius）
   tiers:
     # 2026-10-27 照 PoE2：珠寶詞綴只有一個範圍（等級 1，權重每條一樣）；這次之前三階：T0 物品等級 75 權重 122 value: [22, 25]；T1 物品等級 50 權重 370 value: [19, 21]；T2 物品等級 1 權重 1058 value: [15, 18]

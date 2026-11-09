@@ -421,6 +421,9 @@ public final class SkillMenu extends Menu {
         if (!entry.granted()) {
             return List.of();
         }
+        if (loadout.onSpareSet(entry)) { // 2026-11-10 照站長：另一組武器給的，按下去自動切過去
+            return List.of("<#b4a0ff>⚔ 武器賦予的技能", "<#ffd27f>另一組武器賦予的：按下去會自動切換武器組（輔助、按鍵都留著）");
+        }
         if (loadout.dormant(entry)) {
             return List.of("<#b4a0ff>⚔ 武器賦予的技能", "<red>沒拿著賦予這個技能的武器：不能用（輔助、按鍵都留著）");
         }

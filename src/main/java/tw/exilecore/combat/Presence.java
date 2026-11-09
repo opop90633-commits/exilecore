@@ -97,7 +97,7 @@ public final class Presence {
             for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING, DamageType.CHAOS}) {
                 final double resist = sheet.flat(StatKeys.PRESENCE_RESIST + type.tag(), Set.of());
                 if (resist != 0) {
-                    mods.add(Modifier.flat(type.mitigationStat(), -resist, "臨在"));
+                    mods.add(Modifier.flat(type.mitigationStat(), -resist, "存在範圍"));
                 }
             }
             if (StatKeys.flag(sheet, tw.exilecore.item.unique.UniqueStats.PRESENCE_EXPOSURE)) {
@@ -114,7 +114,7 @@ public final class Presence {
             }
             final double weaken = sheet.flat(StatKeys.PRESENCE_WEAKEN, Set.of());
             if (weaken > 0) {
-                mods.add(Modifier.more(StatKeys.DAMAGE, -Math.min(90, weaken) / 100.0, "臨在"));
+                mods.add(Modifier.more(StatKeys.DAMAGE, -Math.min(90, weaken) / 100.0, "存在範圍"));
             }
             final double taken = Math.max(0, sheet.flat(StatKeys.PRESENCE_TAKEN, Set.of())) / 100.0;
             final double slow = Math.max(0, Math.min(90, sheet.flat(StatKeys.PRESENCE_SLOW, Set.of())

@@ -407,9 +407,12 @@ class MinionTest {
         assertEquals(16.2, MinionAbilities.entropyPerSecond(1)[0], 0.05);
         assertEquals(163.2, MinionAbilities.entropyPerSecond(20)[1], 0.05);
         // 逐級的表照原作寫到 40 級
-        assertEquals(4678, MinionAbilities.range(MinionAbilities.ROAR_COLD, 20)[1], 1e-9);
-        assertEquals(8690377, MinionAbilities.range(MinionAbilities.ROAR_COLD, 40)[1], 1e-9);
-        assertEquals(3655, MinionAbilities.range(MinionAbilities.ARMOUR_COLD, 21)[1], 1e-9);
+        // 2026-11-10 照站長「改成原作的公式」：召喚物等級 = 寶石 × 2 套效用公式（poe2db 骷髏巨獸 68 級：803–1205）
+        assertEquals(188, MinionAbilities.range(MinionAbilities.ROAR_COLD, 20)[0], 1e-9);
+        assertEquals(282, MinionAbilities.range(MinionAbilities.ROAR_COLD, 20)[1], 1e-9);
+        assertEquals(803, MinionAbilities.range(MinionAbilities.ROAR_COLD, 34)[0], 1e-9, "34 級寶石 = 68 級召喚物");
+        assertEquals(1205, MinionAbilities.range(MinionAbilities.ROAR_COLD, 34)[1], 1e-9);
+        assertEquals(160, MinionAbilities.range(MinionAbilities.ARMOUR_COLD, 20)[1], 1e-9);
         assertEquals(27243, MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 20), 1e-9);
         assertEquals(136534, MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 40), 1e-9);
         assertTrue(MinionAbilities.at40(MinionAbilities.HEAL_PER_MINUTE, 41) > 136534, "超過 40 級照最後兩級的比例往上");

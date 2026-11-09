@@ -907,6 +907,12 @@ public final class FlaskService {
             if (base == null || base.kind() != FlaskKind.LIFE) {
                 continue;
             }
+            // 2026-11-10 照站長「非傳奇生命藥劑那個效果有作用嗎」（PoE2 綺夢：Effects of non-Unique Life Flasks always apply）：
+            //   藥劑欄放的是傳奇生命藥劑就沒有效果；這次之前傳奇的也一直套用
+            final ItemData flaskItem = itemData(item, base);
+            if (flaskItem != null && flaskItem.rarity() == tw.exilecore.item.Rarity.UNIQUE) {
+                continue;
+            }
             final PlayerState state = plugin.players().get(player);
             if (state.isFullLife() || tw.exilecore.ascendancy.AscendancyEffects.flaskNoLife(player)) { // 2026-11-01：滿血照沒被保留的生命（PlayerState#isFullLife）
                 continue;

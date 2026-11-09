@@ -1310,7 +1310,7 @@ uniques:
       stats:
         - { stat: mana.on_kill, type: FLAT, value: 3 }
     - from: 7
-      text: "在你臨在範圍內被任何人擊殺的敵人，算是你擊殺的"
+      text: "在你存在範圍內被任何人擊殺的敵人，算是你擊殺的"
       stats:
         - { stat: flag.presence_kills, type: FLAT, value: 1 }
 
@@ -1473,7 +1473,7 @@ uniques:
       stats:
         - { stat: flag.cannot_leech_mana, type: FLAT, value: 1 }
     - from: 5
-      text: "擊中時各有 {value}% 機率讓臨在範圍內的隊友獲得一顆怒星、磐星、銳星"
+      text: "擊中時各有 {value}% 機率讓存在範圍內的隊友獲得一顆怒星、磐星、銳星"
       value: [5, 10]
       stats:
         - { stat: charge.ally_on_hit.frenzy, type: FLAT, value: "{value}" }

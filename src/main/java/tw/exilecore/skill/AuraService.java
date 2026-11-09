@@ -1335,7 +1335,7 @@ final class AuraService implements Listener {
     static final long PRESENCE_CHILL_TICKS = 16;
 
     /**
-     * 2026-10-28 照 PoE2 寒心（Heart of Ice，常駐光環）：你存在範圍（臨在，6 格，吃臨在範圍）內的敵人一直被冰緩，
+     * 2026-10-28 照 PoE2 寒心（Heart of Ice，常駐光環）：你存在範圍（臨在，6 格，吃存在範圍）內的敵人一直被冰緩，
      * 冰緩照「像造成 x 到 y 點冰冷傷害」（逐級，吃這個技能的加成）算，冰緩效果吃光環效果（原作 skill_chill_magnitude_is_aura_magnitude）。
      * 這次之前寒心是冷卻 4 秒的寒氣爆發（真的打人）。
      */

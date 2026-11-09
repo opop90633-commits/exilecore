@@ -122,7 +122,7 @@ public final class ConditionTracker {
         this.plugin = plugin;
     }
 
-    /** 別的系統接上條件（變身中、夥伴在臨在範圍內…）：之後那個條件照這個判斷。 */
+    /** 別的系統接上條件（變身中、夥伴在存在範圍內…）：之後那個條件照這個判斷。 */
     public void register(final String condition, final BiPredicate<Player, PlayerState> provider) {
         providers.put(condition, provider);
     }
@@ -591,7 +591,7 @@ public final class ConditionTracker {
         return count;
     }
 
-    /** 臨在範圍裡有沒有盟友：自己的召喚物、同隊的玩家、虛空形態的幻影（2026-11-01）。 */
+    /** 存在範圍裡有沒有盟友：自己的召喚物、同隊的玩家、虛空形態的幻影（2026-11-01）。 */
     private boolean allyNear(final Player player, final double radius) {
         // 2026-11-01 照站長（原作的幻影算你的友軍）：虛空形態的幻影也算
         if (plugin.skills() != null && plugin.skills().astralImageNear(player, radius)) {

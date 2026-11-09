@@ -1148,7 +1148,7 @@ unveiled_d_helmet_presence:
   group: unveiled_d_helmet_presence
   spawn_tags: [helmet]
   names: [之淵臨, 之黯臨]
-  text: "增加 {value}% 臨在範圍"
+  text: "增加 {value}% 存在範圍"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [25, 35] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [18, 24] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
@@ -1746,13 +1746,13 @@ unveiled_j_aura:
   group: unveiled_j_aura
   spawn_tags: [ruby, emerald, sapphire]
   names: [淵光的, 黯光的]
-  text: "增加 {value}% 光環效果、增加 {b}% 臨在範圍"
+  text: "增加 {value}% 光環效果、增加 {b}% 存在範圍"
   tiers:
     - { tier: 1, ilvl: 60, weight: 500, value: [2, 4], b: [8, 15] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 273   # 2026-10-28 站長：前三階權重 ×0.5（1000 → 500）
     - { tier: 2, ilvl: 1, weight: 700, value: [1, 2], b: [5, 10] }   # 2026-10-27 照 PoE2 原始權重（每階一樣）；這次之前 727   # 2026-10-28 站長：前三階權重 ×0.7（1000 → 700）
   mods:
     - { stat: aura.effect, type: INCREASED, value: "{value}" }
-    - { stat: presence.area, type: INCREASED, value: "{b}" }   # 2026-10：PoE2 這條還帶臨在範圍
+    - { stat: presence.area, type: INCREASED, value: "{b}" }   # 2026-10：PoE2 這條還帶存在範圍
 
 unveiled_j_bleed:
   type: prefix

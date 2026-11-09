@@ -2479,6 +2479,18 @@ public final class SkillService {
         return true;
     }
 
+    /**
+     * 2026-11-10 照站長「武器組 I 綁了武器賦予的技能，切到 II 再切回來綁定會消失」（PoE2：另一組武器的技能按下去自動換組）：
+     * 這個鍵綁的是另一組武器賦予的技能（現在不能用、留在面板上的）就先切過去。回傳有沒有換。
+     */
+    boolean switchToSpareGrant(final Player player, final PlayerState state, final int key) {
+        if (plugin.characters() == null || !state.skills().onSpareSet(state.skills().skill(state.skills().bound(key)))) {
+            return false;
+        }
+        plugin.characters().swapWeaponSet(player, false);
+        return true;
+    }
+
     void perform(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
         final java.util.UUID previousFx = Fx.source(player.getUniqueId()); // 2026-10：隱藏別人的技能特效
         try {
@@ -2490,7 +2502,9 @@ public final class SkillService {
 
     private void performInner(final Player player, final SkillRuntime runtime, final int key, final LivingEntity target, final long now) {
         final PlayerState state = plugin.players().get(player);
-        switchWeaponSetFor(player, state, resolve(state, key)); // 2026-11-08 照站長「武器切換系統」：綁了另一組武器的技能先切過去（不延遲）
+        if (!switchToSpareGrant(player, state, key)) { // 2026-11-10：另一組武器賦予的技能先切過去
+            switchWeaponSetFor(player, state, resolve(state, key)); // 2026-11-08 照站長「武器切換系統」：綁了另一組武器的技能先切過去（不延遲）
+        }
         final StatSheet sheet = plugin.players().sheet(player); // 剛換武器時先重算，普攻與標籤才會跟著新武器
         final LivingEntity preferred = target != null && target.getWorld().equals(player.getWorld()) ? target : null;
         final Resolved pressed = resolve(state, key);
@@ -4595,9 +4609,12 @@ public final class SkillService {
             //   所以一輪冰甲只炸一份；冰甲的補充速度是 霜術士隻數 ÷ 冰甲冷卻（12 秒），重卒錯開冷卻輪流吼最多就這麼快。
             //   整體 = 一隻重卒的指令每秒傷害 × min(重卒隻數, 霜術士隻數 × 咆哮冷卻 ÷ 冰甲冷卻)；沒有霜術士當一隻重卒的量。
             //   其他指令（死亡風暴、毒氣箭、從天而降）每隻各打各的照乘隻數。這次之前直接乘重卒隻數（9 隻重卒估成 9 倍）
+            // 2026-11-10 照站長「網頁估算的爆裂點數要修」（燒紙：網頁 24 億、假人實測 2.8 億）：按一次指令是全部冷卻好的重卒「同時」吼
+            //   （MinionService.each），冷卻一直同步、不會錯開輪流吼；第一隻吃掉冰甲，其他幾隻沒得炸。所以會炸的咆哮每 8 秒最多一次，
+            //   冰甲補得不夠快時再乘 霜術士隻數 × 咆哮冷卻 ÷ 冰甲冷卻（最多 1）；沒有霜術士（只炸凍結的敵人）也是一次。
+            //   這次之前當成重卒會錯開輪流吼：乘 min(重卒隻數, 霜術士隻數 × 8 ÷ 12)，7 隻重卒、7 隻霜術士估成 4.67 倍
             final double commandPer = MinionAbilities.BRUTE.equals(definition.id())
-                    ? each[5] * Math.min(count, roar[1] > 0 ? roar[1] * MinionAbilities.command(MinionAbilities.BRUTE).cooldown()
-                            / MinionAbilities.command(MinionAbilities.FROST).cooldown() : 1) / count
+                    ? each[5] * roarShare(roar[1]) / count
                     : each[5];
             final double eachDps = each[0] + commandPer;
             if (eachDps <= 0) {
@@ -5069,6 +5086,15 @@ public final class SkillService {
      * 2026-11-08：/stats、網頁估震地咆哮一次有幾個爆裂點——技能欄上有霜術士（冰甲）就當你近戰的召喚物都有冰甲、圍在目標旁邊
      * （每個爆裂點各打一下；遠程、會飛的站在射程外圍，爆裂打不到目標，不算），沒有就當一隻凍結的敵人。
      */
+    /**
+     * 2026-11-10：重卒全部的震地咆哮，估算時算幾隻重卒的量（一隻重卒的指令每秒傷害乘這個）：同時吼只有一隻炸得到，
+     * 冰甲補充不夠快時再打折（霜術士隻數 × 咆哮冷卻 ÷ 冰甲冷卻，最多 1）；沒有霜術士（mages 0）是 1。
+     */
+    static double roarShare(final int mages) {
+        return mages <= 0 ? 1 : Math.min(1, mages * MinionAbilities.command(MinionAbilities.BRUTE).cooldown()
+                / MinionAbilities.command(MinionAbilities.FROST).cooldown());
+    }
+
     private int[] roarBursts(final PlayerState state, final StatSheet sheet, final AuraView view) {
         boolean frost = false;
         int mages = 0;

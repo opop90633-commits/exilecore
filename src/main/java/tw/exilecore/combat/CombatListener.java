@@ -1362,7 +1362,7 @@ public final class CombatListener implements Listener {
             if (plugin.skills() != null && plugin.skills().treeMechanics() != null) {
                 plugin.skills().treeMechanics().leechedLife(player, effective, life); // 2026-10-26 照 PoE2 天賦：夥伴也偷取同樣多的生命
             }
-            allyLeech(player, effective, life); // 2026-11-07 照站長「瓦爾傳奇照原作」：臨在範圍內的友方也偷取同樣多
+            allyLeech(player, effective, life); // 2026-11-07 照站長「瓦爾傳奇照原作」：存在範圍內的友方也偷取同樣多
         }
         if (mana > 0) {
             final double now = Math.min(mana * instant, state.maxMana() * INSTANT_LEECH_CAP);
@@ -1379,7 +1379,7 @@ public final class CombatListener implements Listener {
 
     /**
      * 2026-11-07 照站長「瓦爾傳奇照原作」（PoE2「Leeching Life from your Hits causes Allies in your Presence to also Leech the same amount of Life」，
-     * {@code presence.ally_leech_life}，值 100 = 一樣多）：你的擊中偷取生命時，臨在範圍內的隊友與召喚物（你的、隊友的）也偷取 x% 的量，
+     * {@code presence.ally_leech_life}，值 100 = 一樣多）：你的擊中偷取生命時，存在範圍內的隊友與召喚物（你的、隊友的）也偷取 x% 的量，
      * 各自照自己的偷取上限（隊友 PlayerState.addHitLeech、召喚物 MinionHooks.leech）。這次之前沒有。
      */
     private void allyLeech(final Player player, final StatSheet effective, final double life) {

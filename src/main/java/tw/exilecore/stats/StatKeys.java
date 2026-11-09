@@ -667,13 +667,13 @@ public final class StatKeys {
     // ---- 2026-10：傳奇的新機制 ----
     /** 臨在（{@link tw.exilecore.combat.Presence}）：範圍內的敵人抗性降低 x%（後面接 fire／cold／lightning／chaos；FLAT）。 */
     public static final String PRESENCE_RESIST = "presence.resist.";
-    /** FLAT：臨在範圍內的敵人受到的傷害增加 x%。 */
+    /** FLAT：存在範圍內的敵人受到的傷害增加 x%。 */
     public static final String PRESENCE_TAKEN = "presence.taken";
-    /** FLAT：臨在範圍內的敵人造成的傷害更少 x%。 */
+    /** FLAT：存在範圍內的敵人造成的傷害更少 x%。 */
     public static final String PRESENCE_WEAKEN = "presence.weaken";
-    /** FLAT：臨在範圍內的敵人移動速度變慢 x%。 */
+    /** FLAT：存在範圍內的敵人移動速度變慢 x%。 */
     public static final String PRESENCE_SLOW = "presence.slow";
-    /** FLAT：臨在範圍內的敵人每秒受到你最大生命 x% 的火焰傷害。 */
+    /** FLAT：存在範圍內的敵人每秒受到你最大生命 x% 的火焰傷害。 */
     public static final String PRESENCE_BURN = "presence.burn";
     /** INCREASED：臨在的範圍（面積）。 */
     public static final String PRESENCE_AREA = "presence.area";

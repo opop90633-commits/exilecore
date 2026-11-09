@@ -6901,7 +6901,7 @@ many_hands_idol:        # 2026-10-27 照 PoE2 0.5 的「Idol of Uldurn」（原�
       value: [10, 20]
       stats:
         - { stat: attr.dex, type: FLAT, value: "{value}" }
-    - text: "減少 {value}% 臨在範圍"
+    - text: "減少 {value}% 存在範圍"
       value: [20, 40]
       stats:
         - { stat: presence.area, type: INCREASED, value: "-{value}" }
@@ -6988,7 +6988,7 @@ gilded_greed_plate:        # 2026-10-27 照 PoE2 0.5 的「Greed's Embrace」（
       stats:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
   vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
-    - text: "減少 100% 臨在範圍"   # 2026-11-07 照 PoE2；Presence.radius 下限 0.1（半徑剩約 32%）
+    - text: "減少 100% 存在範圍"   # 2026-11-07 照 PoE2；Presence.radius 下限 0.1（半徑剩約 32%）
       stats:
         - { stat: presence.area, type: INCREASED, value: -100 }
     - text: "被包圍時，攻擊增加 {value}% 傷害"   # 2026-11-07 原作「(-40—40)% reduced Attack Damage while Surrounded」，對稱範圍改寫成增加
@@ -7927,7 +7927,7 @@ alpha_howl_cap:        # 2026-10-27 照 PoE2 0.5 的「Alpha's Howl」（原作�
       value: [50, 75]
       stats:
         - { stat: resist.cold, type: FLAT, value: "{value}" }
-    - text: "臨在範圍的半徑加倍"
+    - text: "存在範圍的半徑加倍"
       stats:
         - { stat: presence.area, type: INCREASED, value: 300 }
 
@@ -9131,7 +9131,7 @@ gravedark_sceptre:        # 2026-10-27 照 PoE2 0.5 的「The Dark Defiler」（
       value: [10, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "{value}" }
-    - text: "臨在範圍裡每有一隻召喚物，獲得 5% 傷害為額外的混沌傷害（最多算 12 隻）"
+    - text: "存在範圍裡每有一隻召喚物，獲得 5% 傷害為額外的混沌傷害（最多算 12 隻）"
       stats:
         - { stat: damage.extra.chaos@minions1, type: FLAT, value: 5 }
         - { stat: damage.extra.chaos@minions2, type: FLAT, value: 5 }
@@ -9561,7 +9561,7 @@ tombgrip:        # 2026-10-28 照 PoE2 0.5 的「Gravebind」（原作有、我�
       value: [4, 6]
       stats:
         - { stat: mana.per_kill, type: FLAT, value: "{value}" }
-    - text: "在你臨在範圍內被任何人擊殺的敵人，算是你擊殺的"
+    - text: "在你存在範圍內被任何人擊殺的敵人，算是你擊殺的"
       stats:
         - { stat: flag.presence_kills, type: FLAT, value: 1 }
 
@@ -9757,7 +9757,7 @@ mindtouch:        # 2026-10-28 照 PoE2 0.5 的「Lochtonial Caress」（原作�
       value: [10, 15]
       stats:
         - { stat: mana.max, type: INCREASED, value: "-{value}" }
-    - text: "與臨在範圍內的隊友共享戰星：你獲得戰星時，他們也獲得一顆"
+    - text: "與存在範圍內的隊友共享戰星：你獲得戰星時，他們也獲得一顆"
       stats:
         - { stat: flag.share_charges, type: FLAT, value: 1 }
 
@@ -10657,7 +10657,7 @@ red_sun_greathelm:        # 2026-11-07 照 PoE2 0.5 的「Corona of the Red Sun�
     - text: "增加 25% 光照範圍"   # 2026-11-07 新機制（NEEDS：light.radius；我們只有星脈深坑有光照，接深坑的光照範圍；之前黑日巨盔的同類詞綴沒做）
       stats:
         - { stat: light.radius, type: INCREASED, value: 25 }
-    - text: "你的擊中偷取生命時，你臨在範圍內的友方也偷取同樣多的生命"   # 新機制（NEEDS：presence.ally_leech_life）
+    - text: "你的擊中偷取生命時，你存在範圍內的友方也偷取同樣多的生命"   # 新機制（NEEDS：presence.ally_leech_life）
       stats:
         - { stat: presence.ally_leech_life, type: FLAT, value: 100 }
   vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
@@ -10665,7 +10665,7 @@ red_sun_greathelm:        # 2026-11-07 照 PoE2 0.5 的「Corona of the Red Sun�
       value: [1, 2]
       stats:
         - { stat: skill.level, type: FLAT, value: "{value}", tags: [minion] }
-    - text: "增加 {value}% 臨在範圍"
+    - text: "增加 {value}% 存在範圍"
       value: [25, 50]
       stats:
         - { stat: presence.area, type: INCREASED, value: "{value}" }
@@ -10944,7 +10944,7 @@ doryani_prototype:        # 2026-11-07 照 PoE2 0.5 的「Doryani's Prototype」
     - text: "護甲的 100% 也套用在閃電傷害上"
       stats:
         - { stat: armour.elemental, type: FLAT, value: 100, tags: [lightning] }   # DamageCalculator 照傷害類型的標籤查（只算閃電）
-    - text: "你臨在範圍內的敵人，閃電抗性跟你的一樣"   # 新機制（NEEDS：presence.lightning_resist_equal，combat.Presence）
+    - text: "你存在範圍內的敵人，閃電抗性跟你的一樣"   # 新機制（NEEDS：presence.lightning_resist_equal，combat.Presence）
       stats:
         - { stat: presence.lightning_resist_equal, type: FLAT, value: 1 }
     - text: "閃電抗性不影響你受到的閃電傷害"   # 新機制（NEEDS：flag.lightning_resist_ignored）
@@ -10955,7 +10955,7 @@ doryani_prototype:        # 2026-11-07 照 PoE2 0.5 的「Doryani's Prototype」
       value: [10, 20]
       stats:
         - { stat: penetration, type: FLAT, value: "{value}", tags: [lightning] }
-    - text: "{value}% 閃電抗性"   # (-60—60)% to Lightning Resistance（配原本的「臨在範圍的敵人閃電抗性跟你一樣」）
+    - text: "{value}% 閃電抗性"   # (-60—60)% to Lightning Resistance（配原本的「存在範圍的敵人閃電抗性跟你一樣」）
       value: [-60, 60]
       stats:
         - { stat: resist.lightning, type: FLAT, value: "{value}" }
@@ -11150,7 +11150,7 @@ zerphi_serape:        # 2026-11-07 照 PoE2 0.5 的「Zerphi's Serape」（poe2d
       value: [-30, 30]
       stats:
         - { stat: mana.regen, type: INCREASED, value: "-{value}" }
-    - text: "噬魂者：臨在範圍內有敵人死掉時吞下牠的靈魂，每個靈魂增加 1% 技能速度（最多 50 個；4 秒沒吞到，每 0.5 秒少一個）"   # 新機制（NEEDS：flag.soul_eater；怪物版是 monster.soul_eater）
+    - text: "噬魂者：存在範圍內有敵人死掉時吞下牠的靈魂，每個靈魂增加 1% 技能速度（最多 50 個；4 秒沒吞到，每 0.5 秒少一個）"   # 新機制（NEEDS：flag.soul_eater；怪物版是 monster.soul_eater）
       stats:
         - { stat: flag.soul_eater, type: FLAT, value: 1 }
   vaal_mods:   # 2026-11-07 照 PoE2 的瓦爾栽培寶珠（Cultivated Uniques）：已腐化的這件用蝕培石時，隨機 1～2 條原本的詞綴換成這裡的
@@ -11432,11 +11432,11 @@ flesh_poppet_talisman:        # 2026-11-07 照 PoE2 0.5 的「The Flesh Poppet�
         - { stat: attr.str, type: FLAT, value: "{value}" }
         - { stat: attr.dex, type: FLAT, value: "{value}" }
         - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "減少 {value}% 臨在範圍"
+    - text: "減少 {value}% 存在範圍"
       value: [30, 40]
       stats:
         - { stat: presence.area, type: INCREASED, value: "-{value}" }
-    - text: "變形成野獸型態時，從臨在範圍內的每一個敵人身上複製一條隨機詞綴"   # 新機制（NEEDS：shapeshift.copy_mods，照 steal.mods 的偷詞綴）
+    - text: "變形成野獸型態時，從存在範圍內的每一個敵人身上複製一條隨機詞綴"   # 新機制（NEEDS：shapeshift.copy_mods，照 steal.mods 的偷詞綴）
       stats:
         - { stat: shapeshift.copy_mods, type: FLAT, value: 1 }
     - text: "這樣獲得的詞綴 30 秒後、或下一次變形時失去"   # 跟上一條同一個機制（NEEDS：shapeshift.copy_mods_duration，秒數）

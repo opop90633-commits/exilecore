@@ -520,6 +520,12 @@ public final class SkillLoadout {
      */
     private java.util.Map<String, Integer> grantedNow = java.util.Map.of();
     /**
+     * 2026-11-10 照站長「武器組 I 綁了武器賦予的技能，切到 II 再切回來綁定會消失」（PoE2：另一組武器賦予的技能留在技能列，按下去自動切過去）：
+     * 另一組武器（沒在用的那一組）賦予的技能代號（不存檔，屬性表重算時一起給）。這些技能脫下時不拿掉：輔助、按鍵、光環格都留著，
+     * 按下去由 SkillService 先切武器組；這次之前切組就把它拿掉（輔助退回背包、按鍵回到普攻），切回來放到第一個空格。
+     */
+    private java.util.Set<String> spareGranted = java.util.Set.of();
+    /**
      * 2026-10-26 照 PoE2：屬性需求不足的技能寶石（技能代號 → 原因；不存檔，屬性表算完時重算，見 tw.exilecore.skill.GemAttributes）。
      * 跟沒拿著武器的賦予技能一樣不能用（光環、常駐關掉），但按鍵還是指著它（按下去提示缺什麼，不會變成普攻）。
      */
@@ -955,6 +961,21 @@ public final class SkillLoadout {
         return list;
     }
 
+    /** 2026-11-10：另一組武器（沒在用的）賦予的技能代號（唯讀）。 */
+    public java.util.Set<String> spareGranted() {
+        return spareGranted;
+    }
+
+    /** 2026-11-10：設定另一組武器賦予的技能（PlayerStateService 每次重算，在 {@link #syncGranted} 之前）。 */
+    public void setSpareGranted(final java.util.Set<String> skills) {
+        spareGranted = skills == null ? java.util.Set.of() : java.util.Set.copyOf(skills);
+    }
+
+    /** 2026-11-10：這個賦予的技能現在不能用、但另一組武器有給（按下去要先切武器組）。 */
+    public boolean onSpareSet(final Entry entry) {
+        return entry != null && entry.granted() && !grantedNow.containsKey(entry.skillId()) && spareGranted.contains(entry.skillId());
+    }
+
     /** 2026-10-26：身上的武器現在賦予的技能（技能代號 → 等級，唯讀）。 */
     public java.util.Map<String, Integer> grantedNow() {
         return grantedNow;
@@ -994,7 +1015,9 @@ public final class SkillLoadout {
         if (removeMissing) {
             for (int position = 0; position < MAX_SKILLS; position++) {
                 final Entry entry = skills[position];
-                if (entry != null && entry.granted() && !entry.legacySockets() && !grantedNow.containsKey(entry.skillId())) {
+                // 2026-11-10 照站長：另一組武器給的不拿（切回來輔助、按鍵都還在）；這次之前切武器組也拿掉
+                if (entry != null && entry.granted() && !entry.legacySockets() && !grantedNow.containsKey(entry.skillId())
+                        && !spareGranted.contains(entry.skillId())) {
                     pendingOverflow.addAll(overflow(entry, 0));
                     remove(position);
                     changed = true;
@@ -1097,6 +1120,7 @@ public final class SkillLoadout {
         System.arraycopy(binds, 0, copy.binds, 0, BIND_SLOTS);
         System.arraycopy(ringTargets, 0, copy.ringTargets, 0, RING_AURA_SLOTS); // 2026-11-09
         copy.grantedNow = grantedNow;
+        copy.spareGranted = spareGranted; // 2026-11-10
         return copy;
     }
 

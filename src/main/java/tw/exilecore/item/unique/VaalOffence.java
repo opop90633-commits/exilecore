@@ -35,7 +35,7 @@ import java.util.UUID;
  *       這裡記次數，CombatListener 打中之前疊上去（{@link #critBonus}）。</li>
  *   <li>{@link VaalKeys#KILL_EXPLODE_CRIT}：要知道致命一擊是不是暴擊（{@link #critKill}，KillEffects 問）。</li>
  *   <li>噬魂者（{@link VaalKeys#FLAG_SOUL_EATER}、{@link VaalKeys#SOUL_EATER_ON_UNIQUE_HIT}）：靈魂層數、衰退、技能速度（屬性表的增益來源）。</li>
- *   <li>皮囊偶符（{@link VaalKeys#SHAPESHIFT_COPY_MODS}）：變形成野獸型態時複製臨在範圍內敵人的詞綴（SkillService 變形時呼叫 {@link #shapeshifted}）。</li>
+ *   <li>皮囊偶符（{@link VaalKeys#SHAPESHIFT_COPY_MODS}）：變形成野獸型態時複製存在範圍內敵人的詞綴（SkillService 變形時呼叫 {@link #shapeshifted}）。</li>
  * </ul>
  */
 public final class VaalOffence implements Listener {
@@ -149,7 +149,7 @@ public final class VaalOffence implements Listener {
         }
     }
 
-    /** 敵人死掉：臨在範圍內有噬魂者的玩家吞一個靈魂。 */
+    /** 敵人死掉：存在範圍內有噬魂者的玩家吞一個靈魂。 */
     @EventHandler(priority = EventPriority.MONITOR)
     public void onDeath(final EntityDeathEvent event) {
         final LivingEntity victim = event.getEntity();
@@ -261,7 +261,7 @@ public final class VaalOffence implements Listener {
 
     /**
      * 變形了（SkillService.shapeshift；changed = 真的換了型態，同一個型態再放一次不算變形）：
-     * 先拿掉上一次複製來的詞綴（「下一次變形時失去」），再從臨在範圍內每一個有詞綴的敵人身上各複製一條隨機詞綴，
+     * 先拿掉上一次複製來的詞綴（「下一次變形時失去」），再從存在範圍內每一個有詞綴的敵人身上各複製一條隨機詞綴，
      * {@link VaalKeys#SHAPESHIFT_COPY_MODS_DURATION} 秒後失去。我們的變形技能都是變成野獸型態。
      */
     public void shapeshifted(final Player player, final boolean changed) {

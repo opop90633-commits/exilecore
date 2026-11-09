@@ -573,7 +573,7 @@ public final class UniqueMechanics implements Listener {
         plugin.players().display(player, state);
     }
 
-    /** 2026-10-27（噬屍頭環）：每 3 秒消耗附近（臨在範圍）一具屍體，回復 x% 最大生命；滿血、禁療中不吃。 */
+    /** 2026-10-27（噬屍頭環）：每 3 秒消耗附近（存在範圍）一具屍體，回復 x% 最大生命；滿血、禁療中不吃。 */
     private void devour(final Player player, final PlayerState state, final StatSheet sheet, final long now) {
         final double percent = sheet.flat(UniqueStats.CORPSE_CONSUME_HEAL, Set.of());
         final UUID uuid = player.getUniqueId();

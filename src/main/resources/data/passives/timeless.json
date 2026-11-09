@@ -1966,7 +1966,7 @@
        "active": true
       },
       {
-       "text": "減少 2% 臨在範圍（每 10 點貢禮）",
+       "text": "減少 2% 存在範圍（每 10 點貢禮）",
        "stats": [
         {
          "stat": "presence.area",

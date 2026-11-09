@@ -8,7 +8,7 @@ import tw.exilecore.stats.StatSheet;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-/** 2026-11-07 照站長「瓦爾傳奇照原作」：臨在範圍內的敵人閃電抗性等於你的。 */
+/** 2026-11-07 照站長「瓦爾傳奇照原作」：存在範圍內的敵人閃電抗性等於你的。 */
 class PresenceEqualResistTest {
     @Test
     void setsMonsterResistToYours() {
