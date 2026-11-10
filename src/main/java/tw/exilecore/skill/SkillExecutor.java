@@ -2084,16 +2084,24 @@ final class SkillExecutor {
             }
             visuals.nova(build.definition().visual(), at, radius);
         }
-        // 2026-11-10 照站長「蝕咒裂先改 2」：照原作，範圍內沒有被你詛咒的敵人就沒有傷害（只冒一下特效）；
-        //   這次之前（2026-10-31 A＋B 統整）在準心處照基礎傷害炸一圈
         if (blasts == 0) {
-            visuals.nova(build.definition().visual(), center, Math.min(radius, 1.0));
+            // 2026-10-31 照站長（A＋B 統整成只要 A）：範圍內沒有被你詛咒的敵人時，在準心處炸一圈；原作沒有詛咒就沒有傷害
+            // 2026-11-10 照站長「改回沒有詛咒也炸，但更少 20% 傷害」（HEXBLAST_UNCURSED）；同一天先照原作改成不炸、又改回來；這次之前照基礎傷害炸（× UNPRIMED_SCALE = 1）
+            final SkillProfile blast = build.profile().scaled(HEXBLAST_UNCURSED, "沒有詛咒（更少 20%）");
+            targets.strike(player, blast, SkillTargets.sphere(center, radius), new Object());
+            for (final LivingEntity victim : targets.around(center, radius, player)) {
+                damage.hit(player, victim, blast, null);
+            }
+            visuals.nova(build.definition().visual(), center, radius);
+            blasts = 1;
         }
         return blasts;
     }
 
     /** 2026-10-31：蝕咒裂、稜光裂沒有詛咒／異常可以用掉時，照幾成的傷害炸（基礎數值；用掉詛咒／異常時更多 {@link Primed#MORE}）。 */
     static final double UNPRIMED_SCALE = 1.0;
+    /** 2026-11-10 照站長：蝕咒裂沒有詛咒可以引爆時，在準心處炸的那一圈更少 20% 傷害。 */
+    static final double HEXBLAST_UNCURSED = 0.8;
 
     /** 2026-10-28：蝕咒裂這一下的傷害：詛咒還剩 remainingTicks（每剩整 1 秒更多品質的 x%）。 */
     static SkillProfile hexblastProfile(final SkillBuild build, final long remainingTicks) {

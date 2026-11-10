@@ -794,7 +794,7 @@ public final class MetaGems {
         supports.addAll(service.innerSupportsOf(socket.metaEntry(), metaDefinition, spell));
         // 2026-10-23：放進去的寶石的品質一起算（詛咒效果的品質要在算倍率前放進去）
         // 2026-10-31 修正：插槽法術也吃昇華・嵌晶（技能品質、進階奇術、整合效率、鑲嵌物）；這次之前只有寶石品質＋天賦樹
-        final SkillService.Socketed gem = SkillService.socketedGem(sheet, spell, spellEntry.quality(), supports);
+        final SkillService.Socketed gem = SkillService.socketedGem(sheet, spell, spellEntry.quality(), supports, spellEntry.corrupted()); // 2026-11-10：已腐化 +等級
         return SkillBuild.of(service.config(), spell, spellEntry.level(), state.level(), false, supports,
                 state.weaponTags(), gem.sheet(), SkillService.resonantOf(spellEntry), gem.extra());
     }

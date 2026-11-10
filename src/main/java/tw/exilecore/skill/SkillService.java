@@ -1266,7 +1266,7 @@ public final class SkillService {
     SkillBuild metaBuild(final PlayerState state, final StatSheet sheet, final SkillLoadout.Entry host, final SkillDefinition hostDefinition,
                          final SkillDefinition spell, final SkillLoadout.Entry spellEntry) {
         final List<SupportDefinition> supports = innerSupportsOf(host, hostDefinition, spell);
-        final Socketed gem = socketedGem(sheet, spell, spellEntry.quality(), supports); // 2026-10-31：進階奇術等嵌晶效果
+        final Socketed gem = socketedGem(sheet, spell, spellEntry.quality(), supports, spellEntry.corrupted()); // 2026-10-31：進階奇術等嵌晶效果；2026-11-10：已腐化 +等級
         return SkillBuild.of(config, spell, spellEntry.level(), state.level(), false, supports,
                 state.weaponTags(), gem.sheet(), resonantOf(spellEntry), gem.extra());
     }
@@ -3741,7 +3741,7 @@ public final class SkillService {
         // 2026-10-22：要圖騰的輔助（樁怒、疾樁…）也套到英靈的攻擊上（innerSupportsOf 併成一顆不挑技能的）
         // 2026-10-23 修正：放進去的錘子寶石的品質也要算（以前英靈這一下直接用 SkillBuild.of，品質沒套上）
         final List<SupportDefinition> heroSupports = innerSupportsOf(host, totem, definition);
-        final Socketed gem = socketedGem(sheet, definition, next.quality(), heroSupports); // 2026-10-31：進階奇術等嵌晶效果
+        final Socketed gem = socketedGem(sheet, definition, next.quality(), heroSupports, next.corrupted()); // 2026-10-31：進階奇術等嵌晶效果；2026-11-10：已腐化 +等級
         final SkillBuild built = SkillBuild.of(config, definition, next.level(), state.level(), false, heroSupports,
                 state.weaponTags(), gem.sheet(), resonantOf(next), gem.extra());
         if (built.cooldownTicks() > 0) {
@@ -5939,6 +5939,15 @@ public final class SkillService {
      */
     static Socketed socketedGem(final StatSheet sheet, final SkillDefinition definition, final int gemQuality,
                                 final List<SupportDefinition> supports) {
+        return socketedGem(sheet, definition, gemQuality, supports, false);
+    }
+
+    /**
+     * 2026-11-10 照站長「腐化 +1 的衣服、放進引星的技能」：插槽裡（引星、圖騰、英靈的錘子）已腐化的寶石也吃「+x 全部已腐化技能寶石等級」，
+     * 跟直接放在面板上的一樣（{@link #corruptedLevels}，照現在身上的屬性表算，脫下就沒有）。這次之前插槽裡的不吃。
+     */
+    static Socketed socketedGem(final StatSheet sheet, final SkillDefinition definition, final int gemQuality,
+                                final List<SupportDefinition> supports, final boolean corrupted) {
         final tw.exilecore.ascendancy.AscBuild.Gem gem = tw.exilecore.ascendancy.AscBuild.gem(sheet, definition, supports);
         final int quality = gemQuality + gem.quality() + bonusQuality(sheet);
         List<tw.exilecore.stats.Modifier> extra = qualityModifiers(definition, quality);
@@ -5949,8 +5958,12 @@ public final class SkillService {
             extra = new ArrayList<>(extra);
             extra.addAll(gem.extra());
         }
-        final StatSheet gemSheet = gem.levels() > 0 && sheet != null
-                ? sheet.overlay(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"))) : sheet;
+        final List<tw.exilecore.stats.Modifier> levels = new ArrayList<>();
+        if (gem.levels() > 0) {
+            levels.add(tw.exilecore.stats.Modifier.flat(StatKeys.SKILL_LEVEL, gem.levels(), "鑲嵌物"));
+        }
+        levels.addAll(corruptedLevels(corrupted, sheet)); // 2026-11-10
+        final StatSheet gemSheet = !levels.isEmpty() && sheet != null ? sheet.overlay(levels) : sheet;
         return new Socketed(gemSheet, extra);
     }
 
