@@ -2084,15 +2084,10 @@ final class SkillExecutor {
             }
             visuals.nova(build.definition().visual(), at, radius);
         }
+        // 2026-11-10 照站長「蝕咒裂先改 2」：照原作，範圍內沒有被你詛咒的敵人就沒有傷害（只冒一下特效）；
+        //   這次之前（2026-10-31 A＋B 統整）在準心處照基礎傷害炸一圈
         if (blasts == 0) {
-            // 2026-10-31 照站長（A＋B 統整成只要 A）：範圍內沒有被你詛咒的敵人時，在準心處炸一圈（傷害 × UNPRIMED_SCALE）；原作沒有詛咒就沒有傷害
-            final SkillProfile blast = build.profile().scaled(UNPRIMED_SCALE, "沒有詛咒");
-            targets.strike(player, blast, SkillTargets.sphere(center, radius), new Object());
-            for (final LivingEntity victim : targets.around(center, radius, player)) {
-                damage.hit(player, victim, blast, null);
-            }
-            visuals.nova(build.definition().visual(), center, radius);
-            blasts = 1;
+            visuals.nova(build.definition().visual(), center, Math.min(radius, 1.0));
         }
         return blasts;
     }

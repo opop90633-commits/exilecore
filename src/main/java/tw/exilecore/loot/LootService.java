@@ -236,7 +236,8 @@ public final class LootService {
                 broadcastRare(killer, currency.name(), "#e8c46a", "<yellow>"); // 2026-11-01 照站長
             }
             if (lineage != null) {
-                broadcastRare(killer, lineage + "（血脈輔助寶石）", "#ff6b6b", "<red>", false); // 2026-11-01 照站長
+                // 2026-11-01 照站長；2026-11-10 照站長「血脈輔助掉落要在 DC 廣播」：也發 Discord；這次之前只有遊戲內公告
+                broadcastRare(killer, lineage + "（血脈輔助寶石）", "#ff6b6b", "<red>", true);
             }
             if (!config.autoPickup()) {
                 MonsterListener.dropOwned(plugin, location, stack, killer, MonsterListener.highlight(drop));
@@ -480,7 +481,7 @@ public final class LootService {
             online.playSound(online.getLocation(), org.bukkit.Sound.UI_TOAST_CHALLENGE_COMPLETE, org.bukkit.SoundCategory.PLAYERS, 0.7f, 1.2f);
         }
         plugin.getSLF4JLogger().info("稀有掉落公告：{} 掉出 {}", finder.getName(), itemName);
-        if (plugin.discord() != null && discord) { // 2026-11-02 照站長：Discord 只發超稀有通貨（血脈輔助寶石不發）
+        if (plugin.discord() != null && discord) { // 2026-11-02 照站長：Discord 只發超稀有通貨；2026-11-10 血脈輔助寶石也發
             plugin.discord().rareDrop(tw.exilecore.item.ItemRenderer.escape(name) + " 找到了「" + tw.exilecore.item.ItemRenderer.escape(itemName) + "」！");
         }
     }

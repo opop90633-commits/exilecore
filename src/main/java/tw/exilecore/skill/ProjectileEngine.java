@@ -1624,6 +1624,8 @@ final class ProjectileEngine implements Listener {
             return;
         }
         final int level = shot.build.level(); // 2026-10-26：雷束的數量、傷害照等級（PoE2 雷鳴箭逐級）
+        // 2026-11-10 照站長「擲雷槍品質照原作」：品質多射的雷彈（無條件捨去）；這次之前品質加在主矛數量
+        final int bolts = splash.targets(level) + OriginalSkills.qualityInt(shot.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SPLASH_TARGETS_EXTRA));
         // 2026-11-01 照 PoE2 Lightning Arrow 的 Beam：有 stages.beam 的照那一段（自己的效益、100% 轉閃電），每道雷束再連鎖 count 次；
         //   這次之前雷束是箭的 splash.damage %、不連鎖
         final SkillStages.Stage beam = SkillStages.get(shot.build.definition().id(), BEAM);
@@ -1644,7 +1646,7 @@ final class ProjectileEngine implements Listener {
             enemies.sort(java.util.Comparator.comparingDouble(other -> other.getLocation().distanceSquared(target.getLocation())));
             int e = 0;
             int r = 0;
-            while (count < splash.targets(level) && (e < enemies.size() || r < rods.size())) {
+            while (count < bolts && (e < enemies.size() || r < rods.size())) {
                 final LivingEntity enemy = e < enemies.size() ? enemies.get(e) : null;
                 final LightningRods.Rod rod = r < rods.size() ? rods.get(r) : null;
                 if (rod != null && (enemy == null
@@ -1669,7 +1671,7 @@ final class ProjectileEngine implements Listener {
         }
         final List<LivingEntity> beamed = new ArrayList<>();
         for (final LivingEntity other : enemies) {
-            if (other == target || count >= splash.targets(level)) {
+            if (other == target || count >= bolts) {
                 continue;
             }
             count++;

@@ -19,6 +19,21 @@ import java.util.random.RandomGenerator;
  */
 public final class DamageCalculator {
 
+    /**
+     * 2026-11-10 照站長「蝕咒裂估算補上漏算的」：估算用的暴擊期望倍率。一般 = 1 + p ×（加成 − 1）；
+     * 有必然暴擊（昇華・強行定局）時沒暴擊就重擲、每重擲一次加成更少 30%（跟 {@code outgoing} 一樣）：
+     * Σ (1−p)^k p [1 +（加成 − 1）0.7^k] = 1 +（加成 − 1）p ÷（1 − 0.7(1 − p)）。這次之前估算一律照一般算（必然暴擊的人估太低）。
+     */
+    public static double expectedCritFactor(final StatSheet attacker, final double chance, final double multiplier) {
+        if (chance <= 0) {
+            return 1;
+        }
+        if (attacker != null && StatKeys.flag(attacker, tw.exilecore.ascendancy.AscKeys.INEVITABLE_CRIT)) {
+            return 1 + (multiplier - 1) * chance / (1 - 0.7 * (1 - chance));
+        }
+        return 1 + chance * (multiplier - 1);
+    }
+
     /** 帶這個標籤的擊中不能被格擋或招架（= DodgeRoll.UNDODGEABLE_TAG，Boss 全場大招）。 */
     static final String UNBLOCKABLE_TAG = "undodgeable";
 

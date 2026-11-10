@@ -117,8 +117,13 @@ public final class MinionSheets {
     public static int allyLevel(final int skillLevel) {
         // 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：不再停在 80 級（40 級寶石），每一級都 × 2；
         //   這次之前超過 40 級停在 80 級、改乘 extraScale（每級 +5%）
-        return 2 * Math.max(1, skillLevel);
+        // 2026-11-10 照站長「先別超過 40」：技能等級最多算到 40（召喚物 80 級，原作資料只到 40 級寶石）；
+        //   這次之前 41 級以上照樣 × 2 往上（例如 45 級 = 90 級召喚物）
+        return 2 * Math.max(1, Math.min(MAX_SKILL_LEVEL, skillLevel));
     }
+
+    /** 2026-11-10：召喚物技能最多算到幾級（原作資料只到 40 級）。 */
+    public static final int MAX_SKILL_LEVEL = 40;
 
     /**
      * 2026-11-01：PoE2 召喚物表（1–100 級）在這個召喚物等級的值；超過 100 級照最後兩級的比例往外推

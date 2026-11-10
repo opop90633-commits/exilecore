@@ -276,6 +276,11 @@ public final class OriginalSkills implements Listener {
     private final Map<UUID, Object[]> lastHitter = new HashMap<>();
     /** 磨蝕之志：玩家 → 可以撲殺的稀有、傳奇敵人。 */
     private static final Map<UUID, Set<UUID>> CULLABLE = new ConcurrentHashMap<>();
+    /**
+     * 2026-11-10 照站長「磨蝕之志這個能有顯示嗎」：玩家 → {磨蝕之志的累積（怪物 → 秒數，就是 State.attrition 那一份）, 上限 %, 撲殺要幾秒}。
+     * 給目標框（{@link #attritionText}）看；這次之前層數只在打的時候算進去，畫面上看不到。
+     */
+    private static final Map<UUID, Object[]> ATTRITION_VIEW = new ConcurrentHashMap<>();
     /** 僕骸替：玩家 → 召喚物復活時間的倍率。 */
     private static final Map<UUID, Double> REVIVE_SCALE = new ConcurrentHashMap<>();
     private org.bukkit.scheduler.BukkitTask task;
@@ -828,6 +833,7 @@ public final class OriginalSkills implements Listener {
                 s.attrition.clear();
                 CULLABLE.remove(player.getUniqueId());
             }
+            ATTRITION_VIEW.remove(player.getUniqueId()); // 2026-11-10
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);
@@ -837,6 +843,7 @@ public final class OriginalSkills implements Listener {
         final double cull = levelValue(ATTRITION, ATTRITION_CULL, level, 40) + service.qualityFlat(player, ATTRITION, ATTRITION_CULL);
         final Debuffs debuffs = plugin.combat() == null ? null : plugin.combat().debuffs();
         final Set<UUID> cullable = CULLABLE.computeIfAbsent(player.getUniqueId(), k -> ConcurrentHashMap.newKeySet());
+        ATTRITION_VIEW.put(player.getUniqueId(), new Object[] {s.attrition, cap, cull}); // 2026-11-10：目標框顯示
         for (final LivingEntity near : player.getWorld().getNearbyLivingEntities(player.getLocation(), radius)) {
             if (!monster(near) || near.isDead()) {
                 continue;
@@ -851,14 +858,42 @@ public final class OriginalSkills implements Listener {
                 debuffs.apply(near.getUniqueId(), new Debuffs.Debuff("grinding_will." + player.getUniqueId(), player.getUniqueId(), now + 40,
                         more / 100.0, true, null));
             }
-            if (seconds >= cull) {
-                cullable.add(near.getUniqueId());
+            if (seconds >= cull && cullable.add(near.getUniqueId())) {
+                // 2026-11-10 照站長「這個能有顯示嗎」：剛好待滿、開始有撲殺時提示一次（沒裝模組的人也看得到）
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<#c8a2ff>磨蝕之志<gray>：<white>"
+                        + tw.exilecore.item.ItemRenderer.escape(data.name() == null || data.name().isBlank() ? near.getName() : data.name())
+                        + "</white> 更多 " + Math.round(more) + "% 傷害，<red>你打牠有撲殺了"));
             }
         }
         if (s.attrition.size() > 200) {
             s.attrition.keySet().removeIf(id -> plugin.getServer().getEntity(id) == null);
             cullable.removeIf(id -> plugin.getServer().getEntity(id) == null);
         }
+    }
+
+    /**
+     * 2026-11-10 照站長「磨蝕之志這個能有顯示嗎」：目標框狀態列上的磨蝕之志（這個玩家對這隻怪疊了多少、離撲殺還要幾秒）；
+     * 沒開磨蝕之志、這隻怪沒疊過回傳空字串。
+     */
+    public static String attritionText(final UUID player, final UUID monster) {
+        final Object[] view = player == null || monster == null ? null : ATTRITION_VIEW.get(player);
+        if (view == null || !(view[0] instanceof Map<?, ?> seconds) || !(seconds.get(monster) instanceof Double total)) {
+            return "";
+        }
+        return attritionLabel(total, (Double) view[1], (Double) view[2], culls(player, monster));
+    }
+
+    /** 2026-11-10：磨蝕之志在目標框上的字（純函式，測試用）。 */
+    static String attritionLabel(final double seconds, final double cap, final double cull, final boolean culling) {
+        final long more = Math.round(attritionMore(seconds, cap));
+        return "<#c8a2ff>磨蝕 " + more + "%" + (more >= cap ? "（滿）" : "／" + Math.round(cap) + "%")
+                + (culling ? " <red>撲殺" : String.format(java.util.Locale.ROOT, " <gray>撲殺 %d／%d 秒", (long) Math.floor(seconds), Math.round(cull)));
+    }
+
+    /** 2026-11-10：同 {@link #culls(LivingEntity, LivingEntity)}，用代號查。 */
+    private static boolean culls(final UUID player, final UUID monster) {
+        final Set<UUID> set = CULLABLE.get(player);
+        return set != null && set.contains(monster);
     }
 
     /** 磨蝕之志：這個玩家打這隻敵人有沒有撲殺（CombatListener 的撲殺判斷呼叫）。 */
@@ -2080,6 +2115,7 @@ public final class OriginalSkills implements Listener {
             }
         }
         CULLABLE.remove(event.getPlayer().getUniqueId());
+        ATTRITION_VIEW.remove(event.getPlayer().getUniqueId()); // 2026-11-10
         REVIVE_SCALE.remove(event.getPlayer().getUniqueId());
         pendingBolt.remove(event.getPlayer().getUniqueId());
         pendingGalvanic.remove(event.getPlayer().getUniqueId());

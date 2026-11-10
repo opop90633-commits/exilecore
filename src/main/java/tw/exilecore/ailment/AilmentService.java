@@ -3438,7 +3438,10 @@ public final class AilmentService {
                         Math.round(chill * 100)));
             }
             if (entry.state.buildup() > 0.005) {
-                parts.add(String.format(Locale.ROOT, "<%s>凍結 %d%%", AilmentType.FREEZE.color(), Math.round(entry.state.buildup() * 100)));
+                // 2026-11-10 照站長「Boss 看血條 OK？」：到蓄勢待凍變金色（跟怪物頭上一樣）；這次之前 Boss 血條、目標框一直是藍色
+                final boolean primed = entry.state.buildup() >= primedAt(id);
+                parts.add(String.format(Locale.ROOT, "<%s>凍結 %d%%%s", primed ? "gold" : AilmentType.FREEZE.color(),
+                        Math.round(entry.state.buildup() * 100), primed ? "（蓄勢待凍）" : ""));
             }
         }
         final double shock = entry.state.shock(now);
@@ -3470,17 +3473,29 @@ public final class AilmentService {
         if (corrupted > 0) {
             parts.add(String.format(Locale.ROOT, "<#a0204a>腐血×%d %.1fs", corrupted, (entry.state.corruptedBloodUntil() - now) / 20.0));
         }
-        meterText(parts, entry.state.stun(), AilmentType.STUN, now);
-        meterText(parts, entry.state.electrocute(), AilmentType.ELECTROCUTE, now);
+        meterText(parts, entry.state.stun(), AilmentType.STUN, now, primedAt(id)); // 2026-11-10：蓄勢待暈變金色
+        meterText(parts, entry.state.electrocute(), AilmentType.ELECTROCUTE, now, 2);
         return String.join("  ", parts);
     }
 
+    /** 2026-11-10：這隻怪的蓄勢待凍／待暈門檻（0～1）；不是怪物回傳 2（永遠不到）。 */
+    private double primedAt(final UUID id) {
+        final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(id);
+        if (!(entity instanceof LivingEntity living) || plugin.monsters() == null) {
+            return 2;
+        }
+        return plugin.monsters().data(living).map(data -> config.primed(data.rarity())).orElse(2.0);
+    }
+
     /** 累積條的動作列文字：觸發中寫剩幾秒，不然寫累積到幾 %。 */
-    private static void meterText(final List<String> parts, final AilmentState.Meter meter, final AilmentType type, final long now) {
+    private static void meterText(final List<String> parts, final AilmentState.Meter meter, final AilmentType type, final long now,
+                                  final double primed) {
         if (meter.active(now)) {
             parts.add(String.format(Locale.ROOT, "<%s>%s %.1fs", type.color(), type.mark(), (meter.activeUntil() - now) / 20.0));
         } else if (meter.buildup() > 0.005) {
-            parts.add(String.format(Locale.ROOT, "<%s>%s %d%%", type.color(), type.displayName(), Math.round(meter.buildup() * 100)));
+            final boolean ready = meter.buildup() >= primed; // 2026-11-10：蓄勢待暈變金色
+            parts.add(String.format(Locale.ROOT, "<%s>%s %d%%%s", ready ? "gold" : type.color(), type.displayName(),
+                    Math.round(meter.buildup() * 100), ready ? "（蓄勢待暈）" : ""));
         }
     }
 }

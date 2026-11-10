@@ -273,7 +273,7 @@ class MinionTest {
         assertEquals(46, MinionSheets.allyLevel(23), "2026-10-28 照 PoE2：超過 20 級也照 ×2");
         assertEquals(80, MinionSheets.allyLevel(40));
         // 2026-11-01 照站長「全部改成 +1 技能等級 = +2 召喚物等級」：超過 40 級也照 ×2（這次之前停在 80 級、改乘 extraScale 每級 +5%）
-        assertEquals(90, MinionSheets.allyLevel(45));
+        assertEquals(80, MinionSheets.allyLevel(45), "2026-11-10 照站長「先別超過 40」：45 級當 40 級（這次之前 90）");
         assertEquals(1.0, MinionSheets.extraScale(config, 45), 1e-9, "不再另外乘每級 +5%");
         assertEquals(1.0, MinionSheets.growth(20, 20), 1e-9);
         assertEquals(MinionSheets.refAllyDamage(46) / MinionSheets.refAllyDamage(40), MinionSheets.growth(23, 20), 1e-9,

@@ -134,6 +134,14 @@ public final class AffixRescale {
             return false;
         }
         final Map<String, Integer> mapped = map(data.implicitVars(), data.implicitRanges(), implicit.vars(), loose);
+        // 2026-11-10 照站長「腐化技能寶石 +1 好像沒有運作」：基底後來才加的固定詞綴（祭紋華袍 11/8 加的 +1 已腐化寶石等級），
+        //   舊物品身上沒有那個變數、一直算 0；缺的變數補範圍的中間值（[1,1] 就是 1）。這次之前缺的就一直缺
+        for (final Map.Entry<String, int[]> range : implicit.vars().entrySet()) {
+            final int[] r = range.getValue();
+            if (r != null && r.length >= 2 && !mapped.containsKey(range.getKey())) {
+                mapped.put(range.getKey(), (Math.min(r[0], r[1]) + Math.max(r[0], r[1])) / 2);
+            }
+        }
         if (!mapped.equals(data.implicitVars())) {
             data.setImplicitVars(mapped);
         }

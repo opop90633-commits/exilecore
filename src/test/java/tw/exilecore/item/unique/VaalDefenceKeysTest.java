@@ -88,14 +88,14 @@ class VaalDefenceKeysTest {
         sheet.add(Modifier.flat(VaalKeys.FLAG_MOVEMENT_TO_ES_RECHARGE, 1, "測試"));
         sheet.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, -0.1, "測試"));
         sheet.add(Modifier.flat(VaalKeys.LIGHT_RADIUS_AS_AREA, 50, "測試"));
-        sheet.add(Modifier.increased(VaalKeys.LIGHT_RADIUS, 0.3, "測試"));
+        sheet.add(Modifier.increased(StatKeys.PRESENCE_AREA, 0.3, "測試")); // 2026-11-10：改看存在範圍
         sheet.add(Modifier.flat(VaalKeys.ARMOUR_FROM_LIFE_LOST_8S, 35, "測試"));
         sheet.addAll(UniqueDerived.vaalLate(sheet, 400));
         assertEquals(10, sheet.flat(StatKeys.LIFE_REGEN, Set.of()), 1e-9, "照歸零之前的 200 護盾：每秒 10 生命");
         assertEquals(0, sheet.get(StatKeys.ES_MAX), 1e-9, "無法擁有能量護盾");
         assertEquals(0, tw.exilecore.character.PlayerState.maxEnergyShield(sheet), 1e-9);
         assertEquals(-0.1, sheet.increased(StatKeys.ES_RECHARGE, Set.of()), 1e-9, "移動速度的減少也套用");
-        assertEquals(0.15, sheet.increased(StatKeys.SKILL_AREA, Set.of()), 1e-9, "30% 光照範圍 × 50%");
+        assertEquals(0.15, sheet.increased(StatKeys.SKILL_AREA, Set.of()), 1e-9, "30% 存在範圍 × 50%");
         assertEquals(140, sheet.flat(StatKeys.ARMOUR, Set.of()), 1e-9, "失去 400 生命 × 35%");
     }
 

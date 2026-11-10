@@ -42,6 +42,17 @@ public final class Veiled {
     }
     /** 揭露詞綴的代號開頭。 */
     public static final String UNVEILED = "unveiled_";
+    /**
+     * 2026-11-10 照站長「深淵星魄能更有獨特性嗎」（原作深淵領主印記：褻瀆時出的詞綴階級較高）：深淵星魄做的隱匿詞綴帶這個變數（1），
+     * 揭露時每個選項都擲那條詞綴物品等級允許的最高階（{@link #options}）；揭露石、劫盜的照舊依權重擲。
+     */
+    public static final String ABYSS = "abyss";
+
+    /** 2026-11-10：這條隱匿詞綴是不是深淵星魄做的（深淵印記）。 */
+    public static boolean abyssMark(final RolledAffix veiled) {
+        return veiled != null && isVeiled(veiled.id()) && veiled.vars() != null && veiled.vars().getOrDefault(ABYSS, 0) > 0;
+    }
+
     /** 揭露時給幾個選項。 */
     public static final int CHOICES = 3;
 
@@ -185,7 +196,9 @@ public final class Veiled {
             return false;
         }
         data.affixes().remove(removed);
-        data.affixes().add(fresh(veiled.id(), veiled.tiers().getFirst(), random));
+        final RolledAffix mark = fresh(veiled.id(), veiled.tiers().getFirst(), random);
+        mark.vars().put(ABYSS, 1); // 2026-11-10 照站長：深淵印記，揭露時給最高階；這次之前跟一般隱匿詞綴一樣
+        data.affixes().add(mark);
         return true;
     }
 
@@ -316,9 +329,21 @@ public final class Veiled {
             }
             final Affix affix = pool.remove(index);
             weights.remove(index);
-            chosen.add(roll(affix, data.ilvl(), random));
+            // 2026-11-10 照站長「深淵星魄印記揭露給較高階」：深淵印記擲最高階；這次之前一律依權重擲
+            chosen.add(abyssMark(replacing) ? rollBest(affix, data.ilvl(), random) : roll(affix, data.ilvl(), random));
         }
         return chosen;
+    }
+
+    /** 2026-11-10：物品等級允許的最好一階（需求物品等級最高的那階），數值在那階裡擲。 */
+    static RolledAffix rollBest(final Affix affix, final int itemLevel, final RandomGenerator random) {
+        AffixTier best = null;
+        for (final AffixTier tier : affix.tiersFor(itemLevel)) {
+            if (best == null || tier.ilvl() > best.ilvl()) {
+                best = tier;
+            }
+        }
+        return best == null ? roll(affix, itemLevel, random) : new RolledAffix(affix.id(), best.tier(), best.roll(random));
     }
 
     /** 依權重擲一個物品等級允許的階級與數值。 */

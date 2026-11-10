@@ -23,6 +23,7 @@ final class GemQualityText {
     static final Map<String, String> TEMPLATES = Map.ofEntries(
             Map.entry("potion_craft_insight", "生命、魔力藥劑每分鐘另外獲得 {effect.flask.charges_per_minute.life} 點充能"),
             Map.entry("grinding_will", "撲殺需要的層數少 {-grinding_will.cull}"),
+            Map.entry("thunder_lance_throw", "炸開時多射 {i:splash.targets_extra} 發雷彈"), // 2026-11-10 照站長「擲雷槍品質照原作」；這次之前寫「額外 x 個投射物」（加主矛）
             Map.entry("wood_armor", "被敵人擊中時另外獲得失去的能量護盾 {effect.wood_armor.armour}% 的護甲"),
             Map.entry("field_quake_stomp", "使用這個技能的動作期間暈眩門檻增加 {action.stun_threshold}%"),
             Map.entry("crimson_wrath", "增益另外增加 {effect.rage.effect}% 怒氣效果"),

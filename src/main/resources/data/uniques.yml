@@ -8025,7 +8025,8 @@ scholar_crown:        # 2026-10-27 照 PoE2 0.5 的「Cornathaum」（原作有�
       value: [5, 10]
       stats:
         - { stat: gold.find, type: INCREASED, value: "{value}" }
-    - text: "照亮範圍的增加與減少，以 {value}% 的數值套用在範圍效果上"   # Increases and Reductions to Light Radius also apply to Area of Effect at (25—50)% of their value
+    - text: "存在範圍的增加與減少，以 {value}% 的數值套用在範圍效果上"   # Increases and Reductions to Light Radius also apply to Area of Effect at (25—50)% of their value
+      # 2026-11-10 照站長「有光照範圍的都改成存在範圍」：改看存在範圍（UniqueDerived.vaalLate）；這次之前看光照範圍（沒有東西給，等於沒用）
       value: [25, 50]
       stats:
         - { stat: light.radius_as_area, type: FLAT, value: "{value}" }   # 2026-11-07 新的（NEEDS）：我們沒有光照範圍（原本那條 30% 也沒做），要站長決定
@@ -10654,9 +10655,9 @@ red_sun_greathelm:        # 2026-11-07 照 PoE2 0.5 的「Corona of the Red Sun�
       value: [20, 25]
       stats:
         - { stat: resist.fire, type: FLAT, value: "{value}" }
-    - text: "增加 25% 光照範圍"   # 2026-11-07 新機制（NEEDS：light.radius；我們只有星脈深坑有光照，接深坑的光照範圍；之前黑日巨盔的同類詞綴沒做）
+    - text: "增加 25% 存在範圍"   # 2026-11-10 照站長「有光照範圍的都改成存在範圍」：原作 25% increased Light Radius；這次之前是光照範圍（light.radius，只在星脈深坑有用）
       stats:
-        - { stat: light.radius, type: INCREASED, value: 25 }
+        - { stat: presence.area, type: INCREASED, value: 25 }
     - text: "你的擊中偷取生命時，你存在範圍內的友方也偷取同樣多的生命"   # 新機制（NEEDS：presence.ally_leech_life）
       stats:
         - { stat: presence.ally_leech_life, type: FLAT, value: 100 }
@@ -11478,10 +11479,10 @@ eventide_petals:        # 2026-11-07 照 PoE2 0.5（Runes of Aldur）的「Event
       value: [25, 35]
       stats:
         - { stat: attr.int, type: FLAT, value: "{value}" }
-    - text: "增加 {value}% 光照範圍"   # 我們只有星脈深坑有光照（Delve 讀 light.radius）
+    - text: "增加 {value}% 存在範圍"   # 2026-11-10 照站長「有光照範圍的都改成存在範圍」：原作 (30—50)% increased Light Radius；這次之前是光照範圍（只在星脈深坑有用）
       value: [30, 50]
       stats:
-        - { stat: light.radius, type: INCREASED, value: "{value}" }
+        - { stat: presence.area, type: INCREASED, value: "{value}" }
     - text: "你每有 5% 冰冷抗性，冰晶減少 {value}% 最大生命"   # 原作 Ice Crystals have (-3—3)% reduced maximum Life per 5% Cold Resistance you have（負的＝增加；照封頂後的冰冷抗性，IceCrystals.coldLifeFactor）
       value: [-3, 3]
       stats:

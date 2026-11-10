@@ -225,7 +225,7 @@ public final class UniqueDerived {
      *   <li>{@link VaalKeys#PER_ES_LIFE_REGEN}：每 1 點最大能量護盾每秒回復 x 生命——照「無法擁有能量護盾」歸零之前的最大能量護盾（跟 PoB 一樣）。</li>
      *   <li>{@link VaalKeys#FLAG_NO_ENERGY_SHIELD}：無法擁有能量護盾（最大能量護盾更少 100%；PlayerState.maxEnergyShield 也直接回 0）。</li>
      *   <li>{@link VaalKeys#FLAG_MOVEMENT_TO_ES_RECHARGE}：移動速度的增加與減少也套用在能量護盾回充速度（更多／更少不算）。</li>
-     *   <li>{@link VaalKeys#LIGHT_RADIUS_AS_AREA}：光照範圍的增加與減少以 x% 的數值套用在範圍效果。</li>
+     *   <li>{@link VaalKeys#LIGHT_RADIUS_AS_AREA}：存在範圍的增加與減少以 x% 的數值套用在範圍效果（2026-11-10 之前看光照範圍）。</li>
      *   <li>{@link VaalKeys#ARMOUR_FROM_LIFE_LOST_8S}：獲得等同過去 8 秒被擊中失去的生命 x% 的護甲（lifeLost 由 PlayerState 記）。</li>
      * </ul>
      * 這次之前都沒有。
@@ -251,9 +251,10 @@ public final class UniqueDerived {
             }
         }
         final double lightArea = sheet.flat(VaalKeys.LIGHT_RADIUS_AS_AREA, none);
-        final double light = lightArea != 0 ? sheet.increased(VaalKeys.LIGHT_RADIUS, none) : 0;
+        // 2026-11-10 照站長「有光照範圍的都改成存在範圍」：看存在範圍的增加與減少；這次之前看光照範圍（light.radius）
+        final double light = lightArea != 0 ? sheet.increased(StatKeys.PRESENCE_AREA, none) : 0;
         if (light != 0) {
-            list.add(Modifier.increased(StatKeys.SKILL_AREA, light * lightArea / 100.0, SOURCE + "（光照範圍）"));
+            list.add(Modifier.increased(StatKeys.SKILL_AREA, light * lightArea / 100.0, SOURCE + "（存在範圍）"));
         }
         final double fromLost = sheet.flat(VaalKeys.ARMOUR_FROM_LIFE_LOST_8S, none);
         if (fromLost > 0 && lifeLost > 0) {

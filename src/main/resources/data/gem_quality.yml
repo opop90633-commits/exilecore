@@ -309,7 +309,9 @@ sky_column_thunder:   # Lightning Conduit
 thunder_stake_shaft:   # Lightning Rod（2026-10-28 照 PoE2：(0—20)% 機率落地時多炸一次；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: thunder_stake_shaft.extra_burst, type: FLAT, per: 1.0 }   # 落地時多炸一次的機率 %（LightningRods）
 thunder_lance_throw:   # Lightning Spear
-  - { stat: skill.projectiles, type: FLAT, per: 0.1 }   # 投射物數量
+  # 2026-11-10 照站長「擲雷槍品質照原作」（PoB2 LightningSpearPlayer：品質的 base_number_of_projectiles 加在炸開後的雷彈那一段，基礎 5 發；主矛永遠 1 支）：
+  #   每 1% 品質雷彈 +0.1 發（無條件捨去，ProjectileEngine.splash）；這次之前加在主矛數量（41% 品質＋高階奇術一次射出 9 支）
+  - { stat: splash.targets_extra, type: FLAT, per: 0.1 }   # 炸開後的雷彈數
 phantom_body:   # Lingering Illusion（2026-10-28 照 PoE2：另外 (0—20)% 機率多留一個殘影；這次之前照通用規則）
   - { stat: effect.charge.remnant_extra, type: FLAT, per: 1.0 }   # 增益：加在逐級的機率上
 strung_pearls:   # Barrage（2026-10-28 照 PoE2：重複的投射物「更少」少 (0—5) 個百分點；這次之前照通用規則）
@@ -707,6 +709,10 @@ blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2)
   - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
+  thunderfall_spear:   # Storm Lance：+(0—2) 個投射物（2026-11-10 照站長「改成原作的額外效果」：PoB2 altQualityStats base_number_of_projectiles 0.1；這次之前沒寫，一般的品質效果（插地矛上限）再算一次）
+    - { stat: skill.projectiles, type: FLAT, per: 0.1 }
+  thunder_lance_throw:   # Lightning Spear：消耗充能的好處有 (0—20)% 機率加倍（2026-11-10 照站長：PoB2 altQualityStats chance_%_to_double_effect_of_removing_charges 1；這次之前沒寫，雷彈數再算一次）
+    - { stat: lance.double_charge_chance, type: FLAT, per: 1.0 }   # Signatures.beforeCast：消耗怒星分裂的支數加倍
   phantom_bow_shade:   # Mirage Archer：幻影持續時間 +(0—1) 秒、(0—40)% 增加保留效率（2026-11-08 照 poe2db 額外的品質效果）
     - { stat: asc.mirage_seconds, type: FLAT, per: 0.05 }   # AscGranted.spawnMirage
     - { stat: aura.reservation, type: INCREASED, per: -2.0 }

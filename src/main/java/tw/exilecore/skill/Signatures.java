@@ -486,7 +486,12 @@ final class Signatures {
             return build.withProfile(SkillStages.profile(build, build.profile(), "infused")
                     .withLocal(List.of(tw.exilecore.stats.Modifier.flat(LANCE_CHARGED_MARK, benefit, definition.name()))));
         }
-        final int copies = BOLT_SPEAR_COPIES * benefit; // 倍星：分裂的支數加倍
+        // 2026-11-10 照站長「高階奇術改成原作的額外效果」（擲雷槍 Lightning Spear：消耗充能的好處有 x% 機率加倍）：
+        //   機率中了就當倍星（分裂的支數加倍）；本來就是倍星的不再加倍。這次之前沒有
+        final double doubleChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT);
+        final int benefitUsed = benefit < 2 && doubleChance > 0 && java.util.concurrent.ThreadLocalRandom.current().nextDouble() * 100 < doubleChance
+                ? 2 : benefit;
+        final int copies = BOLT_SPEAR_COPIES * benefitUsed; // 倍星：分裂的支數加倍
         state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：分裂成 " + copies + " 支", now + 30);
         plugin.players().display(player, state);
         return build.withAreaAndProjectiles(build.areaScale(), build.projectiles() + copies - 1);

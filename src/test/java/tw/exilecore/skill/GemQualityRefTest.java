@@ -93,6 +93,8 @@ class GemQualityRefTest {
             {"soul_sever_palm", StatKeys.LIFE_ON_CULL_OVER_TIME, 10.0}, // 2026-10-28 照 PoE2：4 秒內回復（這次之前 LIFE_ON_CULL 一次回）
             {"heaven_punish_maul", tw.exilecore.stats.GemQualityKeys.GLORY_NOT_CONSUME_CHANCE, 50.0}, // 2026-11-08 照站長：天罰巨鎚 50% 不消耗榮耀
             {"mother_child_grenade", tw.exilecore.stats.GemQualityKeys.DETONATION_TIME, -0.4}, // 2026-11-08：子母榴彈減少 40% 引爆時間
+            {"thunderfall_spear", StatKeys.SKILL_PROJECTILES, 2.0}, // 2026-11-10 照站長：霆落矛高階奇術 +2 個投射物
+            {"thunder_lance_throw", tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT, 20.0}, // 2026-11-10：擲雷槍 20% 機率加倍消耗怒星的好處
         };
         for (final Object[] row : moved) {
             final String id = (String) row[0];

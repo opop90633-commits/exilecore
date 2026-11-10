@@ -4691,7 +4691,7 @@ public final class SkillService {
         // 有冷卻的：一輪要等「施放間隔」和「冷卻」比較長的那個。
         // 2026-10：複擊的每一下都要花一次攻擊間隔（打完才能做別的），以前當成同一個間隔裡打完，面板高了好幾倍
         final SkillParams params = build.params();
-        final double critFactor = 1 + crit * (multi / 100.0 - 1);
+        final double critFactor = DamageCalculator.expectedCritFactor(build.profile().effective(hitSheet), crit, multi / 100.0); // 2026-11-10：必然暴擊照期望
         // 2026-10-24：圖騰（弩台等）算圖騰自己射的（每根每秒幾次 × 同時幾根，吃攻速）；以前算成放圖騰的速度（被冷卻卡住），攻速、圖騰數都不會動
         final double totemRate = totemFireRate(build, sheet);
         final double cycle = djinnCycleTicks(build, sheet, djinn); // 2026-11-01：巨靈的指令（不是的話 -1）
@@ -4710,6 +4710,9 @@ public final class SkillService {
             // 2026-10：面板以前只算擊中；點燃、流血、中毒的持續傷害與感電的增傷也算進去（對同等級一般怪物、站著不動）
             dps = plugin.ailments().estimateDps(hitSheet, build.profile(), expectedScaled, critFactor, rateScaled, state.level(), dps);
         }
+        // 2026-11-10 照站長「估算補上霆落矛的引爆」：插地矛的放電與 16 道引爆（lanceExtra）；這次之前只算擲出那一下
+        final double lanceDps = lanceExtra(build, expectedScaled.total() * critFactor * hitOnly, hitRate);
+        dps += lanceDps;
         double fullDps = dps;
         {
             // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
@@ -4720,7 +4723,7 @@ public final class SkillService {
                     DamageCalculator.expectedOutgoing(fullHitSheet, fullBuild.profile()), full.resist());
             final double fullCrit = DamageCalculator.critChance(fullHitSheet, fullBuild.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
             final double fullMulti = DamageCalculator.critMultiplier(fullBuild.profile().effective(fullHitSheet), fullBuild.profile().tags(), null) * 100;
-            final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
+            final double fullCritFactor = DamageCalculator.expectedCritFactor(fullBuild.profile().effective(fullHitSheet), fullCrit, fullMulti / 100.0); // 2026-11-10
             final SkillParams fullParams = fullBuild.params();
             final double fullTotemRate = totemFireRate(fullBuild, fullSheet); // 2026-10-24：同上
             final double fullCycle = djinnCycleTicks(fullBuild, fullSheet, djinn); // 2026-11-01：巨靈的指令
@@ -4742,6 +4745,7 @@ public final class SkillService {
             // 2026-10-24：全開再加「打起來才有的」：投射物貼臉全中、灌注滿層、瞬影擊滿銳星連打
             final double[] fullAlways = alwaysMultipliers(fullBuild, fullHitSheet);
             final double[] fullOnly = fullOnlyMultipliers(fullBuild, fullHitSheet);
+            fullOnly[1] *= hexblastFull(state, fullSheet, fullBuild) * conditionsFull(state, fullBuild, fullHitSheet); // 2026-11-10
             final double fullRateScaled = fullRate * fullAlways[0] * fullOnly[0];
             final DamagePacket fullScaled = new tw.exilecore.stats.DamagePacket(fullExpected).scale(exert * fullAlways[1] * fullOnly[1]);
             fullDps = fullScaled.total() * fullCritFactor * fullRateScaled * SupportMechanics.hitOnlyFactor(fullHitSheet, fullBuild.profile()); // 2026-10-27：同上（只減擊中）
@@ -4749,11 +4753,14 @@ public final class SkillService {
                 fullDps = plugin.ailments().estimateDps(fullHitSheet, fullBuild.profile(), fullScaled, fullCritFactor, fullRateScaled,
                         state.level(), fullDps);
             }
+            // 2026-11-10：全開也補霆落矛的放電、引爆（照全開那一下）
+            fullDps += lanceExtra(fullBuild, fullScaled.total() * fullCritFactor * SupportMechanics.hitOnlyFactor(fullHitSheet, fullBuild.profile()), casts);
             fullDps *= 1 + full.taken();
         }
         // 2026-10-27：掠獸（只能傷害低血的敵人）：數字照能打的時候算，名字標清楚
         final String name = StatKeys.flag(build.profile().effective(hitSheet), tw.exilecore.stats.LineageKeys.LOW_LIFE_ONLY)
-                ? definition.name() + "（掠獸：只傷害生命 35% 以下的敵人）" : definition.name();
+                ? definition.name() + "（掠獸：只傷害生命 35% 以下的敵人）"
+                : lanceDps > 0 ? definition.name() + "（含插地矛放電、引爆）" : definition.name(); // 2026-11-10
         return new DpsRow(slot, position, definition.id(), name, dps, Math.max(dps, fullDps), 0,
                 expectedScaled.total() * critFactor * hitOnly, rateScaled, crit, multi);
     }
@@ -4844,13 +4851,118 @@ public final class SkillService {
      *   <li>瞬影擊類（flicker）：滿銳星時每顆多連打 2 下、速度更多 285%（SkillExecutor），一輪 = 本體一下＋連打，照一輪的時間平均。</li>
      * </ul>
      */
+    /**
+     * 2026-11-10 照站長「估算補上霆落矛的引爆」：霆落矛（signature lance）擲出那一下之外的每秒傷害——插地矛的放電（storm_lance_bolt）
+     * 與引爆的 16 道雷（storm_lance_burst）。假設單體目標、矛都插在目標身上、一直丟：
+     * <ul>
+     *   <li>自己的新矛落地會引爆 3 格內的舊矛（Signatures.lodge），所以每擲一支就引爆前一支：每秒引爆次數 = 每秒擲幾次；
+     *       同一支只會炸一次，別的技能（擲雷槍、驚雷劈…）、幻弓影的幻影不另外多算（保守：幻影丟的矛不算）。</li>
+     *   <li>每次引爆 16 道全打在這隻身上（照原作 overcharged_spear_detonate_number_of_beams 16；被別的技能引爆更多 Primed.MORE = 1）。</li>
+     *   <li>放電：一支矛插下後 1.3 秒第一次、之後每 0.8 秒一次，直到被下一支引爆（最多 6 秒）；丟得快的話根本來不及放電。</li>
+     *   <li>每道、每次的傷害 = 擲出那一下（含暴擊期望）× 自己的傷害表 ÷ 擲出的傷害表（同 Signatures.share）；消耗怒星的那種不算。</li>
+     * </ul>
+     * 不是霆落矛回傳 0。純計算（測試用 {@link #lanceExtraDps}）。
+     */
+    private double lanceExtra(final SkillBuild build, final double perThrow, final double throwsPerSecond) {
+        if (!"lance".equals(config.signature(build.definition().id())) || perThrow <= 0 || throwsPerSecond <= 0) {
+            return 0;
+        }
+        final double burstShare = config.parentDamage("storm_lance_burst") >= 0 ? Signatures.LANCE_BURST_SHARE
+                : config.parentShare("storm_lance_burst", build.definition(), build.level());
+        final double zapShare = config.parentDamage("storm_lance_bolt") >= 0 ? Signatures.LANCE_ZAP_SHARE
+                : config.parentShare("storm_lance_bolt", build.definition(), build.level());
+        return lanceExtraDps(perThrow, throwsPerSecond, burstShare, zapShare);
+    }
+
+    /** 2026-11-10：{@link #lanceExtra} 的算式（純函式）。 */
+    static double lanceExtraDps(final double perThrow, final double throwsPerSecond, final double burstShare, final double zapShare) {
+        final double lifeTicks = Math.min(Signatures.LANCE_LIFE, 20.0 / throwsPerSecond); // 被下一支引爆之前插了多久
+        final double firstZap = 10 + Signatures.LANCE_ZAP;
+        final int zaps = lifeTicks < firstZap ? 0 : 1 + (int) Math.floor((lifeTicks - firstZap) / Signatures.LANCE_ZAP);
+        return throwsPerSecond * perThrow * (Signatures.LANCE_BURST_BOLTS * burstShare + zaps * zapShare);
+    }
+
+    /**
+     * 2026-11-10 照站長「蝕咒裂估算補上漏算的」：全開算蝕咒裂品質的「被移除的詛咒每剩 1 秒更多 x%」——照你面板上（含插槽裡）
+     * 最長的詛咒持續時間（我們任何詛咒一上身就能引爆，全開照剛放完的詛咒算）。這次之前只有實戰算（SkillExecutor.hexblastProfile）。
+     */
+    private double hexblastFull(final PlayerState state, final StatSheet sheet, final SkillBuild build) {
+        if (!"hexblast".equals(config.signature(build.definition().id()))) {
+            return 1;
+        }
+        final double per = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MORE_PER_CURSE_SECOND);
+        if (per <= 0) {
+            return 1;
+        }
+        double longest = 0;
+        for (int position = 0; position < SkillLoadout.MAX_SKILLS; position++) {
+            final SkillLoadout.Entry entry = state.skills().skill(position);
+            if (entry == null) {
+                continue;
+            }
+            final List<SkillLoadout.Entry> entries = new ArrayList<>(innerEntries(entry));
+            entries.add(entry);
+            for (final SkillLoadout.Entry each : entries) {
+                final SkillDefinition definition = config.skill(each.skillId());
+                if (definition == null || definition.mechanic() != Mechanic.MARK) {
+                    continue;
+                }
+                try {
+                    final SkillBuild curse = build(state, sheet, definition, each);
+                    if (curse.params().mark() != null && curse.params().mark().curse()) {
+                        longest = Math.max(longest, curse.durationTicks(curse.params().mark().duration(curse.level())));
+                    }
+                } catch (final RuntimeException ignored) {
+                    // 算不出來的跳過
+                }
+            }
+        }
+        return hexblastRemainingFactor(per, (long) longest);
+    }
+
+    /** 2026-11-10：蝕咒裂剩 remainingTicks 的倍率（跟 SkillExecutor.hexblastProfile 一樣：每剩整 1 秒更多 per%；純函式，測試用）。 */
+    static double hexblastRemainingFactor(final double per, final long remainingTicks) {
+        final long seconds = Math.max(0, remainingTicks) / 20;
+        return per > 0 && seconds > 0 ? 1 + per / 100.0 * seconds : 1;
+    }
+
+    /**
+     * 2026-11-10 照站長「蝕咒裂估算補上漏算的」：全開也算「魔力充沛」（魔力 90% 以上更多傷害）與「對異常的敵人」——
+     * 異常只算這一下帶得到的元素（冰冷 → 冰緩、凍結；閃電 → 感電；火焰 → 點燃），增加的照角色現有的增加傷害換算成倍率。
+     * 這次之前全開不算（面板寫「打到符合條件的敵人才算（沒算進上面的數字）」）。
+     */
+    private double conditionsFull(final PlayerState state, final SkillBuild build, final StatSheet sheet) {
+        final StatSheet effective = build.profile().effective(sheet);
+        final Set<String> tags = build.profile().tags();
+        double factor = effective.more(StatKeys.DAMAGE_HIGH_MANA, tags);
+        final tw.exilecore.stats.DamagePacket packet = DamageCalculator.expectedOutgoing(sheet, build.profile());
+        final java.util.Map<String, tw.exilecore.stats.DamageType> words = new java.util.LinkedHashMap<>();
+        words.put("chilled", tw.exilecore.stats.DamageType.COLD);
+        words.put("shocked", tw.exilecore.stats.DamageType.LIGHTNING);
+        words.put("ignited", tw.exilecore.stats.DamageType.FIRE);
+        final double baseIncreased = 1 + Math.max(0, effective.increased(StatKeys.DAMAGE, tags));
+        double increased = 0;
+        for (final java.util.Map.Entry<String, tw.exilecore.stats.DamageType> word : words.entrySet()) {
+            if (packet.get(word.getValue()) <= 0) {
+                continue;
+            }
+            final String stat = StatKeys.DAMAGE_VS_AILMENT + word.getKey();
+            increased += effective.increased(stat, tags);
+            factor *= effective.more(stat, tags);
+        }
+        return factor * (1 + increased / baseIncreased);
+    }
+
     private double[] fullOnlyMultipliers(final SkillBuild build, final StatSheet sheet) {
         double rate = 1;
         double damage = 1;
         final SkillDefinition definition = build.definition();
         final StatSheet effective = build.profile().effective(sheet);
         final Set<String> tags = build.profile().tags();
-        if (definition.mechanic() == Mechanic.PROJECTILE && build.projectiles() > 1 && !build.params().blink()) {
+        // 2026-11-10 照站長「全開的投射物全中修掉」：只有散彈（merging、刺蝟連射：每一發都能打同一隻，ProjectileEngine）才乘投射物數量；
+        //   其他技能同一次施放的投射物共用一份打過的名單，一隻只吃一發。這次之前所有投射物技能都乘（擲雷槍 9 支當成全中、全開 1,350 萬）
+        if (definition.mechanic() == Mechanic.PROJECTILE && build.projectiles() > 1 && !build.params().blink()
+                && (definition.tags().contains(ProjectileEngine.MERGING) || definition.tags().contains(ProjectileEngine.SPIKE_VOLLEY))) {
             rate *= build.projectiles();
         }
         if (effective.flat(StatKeys.INFUSION_CONSUME, tags) > 0 && effective.flat(tw.exilecore.charge.ChargeService.SUP_INHIBIT, tags) <= 0) {
@@ -4972,7 +5084,7 @@ public final class SkillService {
         final DamagePacket expected = DamageCalculator.expectedOutgoing(sheet, linked.profile());
         final double crit = DamageCalculator.critChance(sheet, linked.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
         final double multi = DamageCalculator.critMultiplier(linked.profile().effective(sheet), linked.profile().tags(), null) * 100;
-        final double critFactor = 1 + crit * (multi / 100.0 - 1);
+        final double critFactor = DamageCalculator.expectedCritFactor(linked.profile().effective(sheet), crit, multi / 100.0); // 2026-11-10
         final SkillParams params = linked.params();
         final double hitRate = ancestorCallsPerSecond(totem, linked, sheet) * up
                 * castHits(params.burst() == null ? 1 : params.burst().count(), params.aftershock() != null,
@@ -4991,7 +5103,7 @@ public final class SkillService {
             final DamagePacket fullExpected = afterResist(DamageCalculator.expectedOutgoing(fullSheet, fullLinked.profile()), full.resist());
             final double fullCrit = DamageCalculator.critChance(fullSheet, fullLinked.profile(), tw.exilecore.character.StatsReport.monsterEvasion(plugin, state));
             final double fullMulti = DamageCalculator.critMultiplier(fullLinked.profile().effective(fullSheet), fullLinked.profile().tags(), null) * 100;
-            final double fullCritFactor = 1 + fullCrit * (fullMulti / 100.0 - 1);
+            final double fullCritFactor = DamageCalculator.expectedCritFactor(fullLinked.profile().effective(fullSheet), fullCrit, fullMulti / 100.0); // 2026-11-10
             final SkillParams fullParams = fullLinked.params();
             final double fullRate = ancestorCallsPerSecond(fullTotem, fullLinked, fullSheet) * fullUp
                     * castHits(fullParams.burst() == null ? 1 : fullParams.burst().count(), fullParams.aftershock() != null,
@@ -6020,6 +6132,7 @@ public final class SkillService {
             case MaceSlams.MOLTEN_QUALITY_SECONDS -> "熔岩地裂持續時間 +" + trimNumber(value) + " 秒"; // 2026-11-05 熔軀崩擊
             // 2026-10-31：犧牲、雷雲的額外品質效果（之前沒有說明，整行不顯示）
             case "effect.life.max" -> "召喚物最大生命增加 " + trimNumber(value * 100) + "%";
+            case tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT -> "消耗怒星分裂的支數有 " + trimNumber(value) + "% 機率加倍"; // 2026-11-10
             // 2026-11-01 照 PoB2 altQualityStats：拾鱗、調藥心得的額外品質效果
             case "effect." + PersistentBuffs.PLATING_ARMOUR -> "每層甲片另外更多 " + trimNumber(value) + "% 護甲";
             case "effect.attack.speed@" + tw.exilecore.stats.Recently.LIFE_FLASK -> "生命藥劑效果中攻擊速度增加 " + trimNumber(value * 100) + "%";
@@ -7665,7 +7778,9 @@ public final class SkillService {
                             beamStage.count().intAt(build.level())));
                 } else if (params.splash() != null) {
                     lines.add(String.format(Locale.ROOT, "<gray>打中時電到附近 <white>%d</white> 個敵人（<white>%d%%</white> 傷害）",
-                            params.splash().targets(build.level()), Math.round(params.splash().damage(build.level()))));
+                            params.splash().targets(build.level()) // 2026-11-10 照站長「擲雷槍品質照原作」：品質多射的雷彈
+                                    + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SPLASH_TARGETS_EXTRA)),
+                            Math.round(params.splash().damage(build.level()))));
                 }
                 if (params.scatter() != null && params.scatter().onHit()) {
                     // 2026-10-26 照 PoE2（凝霜箭的冰片）
@@ -7860,9 +7975,20 @@ public final class SkillService {
                 }
                 if (!mark.effects().isEmpty()) {
                     final List<String> parts = new ArrayList<>();
+                    // 2026-11-10 照站長「上面品質的效果可以加在下面的數據嗎」：印記的品質（effect.＊，跟實戰 markOn 一樣照印記效果乘）
+                    //   併進下面這行的數字，另外註明品質加了多少；這次之前只寫逐級的數值（處決印記 42%，實戰其實是 42% ＋ 品質）
+                    double qualityCrit = 0;
+                    for (final tw.exilecore.stats.Modifier quality : build.qualityEffects()) {
+                        if (quality.stat().equals(StatKeys.CRIT_BONUS_TAKEN) && quality.type() == tw.exilecore.stats.ModType.INCREASED) {
+                            qualityCrit += quality.value() * 100 * fx;
+                        }
+                    }
                     for (final ScaledMod effect : mark.effects()) {
-                        parts.add(effect.stat().equals(StatKeys.CRIT_BONUS_TAKEN)
-                                ? String.format(Locale.ROOT, "暴擊傷害加成增加 <white>%d%%</white>", Math.round(effect.value().at(build.level()) * fx))
+                        final boolean crit = effect.stat().equals(StatKeys.CRIT_BONUS_TAKEN);
+                        final double extra = crit && effect.type() == tw.exilecore.stats.ModType.INCREASED ? qualityCrit : 0;
+                        parts.add(crit
+                                ? String.format(Locale.ROOT, "暴擊傷害加成增加 <white>%d%%</white>%s", Math.round(effect.value().at(build.level()) * fx + extra),
+                                        extra > 0 ? String.format(Locale.ROOT, "<dark_gray>（含品質 +%s%%）", trimNumber(Math.round(extra * 100) / 100.0)) : "")
                                 : "<white>" + effect.describe(build.level(), fx) + "</white>");
                     }
                     // 2026-10-28：誰打都算的印記（引雷印、霜縛印：牠受到的電擊／凍結累積…）寫「牠…（誰打都算）」；這次之前一律寫「對牠」

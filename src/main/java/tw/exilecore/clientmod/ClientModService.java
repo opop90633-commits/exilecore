@@ -845,6 +845,11 @@ public final class ClientModService implements Module, Listener, PluginMessageLi
             final String hex = plugin.ailments().hexText(living.getUniqueId(), now, true);
             status.addAll(MiniParts.parse(join(ailments, hex)));
         }
+        // 2026-11-10 照站長「磨蝕之志這個能有顯示嗎」：你對這隻疊的磨蝕之志（更多傷害 %、離撲殺幾秒）
+        final String attrition = tw.exilecore.skill.OriginalSkills.attritionText(player.getUniqueId(), living.getUniqueId());
+        if (!attrition.isEmpty()) {
+            status.addAll(MiniParts.parse(status.isEmpty() ? attrition : "  " + attrition));
+        }
         // 2026-11-02：稀有、傳奇怪的詞綴列在狀態那一行（魔法怪的詞綴本來就寫在名字裡）；這次之前看不到稀有怪有哪些詞綴
         final String mods = modNames(data);
         if (!mods.isEmpty()) {

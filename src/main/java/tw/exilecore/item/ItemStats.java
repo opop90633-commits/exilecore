@@ -712,8 +712,12 @@ public final class ItemStats {
             final boolean floor = boosted && levelOnly(affix);
             final Map<String, Integer> vars = scale != 1 ? (floor ? floored(rolled.vars(), scale) : scaled(rolled.vars(), scale)) : rolled.vars();
             final Map<String, int[]> ranges = scale != 1 ? (floor ? flooredRanges(affix.ranges(rolled.tier()), scale) : scaledRanges(affix.ranges(rolled.tier()), scale)) : affix.ranges(rolled.tier());
-            final AffixLine line = new AffixLine(affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示
-                    Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges, rolled.fixedScale()), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0, // 2026-11-04：腐化的寫骰出的數值×倍率
+            // 2026-11-10 照站長「深淵星魄印記揭露給較高階」：深淵星魄做的隱匿詞綴寫成深淵印記
+            final String abyssText = Veiled.abyssMark(rolled)
+                    ? (affix.type() == AffixType.PREFIX ? "深淵領主印記・前綴" : "深淵領主印記・後綴") + "（帶去營地找盜賊首領揭露，只出最高階）" : null;
+            final AffixLine line = new AffixLine(abyssText != null ? abyssText
+                    : affix.render(vars, rolled.fixedScale()), affix.rank(rolled.tier()), affix.type(), // 2026-11-01：腐化的固定值也照倍率顯示
+                    abyssText != null ? abyssText : Affix.substituteWithRanges(affix.scaledText(rolled.fixedScale()), vars, ranges, rolled.fixedScale()), boosted, veiledBoost ? (int) Math.round(unveiled * 100) : 0, // 2026-11-04：腐化的寫骰出的數值×倍率
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
                             : data.isFractured(rolled) ? AffixLine.FRACTURED

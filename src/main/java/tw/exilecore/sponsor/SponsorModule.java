@@ -15,7 +15,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
-import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.scheduler.BukkitTask;
 import tw.exilecore.ExileCore;
@@ -149,13 +148,35 @@ public final class SponsorModule implements Module, Listener {
         }
     }
 
-    /** 伺服器滿了：累積贊助有「滿人也能進」的放行（只放行人數已滿，不放行維護、封鎖）。 */
-    @SuppressWarnings("deprecation")
+    /**
+     * 伺服器滿了：累積贊助有「滿人也能進」的放行（只放行人數已滿，不放行維護、封鎖）。
+     * 2026-11-10 照站長「改」（log：HorriblePlayerLoginEventHack，聽舊的 PlayerLoginEvent 會讓 Paper 關掉重新設定的功能）：
+     * 改聽 Paper 的 PlayerConnectionValidateLoginEvent。新事件不分被擋的原因，所以自己確認：人數已滿、沒被封鎖、白名單有過才放行。
+     * 這次之前聽 PlayerLoginEvent 的 KICK_FULL。
+     */
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onLogin(final PlayerLoginEvent event) {
-        if (service != null && event.getResult() == PlayerLoginEvent.Result.KICK_FULL && service.bypassFull(event.getPlayer().getUniqueId())) {
+    public void onLogin(final io.papermc.paper.event.connection.PlayerConnectionValidateLoginEvent event) {
+        if (service == null || event.isAllowed()) {
+            return;
+        }
+        final java.util.UUID uuid = profileId(event.getConnection());
+        if (uuid == null || !service.bypassFull(uuid)) {
+            return;
+        }
+        final org.bukkit.Server server = plugin.getServer();
+        final org.bukkit.OfflinePlayer offline = server.getOfflinePlayer(uuid);
+        final boolean full = server.getOnlinePlayers().size() >= server.getMaxPlayers();
+        if (full && !offline.isBanned() && (!server.hasWhitelist() || offline.isWhitelisted())) {
             event.allow();
         }
+    }
+
+    /** 2026-11-10：登入中（驗證過的帳號）或設定中的連線是哪個帳號；拿不到回傳 null。 */
+    private static java.util.UUID profileId(final io.papermc.paper.connection.PlayerConnection connection) {
+        final com.destroystokyo.paper.profile.PlayerProfile profile = connection instanceof io.papermc.paper.connection.PlayerLoginConnection login
+                ? login.getAuthenticatedProfile()
+                : connection instanceof io.papermc.paper.connection.PlayerConfigurationConnection configuration ? configuration.getProfile() : null;
+        return profile == null ? null : profile.getId();
     }
 
     /** 等帳號資料載入最多幾 tick（再久就照原版的上線訊息送）。 */

@@ -117,8 +117,12 @@ public final class GemQualityKeys {
     public static final String WALL_SELF_MORE = "wall.self_more";
     /** FLAT（%）：危害 x% 機率重新布置（矛陣）。 */
     public static final String HAZARD_REARM = "hazard.rearm_chance";
+    /** 2026-11-10 照站長「擲雷槍品質照原作」：FLAT：打中炸開時多射幾發雷彈（擲雷槍，無條件捨去；ProjectileEngine.splash）。 */
+    public static final String SPLASH_TARGETS_EXTRA = "splash.targets_extra";
     /** FLAT：同時最多幾支超載的矛 +x（霆落矛，無條件捨去）。 */
     public static final String OVERCHARGED_LIMIT = "lance.overcharged_extra";
+    /** 2026-11-10 照 PoE2 擲雷槍額外的品質效果：消耗怒星的好處（分裂支數）有 x% 機率加倍。 */
+    public static final String DOUBLE_CHARGE_BENEFIT = "lance.double_charge_chance";
     /** FLAT（%）：對插了電殛棒的目標，擊中獲得 x% 傷害為額外閃電（電殛矢）。 */
     public static final String ROD_GAIN_LIGHTNING = "rod.gain_lightning";
     /** FLAT：雷雲多放 x 道雷才消失（風暴漩渦 Orb of Storms，無條件捨去；2026-10-29 照 PoE2）。 */
