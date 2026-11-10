@@ -491,6 +491,8 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
                 definition.mechanic() == Mechanic.PROJECTILE && !params.blink()
                         ? params.range() * Math.max(0.1, effective.apply(PROJECTILE_RANGE, 1.0, context))
                         : definition.mechanic() == Mechanic.DASH && params.dash() != null ? params.dash().range(level, params.range()) // 2026-10-28 照 PoE2：位移距離逐級
+                                // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 blink_travel_distance（掠閃多閃 (0—2.5) 公尺，跟逐級表同單位）；這次之前一般的品質效果再算一次
+                                + Math.max(0, effective.flat(tw.exilecore.stats.GemQualityKeys.DASH_DISTANCE_FLAT, context))
                         : params.range(),
                 params.size(),
                 pierce, chains, params.explode().at(level) * areaScale, params.wobble(), params.arrow(),
@@ -852,6 +854,10 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
             list.add(mod.toModifier(level, auraEffect, "戰吼 " + definition.name())); // 2026-10：戰吼效果
         }
         list.addAll(qualityGrants()); // 2026-10-27 照 PoE2：戰吼品質的「增益給 x」（熔魂嘯更多火焰傷害、銀月庇獲得冰冷）
+        // 2026-11-11：只給召喚物增益的祭品（嗜血祭）品質的 effect.＊ 加在給召喚物的那份（Warcries），不另外給你自己
+        if (warcry.buff().isEmpty() && !warcry.minionBuff().isEmpty()) {
+            return list;
+        }
         return withQualityEffects(list, auraEffect, "戰吼 " + definition.name()); // 2026-10-30 照 PoE2：昇華增益技能（冥想、惡魔變身、夏烏拉統治者）的品質加在增益本身
     }
 

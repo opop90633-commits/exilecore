@@ -128,7 +128,8 @@ class AscOriginalSystemsTest {
         assertEquals(2, spark.size());
         assertEquals(4, spark.get(1).value(), 1e-9, "電球：+4 投射物");
         // 額外效果的機制還沒有的寶石：照舊把一般品質再算一次（平衡等效）
-        assertEquals(AscBuild.twice(normal), AscBuild.advanced("blazing_star_shell", 20, normal));
+        // 2026-11-11：熾星彈照原作做了（環射 8 發），換成還沒有機制的凝霜箭（原作是減少動作中的移動懲罰，放技能減速已經拿掉）
+        assertEquals(AscBuild.twice(normal), AscBuild.advanced("rime_arrow", 20, normal));
         // 從一般品質移到額外品質效果的（原作的一般品質沒有這條）
         assertTrue(GemQuality.modifiers("anomaly_devour_blast", 20, "q").stream().noneMatch(m -> m.stat().equals(StatKeys.COOLDOWN_RECOVERY)));
         assertTrue(GemQuality.hasAdvanced("anomaly_devour_blast"));

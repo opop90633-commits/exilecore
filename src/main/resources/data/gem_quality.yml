@@ -60,8 +60,7 @@ curse_ring:   # Blasphemy（2026-10-29 照 PoE2：(0—10)% 增加保留效率�
   - { stat: aura.reservation, type: INCREASED, per: -0.5 }   # 保留效率（保留 ÷ (1 + 效率)，SkillBuild）
 flame_blast_shaft:   # Detonating Arrow（2026-10-28 照 PoE2：最大階段 +(0—1)（無條件捨去）；這次之前照通用規則）
   - { stat: charge.stages_flat, type: FLAT, per: 0.05 }   # 引導最大層數（ChargeSpec.withQuality）
-blink:   # Blink（2026-10-28 照 PoE2：(0—10)% 增加冷卻回復速度；這次之前照通用規則每 1% 增加 1% 傷害）
-  - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }   # 冷卻回復速度
+blink: []   # Blink（2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 qualityStats 是空的，冷卻回復速度是 poe2db 的額外品質效果，移到 advanced；這次之前 2026-10-28 寫在一般品質：(0—10)% 增加冷卻回復速度）
 blood_hunt:   # Blood Hunt（2026-11-01 照 PoE2 active_skill_base_area_of_effect_radius 0.2/1%：血爆半徑 1.3 → 1.7 公尺（20%），換成增加範圍每 1% 3.55%（半徑 ×1.31）；這次之前每 1% 2%（20% 時半徑只到 1.54））
   - { stat: skill.area, type: INCREASED, per: 3.55 }   # 範圍（血爆）
 bloodthirst_rite:   # Pain Offering（2026-10-28 照 PoE2：召喚物光環半徑 +(0—2.4) 格；這次之前照通用規則每 1% 增加 0.5% 戰吼效果）
@@ -161,7 +160,7 @@ strength_sap_curse:   # Enfeeble（2026-10-28 照 PoE2：(0—10)% 增加詛咒�
   - { stat: curse.effect, type: INCREASED, per: 0.5 }   # 詛咒效果
 root_bind:   # Entangle（2026-10-28 照 PoE2：(0—20)% 機率多一道裂隙（再往前一圈）；這次之前照通用規則）
   - { stat: skill.additional_fissure_chance, type: FLAT, per: 1.0 }   # SkillExecutor.extraFissure
-  - { stat: skill.limit, type: FLAT, per: 0.2 }   # 2026-10-30 照 poe2db：限制 (0—4) 道根鬚（每 5% 品質 +1，捨去）
+  # 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：根鬚上限 +(0—4) 是額外的品質效果（PoB2 altQualityStats base_number_of_entangle_roots_allowed 0.2），移到 advanced；這次之前 2026-10-30 寫在一般品質
 soul_draw_shot:   # Essence Drain（2026-10-28 照 PoE2：減益持續時間 +(0—1) 秒；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: debuff.duration, type: FLAT, per: 0.05 }   # 減益持續時間 +秒（AilmentService，加在 debuff.duration 上）
 unquenched_fury:   # Eternal Rage（2026-10-28 照 PoE2：每秒另外回復 (0—0.5) 點怒氣；這次之前照通用規則）
@@ -332,7 +331,7 @@ magic_absorb_art:   # Mana Drain（2026-10-28 照 PoE2：吸取的魔力 +(0—9
   - { stat: mana.on_hit, type: FLAT, per: 4.5 }   # 加在逐級的吸取量上
 magic_spring_well:   # Mana Remnants（2026-11-01 照 PoE2：每個痕跡多 (0—40) 魔力、增益 (0—40)% 增加魔力再生；這次之前換算成魔力回復＋擊殺回魔）
   - { stat: remnant.mana, type: FLAT, per: 2.0 }   # AscGranted.manaRemnantValue
-  - { stat: effect.mana.regen, type: INCREASED, per: 2.0 }   # 增益：魔力再生
+  # 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：增益的魔力再生是額外的品質效果（PoB2 altQualityStats mana_remnants_global_mana_regeneration_rate_granted_+% 2），移到 advanced；這次之前寫在一般品質
 magic_surge:   # Mana Tempest（2026-10-28 照 PoE2：離開之後效果再延續 (0—2) 秒（加在 2 秒上）；這次之前照通用規則）
   - { stat: mana_tempest.linger, type: FLAT, per: 0.1 }   # ManaTempest
 phantom_blade:   # Manifest Weapon（2026-10-29 照 PoE2：(0—20)% 增加召喚物攻擊速度；昇華賦予的技能，品質照 SkillLoadout 的賦予技能品質；這次之前沒寫，照通用規則每 1% 增加 1% 召喚物傷害）
@@ -422,8 +421,7 @@ collapse_heart_chant:   # Mantra of Destruction（2026-10-28 照 PoE2：需要�
   - { stat: mantra.combo, type: FLAT, per: -0.05 }   # OriginalSkills.mantraCombo
 servant_corpse_swap:   # Sacrifice（2026-10-28 照 PoE2：召喚物復活更快 (0—5)%（加在「更慢 x%」上）；這次之前照通用規則）
   - { stat: servant_corpse_swap.slower, type: FLAT, per: 0.25 }   # OriginalSkills.sacrifice
-beast_blood_boil:   # Savage Fury（2026-10-28 照 PoE2：狂暴另外更多 (0—5)% 傷害（加在 20%～39% 上）；這次之前照通用規則）
-  - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
+beast_blood_boil: []   # Savage Fury（2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 qualityStats 是空的，狂暴更多傷害是 poe2db 的額外品質效果，移到 advanced；這次之前 2026-10-28 寫在一般品質：狂暴另外更多 (0—5)% 傷害）
 gathered_scales:   # Scavenged Plating（2026-11-01 照 PoE2：甲片持續時間 +(0—2) 秒（base_skill_effect_duration 每 1% +100 毫秒，PersistentBuffs）；這次之前拾鱗沒有甲片層數，換成護甲、破甲各另外增加 (0—4)%）
   - { stat: plating.duration, type: FLAT, per: 0.1 }   # 甲片持續時間 +x 秒
 ground_shake_shout:   # Seismic Cry（2026-10-27 照 PoE2：強化攻擊的餘震 (0—10)% 更多傷害、獲得 (0—20)% 物理傷害為火焰）
@@ -499,7 +497,7 @@ thunder_cloud:   # Orb of Storms
   - { stat: skill.chains, type: FLAT, per: 0.15 }   # 連鎖次數
 thunderbind_staff:   # Charged Staff（2026-10-28 照 PoE2：(0—20)% 增加技能效果持續時間；這次之前照通用規則每 1% 增加 1% 傷害）
   - { stat: skill.duration, type: INCREASED, per: 1.0 }   # 持續時間
-  - { stat: charged_staff.keep_chance, type: FLAT, per: 1.0 }   # 2026-10-30 照 poe2db：使用時 (0—20)% 機率不移除銳星（OriginalSkills.chargedStaff）
+  # 2026-11-10 照站長「一般品質再算一次的照原作改」：「(0—20)% 機率不移除銳星」是額外的品質效果（PoB2 altQualityStats charge_skip_consume_chance_%），移到下面 advanced；PoB2 一般品質只有持續時間
 thunder_surge:   # Storm Wave（2026-11-01 照 PoE2 active_skill_base_secondary_area_of_effect_radius 0.5/1%：裂隙半寬 +(0—1) 公尺（StormWave）；這次之前 skill.area 每 1% 增加 5%；更早照通用規則）
   - { stat: storm_wave.width, type: FLAT, per: 0.05 }   # 裂隙半寬 +公尺（SkillExecutor.stripHalfWidth）
 lurking_thunder_shell:   # Stormblast Bolts（2026-10-28 照 PoE2：穿透 (0—20)% 閃電抗性；這次之前照通用規則每 1% 增加 1% 傷害）
@@ -697,9 +695,8 @@ mirage_spirit_haven:   # Navira's Oasis：綠洲每秒另外給 (0—0.2) 點藥
   - { stat: asc.oasis_flask_rate, type: FLAT, per: 0.01 }   # AscGranted（加在每秒 0.5 上）
 mirage_spirit_spring:   # Navira's Well：增益再 (0—20)% 增加能量護盾回充速度
   - { stat: asc.well_es_recharge, type: FLAT, per: 1.0 }   # AscGranted
-mirage_spirit_freeze:   # Navira's Fracturing：冰緩照 (0—40)% 更多傷害算、(0—40)% 更多凍結累積
+mirage_spirit_freeze:   # Navira's Fracturing：冰緩照 (0—40)% 更多傷害算（2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db 第二條「(0—40)% more Freeze Buildup」是額外的品質效果，移到 advanced；這次之前兩條都寫在一般品質）
   - { stat: chill.effect, type: MORE, per: 2.0 }
-  - { stat: freeze.buildup, type: MORE, per: 2.0 }
 blade_spirit_settle:   # Ruzhan's Reckoning：傷害半徑 +(0—0.4) 公尺；站長：直接當 +0～0.4 格（不換算成範圍增加）
   - { stat: asc.reckoning_radius, type: FLAT, per: 0.02 }   # 半徑 +格（AscendancyEffects.cast → SkillBuild.withBaseRadius）
 blade_spirit_wrath_fire:   # Ruzhan's Fury：+(0—4) 個投射物
@@ -709,6 +706,252 @@ blade_spirit_device:   # Ruzhan's Trap：符文、龍捲持續時間各 +(0—2)
   - { stat: asc.tornado_duration, type: FLAT, per: 0.1 }   # AscGranted
 
 advanced:
+  chill_fan_shafts:   # Freezing Salvo：封印上限 +(0—4)（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Maximum (0—4) Seals」；這次之前一般的品質效果再算一次）
+    - { stat: seal.max, type: FLAT, per: 0.2 }   # SkillService（加在 10 個上）
+  summon_bone_heavy:   # Skeletal Brute：召喚物 (0—30)% 更多最大生命（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Minions have (0—30)% more Maximum Life」；這次之前一般的品質效果再算一次）
+    - { stat: life.max, type: MORE, per: 1.5 }   # MinionSheets
+  summon_bone_bowmen:   # Skeletal Sniper：(0—50)% 更多火焰傷害（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Deals (0—50)% more Fire Damage」；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 2.5, tags: [fire] }
+  summon_bone_thundermage:   # Skeletal Storm Mage：召喚物施法速度增加 (0—30)%（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—30)% increased Minion Cast Speed」；這次之前一般的品質效果再算一次）
+    - { stat: attack.speed, type: INCREASED, per: 1.5 }   # 召喚物的出手（施法）速度照 attack.speed 算（MinionSheets.attacksPerSecond）
+  summon_bone_berserker:   # Skeletal Reaver：造成物理傷害的 (0—30)% 算成破甲（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Break Armour equal to (0—30)% of Physical damage dealt」；這次之前一般的品質效果再算一次）
+    - { stat: armour.break, type: FLAT, per: 1.5 }   # CombatListener（召喚物打的也破甲）
+  summon_bone_frostmage:   # Skeletal Frost Mage：(0—20)% 增加保留效率（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—20)% increased Spirit Reservation Efficiency」；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -1.0 }
+  soul_attach_art:   # Bind Spectre：(0—20)% 增加保留效率（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—20)% increased Reservation Efficiency」；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -1.0 }
+  summon_bone_priest:   # Skeletal Cleric：召喚物受到的傷害減少 (0—40)%（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Minions take (0—40)% reduced Damage」；這次之前一般的品質效果再算一次）
+    - { stat: damage.taken, type: FLAT, per: -2.0 }   # DamageCalculator（召喚物挨打）
+  mirage_spirit_freeze:   # Navira's Fracturing：(0—40)% 更多凍結累積（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—40)% more Freeze Buildup（從一般品質移過來）」；這次之前一般的品質效果再算一次）
+    - { stat: freeze.buildup, type: MORE, per: 2.0 }
+  cold_winter_gaze:   # Eye of Winter：投射物 (0—50)% 機率回歸（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Projectiles have (0—50)% chance to Return to you」；這次之前一般的品質效果再算一次）
+    - { stat: projectile.return_chance, type: FLAT, per: 2.5 }   # ProjectileEngine（每一發各自擲）
+  flame_core_detonation:   # Flameblast：每多一層傷害型異常幅度更多 (0—40)%（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—40)% more Magnitude of Damaging Ailments per Stage」；這次之前一般的品質效果再算一次）
+    - { stat: ailment.more_per_stage, type: FLAT, per: 2.0 }   # Signatures（引導層數）
+  thunderclap_arrow:   # Lightning Arrow：閃電傷害 (0—30)% 機率為幸運（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats chance_for_extra_damage_roll_with_lightning_damage_% 1.5；這次之前一般的品質效果再算一次）
+    - { stat: damage.lucky_lightning_chance, type: FLAT, per: 1.5 }   # DamageCalculator（閃電與會轉成閃電的物理基礎擲兩次取高）
+  thunder_lure_thrust:   # Gathering Storm：閃電傷害 (0—30)% 機率為幸運（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats chance_for_extra_damage_roll_with_lightning_damage_% 1.5；這次之前一般的品質效果再算一次）
+    - { stat: damage.lucky_lightning_chance, type: FLAT, per: 1.5 }
+  successive_shots:   # Rapid Shot：最大熱度 +(0—30)（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats maximum_number_of_crossbow_heat_stacks 1.5；這次之前一般的品質效果再算一次）
+    - { stat: crossbow.clip, type: FLAT, per: 1.5 }   # 熱度＝彈匣（OriginalSkills.heatMax，無條件捨去）
+  gale_combo:   # Tempest Flurry：終結打擊多 (0—2) 下靈擊（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats final_strike_number_of_spirit_strikes 0.1；這次之前一般的品質效果再算一次）
+    - { stat: stage.final_extra_hits, type: FLAT, per: 0.1 }   # SkillStages.apply（終結打擊多打幾下，無條件捨去）
+  startling_thunder_bell:   # Tempest Bell：鐘多響 (0—10) 次（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats bell_hit_limit 0.5；這次之前一般的品質效果再算一次）
+    - { stat: bell.hit_limit, type: FLAT, per: 0.5 }   # SkillDeployables.Deployed（ringsLeft）
+  hurricane_spear:   # Whirlwind Lance：被元素地面強化的旋風崩散時獲得 (0—50)% 傷害為那種元素（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats windstorm_gain_all_damage_%_as_corresponding_element_if_empowered 2.5；這次之前一般的品質效果再算一次）
+    - { stat: whirl.empowered_gain, type: FLAT, per: 2.5 }   # StageLeftovers.collapse（ElementalGround）
+  prey_kill_mark:   # Sniper's Mark：被標記的敵人造成的傷害更少 (0—10)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats gem_quality_marked_enemy_damage_dealt_+%_final -0.5；這次之前一般的品質效果再算一次）
+    - { stat: mark.enemy_damage_less, type: FLAT, per: 0.5 }   # SkillExecutor（另外掛誰打都算的減益：造成的傷害更少 x%）
+  blazing_star_shell:   # Fireball：(0—10)% 機率另外往四周一圈多射 8 發（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats spell_skill_%_chance_to_fire_8_additional_projectiles_in_nova 0.5；這次之前一般的品質效果再算一次）
+    - { stat: projectile.nova_eight_chance, type: FLAT, per: 0.5 }   # ProjectileEngine
+  ember_envoy:   # Herald of Ash：燼使的火焰傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats herald_of_ash_fire_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: herald.damage, type: FLAT, per: 1.0 }   # AuraService（點燃乘上去）
+  thunder_envoy:   # Herald of Thunder：雷使的閃電傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats herald_of_thunder_lightning_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: herald.damage, type: FLAT, per: 1.0 }   # AuraService.castHeraldEffect
+  frost_envoy:   # Herald of Ice：霜使的冰冷傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats herald_of_ice_cold_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: herald.damage, type: FLAT, per: 1.0 }   # AuraService.castHeraldEffect
+  bloodthirst_rite:   # Pain Offering：增益另外增加 (0—20)% 攻擊與施法速度（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats pain_offering_attack_and_cast_speed_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: effect.attack.speed, type: INCREASED, per: 1.0 }   # 給召喚物的祭品增益（Warcries，加在原本那一條上）
+    - { stat: effect.cast.speed, type: INCREASED, per: 1.0 }
+  soulfire_rite:   # Soul Offering：增益另外增加 (0—20)% 法術傷害（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats power_offering_buff_spell_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: effect.damage, type: INCREASED, per: 1.0, tags: [spell] }   # 給你的增益（SkillBuild.warcryOwnModifiers，加在原本那一條上）
+  field_quake_hammers:   # Rolling Slam：造成的物理傷害的 (0—40)% 算成破甲（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats armour_break_physical_damage_%_dealt_as_armour_break 2；這次之前一般的品質效果再算一次）
+    - { stat: armour.break, type: FLAT, per: 2.0 }   # CombatListener（物理傷害的 x% 破甲）
+  mist_staff_sweep:   # Wind Blast：造成的物理傷害的 (0—40)% 算成破甲（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats armour_break_physical_damage_%_dealt_as_armour_break 2；這次之前一般的品質效果再算一次）
+    - { stat: armour.break, type: FLAT, per: 2.0 }
+  leaping_staff_crash:   # Vaulting Impact：對重暈的敵人 (0—50)% 更多傷害（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats active_skill_damage_+%_final_against_heavy_stunned_enemies 2.5；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 2.5, tags: [vs_heavystunned] }   # TargetConditions（擊中時牠在重暈中）
+  fortress_crumble_shell:   # Siege Cascade：每個彈匣 +(0—3) 支弩矢（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：poe2db 寶石頁第二條「+(0—3) Bolts loaded per clip」（PoB2 altQualityStats base_number_of_crossbow_bolts 0.005 的單位不對，照 poe2db）；這次之前一般的品質效果再算一次）
+    - { stat: crossbow.clip, type: FLAT, per: 0.15 }   # 彈匣（SkillService 小數捨去）
+  freezing_rain_shell:   # Hailstorm Rounds：穿透 (0—60)% 冰冷抗性（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_reduce_enemy_cold_resistance_% 3；這次之前一般的品質效果再算一次）
+    - { stat: penetration, type: FLAT, per: 3.0, tags: [cold] }   # DamageCalculator
+  winter_shell:   # Arctic Armour：每層冰甲給 (0—20)% 增加護甲（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats arctic_armour_armour_granted_+%_per_stage 1；這次之前一般的品質效果再算一次）
+    - { stat: arctic.armour_per_stage, type: FLAT, per: 1.0 }   # OriginalSkills.arctic（增益，層數變了就換）
+  frost_billow:   # Wave of Frost：被打中的敵人凍結時受到的傷害增加 (0—40)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats frozen_monsters_take_increased_damage 2；這次之前一般的品質效果再算一次）
+    - { stat: frozen.damage_taken, type: FLAT, per: 2.0 }   # ProjectileEngine.frozenTaken（4 秒、只在凍結時有效）
+  electrocute_shaft:   # Electrocuting Arrow：插著電殛棒的敵人受到的傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats electrocuting_arrow_damage_taken_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: rod.damage_taken, type: FLAT, per: 1.0 }   # ProjectileEngine.attachRod
+  cold_congeal_shell:   # Ice Shards：(0—200)% 更多擊中的凍結累積（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats active_skill_hit_damage_freeze_multiplier_+%_final 10；這次之前一般的品質效果再算一次）
+    - { stat: freeze.buildup, type: MORE, per: 10.0 }
+  kerosene_grenade:   # Oil Grenade：黑油的曝露降低 (0—10)% 元素抗性（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats skill_base_oil_exposure_-_to_total_elemental_resistance 0.5；這次之前一般的品質效果再算一次）
+    - { stat: oil.exposure, type: FLAT, per: 0.5 }   # OriginalSkills.oilExposure
+  blood_hunt:   # Blood Hunt：血爆另外讓被炸到的失去用掉失血的 (0—4)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats blood_hunt_explosion_%_blood_loss_to_deal_as_life_loss 0.2；這次之前一般的品質效果再算一次）
+    - { stat: blood_hunt.life_loss, type: FLAT, per: 0.2 }   # StageLeftovers.bloodHunt（加在 25% 上）
+  dig_remains:   # Unearth：骨構體 (0—50)% 更多攻擊速度（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats active_skill_minion_attack_speed_+%_final 2.5；這次之前一般的品質效果再算一次）
+    - { stat: attack.speed, type: MORE, per: 2.5 }   # 掘骸的品質帶到骨構體上（Unearth.raise → 召喚物的攻擊）
+  collapse_heart_chant:   # Mantra of Destruction：紫焰持續時間 +(0—0.05) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：poe2db 寶石頁第二條「Purple Flames of Chayula duration +(0—0.05) s」（PoB2 altQualityStats base_secondary_skill_effect_duration 2.5）；這次之前一般的品質效果再算一次）
+    - { stat: skill.secondary_duration_flat, type: FLAT, per: 0.0025 }   # OriginalSkills（紫焰 20 秒＋x）
+  grinding_will:   # Attrition：存在範圍增加 (0—40)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats presence_area_+% 2；這次之前一般的品質效果再算一次）
+    - { stat: grinding_will.presence_area, type: FLAT, per: 2.0 }   # OriginalSkills.attrition（半徑照 √）
+  magic_surge:   # Mana Tempest：風暴裡花掉的魔力加到每秒消耗的比例少 (0—8) 個百分點（30% → 22%）（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats mana_tempest_mana_cost_%_to_add_to_cost_per_second -0.4；這次之前一般的品質效果再算一次）
+    - { stat: mana_tempest.spent_share, type: FLAT, per: -0.4 }   # ManaTempest.spentShare
+  lashing_thorns:   # Thrashing Vines：擊中 (0—30)% 機率穿刺（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats impale_on_hit_%_chance 1.5；這次之前一般的品質效果再算一次）
+    - { stat: stab_nail.spell_chance, type: FLAT, per: 1.5 }   # KeystoneEffects（法術的穿刺機率）
+  root_bind:   # Entangle：根鬚上限 +(0—4)（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_number_of_entangle_roots_allowed 0.2（從一般品質移過來）；這次之前一般的品質效果再算一次）
+    - { stat: skill.limit, type: FLAT, per: 0.2 }   # EntangleRoots.limit＋SkillLimits（每 5% 品質 +1，捨去）
+  beast_blood_boil:   # Savage Fury：狂暴另外更多 (0—5)% 傷害、攻擊擊中多獲得 (0—1) 點獸性（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：poe2db 寶石頁第二條（PoB2 altQualityStats wild_beast_energy_per_hit 0.05；更多傷害那條從一般品質移過來）；這次之前一般的品質效果再算一次）
+    - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
+    - { stat: fury.per_hit, type: FLAT, per: 0.05 }   # AuraService.gainFury（無條件捨去）
+  shield_drum:   # Resonating Shield：引導時暈眩門檻增加 (0—100)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats stun_threshold_+%_while_channelling 5；這次之前一般的品質效果再算一次）
+    - { stat: action.stun_threshold, type: FLAT, per: 5.0 }   # 每敲一下的動作期間（SkillService.performInner；引導中每下接著敲＝一直有）
+  ice_shuttle:   # Frost Darts：分裂 +(0—2) 次（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats number_of_additional_forks_base 0.1；這次之前一般的品質效果再算一次）
+    - { stat: skill.split_shot, type: FLAT, per: 0.1 }   # SkillBuild.forks
+  blood_proclaim:   # Herald of Blood：增益給 (0—15)% 增加物理傷害（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats herald_of_blood_global_physical_damage_granted_+% 0.75；這次之前一般的品質效果再算一次）
+    - { stat: effect.damage, type: INCREASED, per: 0.75, tags: [physical] }   # 光環的增益
+  crimson_wrath:   # Berserk：增益給 +(0—8) 最大怒氣（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats berserk_maximum_rage_granted_+ 0.4；這次之前一般的品質效果再算一次）
+    - { stat: effect.rage.max, type: FLAT, per: 0.4 }   # 光環的增益（SkillResources.maxRage）
+  wilting_breath:   # Withering Presence：每層凋零的間隔少 (0—0.5) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats skill_withering_presence_frequency_ms -25；這次之前一般的品質效果再算一次）
+    - { stat: skill.repeat_interval_flat, type: FLAT, per: -0.025 }   # AuraService（withered_every）
+  frost_arrowhead:   # Ice-Tipped Arrows：多強化 (0—2) 次攻擊（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats shearing_bolts_number_of_empowered_attacks 0.1；這次之前一般的品質效果再算一次）
+    - { stat: skill.empowered_attacks, type: FLAT, per: 0.1 }   # OriginalSkills（4 次＋x，無條件捨去）
+  miasma_zone:   # Toxic Domain：離開毒花之後增益多留 (0—2) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats toxic_domain_buff_linger_duration_ms 100；這次之前一般的品質效果再算一次）
+    - { stat: buff.linger_seconds, type: FLAT, per: 0.1 }   # StageAttacks.bloom
+  blink:   # Blink：(0—10)% 增加冷卻回復速度、多閃 (0—2.5) 公尺（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：poe2db 寶石頁第二條（PoB2 altQualityStats blink_travel_distance 1.25；冷卻回復那條從一般品質移過來）；這次之前一般的品質效果再算一次）
+    - { stat: cooldown.recovery, type: INCREASED, per: 0.5 }
+    - { stat: dash.distance_flat, type: FLAT, per: 0.125 }   # SkillBuild（位移距離，跟逐級表同單位）
+  guard_moment:   # Time of Need：增益給 (0—20)% 增加生命再生速度（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats time_of_need_global_life_regeneration_rate_granted_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: effect.life.regen, type: INCREASED, per: 1.0 }   # 光環的增益（固定值的再生）
+    - { stat: effect.life.regen_percent, type: INCREASED, per: 1.0 }   # 光環的增益（百分比的再生）
+  spectral_step:   # Ghost Dance：幽魂護罩最多 +(0—1) 層（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats ghost_dance_max_stacks 0.05；這次之前一般的品質效果再算一次）
+    - { stat: buff.max_stacks, type: FLAT, per: 0.05 }   # PersistentBuffs.shrouds（無條件捨去）
+  magic_spring_well:   # Mana Remnants：增益給 (0—40)% 增加魔力再生（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats mana_remnants_global_mana_regeneration_rate_granted_+% 2（從一般品質移過來）；這次之前一般的品質效果再算一次）
+    - { stat: effect.mana.regen, type: INCREASED, per: 2.0 }   # 光環的增益
+  insect_devour_horde:   # Ravenous Swarm：每群的間隔少 (0—2) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_cooldown_modifiable_repeat_interval_ms -100；這次之前一般的品質效果再算一次）
+    - { stat: skill.repeat_interval_flat, type: FLAT, per: -0.1 }   # AuraService（summon.interval，最少 0.5 秒）
+  pestilence_sac_burst:   # Plague Bearer：對沒有中毒的敵人 (0—50)% 增加中毒效果（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats poison_effect_+%_vs_non_poisoned_enemies 2.5；這次之前一般的品質效果再算一次）
+    - { stat: poison.magnitude, type: INCREASED, per: 2.5, tags: [vs_notpoisoned] }   # TargetConditions
+  earth_wall_strike:   # Shield Wall：獲得 (0—20)% 物理傷害為火焰（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats active_skill_base_physical_damage_%_to_gain_as_fire 1；這次之前一般的品質效果再算一次）
+    - { stat: damage.gain.fire, type: FLAT, per: 1.0 }
+  breeze_dance_step:   # Wind Dancer：疾風每一階另外更多 (0—50)% 傷害（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 Gale Force altQualityStats wind_dancer_damage_+%_final_per_stage 2.5（品質在風之舞步這顆寶石上）；這次之前一般的品質效果再算一次）
+    - { stat: gale.more_per_stage, type: FLAT, per: 2.5 }   # PersistentBuffs.galeForce
+  magma_barrier:   # Magma Barrier：增益給 +(0—5)% 最大格擋機率（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats magma_barrier_maximum_block_chance_granted_% 0.25；這次之前一般的品質效果再算一次）
+    - { stat: effect.block.max, type: FLAT, per: 0.25 }   # 光環的增益
+  battle_spirit_rise:   # Combat Frenzy：冷卻少 (0—1) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats skill_combat_frenzy_x_ms_cooldown -50；這次之前一般的品質效果再算一次）
+    - { stat: effect.charge.event_cooldown.freeze, type: FLAT, per: -0.05 }   # 光環的增益（加在原本的冷卻上）
+    - { stat: effect.charge.event_cooldown.electrocute, type: FLAT, per: -0.05 }
+    - { stat: effect.charge.event_cooldown.pin, type: FLAT, per: -0.05 }
+  arcane_heart:   # Archmage：每 100 最大魔力另外獲得 (0—1)% 傷害為閃電、魔力消耗另外多最大魔力的 (0—2)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats archmage_all_damage_%_to_gain_as_lightning_to_grant_to_non_channelling_spells_per_100_max_mana 0.05、archmage_max_mana_permyriad_to_add_to_non_channelled_spell_mana_cost 10；這次之前一般的品質效果再算一次）
+    - { stat: effect.damage.extra_per_mana.lightning, type: FLAT, per: 0.05, tags: [spell] }   # 光環的增益（加在原本那一條上）
+    - { stat: effect.skill.cost_max_mana, type: FLAT, per: 0.1, tags: [spell] }
+  element_tide:   # Elemental Conflux：換元素的週期 +(0—4) 秒（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_skill_effect_duration 200；這次之前一般的品質效果再算一次）
+    - { stat: conflux.seconds, type: FLAT, per: 0.2 }   # AuraService.confluxPeriodTicks（8 秒＋x）
+  tripod_element_art:   # Trinity：增益給 (0—20)% 物理轉成隨機元素（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats trinity_%_physical_damage_to_convert_to_random_element_granted 1；這次之前一般的品質效果再算一次）
+    - { stat: effect.damage.convert_random_element, type: FLAT, per: 1.0 }   # DamageCalculator（照期望值平均分給三種元素）
+  blood_tear_sweep:   # Rake：攻擊擊中 (0—20)% 機率加劇流血（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_aggravate_bleeding_on_attack_hit_chance_% 1；這次之前一般的品質效果再算一次）
+    - { stat: bleed.aggravate_chance, type: FLAT, per: 1.0 }   # UniqueMechanics
+  critical_guide_star:   # Cast on Critical：增益給 (0—20)% 增加暴擊率（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats cast_on_crit_global_critical_hit_chance_granted_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: effect.crit.chance, type: INCREASED, per: 1.0 }   # 光環的增益
+  roll_guide_star:   # Cast on Dodge：增益給翻滾距離 +(0—1) 公尺（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats cast_on_dodge_dodge_roll_distance_granted_+ 0.5（0.1 公尺一單位）；這次之前一般的品質效果再算一次）
+    - { stat: effect.dodge.metres, type: FLAT, per: 0.05 }   # 光環的增益（DodgeRoll）
+  element_prayer_star:   # Elemental Invocation：被觸發的技能傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats triggered_skill_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: meta.triggered_damage, type: FLAT, per: 1.0 }   # SkillService.metaCast
+  scythe_prayer_star:   # Reaper's Invocation：被觸發的技能傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats triggered_skill_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: meta.triggered_damage, type: FLAT, per: 1.0 }   # SkillService.metaCast
+  ward_prayer_star:   # Barrier Invocation：被觸發的技能傷害增加 (0—20)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats triggered_skill_damage_+% 1；這次之前一般的品質效果再算一次）
+    - { stat: meta.triggered_damage, type: FLAT, per: 1.0 }   # SkillService.metaCast
+  field_quake_stomp:   # Furious Slam：(0—20)% 更多範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_area_of_effect_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  flame_breath:   # Flame Breath：(0—20)% 更多範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_area_of_effect_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  cold_spirit_palm:   # Shattering Palm：(0—20)% 更多範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_area_of_effect_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: MORE, per: 1.0 }
+  thunder_squall_quarrels:   # Shockburst Rounds：(0—30)% 更多範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_area_of_effect_+%_final 1.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: MORE, per: 1.5 }
+  campaign_flag:   # War Banner：(0—30)% 更多範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_area_of_effect_+%_final 1.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: MORE, per: 1.5 }
+  spine_crush:   # Boneshatter：半徑 +(0—2) 公尺，照慣例換成增加範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_area_of_effect_radius 1；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: INCREASED, per: 10.0 }
+  thorn_body:   # Briarpatch：半徑 +(0—0.6) 公尺，照慣例換成增加範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_area_of_effect_radius 0.3；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: INCREASED, per: 3.0 }
+  frozen_wall_shaft:   # Glacial Bolt：半徑 +(0—1) 公尺，照慣例換成增加範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_area_of_effect_radius 0.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: INCREASED, per: 5.0 }
+  thunder_surge:   # Storm Wave：半徑 +(0—4) 公尺，照慣例換成增加範圍（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_area_of_effect_radius 2；這次之前一般的品質效果再算一次）
+    - { stat: skill.area, type: INCREASED, per: 20.0 }
+  wild_beast_taming:   # Tame Beast：(0—50)% 減少魔力消耗（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_mana_cost_-% 2.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  thunder_lure_seal:   # Voltaic Mark：(0—50)% 減少魔力消耗（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_mana_cost_-% 2.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  wound_scar_curse:   # Vulnerability：(0—50)% 減少魔力消耗（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_mana_cost_-% 2.5；這次之前一般的品質效果再算一次）
+    - { stat: skill.cost, type: INCREASED, per: -2.5 }
+  grey_wolf_escort:   # Wolf Pack：召喚物 (0—20)% 更多攻擊速度（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_minion_attack_speed_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  summon_burning_souls:   # Raging Spirits：召喚物 (0—50)% 更多傷害（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_minion_damage_+%_final 2.5；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 2.5 }
+  thorn_shaft:   # Vine Arrow：(0—40)% 更多持續時間（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_quality_duration_+%_final 2；這次之前一般的品質效果再算一次）
+    - { stat: skill.duration, type: MORE, per: 2.0 }
+  volcano:   # Volcano：(0—20)% 更多持續時間（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_quality_duration_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: skill.duration, type: MORE, per: 1.0 }
+  crisscross_claw:   # Cross Slash：物理 (0—40)% 轉冰冷（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_physical_damage_%_to_convert_to_cold 2；這次之前一般的品質效果再算一次）
+    - { stat: damage.convert.cold, type: FLAT, per: 2.0 }
+  snake_squall_thrust:   # Wind Serpent's Fury：獲得 (0—20)% 傷害為額外混沌（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_base_all_damage_%_to_gain_as_chaos 1；這次之前一般的品質效果再算一次）
+    - { stat: damage.extra.chaos, type: FLAT, per: 1.0 }   # 獲得全部傷害的 x% 為額外混沌（damage.gain 是物理的）
+  spear_recoil_leap:   # Disengage：近戰距離 +(0—1) 公尺（單位 0.1 格）（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats melee_range_+ 0.5；這次之前一般的品質效果再算一次）
+    - { stat: melee.range, type: FLAT, per: 0.75 }
+  frost_tooth_stab:   # Fangs of Frost：近戰距離 +(0—1) 公尺（單位 0.1 格）（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats melee_range_+ 0.5；這次之前一般的品質效果再算一次）
+    - { stat: melee.range, type: FLAT, per: 0.75 }
+  triple_element_curse:   # Elemental Weakness：(0—50)% 減少詛咒延遲（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats curse_delay_+% -2.5；這次之前一般的品質效果再算一次）
+    - { stat: curse.delay, type: INCREASED, per: -2.5 }
+  sluggish_curse:   # Temporal Chains：(0—50)% 減少詛咒延遲（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats curse_delay_+% -2.5；這次之前一般的品質效果再算一次）
+    - { stat: curse.delay, type: INCREASED, per: -2.5 }
+  starfire_bead_chain:   # Ember Fusillade：(0—40)% 減少持續時間、(0—20)% 更少施法速度（原作資料如此）（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats skill_effect_duration_+% -2、active_skill_cast_speed_+%_final -1；這次之前一般的品質效果再算一次）
+    - { stat: skill.duration, type: INCREASED, per: -2.0 }
+    - { stat: cast.speed, type: MORE, per: -1.0 }
+  flowing_flame_canopy:   # Firestorm：(0—20)% 機率不用掉灌注（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_to_not_consume_infusion_% 1；這次之前一般的品質效果再算一次）
+    - { stat: infusion.keep_chance, type: FLAT, per: 1.0 }
+  frost_star_blast:   # Ice Nova：(0—40)% 機率不用掉灌注（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_to_not_consume_infusion_% 2；這次之前一般的品質效果再算一次）
+    - { stat: infusion.keep_chance, type: FLAT, per: 2.0 }
+  unquenched_fury:   # Eternal Rage：(0—15)% 增加保留效率（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_spirit_reservation_efficiency_+% 0.75；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -0.75 }
+  phantom_body:   # Lingering Illusion：(0—40)% 增加保留效率（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_spirit_reservation_efficiency_+% 2；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -2.0 }
+  mutation_guide_star:   # Cast on Elemental Ailment：(0—40)% 增加保留效率（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_reservation_efficiency_+% 2；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -2.0 }
+  steed_call:   # Rhoa Mount：(0—30)% 增加保留效率（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_reservation_efficiency_+% 1.5；這次之前一般的品質效果再算一次）
+    - { stat: aura.reservation, type: INCREASED, per: -1.5 }
+  explosive_spear:   # Explosive Spear：消耗戰星時 (0—20)% 機率不用掉（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats charge_skip_consume_chance_% 1；這次之前一般的品質效果再算一次）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }
+  ice_cone_toss:   # Glacial Lance：消耗戰星時 (0—20)% 機率不用掉（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats charge_skip_consume_chance_% 1；這次之前一般的品質效果再算一次）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }
+  black_oil_rain:   # Oil Barrage：消耗戰星時 (0—20)% 機率不用掉（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats charge_skip_consume_chance_% 1；這次之前一般的品質效果再算一次）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }
+  thunderbind_staff:   # Charged Staff：使用時 (0—20)% 機率不移除銳星（從一般品質移過來：PoB2 一般品質只有持續時間）（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats charge_skip_consume_chance_% 1；這次之前一般的品質效果再算一次）
+    - { stat: charged_staff.keep_chance, type: FLAT, per: 1.0 }
+  gnawing_bite:   # Devour：(0—20)% 機率多一顆戰星（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_to_gain_1_more_charge_% 1；這次之前一般的品質效果再算一次）
+    - { stat: charge.extra, type: FLAT, per: 1.0 }
+  thunder_draw_staff:   # Siphoning Strike：(0—50)% 機率多一顆戰星（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_to_gain_1_more_charge_% 2.5；這次之前一般的品質效果再算一次）
+    - { stat: charge.extra, type: FLAT, per: 2.5 }
+  fallen_star_bear_roar:   # Walking Calamity：(0—50)% 機率不消耗榮耀（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_to_not_consume_glory_% 2.5；這次之前一般的品質效果再算一次）
+    - { stat: glory.not_consume_chance, type: FLAT, per: 2.5 }
+  thunder_bound:   # Thunderous Leap：(0—40)% 機率多一次餘震（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats slam_aftershock_chance_% 2；這次之前一般的品質效果再算一次）
+    - { stat: slam.aftershock_chance, type: FLAT, per: 2.0 }
+  triple_stab:   # Rapid Assault：(0—40)% 更多流血效果（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_bleeding_effect_+%_final 2；這次之前一般的品質效果再算一次）
+    - { stat: bleed.magnitude, type: MORE, per: 2.0 }
+  flame_blast_shaft:   # Detonating Arrow：(0—40)% 更多點燃效果（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_ignite_effect_+%_final 2；這次之前一般的品質效果再算一次）
+    - { stat: ignite.magnitude, type: MORE, per: 2.0 }
+  miasma_bud_rain:   # Toxic Growth：(0—40)% 增加中毒持續時間（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_poison_duration_+% 2；這次之前一般的品質效果再算一次）
+    - { stat: poison.duration, type: INCREASED, per: 2.0 }
+  armor_punch_slug:   # High Velocity Rounds：(0—20)% 更多物理傷害（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_physical_damage_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
+  wingbeat_gust:   # Wing Blast：(0—20)% 更多物理傷害（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_physical_damage_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 1.0, tags: [physical] }
+  miasma_grenade:   # Gas Grenade：(0—20)% 更多火焰傷害（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_fire_damage_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 1.0, tags: [fire] }
+  flame_vein_rift:   # Volcanic Fissure：(0—20)% 更多火焰傷害（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_fire_damage_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: damage, type: MORE, per: 1.0, tags: [fire] }
+  molten_crack_stomp:   # Fury of the Mountain：(0—20)% 更多攻擊速度（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_attack_speed_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  spear_formation:   # Spearfield：(0—20)% 更多攻擊速度（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats active_skill_attack_speed_+%_final 1；這次之前一般的品質效果再算一次）
+    - { stat: attack.speed, type: MORE, per: 1.0 }
+  flame_scatter_fire:   # Incendiary Shot：+(0—4) 個投射物（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_number_of_projectiles 0.2；這次之前一般的品質效果再算一次）
+    - { stat: skill.projectiles, type: FLAT, per: 0.2 }
+  lava_splash:   # Molten Blast：+(0—2) 個投射物（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats base_number_of_projectiles 0.1；這次之前一般的品質效果再算一次）
+    - { stat: skill.projectiles, type: FLAT, per: 0.1 }
+  molten_ball:   # Rolling Magma：連鎖 +(0—4) 次（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats number_of_chains 0.2；這次之前一般的品質效果再算一次）
+    - { stat: skill.chains, type: FLAT, per: 0.2 }
+  helix_arrow_rain:   # Spiral Volley：消耗怒星的好處有 (0—30)% 機率加倍（ProjectileEngine.spiralFrenzy）（# 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats chance_%_to_double_effect_of_removing_charges 1.5；這次之前一般的品質效果再算一次）
+    - { stat: lance.double_charge_chance, type: FLAT, per: 1.5 }
+  strung_pearls:   # Barrage：消耗怒星時 (0—20)% 機率不用掉（2026-11-10 照站長「改成原作」：PoB2 altQualityStats charge_skip_consume_chance_% 1；這次之前沒寫，一般的品質效果（重複更少的百分點）再算一次）
+    - { stat: charge.sup.keep, type: FLAT, per: 1.0 }   # 跟戰星輔助的「消耗時 x% 機率不移除」同一條（ChargeService.spend、面板的「消耗戰星時 x% 機率不移除」）
   thunderfall_spear:   # Storm Lance：+(0—2) 個投射物（2026-11-10 照站長「改成原作的額外效果」：PoB2 altQualityStats base_number_of_projectiles 0.1；這次之前沒寫，一般的品質效果（插地矛上限）再算一次）
     - { stat: skill.projectiles, type: FLAT, per: 0.1 }
   thunder_lance_throw:   # Lightning Spear：消耗充能的好處有 (0—20)% 機率加倍（2026-11-10 照站長：PoB2 altQualityStats chance_%_to_double_effect_of_removing_charges 1；這次之前沒寫，雷彈數再算一次）

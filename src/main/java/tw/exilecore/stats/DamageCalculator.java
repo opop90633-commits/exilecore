@@ -731,7 +731,11 @@ public final class DamageCalculator {
             double amount = roller.roll(min, max);
             // 2026-10-26 照 PoE2 天賦樹：傷害為幸運（擲兩次取高）的機率（可帶類型：閃電傷害為幸運）。
             // 機率用同一個擲骰器擲 0～1（平均值的擲骰器給 0.5，面板上不會跳來跳去）
-            final double lucky = attacker.flat(KeystoneKeys.LUCKY, context) / 100.0;
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：雷鳴箭、引霆突高階奇術的 chance_for_extra_damage_roll_with_lightning_damage_%
+            //   （閃電傷害 x% 機率為幸運）：閃電的基礎、還有會轉成閃電的物理基礎都擲；這次之前一般的品質效果再算一次
+            final double lightningLucky = type == DamageType.LIGHTNING || type == DamageType.PHYSICAL && convertsToLightning(attacker, skill)
+                    ? attacker.flat(GemQualityKeys.LIGHTNING_LUCKY, context) : 0;
+            final double lucky = (attacker.flat(KeystoneKeys.LUCKY, context) + lightningLucky) / 100.0;
             if (lucky > 0 && min < max && defaultRoller.roll(0, 1) < lucky) {
                 amount = Math.max(amount, roller.roll(min, max));
             }
@@ -824,6 +828,12 @@ public final class DamageCalculator {
         return packet;
     }
 
+    /** 2026-11-11：這一下的物理有沒有轉成閃電（技能自己的或輔助的）。 */
+    static boolean convertsToLightning(final StatSheet attacker, final SkillProfile skill) {
+        final Double own = skill.conversion().get(DamageType.LIGHTNING);
+        return own != null && own > 0 || attacker.flat(StatKeys.damageConvert(DamageType.LIGHTNING), skill.contextFor(DamageType.PHYSICAL)) > 0;
+    }
+
     /** 物理的轉換：技能自己的＋輔助的（damage.convert.類型，百分比點數）。 */
     private static Map<DamageType, Double> conversion(final StatSheet attacker, final SkillProfile skill, final Set<String> context) {
         Map<DamageType, Double> result = skill.conversion();
@@ -837,6 +847,17 @@ public final class DamageCalculator {
                     result = result.isEmpty() ? new java.util.EnumMap<>(DamageType.class) : new java.util.EnumMap<>(result);
                 }
                 result.merge(type, percent / 100.0, Double::sum);
+            }
+        }
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：三相訣高階奇術的 trinity_%_physical_damage_to_convert_to_random_element_granted
+        //   （增益：x% 物理轉成隨機元素）；照期望值平均分給火焰、冰冷、閃電（每一下擲的話面板數字會跳）。這次之前一般的品質效果再算一次
+        final double random = attacker.flat(GemQualityKeys.CONVERT_RANDOM_ELEMENT, context);
+        if (random > 0) {
+            if (!(result instanceof java.util.EnumMap)) {
+                result = result.isEmpty() ? new java.util.EnumMap<>(DamageType.class) : new java.util.EnumMap<>(result);
+            }
+            for (final DamageType type : new DamageType[] {DamageType.FIRE, DamageType.COLD, DamageType.LIGHTNING}) {
+                result.merge(type, random / 300.0, Double::sum);
             }
         }
         return result;

@@ -225,6 +225,7 @@ public final class OriginalSkills implements Listener {
         /** 2026-11-01 照 PoE2 Devour：這一下鎖定要吃的（放之前挑好，放完吃掉）。 */
         DevourTarget devour;
         int arcticStages;
+        int arcticArmourStages; // 2026-11-11：高階奇術品質的每層護甲現在照幾層給
         long nextArcticStage = -1;
         long arcticReady;
         long staffUntil;
@@ -581,7 +582,8 @@ public final class OriginalSkills implements Listener {
             case CROSS -> pullFragments(player);
             case RAPID -> s.lastRapid = now;
             case ICE_TIPPED -> {
-                s.iceTippedLeft = ICE_TIPPED_USES; // 照 PoE2：強化接下來 4 次、增益最多 20 秒
+                // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 shearing_bolts_number_of_empowered_attacks（多強化 (0—2) 次，無條件捨去）；這次之前一般的品質效果再算一次
+                s.iceTippedLeft = ICE_TIPPED_USES + qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EMPOWERED_ATTACKS)); // 照 PoE2：強化接下來 4 次、增益最多 20 秒
                 service.buffs().apply(player, "guard." + ICE_TIPPED, definition.name(), (int) Math.round(ICE_TIPPED_TICKS * build.durationScale()),
                         List.of(Modifier.flat("ice_tipped.ready", 1, definition.name())));
             }
@@ -774,7 +776,27 @@ public final class OriginalSkills implements Listener {
         if (s.arcticStages > 0 && now % 20 == 0) {
             Fx.spawn(player.getWorld(), Particle.SNOWFLAKE, player.getLocation().add(0, 1, 0), 2 + s.arcticStages, 0.4, 0.6, 0.4, 0.01);
         }
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 arctic_armour_armour_granted_+%_per_stage
+        //   （冰甲每一層給 (0—20)% 增加護甲；層數變了就換）；這次之前一般的品質效果再算一次
+        final double perStage = service.qualityFlat(player, ARCTIC, tw.exilecore.stats.GemQualityKeys.ARCTIC_ARMOUR_PER_STAGE);
+        if (perStage > 0 && s.arcticStages > 0) {
+            if (s.arcticArmourStages != s.arcticStages || now % 20 == 0) {
+                service.buff(player, ARCTIC_ARMOUR_BUFF, "凜冬之殼", 30, List.of(Modifier.increased(StatKeys.ARMOUR,
+                        arcticArmour(perStage, s.arcticStages), "凜冬之殼（每層護甲）")));
+                s.arcticArmourStages = s.arcticStages;
+            }
+        } else if (s.arcticArmourStages > 0) {
+            service.removeBuff(player, ARCTIC_ARMOUR_BUFF);
+            s.arcticArmourStages = 0;
+        }
     }
+
+    /** 2026-11-11：冰甲每層增加 perStage% 護甲，stages 層的增加（小數）。純函式（測試用）。 */
+    static double arcticArmour(final double perStage, final int stages) {
+        return Math.max(0, perStage) * Math.max(0, stages) / 100.0;
+    }
+
+    static final String ARCTIC_ARMOUR_BUFF = "arctic_armour_quality";
 
     // ---- 雷縛長棍 ----
 
@@ -837,7 +859,9 @@ public final class OriginalSkills implements Listener {
             return;
         }
         final StatSheet sheet = plugin.players().sheet(player);
-        final double radius = tw.exilecore.combat.Presence.radius(sheet);
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 presence_area_+%（磨蝕之志用的存在範圍增加 x%，半徑照 √ 放大）；這次之前一般的品質效果再算一次
+        final double radius = tw.exilecore.combat.Presence.radius(sheet)
+                * Math.sqrt(Math.max(0, 1 + service.qualityFlat(player, ATTRITION, tw.exilecore.stats.GemQualityKeys.PRESENCE_AREA) / 100.0));
         final double cap = levelValue(ATTRITION, ATTRITION_CAP, level, 40);
         // 2026-10-28 照 PoE2 Attrition 的品質：撲殺需要的層數少 (0—5)
         final double cull = levelValue(ATTRITION, ATTRITION_CULL, level, 40) + service.qualityFlat(player, ATTRITION, ATTRITION_CULL);
@@ -2051,7 +2075,9 @@ public final class OriginalSkills implements Listener {
         if (mantra != null && now - (long) mantra[1] <= 20) {
             final Player player = plugin.getServer().getPlayer((UUID) mantra[0]);
             if (player != null) {
-                service.buffs().apply(player, "purple_flames", "紫焰", (int) PURPLE_FLAMES_TICKS,
+                // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 base_secondary_skill_effect_duration（紫焰多 (0—0.05) 秒，照 poe2db）；這次之前一般的品質效果再算一次
+                service.buffs().apply(player, "purple_flames", "紫焰", (int) (PURPLE_FLAMES_TICKS
+                                + Math.round(service.qualityFlat(player, MANTRA, tw.exilecore.stats.GemQualityKeys.SECONDARY_DURATION_FLAT) * 20)),
                         List.of(Modifier.flat(StatKeys.damageExtra(DamageType.CHAOS), PURPLE_FLAMES, "紫焰")));
             }
         }

@@ -1880,6 +1880,14 @@ public final class MapService {
         // 2026-10-17：只有這張圖現在的 Boss 給 Boss 掉落（區塊重新載入帶回來的舊 Boss 不算，以前打死會再擲一整份）
         if (boss && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
             bosses.loot(instance, player, drops);
+            // 2026-11-11 照站長「有地方能檢查災厄級有沒有人有掉東西嗎」：災厄級、終局、極境、巔峰的掉落記一筆（管理網頁「Boss 掉落」）
+            if (player != null) {
+                try {
+                    BossDropRecords.get(plugin).record(instance, config, player.getUniqueId(), player.getName(), drops);
+                } catch (final RuntimeException e) {
+                    plugin.getSLF4JLogger().warn("Boss 掉落紀錄失敗", e);
+                }
+            }
             return;
         }
         // 追逐級傳奇：一般怪物也有極低的固定機率（不吃任何加成；怪物等級不到 75 時池子是空的）

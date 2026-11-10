@@ -4071,6 +4071,13 @@ final class SkillExecutor {
         final int markLimit = 1 + (build.definition().tags().contains(SkillLimits.TAG) ? SkillLimits.bonus(plugin.players().sheet(player), build) : 0);
         plugin.combat().debuffs().applyMark(target.getUniqueId(), new Debuffs.Debuff(build.definition().id(), player.getUniqueId(), until,
                 params.taken() / 100.0 * build.auraEffect(), params.selfOnly(), null, mods, 0), bypassLimit ? 0 : markLimit);
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：獵殺印記高階奇術的 gem_quality_marked_enemy_damage_dealt_+%_final
+        //   （被標記的敵人造成的傷害更少 (0—10)%）：印記本身只對施加的人有效（self_only），這條另外掛一個誰都算的減益、跟印記一樣久；這次之前一般的品質效果再算一次
+        final double less = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.MARK_ENEMY_LESS);
+        if (less > 0) {
+            plugin.combat().debuffs().apply(target.getUniqueId(), new Debuffs.Debuff(build.definition().id() + ".less", player.getUniqueId(), until, 0, false, null,
+                    java.util.List.of(tw.exilecore.stats.Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, -less / 100.0, build.definition().name())), 0));
+        }
         if (plugin.skills() != null) {
             plugin.skills().supportMechanics().markApplied(player, build, target, until); // 2026-10-26：烙印深、久印
             plugin.skills().spears().marked(player, build, target); // 2026-10-27 照 PoE2 Bloodhound's Mark

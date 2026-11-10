@@ -120,6 +120,8 @@ final class ProjectileEngine implements Listener {
         int forksLeft;
         /** 回歸中：往施放者飛，路上再打一次。 */
         boolean returning;
+        /** 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：寒冬之眼高階奇術「(0—50)% 機率回到你身邊」擲中的這一發。 */
+        boolean qualityReturn;
         /** 榴彈滾到停了：不再動，只等引信。 */
         boolean resting;
         /** 黏彈（2026-10 輔助）：碰到方塊就黏住，不彈跳。 */
@@ -390,6 +392,11 @@ final class ProjectileEngine implements Listener {
             }
             consumed += spent;
         }
+        // 2026-11-10 照站長「一般品質再算一次的照原作改」（Spiral Volley 額外的品質效果：消耗充能的好處有 x% 機率加倍）：中了就當用掉兩倍的顆數
+        final double doubleChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT);
+        if (consumed > 0 && doubleChance > 0 && java.util.concurrent.ThreadLocalRandom.current().nextDouble() * 100 < doubleChance) {
+            consumed *= 2;
+        }
         if (consumed <= 0) {
             return build;
         }
@@ -529,6 +536,13 @@ final class ProjectileEngine implements Listener {
                     tw.exilecore.stats.SupportExtraKeys.RANDOM_DIRECTION_HALF_ANGLE, random::nextDouble);
         }
         directions = aimAtTargets(origin, build, directions); // 2026-11-01 照 PoE2 Spiral Volley：附近有敵人就直接朝牠射
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 spell_skill_%_chance_to_fire_8_additional_projectiles_in_nova
+        //   （熾星彈 (0—10)% 機率另外往四周一圈多射 8 發）；這次之前一般的品質效果再算一次
+        final double nova = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.NOVA_EIGHT_CHANCE);
+        if (nova > 0 && random.nextDouble() * 100 < nova) {
+            directions = new ArrayList<>(directions);
+            directions.addAll(SkillMath.fan(look.getX(), 0, look.getZ(), NOVA_EXTRA, 360));
+        }
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();
         // 2026-10-26（PoE2 的 Merging）：弩的碎片彈每一片都可以打中同一個敵人（貼臉一發的碎片全部打在同一隻身上）
@@ -551,6 +565,9 @@ final class ProjectileEngine implements Listener {
             final Shot shot = spawn(owner, build, profile, origin.world(), start, direction, build.speed() * factor, build.range() * factor,
                     merging || !split.isEmpty() ? new HashSet<>() : volley, false, visual);
             if (shot != null) {
+                // 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db Eye of Winter「Projectiles have (0—50)% chance to Return to you」；這次之前一般的品質效果再算一次
+                final double returnChance = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.RETURN_CHANCE);
+                shot.qualityReturn = returnChance > 0 && random.nextDouble() * 100 < returnChance;
                 shot.splitBonus = splitBonus;
                 shot.pelletHits = pellets;
                 if (wander != null && shot.arrow == null) {
@@ -560,6 +577,9 @@ final class ProjectileEngine implements Listener {
         }
         visuals.cast(visual, eye);
     }
+
+    /** 2026-11-11：熾星彈高階奇術品質的環射多射幾發（原作 8）。 */
+    static final int NOVA_EXTRA = 8;
 
     /** 2026-10-28 照 PoE2 Spark：投射物離地面多高（格）。 */
     static final double WANDER_HOVER = 0.35;
@@ -693,7 +713,7 @@ final class ProjectileEngine implements Listener {
         visuals.trail(shot.visual(), shot.world, from, next);
         shot.position = next;
         if (--shot.ticksLeft <= 0) {
-            if (shot.build.returning() && !shot.secondary) {
+            if (returns(shot) && !shot.secondary) {
                 stopEffects(shot, owner, next.toLocation(shot.world), false);
                 startReturn(shot);
                 return;
@@ -1149,7 +1169,7 @@ final class ProjectileEngine implements Listener {
         final Location arrowAt = arrow.getLocation(); // 2026-10-25：這一 tick 飛過的路上的冰晶、鐘直接被打到
         targets.strike(owner, shot.profile, SkillTargets.segment(arrowAt.clone().subtract(arrow.getVelocity()), arrowAt, 0.3), shot);
         if (--shot.ticksLeft <= 0) {
-            if (shot.build.returning() && !shot.secondary) {
+            if (returns(shot) && !shot.secondary) {
                 stopEffects(shot, owner, arrow.getLocation(), false);
                 startReturn(shot);
                 return;
@@ -1289,7 +1309,7 @@ final class ProjectileEngine implements Listener {
                 remove(shot); // 回歸的飛太久（施放者一直跑）：消失，不再做停下來的效果
                 return;
             }
-            if (shot.build.returning() && !shot.secondary) {
+            if (returns(shot) && !shot.secondary) {
                 stopEffects(shot, owner, next.toLocation(shot.world), false);
                 startReturn(shot);
                 return;
@@ -1495,6 +1515,7 @@ final class ProjectileEngine implements Listener {
             hitProfile = hitProfile.withLocal(List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.DAMAGE_GAIN + "lightning", rodGain, "電殛棒")));
         }
         attachRod(shot, owner, target);
+        frozenTaken(shot, owner, target);
         if (shot.pelletHits != null) {
             final int pellets = shot.pelletHits.merge(target.getUniqueId(), 1, Integer::sum);
             hitProfile = hitProfile.withLocal(List.of(tw.exilecore.stats.Modifier.increased(tw.exilecore.stats.StatKeys.IGNITE_DURATION,
@@ -1607,7 +1628,7 @@ final class ProjectileEngine implements Listener {
                 }
             }
         }
-        if (shot.build.returning() && !shot.secondary && !shot.returning) {
+        if (returns(shot) && !shot.secondary && !shot.returning) {
             visuals.impact(shot.visual(), at);
             stopEffects(shot, owner, at, true);
             startReturn(shot);
@@ -1887,8 +1908,27 @@ final class ProjectileEngine implements Listener {
         final long now = plugin.getServer().getCurrentTick();
         final tw.exilecore.combat.Debuffs debuffs = plugin.combat().debuffs();
         debuffs.remove(target.getUniqueId(), ElectrocutingRods.ROD_ID, owner.getUniqueId(), now);
-        debuffs.apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff(ElectrocutingRods.ROD_ID, owner.getUniqueId(), now + ticks, 0, false, null));
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 electrocuting_arrow_damage_taken_+%（插著電殛棒的敵人受到的傷害增加 (0—20)%）；這次之前一般的品質效果再算一次
+        final double taken = SkillZones.localFlat(shot.profile, tw.exilecore.stats.GemQualityKeys.ROD_DAMAGE_TAKEN);
+        debuffs.apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff(ElectrocutingRods.ROD_ID, owner.getUniqueId(), now + ticks, 0, false, null,
+                taken > 0 ? List.of(tw.exilecore.stats.Modifier.flat(tw.exilecore.stats.StatKeys.DAMAGE_TAKEN, taken, "電殛棒")) : List.of(), 0));
     }
+
+    /**
+     * 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 frozen_monsters_take_increased_damage（霜浪：被打中的敵人凍結時受到的傷害增加
+     *（0—40）%，4 秒，誰打都算）；減益的標籤 vs_frozen 讓它只在凍結時有效（CombatListener.frozenTags）。這次之前一般的品質效果再算一次。
+     */
+    private void frozenTaken(final Shot shot, final Player owner, final LivingEntity target) {
+        final double taken = SkillZones.localFlat(shot.profile, tw.exilecore.stats.GemQualityKeys.FROZEN_DAMAGE_TAKEN);
+        if (taken <= 0 || plugin.combat() == null || owner == null) {
+            return;
+        }
+        final long now = plugin.getServer().getCurrentTick();
+        plugin.combat().debuffs().apply(target.getUniqueId(), new tw.exilecore.combat.Debuffs.Debuff("frozen_taken." + owner.getUniqueId(), owner.getUniqueId(),
+                now + FROZEN_TAKEN_TICKS, taken / 100.0, false, tw.exilecore.stats.TreeConditions.VS_FROZEN));
+    }
+
+    static final long FROZEN_TAKEN_TICKS = 80;
 
     /** 2026-10-26（熔球）：落地炸一圈（不移除、每一跳都可以再打到同一個敵人）。 */
 
@@ -2369,6 +2409,11 @@ final class ProjectileEngine implements Listener {
         }
     }
 
+    /** 2026-11-11：這一發會不會回歸（技能本身回歸，或高階奇術品質擲中的）。 */
+    private static boolean returns(final Shot shot) {
+        return shot.build.returning() || shot.qualityReturn;
+    }
+
     /** 回歸：掉頭飛回施放者身邊，路上可以再打一次（剛打過的也算）。 */
     private void startReturn(final Shot shot) {
         shot.returning = true;
@@ -2436,7 +2481,7 @@ final class ProjectileEngine implements Listener {
             if (shot.returning) {
                 return; // 回歸的箭矢碰到牆：下一 tick 再往施放者的方向推
             }
-            if (shot.build.returning() && !shot.secondary) {
+            if (returns(shot) && !shot.secondary) {
                 stopEffects(shot, owner, event.getEntity().getLocation(), true);
                 startReturn(shot);
                 return;

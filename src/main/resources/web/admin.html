@@ -212,6 +212,7 @@
     <button type="button" role="tab" data-tab="trace" aria-selected="false">物品追查</button>
     <button type="button" role="tab" data-tab="transfer" aria-selected="false">帳號轉移</button>
     <button type="button" role="tab" data-tab="dps" aria-selected="false">輸出紀錄</button>
+    <button type="button" role="tab" data-tab="bossdrops" aria-selected="false">Boss 掉落</button>
     <button type="button" role="tab" data-tab="retention" aria-selected="false">玩家留存</button>
     <button type="button" role="tab" data-tab="news" aria-selected="false">更新公告</button>
     <button type="button" role="tab" data-tab="log" aria-selected="false">操作紀錄</button>
@@ -499,6 +500,36 @@
         <button type="button" id="news-cancel">取消</button>
         <button type="button" class="danger" id="news-delete">刪除這篇</button>
       </div>
+    </div>
+  </section>
+
+  <!-- 2026-11-11 照站長「有地方能檢查災厄級有沒有人有掉東西嗎」：Boss 掉落紀錄 -->
+  <section id="tab-bossdrops" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Boss 掉落</h2>
+      <p class="note">災厄級（迷霧之主、審判者、不朽統帥、晶淵王座）、終局、極境、巔峰每倒下一次，<b>每個有份的人一筆</b>（每個人各擲一份掉落）。
+        記的是「掉出來的」：被掉落過濾器換成金幣的也算。2026-11-11 更新之後才有紀錄。「份數」＝擲了幾份掉落（同一場 3 個人有份就是 3 份）。</p>
+      <div class="filters">
+        <label>範圍 <select id="bd-days"><option value="1">今天（24 小時）</option><option value="7" selected>最近 7 天</option>
+          <option value="30">最近 30 天</option><option value="0">全部</option></select></label>
+        <label>種類 <select id="bd-kind"><option value="">全部</option><option value="災厄級">災厄級</option><option value="終局">終局</option>
+          <option value="極境">極境</option><option value="巔峰">巔峰</option></select></label>
+        <input type="text" id="bd-name" placeholder="找玩家、Boss 或物品" aria-label="找玩家、Boss 或物品" size="18">
+        <label><input type="checkbox" id="bd-only"> 只看有掉傳奇／專屬寶石的</label>
+        <button type="button" id="bd-refresh">重新整理</button>
+      </div>
+      <h3>每隻 Boss</h3>
+      <div class="scroll"><table id="bd-summary">
+        <thead><tr><th>種類</th><th>Boss</th><th class="num">份數</th><th class="num">人數</th><th class="num">傳奇</th>
+          <th class="num">專屬寶石</th><th class="num">每份傳奇</th><th>掉過的（次數）</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <h3>每一筆（新的在前）</h3>
+      <div class="scroll tall"><table id="bd-rows">
+        <thead><tr><th>時間</th><th>玩家</th><th>種類</th><th>Boss</th><th class="num">階級</th><th>傳奇</th><th>專屬寶石</th><th>通貨</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+      <p class="empty" id="bd-empty" hidden>還沒有紀錄（更新之後打倒的 Boss 才會記）。</p>
     </div>
   </section>
 
@@ -1972,6 +2003,44 @@
     places.forEach(function (w) { select.appendChild(h('option', { value: w, text: w + '（' + seen[w] + '）' })); });
     if (keep && seen[keep]) { select.value = keep; }
   }
+  // ---- Boss 掉落（2026-11-11） ----
+  var bdData = null;
+  function loadBossDrops() {
+    return api('GET', 'admin/api/boss-drops?days=' + encodeURIComponent($('bd-days').value)).then(function (json) {
+      bdData = json;
+      renderBossDrops();
+    }).catch(fail);
+  }
+  function renderBossDrops() {
+    if (!bdData) { return; }
+    var kind = $('bd-kind').value, q = $('bd-name').value.trim().toLowerCase(), only = $('bd-only').checked;
+    var sum = clear($('bd-summary').querySelector('tbody'));
+    bdData.summary.forEach(function (s) {
+      if (kind && s.kind !== kind) { return; }
+      if (q && s.boss.toLowerCase().indexOf(q) < 0 && !Object.keys(s.items).some(function (n) { return n.toLowerCase().indexOf(q) >= 0; })) { return; }
+      var items = Object.keys(s.items).sort(function (a, b) { return s.items[b] - s.items[a]; })
+        .map(function (n) { return n + ' ×' + s.items[n]; }).join('、');
+      sum.appendChild(h('tr', null, h('td', { text: s.kind }), h('td', { text: s.boss }), h('td', { cls: 'num', text: num(s.kills) }),
+        h('td', { cls: 'num', text: num(s.players) }), h('td', { cls: 'num', text: num(s.uniques) }), h('td', { cls: 'num', text: num(s.gems) }),
+        h('td', { cls: 'num', text: s.kills > 0 ? (s.uniques / s.kills * 100).toFixed(1) + '%' : '' }),
+        h('td', { text: items || '（還沒有）' })));
+    });
+    var body = clear($('bd-rows').querySelector('tbody'));
+    var shown = 0;
+    bdData.rows.forEach(function (r) {
+      if (kind && r.kind !== kind) { return; }
+      if (only && !r.uniques.length && !r.gems.length) { return; }
+      var cur = Object.keys(r.currency).map(function (n) { return n + (r.currency[n] > 1 ? ' ×' + r.currency[n] : ''); }).join('、');
+      var text = [r.player, r.boss].concat(r.uniques, r.gems).join(' ').toLowerCase();
+      if (q && text.indexOf(q) < 0) { return; }
+      shown++;
+      body.appendChild(h('tr', null, h('td', { cls: 'time', text: time(r.at) }), h('td', { text: r.player }), h('td', { text: r.kind }),
+        h('td', { text: r.boss }), h('td', { cls: 'num', text: r.tier > 0 ? 'T' + r.tier : '' }),
+        h('td', { text: r.uniques.join('、') }), h('td', { text: r.gems.join('、') }), h('td', { text: cur })));
+    });
+    $('bd-empty').hidden = shown > 0;
+  }
+
   function loadDps() {
     return api('GET', 'admin/api/dps?days=' + encodeURIComponent($('dps-days').value)).then(function (json) {
       dpsData = json;
@@ -2079,8 +2148,9 @@
     Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) {
       b.setAttribute('aria-selected', b.getAttribute('data-tab') === tab ? 'true' : 'false');
     });
-    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'retention', 'news', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
+    ['give', 'records', 'orders', 'settings', 'players', 'guilds', 'trace', 'transfer', 'dps', 'bossdrops', 'retention', 'news', 'log'].forEach(function (t) { $('tab-' + t).hidden = t !== tab; });
     if (tab === 'transfer') { loadTransfers(); }
+    if (tab === 'bossdrops' && !bdData) { loadBossDrops(); } // 2026-11-11
     if (tab === 'dps' && !dpsData) { loadDps(); } // 2026-10-17：切回來不重抓（要新的按「重新整理」）
     if (tab === 'retention' && !retentionData) { loadRetention(); } // 2026-10-19
     if (tab === 'records') { loadRecords(); }
@@ -2142,6 +2212,10 @@
   $('transfer-from').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
   $('transfer-to').addEventListener('input', function () { transferPreviewed = null; $('transfer-result').hidden = true; });
   $('dps-refresh').addEventListener('click', loadDps);
+  $('bd-refresh').addEventListener('click', loadBossDrops); // 2026-11-11
+  $('bd-days').addEventListener('change', loadBossDrops);
+  ['bd-kind', 'bd-only'].forEach(function (id) { $(id).addEventListener('change', renderBossDrops); });
+  $('bd-name').addEventListener('input', renderBossDrops);
   // ---- 2026-10-27：清除輸出紀錄（一位玩家的全部角色，或全部玩家；POST admin/api/dps/clear） ----
   function clearDps(uuid, name) {
     var body = uuid ? { uuid: uuid } : { all: true };

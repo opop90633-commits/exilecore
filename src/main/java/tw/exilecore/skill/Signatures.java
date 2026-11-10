@@ -422,6 +422,12 @@ final class Signatures {
                 result = result.withAreaAndProjectiles(result.areaScale() * Math.sqrt(1 + area), result.projectiles());
             }
             // 2026-11-01 照 PoE2 Flameblast（vaal_flameblast_radius_+_per_stage 6，沒有基礎半徑）：半徑照層數倍增（每層 0.6 公尺）
+            // 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db Flameblast「(0—40)% more Magnitude of Damaging Ailments per Stage」（每多一層）；這次之前一般的品質效果再算一次
+            final double ailmentPerStage = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.AILMENT_MORE_PER_STAGE) * (stages - 1) / 100.0;
+            if (ailmentPerStage > 0) {
+                result = result.withProfile(result.profile().withLocal(List.of(Modifier.more(StatKeys.IGNITE_MAGNITUDE, ailmentPerStage, "引導層數"),
+                        Modifier.more(StatKeys.BLEED_MAGNITUDE, ailmentPerStage, "引導層數"), Modifier.more(StatKeys.POISON_MAGNITUDE, ailmentPerStage, "引導層數"))));
+            }
             final double radiusScale = FireSpells.stageRadiusScale(SkillZones.localFlat(result.profile(), FireSpells.STAGE_RADIUS), stages);
             if (radiusScale > 1) {
                 result = result.withAreaAndProjectiles(result.areaScale() * radiusScale, result.projectiles());

@@ -522,7 +522,8 @@ public final class StageLeftovers implements Listener {
                 return;
             }
             service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), SkillTargets.facing(player)), cast, null);
-            final double loss = consumed * BLOOD_LIFE_LOSS;
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 blood_hunt_explosion_%_blood_loss_to_deal_as_life_loss（另外失去用掉失血的 (0—4)%）；這次之前一般的品質效果再算一次
+            final double loss = consumed * (BLOOD_LIFE_LOSS + parent.qualityFlat(tw.exilecore.stats.GemQualityKeys.BLOOD_HUNT_LIFE_LOSS) / 100.0);
             if (loss > 0) {
                 for (final LivingEntity enemy : service.targets().around(at, radius, player)) {
                     plugin.ailments().dealFlatPhysical(enemy, loss, player.getUniqueId());
@@ -1534,7 +1535,19 @@ public final class StageLeftovers implements Listener {
         // 2026-10-28 照 PoE2 Whirlwind Lance 的品質：每多一階再更多 (0—40)%（加在 150% 上）
         final double more = whirlMore(whirl.stage)
                 + SkillZones.localFlat(whirl.profile, Signatures.WHIRL_QUALITY_MORE) / 100.0 * Math.max(0, whirl.stage - 1);
-        final SkillProfile profile = more > 0 ? whirl.profile.scaled(1 + more, "旋風階數") : whirl.profile;
+        SkillProfile profile = more > 0 ? whirl.profile.scaled(1 + more, "旋風階數") : whirl.profile;
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 windstorm_gain_all_damage_%_as_corresponding_element_if_empowered
+        //   （旋風被元素地面強化時，崩散獲得 (0—50)% 傷害為那種元素的額外傷害；中心碰到火焰／冰冷／閃電地面就算）；這次之前一般的品質效果再算一次
+        final double empowered = SkillZones.localFlat(whirl.profile, tw.exilecore.stats.GemQualityKeys.WHIRL_EMPOWERED_GAIN);
+        if (empowered > 0) {
+            final List<Modifier> gains = new ArrayList<>();
+            for (final DamageType element : ElementalGround.elementsAt(plugin, whirl.center, radius)) {
+                gains.add(Modifier.flat(StatKeys.DAMAGE_EXTRA + element.tag(), empowered, "被強化的旋風"));
+            }
+            if (!gains.isEmpty()) {
+                profile = profile.withLocal(gains);
+            }
+        }
         final double push = 0.8 * (1 + WHIRL_STAGE_KNOCKBACK * Math.max(0, whirl.stage - 1));
         for (final LivingEntity victim : service.targets().around(whirl.center, radius, owner)) {
             service.executor().hitOne(owner, profile, victim, whirl.center, push);

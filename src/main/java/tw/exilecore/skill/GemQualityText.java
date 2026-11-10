@@ -30,7 +30,7 @@ final class GemQualityText {
             Map.entry("flame_blast_shaft", "最大階段 +{i:charge.stages_flat}"),
             Map.entry("blood_scent_seal", "被標記的目標另外照失血的 {bloodhound.stun_percent}% 累積重暈"),
             Map.entry("wild_beast_taming", "鬼火持續時間 +{tame.wisp_seconds} 秒、夥伴的保留效率增加 {-aura.reservation}%"), // 2026-10-30 照 PoE2 Tame Beast
-            Map.entry("thunderbind_staff", "增加 {skill.duration}% 技能效果持續時間、{charged_staff.keep_chance}% 機率不用掉銳星"), // 2026-10-30 照 poe2db Charged Staff
+            Map.entry("thunderbind_staff", "增加 {skill.duration}% 技能效果持續時間"), // 2026-10-30 照 poe2db Charged Staff；2026-11-10：不用掉銳星移到額外的品質效果（照 PoB2 altQualityStats）
             Map.entry("bone_thorn_ring", "定身敵人時當作傷害再更多 {pin.as_though_damage}%"),
             Map.entry("bone_rite", "被護住的召喚物護盾消失後 1 秒內受到的傷害更少 {offering.shield_lost_less}%"),
             Map.entry("dig_remains", "骨構體持續時間 +{skill.base_duration_flat} 秒、移動速度增加 {movement.speed}%"),

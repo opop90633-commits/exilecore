@@ -32,7 +32,7 @@ public final class SkillConfig {
 
     /** 外觀代號（粒子與音效寫在 SkillVisuals）。 */
     public static final Set<String> VISUALS = Set.of("slash", "heavy_strike", "cleave", "slam", "leap",
-            "arrow", "burning_arrow", "wand_bolt", "staff_bolt", "blazing_star_shell", "frost_star_blast", "roaming_thunder", "chain_thunder",
+            "arrow", "burning_arrow", "wand_bolt", "staff_bolt", "frost_bolt", "blazing_star_shell", "frost_star_blast", "roaming_thunder", "chain_thunder",
             "crossbow_bolt", "blasting_quarrel", "permafrost_bolt", "staff_sweep", "tempest", "ice_cone",
             "spear_thrust", "thunder_lance_throw", "whirl", "erosion_star_shot", "blight_nova",
             // 第三部分：位移、延遲落下、地面效果、榴彈、印記…

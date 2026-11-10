@@ -136,6 +136,9 @@ final class AdminWeb {
         // 2026-10：輸出紀錄（每場 Boss、每段假人：每個人打了多少、幾秒）
         server.endpoint("/admin/api/dps", request -> api(request, false, session -> tw.exilecore.combat.DpsRecords.get(plugin)
                 .json(parseDays(request.param("days")))), "GET");
+        // 2026-11-11 照站長「有地方能檢查災厄級有沒有人有掉東西嗎」：Boss 掉落紀錄（災厄級、終局、極境、巔峰；每個有份的人一筆）
+        server.endpoint("/admin/api/boss-drops", request -> api(request, false, session -> tw.exilecore.map.BossDropRecords.get(plugin)
+                .json(parseDays(request.param("days")))), "GET");
         // 2026-10-27：清除輸出紀錄（站長要的：單一玩家／單一角色，或全部玩家）
         server.endpoint("/admin/api/dps/clear", request -> api(request, true, session -> clearDps(session, body(request))), "POST");
         // 2026-10-19：玩家留存（新玩家第 1、7、30 天還有沒有回來、每週新玩家、每天上線、流失的人停在哪）

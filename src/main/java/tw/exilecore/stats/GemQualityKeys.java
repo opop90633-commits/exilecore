@@ -147,4 +147,56 @@ public final class GemQualityKeys {
     public static final String MOUNT_SKILL = "steed_call";
     /** FLAT（%）：坐騎更多 x% 最大生命——坐騎打不死，換成騎著時的重暈門檻更多 x%（AilmentService）。 */
     public static final String MOUNT_LIFE_MORE = "mount.life_more";
+    // ---- 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的額外品質效果（PoB2 altQualityStats／poe2db）----
+
+    /** FLAT（%）：捷放出來的那一下傷害增加 x%（燼使的點燃、霜使的碎裂、雷使的落雷；herald_of_*_damage_+%）。 */
+    public static final String HERALD_DAMAGE = "herald.damage";
+    /** FLAT：獸血沸攻擊擊中多獲得 x 點獸性（無條件捨去；wild_beast_energy_per_hit）。 */
+    public static final String FURY_PER_HIT = "fury.per_hit";
+    /** FLAT（秒）：元素潮汐換元素的週期 +x（base_skill_effect_duration）。 */
+    public static final String CONFLUX_SECONDS = "conflux.seconds";
+    /** FLAT（%）：磨蝕之志用的存在範圍增加 x%（presence_area_+%；半徑照 √）。 */
+    public static final String PRESENCE_AREA = "grinding_will.presence_area";
+    /** FLAT：連段的終結打擊多打 x 下（無條件捨去；風暴連擊 final_strike_number_of_spirit_strikes）。 */
+    public static final String FINAL_EXTRA_HITS = "stage.final_extra_hits";
+    /** FLAT：鐘多響 x 次（無條件捨去；驚雷之鐘 bell_hit_limit）。 */
+    public static final String BELL_HIT_LIMIT = "bell.hit_limit";
+    /** FLAT（%）：旋風被元素地面強化時，崩散獲得 x% 傷害為那種元素（颶風槍 windstorm_gain_all_damage_%_as_corresponding_element_if_empowered）。 */
+    public static final String WHIRL_EMPOWERED_GAIN = "whirl.empowered_gain";
+    /** FLAT（%）：x% 機率另外往四周一圈多射 8 發（熾星彈 spell_skill_%_chance_to_fire_8_additional_projectiles_in_nova）。 */
+    public static final String NOVA_EIGHT_CHANCE = "projectile.nova_eight_chance";
+    /** FLAT（%）：凜冬之殼每層給 x% 增加護甲（arctic_armour_armour_granted_+%_per_stage）。 */
+    public static final String ARCTIC_ARMOUR_PER_STAGE = "arctic.armour_per_stage";
+    /** FLAT（%）：插著電殛棒的敵人受到的傷害增加 x%（electrocuting_arrow_damage_taken_+%）。 */
+    public static final String ROD_DAMAGE_TAKEN = "rod.damage_taken";
+    /** FLAT（%）：被霜浪打中的敵人凍結時受到的傷害增加 x%（frozen_monsters_take_increased_damage）。 */
+    public static final String FROZEN_DAMAGE_TAKEN = "frozen.damage_taken";
+    /** FLAT（%）：血獵的血爆另外讓被炸到的失去用掉失血的 x%（blood_hunt_explosion_%_blood_loss_to_deal_as_life_loss）。 */
+    public static final String BLOOD_HUNT_LIFE_LOSS = "blood_hunt.life_loss";
+    /** FLAT（秒）：技能的次要效果持續時間 +x（崩滅心咒的紫焰；base_secondary_skill_effect_duration）。 */
+    public static final String SECONDARY_DURATION_FLAT = "skill.secondary_duration_flat";
+    /** FLAT（百分點，負的）：魔湧裡花掉的魔力、生命加到每秒消耗的比例（30%）少 x（mana_tempest_mana_cost_%_to_add_to_cost_per_second）。 */
+    public static final String TEMPEST_SPENT_SHARE = "mana_tempest.spent_share";
+    /** FLAT：多強化 x 次攻擊（無條件捨去；霜鏃 shearing_bolts_number_of_empowered_attacks）。 */
+    public static final String EMPOWERED_ATTACKS = "skill.empowered_attacks";
+    /** FLAT（秒）：離開區域之後增益多留 x 秒（瘴域 toxic_domain_buff_linger_duration_ms）。 */
+    public static final String BUFF_LINGER_SECONDS = "buff.linger_seconds";
+    /** FLAT（跟位移逐級表同單位）：位移距離 +x（掠閃 blink_travel_distance）。 */
+    public static final String DASH_DISTANCE_FLAT = "dash.distance_flat";
+    /** FLAT：增益最多 +x 層（無條件捨去；幻步 ghost_dance_max_stacks）。 */
+    public static final String MAX_STACKS = "buff.max_stacks";
+    /** FLAT（%）：疾風每一階另外更多 x% 傷害（風之舞步 wind_dancer_damage_+%_final_per_stage）。 */
+    public static final String GALE_MORE_PER_STAGE = "gale.more_per_stage";
+    /** FLAT（秒，負的）：反覆的間隔 +x（蟲噬群每群的間隔、凋息每層凋零的間隔）。 */
+    public static final String REPEAT_INTERVAL_SECONDS = "skill.repeat_interval_flat";
+    /** FLAT（%）：x% 物理轉成隨機元素（三相訣的增益；DamageCalculator 照期望值平均分給三種元素）。 */
+    public static final String CONVERT_RANDOM_ELEMENT = "damage.convert_random_element";
+    /** FLAT（%）：閃電傷害 x% 機率為幸運（雷鳴箭、引霆突 chance_for_extra_damage_roll_with_lightning_damage_%）。 */
+    public static final String LIGHTNING_LUCKY = "damage.lucky_lightning_chance";
+    /** FLAT（%）：被印記標記的敵人造成的傷害更少 x%（獵殺印記 gem_quality_marked_enemy_damage_dealt_+%_final；SkillExecutor 另外掛的減益）。 */
+    public static final String MARK_ENEMY_LESS = "mark.enemy_damage_less";
+    /** 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：FLAT（%）：每一發投射物 x% 機率回歸（寒冬之眼）。 */
+    public static final String RETURN_CHANCE = "projectile.return_chance";
+    /** 2026-11-11：FLAT（%）：每多一層引導，傷害型異常的幅度更多 x%（爆炎 Flameblast）。 */
+    public static final String AILMENT_MORE_PER_STAGE = "ailment.more_per_stage";
 }

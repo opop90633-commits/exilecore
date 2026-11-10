@@ -171,8 +171,11 @@ public final class SkillStages {
         if (stage.reach() != 0) {
             marks.add(Modifier.flat(REACH, stage.reach(), stage.name()));
         }
-        if (stage.hits() > 1) {
-            marks.add(Modifier.flat(HITS, stage.hits(), stage.name()));
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 final_strike_number_of_spirit_strikes（風暴連擊的終結打擊多打 (0—2) 下靈擊，無條件捨去）；這次之前一般的品質效果再算一次
+        final int spirit = "final".equals(key) ? (int) Math.floor(Math.max(0, build.qualityFlat(tw.exilecore.stats.GemQualityKeys.FINAL_EXTRA_HITS)) + 1e-9) : 0;
+        final int hits = Math.max(1, stage.hits()) + spirit;
+        if (hits > 1) {
+            marks.add(Modifier.flat(HITS, hits, stage.name()));
         }
         return build.withProfile(profile.withLocal(marks));
     }

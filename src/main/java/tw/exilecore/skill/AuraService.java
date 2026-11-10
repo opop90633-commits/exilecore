@@ -776,7 +776,10 @@ final class AuraService implements Listener {
                         minions.trim(player.getUniqueId(), aura.skillId, max); // 精魂或上限變少了：多的收掉
                     }
                     final int alive = minions.count(player.getUniqueId(), aura.skillId);
-                    final double interval = aura.build.definition().summon().interval();
+                    // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 base_cooldown_modifiable_repeat_interval_ms（蟲噬群每群的間隔少 (0—2) 秒，最少 0.5 秒）；這次之前一般的品質效果再算一次
+                    final double baseInterval = aura.build.definition().summon().interval();
+                    final double interval = baseInterval <= 0 ? baseInterval
+                            : Math.max(0.5, baseInterval + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.REPEAT_INTERVAL_SECONDS));
                     if (interval > 0) {
                         // 2026-10-26（PoE2 蟲噬群）：每隔幾秒叫一隻（最多 max 隻、各自有持續時間），不管死掉或消失；冷卻回復也加快
                         if (alive < max && now >= aura.companionReady) {
@@ -1016,7 +1019,7 @@ final class AuraService implements Listener {
         for (final String tag : effect.tags()) {
             if (tag.startsWith(ModifierText.IF_CONFLUX)) {
                 // 2026-10-26 照 PoE2 Elemental Conflux：每 8 秒隨機換一種元素，只有那一種更多傷害
-                if (!tag.substring(ModifierText.IF_CONFLUX.length()).equals(confluxElement(player.getUniqueId(), plugin.getServer().getCurrentTick()))) {
+                if (!tag.substring(ModifierText.IF_CONFLUX.length()).equals(confluxElement(player.getUniqueId(), plugin.getServer().getCurrentTick(), confluxPeriodTicks(player.getUniqueId())))) {
                     return List.of();
                 }
                 final java.util.Set<String> rest = new java.util.LinkedHashSet<>(effect.tags());
@@ -1044,10 +1047,25 @@ final class AuraService implements Listener {
 
     /** 這個玩家現在的元素潮汐是哪種元素（每 8 秒隨機換；同一個週期內每次問都一樣）。 */
     static String confluxElement(final UUID player, final long now) {
-        final long period = now / CONFLUX_PERIOD;
+        return confluxElement(player, now, CONFLUX_PERIOD);
+    }
+
+    /** 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：週期照元素潮汐的持續時間（高階奇術 base_skill_effect_duration +200 毫秒／1%）；這次之前固定 8 秒。 */
+    static String confluxElement(final UUID player, final long now, final long periodTicks) {
+        final long period = now / Math.max(1, periodTicks);
         return CONFLUX_ELEMENTS[new java.util.Random(player.getMostSignificantBits() ^ player.getLeastSignificantBits() ^ period * 0x9E3779B97F4A7C15L)
                 .nextInt(CONFLUX_ELEMENTS.length)];
     }
+
+    /** 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：這個玩家元素潮汐幾 tick 換一次（8 秒＋高階奇術品質給的秒數）；這次之前固定 8 秒。 */
+    long confluxPeriodTicks(final UUID player) {
+        final Map<String, Active> mine = active.get(player);
+        final Active tide = mine == null ? null : mine.get(ELEMENT_TIDE);
+        final double extra = tide == null ? 0 : tide.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.CONFLUX_SECONDS);
+        return CONFLUX_PERIOD + Math.max(0, Math.round(extra * 20));
+    }
+
+    static final String ELEMENT_TIDE = "element_tide";
 
     /** 開著元素潮汐的人換週期了就重算屬性表（每次 tick 呼叫）。 */
     private void tickConflux(final Player player, final Map<String, Active> mine, final long now) {
@@ -1063,8 +1081,9 @@ final class AuraService implements Listener {
             confluxPeriod.remove(player.getUniqueId());
             return;
         }
-        final Long last = confluxPeriod.put(player.getUniqueId(), now / CONFLUX_PERIOD);
-        if (last != null && last != now / CONFLUX_PERIOD) {
+        final long periodTicks = confluxPeriodTicks(player.getUniqueId());
+        final Long last = confluxPeriod.put(player.getUniqueId(), now / periodTicks);
+        if (last != null && last != now / periodTicks) {
             plugin.players().markDirty(player);
         }
     }
@@ -1389,7 +1408,9 @@ final class AuraService implements Listener {
                         player.getUniqueId(), tick + 15, Math.max(0, taken), false, enemy.tag(), mods, 0));
             }
             if (enemy.witheredEvery() != null) { // 2026-10-26：凋息（PoE2 Withering Presence）：待在範圍裡每隔幾秒 1 層凋零（6 秒；效果越強間隔越短）
-                final double every = Math.max(0.1, enemy.witheredEvery().at(level) / Math.max(0.1, scale)) * 20;
+                // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 skill_withering_presence_frequency_ms（每層的間隔少 (0—0.5) 秒，最少 0.1 秒）；這次之前一般的品質效果再算一次
+                final double every = Math.max(0.1, (enemy.witheredEvery().at(level)
+                        + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.REPEAT_INTERVAL_SECONDS)) / Math.max(0.1, scale)) * 20;
                 final Map<UUID, Long> last = witheredAt.computeIfAbsent(key, k -> new HashMap<>());
                 final long previous = last.getOrDefault(id, first - (long) every);
                 if (now - previous >= every) {
@@ -1702,7 +1723,9 @@ final class AuraService implements Listener {
             return;
         }
         state.lastGain = now;
-        state.points = Math.min(aura.build.definition().aura().fury().max(), state.points + 1);
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 wild_beast_energy_per_hit（攻擊擊中多獲得 (0—1) 點獸性，無條件捨去）；這次之前一般的品質效果再算一次
+        final int extra = (int) Math.floor(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.FURY_PER_HIT) + 1e-9);
+        state.points = Math.min(aura.build.definition().aura().fury().max(), state.points + 1 + Math.max(0, extra));
     }
 
     /** 現在是不是獸形；是的話變身的增益至少撐到 until（狂暴中一直維持獸形）。 */
@@ -1971,8 +1994,10 @@ final class AuraService implements Listener {
                 final double overkill = struck ? last.overkill() / 100.0 * maxLife(entity) : 0;
                 if (overkill > 0 && plugin.ailments() != null) {
                     // 2026-10-28 照 PoE2 Herald of Ash 的品質：另外 +(0—5)% 過量擊殺傷害算進點燃
+                    // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 herald_of_ash_fire_damage_+%（燼使的火焰傷害增加 x%，乘在點燃上）；這次之前一般的品質效果再算一次
                     final double dps = overkill * (ashPercent(aura.build.level())
-                            + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ASH_OVERKILL)) / 100.0;
+                            + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ASH_OVERKILL)) / 100.0
+                            * (1 + aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_DAMAGE) / 100.0);
                     final double perUnit = plugin.ailments().config().igniteDps(1, 0, 1);
                     final tw.exilecore.stats.StatSheet sheet = aura.build.profile().effective(plugin.players().sheet(credit));
                     final double radius = ASH_RADIUS * aura.build.areaScale();
@@ -2036,6 +2061,10 @@ final class AuraService implements Listener {
                     state.weaponTags(), plugin.players().sheet(credit), entry == null ? Set.of() : SkillService.resonantOf(entry));
             // 2026-10-28 照 PoE2 Herald of Ice 的品質：碎裂爆炸半徑 +(0—0.4) 公尺（加在基礎半徑上，再乘範圍）
             final SkillBuild subBuild = built.withBaseRadius(tw.exilecore.core.Units.metres(aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_ICE_RADIUS))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），品質加的半徑（照 PoE2 公尺）也換算
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 herald_of_ice_cold／herald_of_thunder_lightning_damage_+%（捷放出來的那一下傷害增加 x%）；這次之前一般的品質效果再算一次
+            final double heraldDamage = aura.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.HERALD_DAMAGE);
+            final SkillBuild castBuild = heraldDamage <= 0 ? subBuild : subBuild.withProfile(subBuild.profile().withLocal(List.of(new tw.exilecore.stats.Modifier(
+                    tw.exilecore.stats.StatKeys.DAMAGE, tw.exilecore.stats.ModType.INCREASED, heraldDamage / 100.0, Set.of(), "高階奇術（捷的傷害）"))));
             // 方向：朝屍體附近最近的另一隻怪，沒有就照主人的面向
             LivingEntity target = fixedTarget;
             for (final LivingEntity candidate : target != null ? List.<LivingEntity>of() : targets.around(at, HERALD_SEARCH)) {
@@ -2048,7 +2077,7 @@ final class AuraService implements Listener {
                     ? SkillTargets.center(target).toVector().subtract(at.toVector()).normalize()
                     : SkillTargets.facing(credit);
             visuals.herald(aura.build.definition().visual(), at);
-            executor.executeFrom(Origin.at(credit, at, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(credit) : direction), subBuild, target);
+            executor.executeFrom(Origin.at(credit, at, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(credit) : direction), castBuild, target);
         }
     }
 

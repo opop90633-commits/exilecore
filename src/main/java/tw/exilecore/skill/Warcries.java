@@ -509,8 +509,16 @@ final class Warcries {
             final org.bukkit.entity.LivingEntity victim = unwilling ? tw.exilecore.ascendancy.AscendancyEffects.offeringVictim(player, SPIKE_SEARCH) : null;
             final org.bukkit.Location victimAt = victim == null ? null : victim.getLocation();
             final double power = victim == null ? 0 : tw.exilecore.ascendancy.AscendancyEffects.cullForOffering(player, victim);
+            final double offeringScale = build.auraEffect() * (1 + extraEffect) * (1 + power / 100.0);
             for (final ScaledMod mod : spec.minionBuff()) {
-                minionMods.add(mod.toModifier(build.level(), build.auraEffect() * (1 + extraEffect) * (1 + power / 100.0), name));
+                minionMods.add(mod.toModifier(build.level(), offeringScale, name));
+            }
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：給召喚物的祭品增益也吃品質的 effect.＊（嗜血祭高階奇術的 pain_offering_attack_and_cast_speed_+%：
+            //   攻擊與施法速度另外增加 (0—20)%，加在原本那一條上、一起乘效果）；這次之前一般的品質效果再算一次。給你的（魂火祭）走 warcryOwnModifiers
+            if (!spec.minionBuff().isEmpty()) {
+                final List<Modifier> merged = SkillBuild.mergeEffects(new java.util.ArrayList<>(minionMods), build.qualityEffects(), offeringScale, name);
+                minionMods.clear();
+                minionMods.addAll(merged);
             }
             // 2026-10-28 照 PoE2 Bone Offering 的品質：護盾消失後 1 秒更少 x% 傷害（MinionService.hitTaken）
             final double shieldLess = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SHIELD_LOST_LESS);

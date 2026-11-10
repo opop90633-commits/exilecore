@@ -150,7 +150,8 @@ class SkillBatchJParityTest {
         assertEquals(0.2, sum(boon.auraModifiers(), "cast.speed@manaflask"), 1e-9);
         assertNotNull(SkillService.advancedQualityText(plating, 20));
         assertNotNull(SkillService.advancedQualityText(config.skill("potion_craft_insight"), 20));
-        assertTrue(tw.exilecore.currency.GemQuality.advancedModifiers("breeze_dance_step", 20, "q") == null, "Wind Dancer 原作沒有額外品質");
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：Wind Dancer 寶石的品質給疾風（PoB2 Gale Force：一般品質半徑、額外品質每階更多 2.5%/1%）；這次之前斷言沒有額外品質
+        assertEquals(50, tw.exilecore.currency.GemQuality.advancedModifiers("breeze_dance_step", 20, "q").getFirst().value(), 1e-9);
     }
 
     private static double levelValue(final String skillId, final String stat, final int level) {

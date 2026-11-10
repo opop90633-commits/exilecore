@@ -174,6 +174,19 @@ public final class CombatListener implements Listener {
      * 玩家自己打的這一下擊中時獲得戰星的機率。召喚物打的、荊棘的反彈、殺死的敵人爆炸都不算擊中（空的）；沒有戰星系統也是空的。
      */
     /** 這一擊的標籤（減益的標籤限制用）：技能的標籤；攻擊也算物理（威壓：物理傷害）。 */
+    /**
+     * 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：受到的傷害增加的減益可以寫「只在凍結時」（標籤 vs_frozen，霜浪高階奇術的
+     * frozen_monsters_take_increased_damage）：被打的這一下牠是凍結的就把 vs_frozen 加進這一擊的標籤。這次之前沒有。純函式。
+     */
+    public static java.util.Set<String> frozenTags(final java.util.Set<String> hitTags, final boolean frozen) {
+        if (!frozen) {
+            return hitTags;
+        }
+        final java.util.Set<String> tags = new java.util.HashSet<>(hitTags);
+        tags.add(tw.exilecore.stats.TreeConditions.VS_FROZEN);
+        return tags;
+    }
+
     private static java.util.Set<String> hitTags(final SkillProfile skill) {
         if (skill == null || skill.tags() == null) {
             return java.util.Set.of("attack", "physical");
@@ -528,7 +541,8 @@ public final class CombatListener implements Listener {
         }
         // 感電：受到的傷害增加（在減免之後乘）；印記、戰吼的減益也在這裡乘
         final double taken = ((ailments == null ? 1.0 : ailments.damageTakenMultiplier(defender)) + brokenTaken)
-                * debuffs.takenMultiplier(defender.getUniqueId(), attacker.getUniqueId(), plugin.getServer().getCurrentTick(), hitTagSet);
+                * debuffs.takenMultiplier(defender.getUniqueId(), attacker.getUniqueId(), plugin.getServer().getCurrentTick(),
+                        frozenTags(hitTagSet, ailments != null && ailments.isFrozen(defender)));
         // PvP：傷害乘上專屬的 PvP 減傷（元素異常照縮小後的傷害算：pendingAilment 存的是沒乘減傷的 taken）
         // 2026-10：召喚物、圖騰、陷阱打的再乘 minion_damage；挨打的玩家拿近戰武器再少 melee_reduction %
         final double pvpScale = pvpAttacker != null && plugin.pvp() != null

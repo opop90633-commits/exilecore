@@ -75,6 +75,8 @@ final class ManaTempest {
         long nextDrain;
         /** 2026-10-28 照 PoE2 Mana Tempest 的品質：離開之後效果再留幾 tick（2 秒＋品質的 0～2 秒）。 */
         int linger = LINGER_TICKS;
+        /** 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：花掉的魔力、生命加到每秒消耗的比例（30%，高階奇術品質每 1% 少 0.4 個百分點）。 */
+        double spentShare = SPENT_SHARE;
 
         Storm(final String skillId, final String name, final Location center, final List<Modifier> effects, final int cooldownTicks, final long now) {
             this.skillId = skillId;
@@ -94,6 +96,11 @@ final class ManaTempest {
     /** 每秒的消耗（最大魔力 1% + 花掉的 30% 累積）。 */
     static double costPerSecond(final double maxMana, final double extraPerSecond) {
         return Math.max(0, maxMana) * BASE_PERCENT / 100.0 + Math.max(0, extraPerSecond);
+    }
+
+    /** 2026-11-11：花掉的加到每秒消耗的比例（品質給的百分點是負的；不會低於 0）。純函式。 */
+    static double spentShare(final double qualityPoints) {
+        return Math.max(0, SPENT_SHARE + qualityPoints / 100.0);
     }
 
     /** 站在風暴裡（水平距離在半徑內、上下 3 格內）。 */
@@ -122,6 +129,8 @@ final class ManaTempest {
         final Storm storm = new Storm(build.definition().id(), build.definition().name(), player.getLocation().clone(), effects(build),
                 build.cooldownTicks(), now);
         storm.linger = LINGER_TICKS + (int) Math.round(Math.max(0, build.qualityFlat(tw.exilecore.stats.GemQualityKeys.LINGER_SECONDS)) * 20);
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 mana_tempest_mana_cost_%_to_add_to_cost_per_second（30% → 22%）；這次之前一般的品質效果再算一次
+        storm.spentShare = spentShare(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.TEMPEST_SPENT_SHARE));
         storms.put(player.getUniqueId(), storm);
         runtime.startCooldown(storm.skillId, now, HELD_COOLDOWN); // 風暴還在時冷卻不回復
         service.ownBuff(player, BUFF_ID, storm.skillId); // 2026-11-01：快捷欄畫在魔湧那一格
@@ -141,7 +150,7 @@ final class ManaTempest {
     void spent(final Player player, final double amount) {
         final Storm storm = storms.get(player.getUniqueId());
         if (storm != null && amount > 0 && inside(storm.center, player.getLocation())) {
-            storm.extraPerSecond += amount * SPENT_SHARE;
+            storm.extraPerSecond += amount * storm.spentShare;
         }
     }
 

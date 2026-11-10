@@ -116,7 +116,9 @@ final class SkillDeployables implements Listener {
             this.label = label;
             this.nextTick = now + (spec.kind() == DeploySpec.Kind.TOTEM ? 10 : 0);
             // 2026-10-30 照 PoE2 Durability（support_number_of_additional_uses_before_expiry 2）：鐘多響幾次（bell_hit_limit 10 → 12）
-            this.ringsLeft = spec.rings() + (int) Math.round(SkillZones.localFlat(build.profile(), tw.exilecore.stats.SupportExtraKeys.DURABILITY));
+            this.ringsLeft = spec.rings() + (int) Math.round(SkillZones.localFlat(build.profile(), tw.exilecore.stats.SupportExtraKeys.DURABILITY))
+                    // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 bell_hit_limit（驚雷之鐘多響 (0—10) 次，無條件捨去）；這次之前一般的品質效果再算一次
+                    + (int) Math.floor(Math.max(0, build.qualityFlat(tw.exilecore.stats.GemQualityKeys.BELL_HIT_LIMIT)) + 1e-9);
             this.armed = spec.kind() != DeploySpec.Kind.TRAP;
         }
 

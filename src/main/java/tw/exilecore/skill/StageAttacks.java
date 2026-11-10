@@ -346,6 +346,8 @@ public final class StageAttacks implements Listener {
         final double radius;
         final long until;
         final int level;
+        /** 2026-11-11：離開毒花之後增益還留幾 tick（0.75 秒＋高階奇術品質）。 */
+        long lingerTicks = BLOOM_LINGER;
 
         Bloom(final UUID owner, final Location center, final double radius, final long until, final int level) {
             this.owner = owner;
@@ -707,7 +709,10 @@ public final class StageAttacks implements Listener {
         final double radius = zone == null ? 3 : build.radius();
         final long ticks = build.groundDurationTicks(zone == null ? 8 : zone.duration()); // 2026-11-01：毒花是地面效果（Persistent Ground）
         blooms.removeIf(each -> each.owner.equals(player.getUniqueId()));
-        blooms.add(new Bloom(player.getUniqueId(), player.getLocation(), radius, now + ticks, build.level()));
+        final Bloom made = new Bloom(player.getUniqueId(), player.getLocation(), radius, now + ticks, build.level());
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 toxic_domain_buff_linger_duration_ms（離開毒花後增益多留 (0—2) 秒）；這次之前一般的品質效果再算一次
+        made.lingerTicks = BLOOM_LINGER + Math.max(0, Math.round(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.BUFF_LINGER_SECONDS) * 20));
+        blooms.add(made);
         startTimer();
     }
 
@@ -788,7 +793,7 @@ public final class StageAttacks implements Listener {
             }
             // 照 PoE2 Toxic Bloom：花裡每秒回復生命（逐級，每分鐘 340 → 2500 → 4660）、技能消耗增加 25%
             final double regen = service.levelValue(DOMAIN, DOMAIN_REGEN, bloom.level) / 60.0;
-            service.buff(player, BLOOM_BUFF, "毒花", (int) BLOOM_LINGER, List.of(Modifier.flat(StatKeys.LIFE_REGEN, regen, "毒花"),
+            service.buff(player, BLOOM_BUFF, "毒花", (int) bloom.lingerTicks, List.of(Modifier.flat(StatKeys.LIFE_REGEN, regen, "毒花"),
                     Modifier.increased(StatKeys.SKILL_COST, DOMAIN_COST / 100.0, "毒花")));
         }
         for (final Iterator<Map.Entry<UUID, Pustule>> it = pustules.entrySet().iterator(); it.hasNext(); ) {

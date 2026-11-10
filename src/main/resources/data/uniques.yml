@@ -11219,12 +11219,13 @@ empress_splendour:        # 2026-11-07 照 PoE2 0.5 的「Atziri's Splendour」�
   sources: [delve_guardian]        # 2026-11-07 照 PoE2：poe2db 限定「瓦爾命途」阿茲里掉落 → 我們的星脈深坑每 10 層的深坑守衛
   weight: 100
   rune_sockets: 6        # 原作「有 6 個增幅插槽（隱藏）」
+  version: 2        # 2026-11-11 拿掉重複的「+1 全部已腐化技能寶石等級」（基底已有）
+  legacy: { 1: [2, 3, 4, 5, 6, 7] }   # 第 1 版的第 2～7 條對到新的第 1～6 條（數值保留）
   flavour:
     - "「女王的禮服只配鑲靈魂，其他的寶石都不夠格。」"
   mods:
-    - text: "+1 全部已腐化技能寶石等級"   # 新機制（NEEDS：gem.corrupted_level，SkillService 照 entry.corrupted() 加）
-      stats:
-        - { stat: gem.corrupted_level, type: FLAT, value: 1 }
+    # 2026-11-11 照站長「這個重複了，理論上只有一條固定的」：「+1 全部已腐化技能寶石等級」是基底祭紋華袍的固定詞綴（11/8 補上），
+    #   原作的這一條就是基底那條；這次之前傳奇自己又寫一條，變成 +2
     - text: "這件物品只能鑲嵌魂核符文"   # 新機制（NEEDS：local.only_soul_cores）
       stats:
         - { stat: local.only_soul_cores, type: FLAT, value: 1 }

@@ -95,6 +95,14 @@ class GemQualityRefTest {
             {"mother_child_grenade", tw.exilecore.stats.GemQualityKeys.DETONATION_TIME, -0.4}, // 2026-11-08：子母榴彈減少 40% 引爆時間
             {"thunderfall_spear", StatKeys.SKILL_PROJECTILES, 2.0}, // 2026-11-10 照站長：霆落矛高階奇術 +2 個投射物
             {"thunder_lance_throw", tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT, 20.0}, // 2026-11-10：擲雷槍 20% 機率加倍消耗怒星的好處
+            {"strung_pearls", tw.exilecore.charge.ChargeService.SUP_KEEP, 20.0}, // 2026-11-10：連珠 20% 機率不用掉怒星
+            // 2026-11-10 照站長「一般品質再算一次的照原作改」：PoB2 altQualityStats
+            {"thunderbind_staff", "charged_staff.keep_chance", 20.0}, // 雷縛長棍：不移除銳星從一般品質移過來
+            {"explosive_spear", tw.exilecore.charge.ChargeService.SUP_KEEP, 20.0},
+            {"flowing_flame_canopy", tw.exilecore.stats.TreeMechanicKeys.INFUSION_KEEP_CHANCE, 20.0},
+            {"fallen_star_bear_roar", tw.exilecore.stats.GemQualityKeys.GLORY_NOT_CONSUME_CHANCE, 50.0},
+            {"helix_arrow_rain", tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT, 30.0},
+            {"molten_ball", StatKeys.SKILL_CHAINS, 4.0},
         };
         for (final Object[] row : moved) {
             final String id = (String) row[0];

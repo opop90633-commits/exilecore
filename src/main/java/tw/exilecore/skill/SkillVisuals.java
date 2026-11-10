@@ -27,6 +27,9 @@ final class SkillVisuals {
     private static final Particle.DustOptions SPARK = new Particle.DustOptions(Color.fromRGB(0xFFF27A), 0.8f);
     private static final Particle.DustOptions ARC = new Particle.DustOptions(Color.fromRGB(0xA8E4FF), 1.0f);
     private static final Particle.DustOptions FROST = new Particle.DustOptions(Color.fromRGB(0xBFEFFF), 1.2f);
+    /** 2026-11-11：霜鑽的冰球（顆粒大一點、偏藍白）與散布（碰撞半徑 0.55 格的一半）。 */
+    private static final Particle.DustOptions FROST_BOLT = new Particle.DustOptions(Color.fromRGB(0x9FDFFF), 1.8f);
+    private static final double FROST_BOLT_SPREAD = 0.28;
     private static final Particle.DustOptions VOID = new Particle.DustOptions(Color.fromRGB(0x5B1E7A), 1.3f);
     private static final Particle.DustOptions BLIGHT = new Particle.DustOptions(Color.fromRGB(0x3E7A2C), 1.2f);
 
@@ -215,6 +218,10 @@ final class SkillVisuals {
             }
             case "wand_bolt" -> sound(at, Sound.BLOCK_AMETHYST_BLOCK_CHIME, 0.9f, 1.6f);
             case "staff_bolt" -> sound(at, Sound.ENTITY_BREEZE_SHOOT, 0.6f, 1.3f);
+            case "frost_bolt" -> { // 2026-11-11：霜鑽出手（冰球）
+                sound(at, Sound.ENTITY_BREEZE_SHOOT, 0.5f, 0.9f);
+                sound(at, Sound.BLOCK_GLASS_HIT, 0.6f, 1.2f);
+            }
             case "blazing_star_shell" -> sound(at, Sound.ENTITY_BLAZE_SHOOT, 0.7f, 1.1f);
             case "roaming_thunder" -> sound(at, Sound.ENTITY_FIREWORK_ROCKET_TWINKLE, 0.6f, 1.6f);
             case "crossbow_bolt" -> sound(at, Sound.ITEM_CROSSBOW_SHOOT, 0.8f, 1.1f);
@@ -292,6 +299,15 @@ final class SkillVisuals {
                         tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 1, 0.02, 0.02, 0.02, 0);
                     }
                 }
+                case "frost_bolt" -> {
+                    // 2026-11-11 照站長「霜鑽的視覺大小能跟原作一樣嗎」：原作 Frostbolt 是一顆大冰球；照它的碰撞半徑（0.55 格，直徑約 1.1 格）
+                    //   畫一團冰晶（散布約半徑的一半，大部分粒子落在球裡）；這次之前用法杖彈（staff_bolt），粗細只有 0.1 格左右
+                    tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 6, FROST_BOLT_SPREAD, FROST_BOLT_SPREAD, FROST_BOLT_SPREAD, 0, FROST_BOLT);
+                    tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 2, FROST_BOLT_SPREAD * 0.8, FROST_BOLT_SPREAD * 0.8, FROST_BOLT_SPREAD * 0.8, 0.01);
+                    if (i % 2 == 0) {
+                        tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 1, 0.08, 0.08, 0.08, 0);
+                    }
+                }
                 case "blazing_star_shell" -> {
                     tw.exilecore.skill.Fx.spawn(world, Particle.FLAME, at, 2, 0.08, 0.08, 0.08, 0.01);
                     if (i % 2 == 0) {
@@ -365,6 +381,10 @@ final class SkillVisuals {
             case "staff_bolt" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 10, 0.25, 0.25, 0.25, 0, STAFF);
                 tw.exilecore.skill.Fx.spawn(world, Particle.END_ROD, at, 3, 0.1, 0.1, 0.1, 0.02);
+            }
+            case "frost_bolt" -> { // 2026-11-11：霜鑽打中時的冰屑（跟球一樣大）
+                tw.exilecore.skill.Fx.spawn(world, Particle.DUST, at, 14, 0.4, 0.4, 0.4, 0, FROST_BOLT);
+                tw.exilecore.skill.Fx.spawn(world, Particle.SNOWFLAKE, at, 6, 0.3, 0.3, 0.3, 0.05);
             }
             case "roaming_thunder" -> {
                 tw.exilecore.skill.Fx.spawn(world, Particle.ELECTRIC_SPARK, at, 8, 0.2, 0.2, 0.2, 0.1);

@@ -6049,10 +6049,31 @@ public final class SkillService {
         }
         final List<String> lines = new ArrayList<>();
         for (final tw.exilecore.stats.Modifier modifier : mods) {
-            final String special = qualityLine(modifier);
-            final String line = special != null ? special : ModifierText.describe(modifier);
-            if (line != null && !line.startsWith("特殊效果")) {
-                lines.add(definition.summon() != null && !line.startsWith("召喚物") && !line.startsWith("同時最多") ? "召喚物：" + line : line);
+            String special = qualityLine(modifier);
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：跟技能有關的寫法（連射的彈匣就是熱度、間隔是什麼的間隔、骨構體）
+            if ("successive_shots".equals(definition.id()) && StatKeys.CROSSBOW_CLIP.equals(modifier.stat())) {
+                special = "最大熱度 +" + (int) Math.floor(modifier.value() + 1e-9);
+            } else if (tw.exilecore.stats.GemQualityKeys.REPEAT_INTERVAL_SECONDS.equals(modifier.stat())) {
+                special = ("insect_devour_horde".equals(definition.id()) ? "放出蟲群的間隔少 " : "每層凋零的間隔少 ") + trimNumber(-modifier.value()) + " 秒";
+            } else if ("chill_fan_shafts".equals(definition.id()) && StatKeys.SEAL_MAX.equals(modifier.stat())) {
+                special = "封印上限 +" + Math.round(modifier.value());
+            } else if ("summon_bone_thundermage".equals(definition.id()) && StatKeys.ATTACK_SPEED.equals(modifier.stat())) {
+                special = "召喚物施法速度增加 " + trimNumber(modifier.value() * 100) + "%";
+            } else if ("dig_remains".equals(definition.id()) && StatKeys.ATTACK_SPEED.equals(modifier.stat())) {
+                special = "骨構體 " + trimNumber(modifier.value() * 100) + "% 更多攻擊速度";
+            }
+            String line = special != null ? special : ModifierText.describe(modifier);
+            // 2026-11-11：增益本身的數值（effect.＊）照拿掉前綴的那條寫，前面加「增益：」；這次之前沒有說明（整行不顯示）
+            if ((line == null || line.startsWith("特殊效果")) && modifier.stat().startsWith(SkillBuild.EFFECT_PREFIX)) {
+                final tw.exilecore.stats.Modifier inner = new tw.exilecore.stats.Modifier(modifier.stat().substring(SkillBuild.EFFECT_PREFIX.length()),
+                        modifier.type(), modifier.value(), modifier.tags(), modifier.source());
+                final String innerSpecial = qualityLine(inner);
+                final String innerLine = innerSpecial != null ? innerSpecial : ModifierText.describe(inner);
+                line = innerLine == null || innerLine.startsWith("特殊效果") ? null : "增益：" + innerLine;
+            }
+            if (line != null && !line.isEmpty() && !line.startsWith("特殊效果")) {
+                lines.add(definition.summon() != null && !line.startsWith("召喚物") && !line.startsWith("同時最多") && !line.startsWith("放出")
+                        && !line.contains("魔力消耗") && !line.contains("保留效率") ? "召喚物：" + line : line); // 2026-11-10：消耗、保留是技能本身的
             }
         }
         return lines.isEmpty() ? null : String.join("、", lines);
@@ -6123,7 +6144,8 @@ public final class SkillService {
                 final String line = special != null ? special : ModifierText.describe(modifier);
                 if (line != null && !line.startsWith("特殊效果")) {
                     // 召喚技能的品質是給召喚物的（傷害、生命、暈眩累積）
-                    lines.add(definition.summon() != null && !line.startsWith("召喚物") && !line.startsWith("同時最多") ? "召喚物：" + line : line);
+                    lines.add(definition.summon() != null && !line.startsWith("召喚物") && !line.startsWith("同時最多")
+                        && !line.contains("魔力消耗") && !line.contains("保留效率") ? "召喚物：" + line : line); // 2026-11-10：消耗、保留是技能本身的
                 }
             }
             return String.format(Locale.ROOT, "品質 +%d%%：%s", quality, lines.isEmpty() ? "強化這個技能自己的效果" : String.join("、", lines));
@@ -6141,11 +6163,41 @@ public final class SkillService {
     static String qualityLine(final tw.exilecore.stats.Modifier modifier) {
         final double value = modifier.value();
         return switch (modifier.stat()) {
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：這批高階奇術的額外品質效果
+            case tw.exilecore.stats.GemQualityKeys.HERALD_DAMAGE -> "捷放出的傷害增加 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.FURY_PER_HIT -> "攻擊擊中多獲得 " + (int) Math.floor(value + 1e-9) + " 點獸性";
+            case tw.exilecore.stats.GemQualityKeys.CONFLUX_SECONDS -> "換元素的週期多 " + trimNumber(value) + " 秒";
+            case tw.exilecore.stats.GemQualityKeys.PRESENCE_AREA -> "磨蝕之志的存在範圍增加 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.FINAL_EXTRA_HITS -> "終結打擊多打 " + (int) Math.floor(value + 1e-9) + " 下";
+            case tw.exilecore.stats.GemQualityKeys.BELL_HIT_LIMIT -> "鐘多響 " + (int) Math.floor(value + 1e-9) + " 次";
+            case tw.exilecore.stats.GemQualityKeys.WHIRL_EMPOWERED_GAIN -> "旋風被元素地面強化時，崩散獲得 " + trimNumber(value) + "% 傷害為那種元素";
+            case tw.exilecore.stats.GemQualityKeys.NOVA_EIGHT_CHANCE -> trimNumber(value) + "% 機率另外往四周多射 8 發";
+            case tw.exilecore.stats.GemQualityKeys.ARCTIC_ARMOUR_PER_STAGE -> "每層冰甲增加 " + trimNumber(value) + "% 護甲";
+            case tw.exilecore.stats.GemQualityKeys.ROD_DAMAGE_TAKEN -> "插著電殛棒的敵人受到的傷害增加 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.FROZEN_DAMAGE_TAKEN -> "被打中的敵人凍結時受到的傷害增加 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.BLOOD_HUNT_LIFE_LOSS -> "血爆另外讓敵人失去用掉失血的 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.SECONDARY_DURATION_FLAT -> "紫焰持續時間 +" + trimNumber(value) + " 秒";
+            case tw.exilecore.stats.GemQualityKeys.TEMPEST_SPENT_SHARE -> "風暴裡花掉的加到每秒消耗的比例少 " + trimNumber(-value) + " 個百分點";
+            case tw.exilecore.stats.GemQualityKeys.EMPOWERED_ATTACKS -> "多強化 " + (int) Math.floor(value + 1e-9) + " 次攻擊";
+            case tw.exilecore.stats.GemQualityKeys.BUFF_LINGER_SECONDS -> "離開之後增益多留 " + trimNumber(value) + " 秒";
+            case tw.exilecore.stats.GemQualityKeys.DASH_DISTANCE_FLAT -> "多閃 " + trimNumber(value) + " 格";
+            case tw.exilecore.stats.GemQualityKeys.MAX_STACKS -> "最多 +" + (int) Math.floor(value + 1e-9) + " 層";
+            case tw.exilecore.stats.GemQualityKeys.GALE_MORE_PER_STAGE -> "疾風每一階另外更多 " + trimNumber(value) + "% 傷害";
+            case tw.exilecore.stats.GemQualityKeys.REPEAT_INTERVAL_SECONDS -> "間隔少 " + trimNumber(-value) + " 秒";
+            case tw.exilecore.stats.GemQualityKeys.LIGHTNING_LUCKY -> "閃電傷害 " + trimNumber(value) + "% 機率為幸運";
+            case tw.exilecore.stats.GemQualityKeys.MARK_ENEMY_LESS -> "被標記的敵人造成的傷害更少 " + trimNumber(value) + "%";
+            case tw.exilecore.stats.GemQualityKeys.RETURN_CHANCE -> "投射物 " + trimNumber(value) + "% 機率回到你身邊";
+            case tw.exilecore.stats.GemQualityKeys.AILMENT_MORE_PER_STAGE -> "每多一層，傷害型異常的幅度更多 " + trimNumber(value) + "%";
+            case "effect." + tw.exilecore.stats.GemQualityKeys.CONVERT_RANDOM_ELEMENT -> "增益給 " + trimNumber(value) + "% 物理轉成隨機元素";
+            case "effect." + tw.exilecore.item.unique.UniqueStats.DODGE_METRES -> "增益給翻滾距離 +" + trimNumber(value) + " 公尺";
             case StageAttacks.LIMIT + "jagged" -> "鋸齒地面上限 +" + (int) Math.floor(value + 1e-9);
             case MaceSlams.MOLTEN_QUALITY_SECONDS -> "熔岩地裂持續時間 +" + trimNumber(value) + " 秒"; // 2026-11-05 熔軀崩擊
             // 2026-10-31：犧牲、雷雲的額外品質效果（之前沒有說明，整行不顯示）
             case "effect.life.max" -> "召喚物最大生命增加 " + trimNumber(value * 100) + "%";
-            case tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT -> "消耗怒星分裂的支數有 " + trimNumber(value) + "% 機率加倍"; // 2026-11-10
+            case tw.exilecore.stats.GemQualityKeys.DOUBLE_CHARGE_BENEFIT -> "消耗怒星的好處有 " + trimNumber(value) + "% 機率加倍"; // 2026-11-10（擲雷槍：分裂支數；螺旋箭雨：用掉的顆數）
+            case tw.exilecore.charge.ChargeService.SUP_KEEP -> "消耗戰星時 " + trimNumber(value) + "% 機率不用掉（效果照算）"; // 2026-11-10 連珠
+            case tw.exilecore.stats.TreeMechanicKeys.INFUSION_KEEP_CHANCE -> "消耗灌注時 " + trimNumber(value) + "% 機率不用掉"; // 2026-11-10 流焰天幕、冰新星
+            case OriginalSkills.STAFF_KEEP -> "使用時 " + trimNumber(value) + "% 機率不移除銳星（照樣算用掉了幾顆）"; // 2026-11-10 雷縛長棍
             // 2026-11-01 照 PoB2 altQualityStats：拾鱗、調藥心得的額外品質效果
             case "effect." + PersistentBuffs.PLATING_ARMOUR -> "每層甲片另外更多 " + trimNumber(value) + "% 護甲";
             case "effect.attack.speed@" + tw.exilecore.stats.Recently.LIFE_FLASK -> "生命藥劑效果中攻擊速度增加 " + trimNumber(value * 100) + "%";
@@ -6178,8 +6230,25 @@ public final class SkillService {
             case StatKeys.DAMAGE -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_BROKEN_ARMOUR)
                     ? "對護甲完全破碎的敵人擊中更多 " + trimNumber(value * 100) + "% 傷害"
                     : modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_IMMOBILISED)
-                    ? "對被禁錮的敵人更多 " + trimNumber(value * 100) + "% 傷害" : null;
-            default -> null;
+                    ? "對被禁錮的敵人更多 " + trimNumber(value * 100) + "% 傷害"
+                    : modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_HEAVY_STUNNED) // 2026-11-11 躍棍崩擊
+                    ? "對重暈的敵人更多 " + trimNumber(value * 100) + "% 傷害" : null;
+            // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」
+            case StatKeys.POISON_MAGNITUDE -> modifier.tags().contains(tw.exilecore.stats.TreeConditions.VS_NOT_POISONED)
+                    ? "對沒有中毒的敵人增加 " + trimNumber(value * 100) + "% 中毒效果" : null;
+            case tw.exilecore.stats.KeystoneOriginKeys.IMPALE_SPELL_CHANCE -> "擊中 " + trimNumber(value) + "% 機率穿刺";
+            case tw.exilecore.item.unique.UniqueStats.BLEED_AGGRAVATE_CHANCE -> "攻擊擊中 " + trimNumber(value) + "% 機率加劇流血";
+            case tw.exilecore.stats.GemQualityKeys.STUN_THRESHOLD_WHILE_USING -> "使用這個技能的動作期間（引導中一直有）暈眩門檻增加 " + trimNumber(value) + "%";
+            case StatKeys.SKILL_FORK -> "投射物分裂 +" + Math.round(value) + " 次";
+            case "effect." + StatKeys.BLOCK_MAX -> "增益：最大格擋機率 +" + trimNumber(value) + "%";
+            case "effect." + StatKeys.LIFE_REGEN_PERCENT -> ""; // 跟上一條「生命再生速度」是同一個效果（固定值與百分比的再生都加），不另外寫
+            default -> modifier.stat().startsWith("effect.charge.event_cooldown.")
+                    ? "增益：" + (switch (modifier.stat().substring("effect.charge.event_cooldown.".length())) {
+                        case "freeze" -> "凍結";
+                        case "electrocute" -> "電擊";
+                        case "pin" -> "釘住";
+                        default -> "觸發";
+                    }) + "給戰星的冷卻" + (value < 0 ? "少 " : "多 ") + trimNumber(Math.abs(value)) + " 秒" : null;
         };
     }
 

@@ -220,7 +220,12 @@ final class PersistentBuffs implements Listener {
             return;
         }
         final long every = Math.max(20, Math.round(levelValue(GHOST_DANCE, SHROUD_INTERVAL, level, 12) * 20 / recovery(sheet)));
-        if (s.nextShroud < 0 || s.shrouds >= SHROUD_MAX) {
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 ghost_dance_max_stacks（幽魂護罩最多 +(0—1) 層，無條件捨去）；這次之前一般的品質效果再算一次
+        final int max = SHROUD_MAX + OriginalSkills.qualityInt(Math.max(0, service.qualityFlat(player, GHOST_DANCE, tw.exilecore.stats.GemQualityKeys.MAX_STACKS)));
+        if (s.shrouds > max) {
+            s.shrouds = max;
+        }
+        if (s.nextShroud < 0 || s.shrouds >= max) {
             s.nextShroud = now + every;
         } else if (now >= s.nextShroud) {
             s.shrouds++;
@@ -403,11 +408,13 @@ final class PersistentBuffs implements Listener {
             return;
         }
         final double radiusMetres = Math.max(0, service.qualityFlat(player, WIND_DANCER, GALE_RADIUS));
+        // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：高階奇術的 wind_dancer_damage_+%_final_per_stage（疾風每一階另外更多 (0—50)% 傷害）；這次之前一般的品質效果再算一次
+        final double perStage = Math.max(0, service.qualityFlat(player, WIND_DANCER, tw.exilecore.stats.GemQualityKeys.GALE_MORE_PER_STAGE));
         final boolean fired = service.procs().castAt(player, GALE_FORCE, WIND_DANCER, player.getLocation(), build -> build
                 .withBaseRadius(radiusMetres)
                 .withAreaAndProjectiles(build.areaScale() * galeRadiusScale(stages), build.projectiles())
                 .withKnockback(build.knockback() * galeKnockbackScale(stages))
-                .withProfile(build.profile().scaled(galeDamageScale(stages), "風之舞步 " + stages + " 階")));
+                .withProfile(build.profile().scaled(galeDamageScale(stages) * (1 + perStage / 100.0 * stages), "風之舞步 " + stages + " 階")));
         if (fired) {
             s.windSince = now;
             s.windShown = 0;
