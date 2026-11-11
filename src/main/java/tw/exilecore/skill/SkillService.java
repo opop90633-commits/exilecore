@@ -4855,9 +4855,8 @@ public final class SkillService {
      * 2026-11-10 照站長「估算補上霆落矛的引爆」：霆落矛（signature lance）擲出那一下之外的每秒傷害——插地矛的放電（storm_lance_bolt）
      * 與引爆的 16 道雷（storm_lance_burst）。假設單體目標、矛都插在目標身上、一直丟：
      * <ul>
-     *   <li>自己的新矛落地會引爆 3 格內的舊矛（Signatures.lodge），所以每擲一支就引爆前一支：每秒引爆次數 = 每秒擲幾次；
-     *       同一支只會炸一次，別的技能（擲雷槍、驚雷劈…）、幻弓影的幻影不另外多算（保守：幻影丟的矛不算）。</li>
-     *   <li>每次引爆 16 道全打在這隻身上（照原作 overcharged_spear_detonate_number_of_beams 16；被別的技能引爆更多 Primed.MORE = 1）。</li>
+     *   <li>2026-11-11 照站長：一般的矛插滿 3 支之後，新的落地把最舊的擠掉，擠掉時只放一次平常的電（不再射 16 道）；
+     *       16 道只有消耗怒星的那支時間到引爆才有（這裡不算消耗怒星的那種）。這次之前照「每擲一支就引爆前一支、16 道」算。</li>
      *   <li>放電：一支矛插下後 1.3 秒第一次、之後每 0.8 秒一次，直到被下一支引爆（最多 6 秒）；丟得快的話根本來不及放電。</li>
      *   <li>每道、每次的傷害 = 擲出那一下（含暴擊期望）× 自己的傷害表 ÷ 擲出的傷害表（同 Signatures.share）；消耗怒星的那種不算。</li>
      * </ul>
@@ -4876,10 +4875,15 @@ public final class SkillService {
 
     /** 2026-11-10：{@link #lanceExtra} 的算式（純函式）。 */
     static double lanceExtraDps(final double perThrow, final double throwsPerSecond, final double burstShare, final double zapShare) {
-        final double lifeTicks = Math.min(Signatures.LANCE_LIFE, 20.0 / throwsPerSecond); // 被下一支引爆之前插了多久
+        // 2026-11-11：同時插 3 支，一支插多久 = 被擠掉前（3 次擲）或時間到（6 秒）
+        final double pushedAfter = Signatures.LANCE_MAX * 20.0 / throwsPerSecond;
+        final double lifeTicks = Math.min(Signatures.LANCE_LIFE, pushedAfter);
         final double firstZap = 10 + Signatures.LANCE_ZAP;
-        final int zaps = lifeTicks < firstZap ? 0 : 1 + (int) Math.floor((lifeTicks - firstZap) / Signatures.LANCE_ZAP);
-        return throwsPerSecond * perThrow * (Signatures.LANCE_BURST_BOLTS * burstShare + zaps * zapShare);
+        int zaps = lifeTicks < firstZap ? 0 : 1 + (int) Math.floor((lifeTicks - firstZap) / Signatures.LANCE_ZAP);
+        if (pushedAfter < Signatures.LANCE_LIFE) {
+            zaps++; // 被擠掉時多放一次電
+        }
+        return throwsPerSecond * perThrow * zaps * zapShare;
     }
 
     /**
@@ -6380,6 +6384,29 @@ public final class SkillService {
         return kept;
     }
 
+    /**
+     * 2026-11-11：這個技能在技能面板上掛著的輔助（不管能不能輔助它本身）：直接放在面板上的看自己那一格；放在裂甲熊咆第 1 孔的人形戰吼
+     * 看熊咆其他孔（SocketedWarcry）。熔魂嘯的火山步、火山噴發照它們自己的類型吃這些輔助。找不到回傳空的。
+     */
+    List<SupportDefinition> rawSupportsFor(final Player player, final String skillId) {
+        final SkillLoadout loadout = plugin.players().get(player).skills();
+        if (loadout == null || skillId == null) {
+            return List.of();
+        }
+        for (final SkillLoadout.Entry entry : loadout.entries()) {
+            if (entry == null) {
+                continue;
+            }
+            if (skillId.equals(entry.skillId())) {
+                return supportsOf(entry);
+            }
+            if (entry.inner() != null && skillId.equals(entry.inner().skillId()) && SocketedWarcry.hosts(config.skill(entry.skillId()))) {
+                return supportsOf(spellEntry(entry, entry.inner()));
+            }
+        }
+        return List.of();
+    }
+
     List<SupportDefinition> supportsOf(final SkillLoadout.Entry entry) {
         final List<SupportDefinition> list = new ArrayList<>();
         for (final String id : entry.supportIds()) {
@@ -7418,7 +7445,19 @@ public final class SkillService {
         if (!build.isDefault()) {
             final int required = config.requiredLevel(build.gemLevel());
             if (build.levelCapped()) {
-                lines.add("<red>需要角色等級 " + required + "，目前照 Lv." + (build.level() - build.bonusLevel()) + " 算");
+                // 2026-11-11 照站長「角色 97 等但他判斷沒到 90 等」：被壓等級有兩種原因——角色等級不夠，或屬性（力敏智）不夠
+                //   （SkillBuild 會降到屬性夠的最高等級）。這次之前一律寫「需要角色等級」，屬性不夠時看起來像等級判斷錯
+                final int used = build.level() - build.bonusLevel();
+                final int byCharacter = config.maxLevelFor(state.level());
+                final String attr = sheet == null ? null : GemAttributes.problem(GemAttributes.supportsOn(
+                                GemAttributes.base(config, definition, Math.min(build.gemLevel(), used + 1)),
+                                build.supports().stream().filter(java.util.Objects::nonNull).map(SupportDefinition::id).toList())
+                        .scaled(GemAttributes.scale(sheet)), GemAttributes.Attributes.of(sheet));
+                if (byCharacter > used && attr != null) {
+                    lines.add("<red>屬性不夠 Lv." + (used + 1) + " 的需求，目前照 Lv." + used + " 算<gray>（" + attr + "；輔助寶石會加需求）");
+                } else {
+                    lines.add("<red>需要角色等級 " + required + "，目前照 Lv." + used + " 算");
+                }
             } else {
                 lines.add("<gray>需要角色等級 " + required);
             }

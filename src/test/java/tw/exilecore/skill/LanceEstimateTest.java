@@ -8,19 +8,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
-/** 2026-11-10 照站長：霆落矛估算補引爆、擲雷槍品質照原作。 */
+/** 2026-11-10 照站長：霆落矛估算、擲雷槍品質照原作。2026-11-11：一般的矛被擠掉只放一次電（不再 16 道）。 */
 class LanceEstimateTest {
 
     @Test
-    void fastThrowsDetonateEveryLanceWithoutZapping() {
-        // 每秒 3 支：每支插 6.7 tick 就被下一支引爆，來不及放電；每支引爆 16 道 × 2.27 倍
-        assertEquals(3 * 100 * 16 * 2.27, SkillService.lanceExtraDps(100, 3, 2.27, 0.38), 1e-6);
+    void fastThrowsPushOutWithOneZap() {
+        // 每秒 3 支：同時 3 支，每支插 20 tick 就被擠掉：26 tick 才第一次放電 → 0 次；擠掉時放 1 次
+        assertEquals(3 * 100 * 1 * 0.38, SkillService.lanceExtraDps(100, 3, 2.27, 0.38), 1e-6);
     }
 
     @Test
-    void slowThrowsAlsoZap() {
-        // 每 2 秒 1 支（40 tick）：26 tick 第一次放電，之後每 16 tick（42 > 40）→ 1 次
-        assertEquals(0.5 * 100 * (16 * 2 + 1 * 0.5), SkillService.lanceExtraDps(100, 0.5, 2, 0.5), 1e-6);
+    void slowThrowsZapUntilExpiry() {
+        // 每 2 秒 1 支：3 支要 120 tick 才擠（= 6 秒，時間到先消失，不算擠掉）：26、42、58、74、90、106 → 6 次
+        assertEquals(0.5 * 100 * 6 * 0.5, SkillService.lanceExtraDps(100, 0.5, 2, 0.5), 1e-6);
     }
 
     @Test

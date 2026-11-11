@@ -280,7 +280,11 @@ final class Warcries {
                 lines.add(String.format(Locale.ROOT, "<#f5b942>　擊中時破甲 %s 點", ModifierText.number(empower.armourBreak().at(level))));
             }
             if (empower.extraTargets() > 0) {
-                lines.add(String.format(Locale.ROOT, "<#f5b942>　多打 %d 個敵人", empower.extraTargets()));
+                lines.add(String.format(Locale.ROOT, "<#f5b942>　%s多打 %d 個敵人", empower.ancestral() ? "打擊" : "", empower.extraTargets()));
+            }
+            if (empower.ancestral()) { // 2026-11-11 照 PoE2 Ancestral Boost
+                lines.add(String.format(Locale.ROOT, "<#f5b942>　猛擊傷害更多 %s%%、範圍增加 %s%%",
+                        ModifierText.number(WarcrySpec.Empower.ANCESTRAL_SLAM_MORE), ModifierText.number(WarcrySpec.Empower.ANCESTRAL_SLAM_AREA)));
             }
             if (empower.aftershocks() > 0) {
                 lines.add(String.format(Locale.ROOT, "<#f5b942>　多一次餘震（0.5 秒後在同一個地方再砸一次）"));
@@ -482,7 +486,7 @@ final class Warcries {
             }
         }
         if (plugin.skills() != null && (spec.extras().steps() != null || spec.extras().eruption() != null)) {
-            plugin.skills().supportMechanics().startKaom(player, spec, build.level(), now + ticks); // 熔魂嘯：火山步、火山噴發
+            plugin.skills().supportMechanics().startKaom(player, spec, build.level(), now + ticks, build.definition().id()); // 熔魂嘯：火山步、火山噴發（2026-11-11：帶它的輔助）
         }
         if (!modifiers.isEmpty() && spec.allies()) {
             for (final Player ally : allies(player, radius)) {

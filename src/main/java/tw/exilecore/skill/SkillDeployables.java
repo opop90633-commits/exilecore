@@ -189,7 +189,18 @@ final class SkillDeployables implements Listener {
             final double aps = (weaponAps <= 0 ? 1.0 : weaponAps) * Math.max(0.05, build.definition().attackSpeed());
             return exactTicks(1.0 / aps, speed);
         }
-        return exactTicks(spec.interval(), speed);
+        return exactTicks(spec.interval(), speed) + addedTicks(build, sheet);
+    }
+
+    /**
+     * 2026-11-11 照站長「輸出紀錄仔細對有沒有 bug」：法術本身「總施法時間 +x 秒（不吃施法速度）」（隕星 +1 秒，skill.added_time）圖騰放也要算。
+     * 這次之前圖騰只照施法時間 ÷ 施法速度，隕星少了那 1 秒：3 根星咒圖騰每秒放 5.5 顆隕星（照原作約 2 顆）。
+     */
+    static double addedTicks(final SkillBuild build, final tw.exilecore.stats.StatSheet sheet) {
+        if (build == null || sheet == null) {
+            return 0;
+        }
+        return Math.max(0, build.profile().effective(sheet).flat(SkillProfiles.ADDED_TIME, build.profile().tags())) * 20;
     }
 
     /** 同上：英靈圖騰叫英靈的間隔（小數 tick）。 */
@@ -218,7 +229,7 @@ final class SkillDeployables implements Listener {
             final double weaponAps = build.profile().effective(sheet).flat(tw.exilecore.stats.StatKeys.WEAPON_APS, build.profile().tags());
             return weaponTotemTicks(weaponAps, build.definition().attackSpeed(), speed);
         }
-        return totemTicks(spec.interval(), speed);
+        return totemTicks(spec.interval(), speed) + Math.round(addedTicks(build, sheet)); // 2026-11-11：加上不吃施法速度的那段（隕星 +1 秒）
     }
 
     /** 2026-10-26 照 PoE2（崩震圖騰）：間隔 = 1 ÷（武器攻速 × 技能的攻擊速度）÷ 攻速加成；沒有武器攻速當 1 次／秒。 */

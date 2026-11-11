@@ -726,6 +726,14 @@ final class Signatures {
         if (lance == null) {
             return;
         }
+        // 2026-11-11 照站長「超過上限時最舊的那支一樣會擠掉造成傷害，但閃電數量要跟沒擠之前一樣，只有消耗怒星的那支時間到引爆才有那一大把雷」：
+        //   一般的矛（沒消耗怒星）被擠掉、被引爆時只放一次平常的電（連鎖閃電），不再射 16 道。
+        //   這次之前一般的矛被擠掉也射 16 道 405%（單體 Boss 全部打在牠身上），每丟一次就多好幾次引爆（輸出紀錄 4500 萬～7700 萬的主因）
+        if (lance.zapEvery() >= LANCE_ZAP) {
+            zap(player, lance);
+            lance.at().getWorld().playSound(lance.at(), Sound.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.4f, 1.6f);
+            return;
+        }
         final SkillBuild raw = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
         final SkillBuild sub = raw != null && enhanced ? raw.withProfile(raw.profile().scaled(Primed.MORE, "被其他技能引爆")) : raw;
         if (sub != null) {
@@ -876,19 +884,25 @@ final class Signatures {
             }
             if (now >= lance.nextZap()[0]) {
                 lance.nextZap()[0] = now + lance.zapEvery();
-                final List<LivingEntity> near = service.targets().around(lance.at(),
-                        (lance.zapEvery() < LANCE_ZAP ? LANCE_CHARGED_ZAP_RANGE : LANCE_ZAP_RANGE) * lance.build().areaScale(), player);
-                if (!near.isEmpty()) {
-                    final SkillBuild sub = subBuild(player, "storm_lance_bolt", lance.build(), share("storm_lance_bolt", lance.build(), LANCE_ZAP_SHARE));
-                    if (sub != null) {
-                        final Location from = lance.at().clone().add(0, 1.5, 0);
-                        final LivingEntity target = near.get(0);
-                        final Vector direction = SkillTargets.center(target).toVector().subtract(from.toVector());
-                        service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player)
-                                : direction.normalize()), sub, target);
-                    }
-                }
+                zap(player, lance);
             }
+        }
+    }
+
+    /** 插著的矛放一次電（連鎖閃電，打最近範圍內的一個敵人開始連）。2026-11-11 從 tickLances 抽出來（一般的矛被擠掉時也放一次）。 */
+    private void zap(final Player player, final Lance lance) {
+        final List<LivingEntity> near = service.targets().around(lance.at(),
+                (lance.zapEvery() < LANCE_ZAP ? LANCE_CHARGED_ZAP_RANGE : LANCE_ZAP_RANGE) * lance.build().areaScale(), player);
+        if (near.isEmpty()) {
+            return;
+        }
+        final SkillBuild sub = subBuild(player, "storm_lance_bolt", lance.build(), share("storm_lance_bolt", lance.build(), LANCE_ZAP_SHARE));
+        if (sub != null) {
+            final Location from = lance.at().clone().add(0, 1.5, 0);
+            final LivingEntity target = near.get(0);
+            final Vector direction = SkillTargets.center(target).toVector().subtract(from.toVector());
+            service.procCast(Origin.at(player, from, direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player)
+                    : direction.normalize()), sub, target);
         }
     }
 

@@ -428,6 +428,12 @@ public record SupportDefinition(String id, String name, String description, Stri
         if (sub != null && ownRefusal(sub) == null) {
             return null;
         }
+        // 2026-11-11 照站長「碎地放不進熔魂嘯」：熔魂嘯觸發的火山步（近戰猛擊）、火山噴發（投射物攻擊）能吃的輔助也掛得上（效果給它們；Kaom）
+        for (final SkillDefinition triggered : SubSkills.triggered(skill)) {
+            if (!RefSupportRules.triggeredExcluded(id) && ownRefusal(triggered) == null) { // 原作不能用在觸發技能上的（support_ref.yml triggered）不算
+                return null;
+            }
+        }
         if (MinionTypes.of(skill).isEmpty()) {
             return own;
         }

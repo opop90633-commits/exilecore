@@ -111,7 +111,7 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
         /** 持續期間全部強化的次數（夠大就好）。 */
         public static final int ALL = 9999;
 
-        static final List<String> KINDS = List.of("attack", "melee", "slam", "strike", "shield");
+        static final List<String> KINDS = List.of("attack", "melee", "slam", "strike", "shield", "ancestral"); // 2026-11-11：ancestral＝先祖加成（打擊與猛擊）
         static final List<String> CONDITIONS = List.of("heavy_stun", "freeze");
 
         /** 這個攻擊技能會不會被這種強化用掉。 */
@@ -124,8 +124,18 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
                 case "slam" -> attack.tags().contains(tw.exilecore.stats.Tags.SLAM);
                 case "strike" -> attack.tags().contains(tw.exilecore.stats.Tags.STRIKE);
                 case "shield" -> Warcries.SHIELD_ATTACKS.contains(attack.id());
+                // 2026-11-11 照站長「補上」（PoE2 Ancestral Boost）：近戰打擊與猛擊都被先祖加成；這次之前熔魂嘯只強化打擊
+                case "ancestral" -> attack.tags().contains(tw.exilecore.stats.Tags.STRIKE) || attack.tags().contains(tw.exilecore.stats.Tags.SLAM);
                 default -> true;
             };
+        }
+
+        /** 2026-11-11 照 PoE2 Ancestral Boost：被先祖加成的猛擊傷害更多 30%、範圍增加 25%。 */
+        public static final double ANCESTRAL_SLAM_MORE = 30;
+        public static final double ANCESTRAL_SLAM_AREA = 25;
+
+        public boolean ancestral() {
+            return "ancestral".equals(kind);
         }
 
         /** 給玩家看的「哪一類攻擊」。 */
@@ -135,6 +145,7 @@ public record WarcrySpec(double radius, double duration, boolean taunt, Scaled h
                 case "slam" -> "猛擊";
                 case "strike" -> "打擊";
                 case "shield" -> "盾的攻擊";
+                case "ancestral" -> "打擊與猛擊";
                 default -> "攻擊";
             };
         }

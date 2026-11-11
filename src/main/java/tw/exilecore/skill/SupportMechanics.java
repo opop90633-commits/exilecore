@@ -568,6 +568,7 @@ public final class SupportMechanics implements Listener {
         final List<SkillRuntime.Empowered> used = new ArrayList<>();
         final List<Modifier> mods = new ArrayList<>();
         int extraTargets = 0;
+        double ancestralArea = 0; // 2026-11-11：先祖加成的猛擊範圍增加 x%
         for (final Iterator<Map.Entry<String, SkillRuntime.Empowered>> it = runtime.empowered.entrySet().iterator(); it.hasNext(); ) {
             final Map.Entry<String, SkillRuntime.Empowered> entry = it.next();
             final SkillRuntime.Empowered each = entry.getValue();
@@ -600,6 +601,11 @@ public final class SupportMechanics implements Listener {
                 mods.add(Modifier.flat(StatKeys.FLAG_CULLING, 1, "決嘯"));
             }
             mods.addAll(each.extra()); // 2026-10-27 照 PoE2：戰吼品質的額外火焰、裂甲熊咆插槽的增加傷害
+            // 2026-11-11 照站長「補上」（PoE2 Ancestral Boost）：熔魂嘯期間被先祖加成的猛擊：傷害更多 30%、範圍增加 25%（打擊照舊多打 2 個敵人）
+            if (spec.ancestral() && build.definition().tags().contains(Tags.SLAM)) {
+                mods.add(Modifier.more(StatKeys.DAMAGE, WarcrySpec.Empower.ANCESTRAL_SLAM_MORE / 100.0, "先祖加成"));
+                ancestralArea = Math.max(ancestralArea, WarcrySpec.Empower.ANCESTRAL_SLAM_AREA);
+            }
             extraTargets += spec.extraTargets();
             // 不竭嘯（PoE2 Tireless）：x% 機率不算這一次
             if (each.tireless() > 0 && plugin.random().nextDouble() * 100 < each.tireless()) {
@@ -622,6 +628,12 @@ public final class SupportMechanics implements Listener {
         SkillBuild result = build.withProfile(build.profile().withLocal(mods));
         if (extraTargets > 0 && build.definition().mechanic() == Mechanic.STRIKE) {
             result = result.withTargets(result.targets() + extraTargets);
+        }
+        if (ancestralArea > 0 && result.areaScale() > 0) {
+            // 範圍「增加」跟其他增加相加（半徑照面積開根號）：原本 (1 + 增加)，加上之後 (1 + 增加 + 0.25)
+            final double increased = build.profile().effective(plugin.players().sheet(player)).increased(StatKeys.SKILL_AREA, build.profile().tags());
+            final double base = Math.max(0.05, 1 + increased);
+            result = result.withAreaAndProjectiles(result.areaScale() * Math.sqrt((base + ancestralArea / 100.0) / base), result.projectiles());
         }
         final Location at = player.getLocation().add(0, 1.2, 0);
         Fx.spawn(at.getWorld(), Particle.CRIT, at, 8, 0.3, 0.3, 0.3, 0.1);
@@ -720,6 +732,12 @@ public final class SupportMechanics implements Listener {
     /** 2026-10-27：同上，半徑再乘 radiusScale（堅壁戰吼的品質：盾波半徑 +x 格）。 */
     void castHidden(final Player player, final String skillId, final int level, final Location at, final long cooldown, final LivingEntity target,
                     final List<Modifier> local, final double radiusScale) {
+        castHidden(player, skillId, level, at, cooldown, target, local, radiusScale, List.of());
+    }
+
+    /** 2026-11-11：同上，另外掛著 supports 這些輔助（熔魂嘯的火山步、火山噴發吃熔魂嘯的輔助；能輔助它的才生效）。 */
+    void castHidden(final Player player, final String skillId, final int level, final Location at, final long cooldown, final LivingEntity target,
+                    final List<Modifier> local, final double radiusScale, final List<SupportDefinition> supports) {
         final SkillDefinition sub = service.config().skill(skillId);
         if (sub == null) {
             return;
@@ -733,7 +751,7 @@ public final class SupportMechanics implements Listener {
             hiddenReady.put(key, now + cooldown);
         }
         final PlayerState state = plugin.players().get(player);
-        SkillBuild build = SkillBuild.of(service.config(), sub, Math.max(1, level), state.level(), false, List.of(), state.weaponTags(),
+        SkillBuild build = SkillBuild.of(service.config(), sub, Math.max(1, level), state.level(), false, supports, state.weaponTags(),
                 plugin.players().sheet(player));
         if (!local.isEmpty()) {
             build = build.withProfile(build.profile().withLocal(local));
@@ -990,13 +1008,16 @@ public final class SupportMechanics implements Listener {
         final String eruption;
         final int level;
         final long untilTick;
+        /** 2026-11-11：熔魂嘯掛著的輔助（火山步、火山噴發照它們自己的類型吃，例如碎地、元刃、貼身）。 */
+        final List<SupportDefinition> supports;
         double walked;
 
-        Kaom(final String steps, final String eruption, final int level, final long untilTick) {
+        Kaom(final String steps, final String eruption, final int level, final long untilTick, final List<SupportDefinition> supports) {
             this.steps = steps;
             this.eruption = eruption;
             this.level = level;
             this.untilTick = untilTick;
+            this.supports = supports == null ? List.of() : List.copyOf(supports);
         }
     }
 
@@ -1006,9 +1027,10 @@ public final class SupportMechanics implements Listener {
     static final long ERUPTION_COOLDOWN = 8;
 
     /** 熔魂嘯吼完（Warcries 呼叫）。 */
-    void startKaom(final Player player, final WarcrySpec spec, final int level, final long untilTick) {
+    void startKaom(final Player player, final WarcrySpec spec, final int level, final long untilTick, final String cryId) {
         if (spec.extras().steps() != null || spec.extras().eruption() != null) {
-            kaom.put(player.getUniqueId(), new Kaom(spec.extras().steps(), spec.extras().eruption(), level, untilTick));
+            kaom.put(player.getUniqueId(), new Kaom(spec.extras().steps(), spec.extras().eruption(), level, untilTick,
+                    service.rawSupportsFor(player, cryId)));
         }
     }
 
@@ -1024,7 +1046,7 @@ public final class SupportMechanics implements Listener {
         active.walked += step;
         if (active.walked >= STEP_METRES) {
             active.walked = 0;
-            castHidden(player, active.steps, active.level, player.getLocation(), 0, null);
+            castHidden(player, active.steps, active.level, player.getLocation(), 0, null, List.of(), 1, active.supports); // 2026-11-11：吃熔魂嘯的輔助
         }
     }
 
@@ -1360,7 +1382,7 @@ public final class SupportMechanics implements Listener {
         final Kaom active = kaom.get(player.getUniqueId());
         if (active != null && active.eruption != null && now <= active.untilTick && tags.contains(Tags.MELEE) && tags.contains(Tags.STRIKE)
                 && skill.isAttack() && !skill.id().startsWith("ancestral_") && !skill.id().startsWith("forebear_") && !skill.id().equals("hero_spirit_totem") && !skill.id().equals("molten_soul_shriek")) {
-            castHidden(player, active.eruption, active.level, target.getLocation(), ERUPTION_COOLDOWN, target);
+            castHidden(player, active.eruption, active.level, target.getLocation(), ERUPTION_COOLDOWN, target, List.of(), 1, active.supports); // 2026-11-11：吃熔魂嘯的輔助
         }
     }
 

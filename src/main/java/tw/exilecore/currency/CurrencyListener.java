@@ -330,11 +330,20 @@ public final class CurrencyListener implements Listener {
         final String uuid = data.uuid();
         final List<tw.exilecore.gui.Dialogs.Option> options = new java.util.ArrayList<>();
         for (int i = 0; i < data.runes().size(); i++) {
+            if (VaalCrafting.socketBound(data.runes().get(i))) {
+                // 2026-11-11 照站長「照原作改」（poe2db Uhtred's Sidereus：Socket-bound，「Once socketed it cannot be retrieved or replaced」）：
+                //   增幅、遠古增幅、阿茲里的魂核那一孔不能被覆蓋；這次之前蓋得掉（被蓋掉的消失、不還）
+                continue;
+            }
             final tw.exilecore.item.Runes.Rune old = plugin.items().repository().rune(data.runes().get(i));
             final String text = old == null ? data.runes().get(i)
                     : old.name() + "（" + String.join("、", tw.exilecore.item.Runes.linesOn(plugin.items().repository(), base, data, old).stream()
                     .map(tw.exilecore.item.Runes.Line::text).toList()) + "）";
             options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
+        }
+        if (options.isEmpty()) {
+            fail(player, rune.name() + "：這件的符文孔都嵌著增幅、遠古增幅或阿茲里的魂核，嵌上去就拿不下來，也不能被換掉");
+            return;
         }
         // 游標上的符文先放回背包（對話框打開時背包會關掉；確定了才從背包、通貨袋扣一顆）
         final ItemStack cursor = event.getView().getCursor();
@@ -346,7 +355,11 @@ public final class CurrencyListener implements Listener {
         player.closeInventory();
         plugin.dialogs().form(player, "<dark_gray>覆蓋符文",
                 List.of("<gray>這件的符文孔都滿了。", "<gray>選一顆舊的符文換成「<white>" + tw.exilecore.item.ItemRenderer.escape(rune.name()) + "</white>」",
-                        data.corrupted() ? "<red>已腐化：被換掉的那顆會消失（拿不回來）" : "<green>被換掉的那顆會還給你"),
+                        data.corrupted() ? "<red>已腐化：被換掉的那顆會消失（拿不回來）"
+                                // 2026-11-11 照站長「照原作改」：增幅、遠古增幅、阿茲里的魂核那一孔不能被覆蓋（清單裡不列）
+                                : data.runes().stream().anyMatch(VaalCrafting::socketBound)
+                                ? "<green>被換掉的那顆會還給你<gray>（增幅、遠古增幅、阿茲里的魂核嵌死了，那一孔不能換，不在清單裡）"
+                                : "<green>被換掉的那顆會還給你"),
                 List.of(new tw.exilecore.gui.Dialogs.Choice("slot", "要覆蓋哪一顆", options, "0")),
                 "覆蓋", answers -> {
                     final ItemStack stack = player.getInventory().getItem(slot);
@@ -362,6 +375,10 @@ public final class CurrencyListener implements Listener {
                         return;
                     }
                     if (index < 0 || index >= now.runes().size()) {
+                        return;
+                    }
+                    if (VaalCrafting.socketBound(now.runes().get(index))) { // 2026-11-11 照原作：嵌死的那一孔不能換
+                        fail(player, "這一孔嵌著拿不下來的符文，不能被換掉");
                         return;
                     }
                     if (!takeOne(player, rune)) {

@@ -145,7 +145,9 @@ public final class CombatListener implements Listener {
             while (name == null) {
                 final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(probe);
                 if (definition != null) {
-                    name = definition.hidden() && definition.isAttack() ? "普攻" : definition.name();
+                    // 2026-11-11 照站長「檢查有沒有人的輸出不正常」：只有真正的普攻（default_*）叫「普攻」；觸發的隱藏攻擊（霆矛放電、雷霆連鎖、
+                    //   火山步、餘震…）用它自己的名字。這次之前隱藏的攻擊全部記成「普攻」，輸出紀錄看起來像普攻打出 7000 萬
+                    name = definition.hidden() && definition.isAttack() && definition.id().startsWith("default_") ? "普攻" : definition.name();
                     break;
                 }
                 final int dot = probe.lastIndexOf('.');
