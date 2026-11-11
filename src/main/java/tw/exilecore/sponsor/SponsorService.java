@@ -2415,12 +2415,25 @@ public final class SponsorService {
         tryOns.put(player.getUniqueId(), entry);
         plugin.characters().gear().resync(player);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            if (tryOns.remove(player.getUniqueId(), entry) && player.isOnline()) {
-                plugin.characters().gear().resync(player);
-                player.sendMessage(plugin.text().prefixed("<gray>試穿結束：" + rarityTag(cosmetic)));
+            if (tryOns.remove(player.getUniqueId(), entry)) {
+                endTryOn(player, entry);
             }
         }, TRY_ON_TICKS + 1);
         return null;
+    }
+
+    /**
+     * 試穿時間到（從 {@link #tryOns} 拿掉的那一個人）：顯示用的裝備照身上套的重做、告訴玩家。
+     * 2026-11-11 照站長「試穿結束後手上還拿著提燈，沒套用身上的造型」：時間到的那一 tick 先被 {@link #tryingOn} 拿掉的話，
+     * 這次之前排好的那一次看到已經不在了就不重做，手上一直是試穿的樣子（要等裝備有變才換回來）；現在兩邊拿掉都走這裡。
+     */
+    private void endTryOn(final Player player, final TryOn entry) {
+        if (!player.isOnline()) {
+            return;
+        }
+        plugin.characters().gear().resync(player);
+        final SponsorConfig.Cosmetic cosmetic = config.cosmetics().get(entry.id());
+        player.sendMessage(plugin.text().prefixed("<gray>試穿結束：" + (cosmetic == null ? entry.id() : rarityTag(cosmetic))));
     }
 
     /** 試穿中的時裝（沒有、時間到了 null）。 */
@@ -2430,7 +2443,9 @@ public final class SponsorService {
             return null;
         }
         if (plugin.getServer().getCurrentTick() > entry.until()) {
-            tryOns.remove(player.getUniqueId(), entry);
+            if (tryOns.remove(player.getUniqueId(), entry)) {
+                plugin.getServer().getScheduler().runTask(plugin, () -> endTryOn(player, entry)); // 2026-11-11：這裡先拿掉的也要換回來
+            }
             return null;
         }
         return config.cosmetics().get(entry.id());

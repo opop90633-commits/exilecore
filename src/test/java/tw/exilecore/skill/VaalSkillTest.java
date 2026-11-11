@@ -26,4 +26,19 @@ class VaalSkillTest {
         assertEquals(5, gem.flat(StatKeys.SKILL_LEVEL, Set.of(Tags.SPELL)), 1e-9);
         assertEquals(1, gem.flat(StatKeys.SKILL_LEVEL, Set.of(Tags.ATTACK)), 1e-9, "[spell] 只算法術");
     }
+
+    /** 2026-11-11 照站長「引星內的技能好像還是沒吃到腐化技能寶石等級 +1」：插槽裡的寶石算施放用的那一格時，已腐化要帶過去。 */
+    @Test
+    void socketedSpellKeepsCorrupted() {
+        final tw.exilecore.character.SkillLoadout.Entry host = new tw.exilecore.character.SkillLoadout.Entry("cast_on_crit", 20)
+                .withSockets(3)
+                .withSpell(0, new tw.exilecore.character.SkillLoadout.Entry("fireball", 18).withCorrupted(true).withQuality(10))
+                .withSpell(1, new tw.exilecore.character.SkillLoadout.Entry("frost_bolt", 17));
+        final List<tw.exilecore.character.SkillLoadout.Entry> inner = SkillService.innerEntries(host);
+        assertEquals(2, inner.size());
+        assertTrue(inner.get(0).corrupted(), "已腐化的放進去還是已腐化");
+        assertEquals(10, inner.get(0).quality());
+        assertEquals(18, inner.get(0).level());
+        assertTrue(!inner.get(1).corrupted(), "沒腐化的照舊");
+    }
 }

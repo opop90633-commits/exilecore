@@ -529,8 +529,12 @@ HANDHELD = {
     "fixed": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
 }
 OFFHAND = {
-    # 跟原版平面物品（item/generated）一樣拿：盾面朝外側（2026-10：原本轉 90 度變成朝前後，看起來像飄在手臂後面）
-    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]},
+    # 2026-11-11 照站長「盾牌拿的方式怪怪的（盾面朝前）」：照原版盾牌轉 90 度、盾面朝外側，再往外推 2 格貼在手臂外面；
+    #   這次之前跟原版平面物品一樣不轉（rotation 0、translation x 0），實際看是盾面朝前、像拿著一塊牌子。
+    #   2026-10 那次轉 90 度看起來在手臂後面，是因為沒往外推、盾卡在手臂裡
+    #   同日改：手上的座標 x 往外側、y 往前、z 順著手臂往上（見 OFFHAND_CARRY），只轉 y 的話盾躺著往前伸；
+    #   改成繞 x 轉 90（盾的上方朝上）、繞 y 轉 -90（正面 north 朝外、背面的握把朝手臂），中心順著手臂往上 4 格蓋住前臂
+    "thirdperson_righthand": {"rotation": [90, -90, 0], "translation": [2, 0, 4], "scale": [0.6, 0.6, 0.6]},
     "firstperson_righthand": {"rotation": [0, -90, 25], "translation": [1.13, 3.2, 1.13], "scale": [0.6, 0.6, 0.6]},
     "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.5, 0.5, 0.5]},
     "gui": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.85, 0.85, 0.85]},
@@ -550,7 +554,17 @@ FLOATING = {
     "ground": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]},
     "fixed": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.6, 0.6, 0.6]},
 }
+# 2026-11-11 照站長「能按照時裝去改動嗎？盾牌是貼外側，虛空魔典這種的是原先的樣子」：拿在手前、正面朝前的副手（書、提燈這類法器樣子的），
+#   照改之前的 OFFHAND（跟原版平面物品一樣不轉）；Model 的部位寫 "offhand_front"（資源包、選單一樣當副手：盾、箭袋都能套）
+OFFHAND_FRONT = dict(OFFHAND, thirdperson_righthand={"rotation": [0, 0, 0], "translation": [0, 3, 1], "scale": [0.6, 0.6, 0.6]})
 DISPLAY = {"weapon": HANDHELD, "offhand": OFFHAND, "headgear": HEADGEAR, "back": FLOATING, "pet": FLOATING}
+DISPLAY["offhand_front"] = OFFHAND_FRONT
+# 2026-11-11 照站長「幽魂提燈看起來也不是用提的」：提燈這類用提的，提把（模型頂端，y 約 16）在拳頭、燈身吊在手下面。
+#   手上的座標：x 往外側、y 往前、z 順著手臂往上（原版拿東西不轉時模型的上方朝前，所以提燈、書都是躺著往前伸）；
+#   繞 x 轉 90 度讓模型的上方朝上，再順著手臂往下移 4 格（模型頂端 8.4 格 × 0.6 ≈ 5 格，提把剛好在拳頭）。
+#   同日第一版沒轉、只把 y 往下移 7，實機看是燈躺著往前伸
+OFFHAND_CARRY = dict(OFFHAND, thirdperson_righthand={"rotation": [90, 0, 0], "translation": [0, 0, -4], "scale": [0.6, 0.6, 0.6]})
+DISPLAY["offhand_carry"] = OFFHAND_CARRY
 
 
 # ======================================================================
@@ -730,7 +744,7 @@ def star_aegis():
 def void_tome():
     m = Model("void_tome", ["#1a1024", "#3a2058", "#5c3488", "#e8dcc0",
                             "#d24bff", "#ffb0ff", "#c9a43a", "#ffe08a",
-                            None, None, None, None, None, None, None, None], "offhand")
+                            None, None, None, None, None, None, None, None], "offhand_front")   # 2026-11-11：拿在手前（不是貼手臂的盾）
     m.materials = {0: 'leather', 1: 'leather', 2: 'leather', 3: 'plain', 6: 'metal', 7: 'metal'}
     m.box((3, 2, 5.8), (13, 15, 6.8), 1)                    # 封面
     m.box((3, 2, 9.2), (13, 15, 10.2), 1)                   # 封底
@@ -2323,7 +2337,7 @@ def hw_candy_cane():
 def hw_ghost_lantern():
     m = Model("hw_ghost_lantern", ["#1a1a20", "#3a3a46", "#6a6a7a", ("#3aff7a", 200),
                                    "#b8ffd0", "#ffffff", None, None,
-                                   None, None, None, None, None, None, None, None], "offhand")
+                                   None, None, None, None, None, None, None, None], "offhand_carry")   # 2026-11-11：用提的（提把在手上、燈吊在下面）
     m.materials = {0: 'metal', 1: 'metal', 2: 'metal', 3: 'glass'}
     m.box((5.0, 2.0, 5.0), (11.0, 3.0, 11.0), 1)               # 燈座
     m.box((5.4, 12.0, 5.4), (10.6, 13.0, 10.6), 1)             # 燈頂

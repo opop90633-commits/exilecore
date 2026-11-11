@@ -5928,8 +5928,10 @@ public final class SkillService {
                 supports.set(i, ""); // 2026-10-26：別的孔裡的技能寶石不是輔助
             }
         }
-        return new SkillLoadout.Entry(spell.skillId(), spell.level(), SkillLoadout.MAX_SOCKETS, supports, host.resonant())
-                .withQuality(spell.quality()); // 2026-10-23：放進去的寶石的品質
+        // 2026-11-11 照站長「引星內的技能好像還是沒吃到腐化技能寶石等級 +1」：帶上放進去的寶石是不是已腐化——
+        //   2026-11-10 插槽的技能看 entry.corrupted() 吃「+x 全部已腐化技能寶石等級」，可是這裡做出來的一律是沒腐化的，所以還是沒吃到
+        return new SkillLoadout.Entry(spell.skillId(), spell.level(), SkillLoadout.MAX_SOCKETS, supports, host.resonant(), null,
+                spell.corrupted(), spell.quality()); // 2026-10-23：放進去的寶石的品質
     }
 
     /** 2026-10-26 照 PoE2 天賦樹：「所有技能的品質 +x%」（加在每顆技能寶石自己的品質上）。 */
