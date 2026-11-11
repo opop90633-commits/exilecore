@@ -1452,7 +1452,8 @@ public final class GemService {
             if (why != null) {
                 return Change.fail(why);
             }
-        } else if (support.socketRefusal(definition, entry.supports()) != null) { // 2026-10-30：別的輔助解開的組合（終式 → 鐘星）；2026-11-01 照 PoE2：能輔助別的輔助送的技能也插得進去
+        } else if (support.socketRefusal(definition, entry.supports()) != null // 2026-10-30：別的輔助解開的組合（終式 → 鐘星）；2026-11-01 照 PoE2：能輔助別的輔助送的技能也插得進去
+                && !socketedCrySupports(definition, entry, support)) { // 2026-11-11 照站長「長留、碎地、元刃、貼身這些不能裝」：熊咆插槽的戰吼吃得到也可以掛
             return Change.fail(support.name() + "不能輔助" + definition.name() + "（" + support.refusal(definition, entry.supports()) + "）");
         }
         if (host && index == SkillLoadout.Entry.INNER_SOCKET) {
@@ -1873,5 +1874,17 @@ public final class GemService {
         } else {
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, SoundCategory.PLAYERS, 0.8f, 0.6f);
         }
+    }
+
+    /**
+     * 2026-11-11 照站長「長留、碎地、元刃、貼身這些不能裝」：裂甲熊咆第 1 孔放了人形戰吼（熔魂嘯）時，其他孔的輔助套在那顆戰吼上
+     * （SkillService.socketedWarcry），那顆戰吼吃得到就可以掛（熊咆本身吃不到的就只作用在戰吼上）。
+     */
+    private boolean socketedCrySupports(final SkillDefinition definition, final SkillLoadout.Entry entry, final SupportDefinition support) {
+        if (!SocketedWarcry.hosts(definition) || entry.inner() == null) {
+            return false;
+        }
+        final SkillDefinition cry = config().skill(entry.inner().skillId());
+        return cry != null && SocketedWarcry.problem(cry) == null && support.supports(cry, entry.supports());
     }
 }

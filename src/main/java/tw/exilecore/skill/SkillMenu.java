@@ -745,6 +745,15 @@ public final class SkillMenu extends Menu {
         return null;
     }
 
+    /** 2026-11-11：裂甲熊咆第 1 孔放著的人形戰吼（合格的才算）；不是熊咆、沒放回傳 null。 */
+    private SkillDefinition socketedCry(final SkillDefinition definition, final SkillLoadout.Entry entry) {
+        if (definition == null || entry == null || !SocketedWarcry.hosts(definition) || entry.inner() == null) {
+            return null;
+        }
+        final SkillDefinition cry = service.config().skill(entry.inner().skillId());
+        return cry == null || SocketedWarcry.problem(cry) != null ? null : cry;
+    }
+
     /** 輔助寶石能不能掛在這個技能上（不看有沒有空孔）；可以回傳 null。 */
     private String supportProblem(final SkillLoadout loadout, final int position, final SkillLoadout.Entry entry,
                                   final SkillDefinition definition, final SupportDefinition support) {
@@ -758,8 +767,11 @@ public final class SkillMenu extends Menu {
             }
         } else {
             final String refusal = support.socketRefusal(definition, entry == null ? java.util.List.of() : entry.supports()); // 2026-10-30：別的輔助解開的組合；2026-11-01：輔助送的技能
-            if (refusal != null) {
-                return support.name() + "不能輔助這個技能（" + refusal + "）";
+            // 2026-11-11 照站長「長留、碎地、元刃、貼身這些不能裝」：裂甲熊咆第 1 孔放了人形戰吼（熔魂嘯）時，其他孔的輔助是套在那顆戰吼上的
+            //   （SkillService.socketedWarcry），熊咆本身或那顆戰吼其中一個吃得到就可以掛；這次之前只照熊咆驗，近戰、猛擊、持續時間的輔助都掛不上
+            final SkillDefinition cry = socketedCry(definition, entry);
+            if (refusal != null && (cry == null || !support.supports(cry, entry.supports()))) {
+                return support.name() + "不能輔助這個技能（" + refusal + (cry == null ? "" : "；插槽的" + cry.name() + "也吃不到") + "）";
             }
         }
         final int copies = service.config().supportCopies(support.id(), plugin.players().sheet(player)); // 2026-11-04：血脈輔助一個角色一顆（唯我論多 2）
@@ -980,7 +992,12 @@ public final class SkillMenu extends Menu {
             }
             lore.add("<gray>只作用在" + ItemRenderer.escape(String.join("、", names)) + "（別的輔助送的技能）");
         } else if (definition != null && !support.supports(definition, entry.supports())) {
-            lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition, entry.supports())) + "，不會生效）");
+            final SkillDefinition cry = socketedCry(definition, entry); // 2026-11-11：熊咆插槽的戰吼吃得到就算有效
+            if (cry != null && support.supports(cry, entry.supports())) {
+                lore.add("<gray>作用在插槽的" + ItemRenderer.escape(cry.name()) + "上（熊咆本身吃不到）");
+            } else {
+                lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition, entry.supports())) + "，不會生效）");
+            }
         }
         if (definition != null && support.needsChargeSpend() && !host && support.supports(definition) && !SupportDefinition.consumesAny(definition)) {
             // 2026-10-24：恆星、倍星要技能真的會消耗戰星：本身不消耗、也沒掛狂速／綿咒／碎地／蔓寒的話沒效果

@@ -7418,7 +7418,19 @@ public final class SkillService {
         if (!build.isDefault()) {
             final int required = config.requiredLevel(build.gemLevel());
             if (build.levelCapped()) {
-                lines.add("<red>需要角色等級 " + required + "，目前照 Lv." + (build.level() - build.bonusLevel()) + " 算");
+                // 2026-11-11 照站長「角色 97 等但他判斷沒到 90 等」：被壓等級有兩種原因——角色等級不夠，或屬性（力敏智）不夠
+                //   （SkillBuild 會降到屬性夠的最高等級）。這次之前一律寫「需要角色等級」，屬性不夠時看起來像等級判斷錯
+                final int used = build.level() - build.bonusLevel();
+                final int byCharacter = config.maxLevelFor(state.level());
+                final String attr = sheet == null ? null : GemAttributes.problem(GemAttributes.supportsOn(
+                                GemAttributes.base(config, definition, Math.min(build.gemLevel(), used + 1)),
+                                build.supports().stream().filter(java.util.Objects::nonNull).map(SupportDefinition::id).toList())
+                        .scaled(GemAttributes.scale(sheet)), GemAttributes.Attributes.of(sheet));
+                if (byCharacter > used && attr != null) {
+                    lines.add("<red>屬性不夠 Lv." + (used + 1) + " 的需求，目前照 Lv." + used + " 算<gray>（" + attr + "；輔助寶石會加需求）");
+                } else {
+                    lines.add("<red>需要角色等級 " + required + "，目前照 Lv." + used + " 算");
+                }
             } else {
                 lines.add("<gray>需要角色等級 " + required);
             }

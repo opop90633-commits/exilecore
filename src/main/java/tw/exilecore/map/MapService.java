@@ -1851,6 +1851,20 @@ public final class MapService {
                     plugin.getSLF4JLogger().error("{}（{}）的掉落處理出錯", instance.label(), instance.special().kind(), e);
                 }
             }
+            // 2026-11-11 照站長「份數已經上百，傳奇和專屬寶石卻還是 0」：災厄級（迷霧之主、審判者、不朽統帥、晶淵王座）的 Boss 掉落。
+            //   它們開在特別的實例裡，這次之前上面直接 return，MapBosses.loot 從來沒被叫到——專屬傳奇、專屬寶石、碎片／徽記／藍晶、
+            //   魂核符文（maps.yml 的 event_bosses.<代號>.drops）一件都不會掉；現在跟一般地圖 Boss 一樣走 MapBosses.loot（裡面會擲事件 Boss 那段）
+            if (config.eventBoss(instance.map().id()) != null && entity.getPersistentDataContainer().has(bossKey)
+                    && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
+                bosses.loot(instance, player, drops);
+                if (player != null) {
+                    try {
+                        BossDropRecords.get(plugin).record(instance, config, player.getUniqueId(), player.getName(), drops);
+                    } catch (final RuntimeException e) {
+                        plugin.getSLF4JLogger().warn("Boss 掉落紀錄失敗", e);
+                    }
+                }
+            }
             return;
         }
         // 劫盜合約：只有星圖（一般的地圖）裡的怪物掉（heist.yml 的 contract_chance；吃物品數量）
