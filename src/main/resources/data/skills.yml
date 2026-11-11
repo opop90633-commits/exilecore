@@ -8392,7 +8392,7 @@ skills:
 
   volley_of_ages:   # 2026-11-04 照站長「絕境、迷霧、軍團的 Boss 新增一些獨特的技能與輔助」（自己設計的主題寶石）；數值照 star_drop_arrow（同一種做法的終局專屬）
     name: 萬古箭雨
-    description: 射出一支凍在時間裡的箭，打中時往附近最多 5 個敵人落下停滯的箭；三成物理轉為冰冷，容易凍結、癱瘓。不朽統帥專屬。
+    description: 射出一支凍在時間裡的箭，打中時附近最多 5 個敵人頭上各出現一支停滯的箭，停一下再一支接一支落下（各 36% 傷害）；三成物理轉為冰冷，容易凍結、癱瘓。不朽統帥專屬。   # 2026-11-11 照站長「沒有箭雨的感覺」：寫清楚是落下的箭
     icon: PRISMARINE_SHARD
     type: attack
     tier: 14
@@ -8400,7 +8400,7 @@ skills:
     tags: [attack, projectile, area, cold, physical]
     weapons: [bow]
     mechanic: projectile
-    projectile: { arrow: true, speed: 3.2, range: 40, splash: { targets: 5, radius: 3.2, damage: 36 } }
+    projectile: { arrow: true, speed: 3.2, range: 40, splash: { targets: 5, radius: 3.2, damage: 36, rain: true } }   # 2026-11-11 照站長「這個技能沒有箭雨的感覺」：rain＝停滯的箭從頭上落下（ProjectileEngine.rainSplash）；這次之前跟雷鳴箭一樣瞬間的雷束
     convert: { cold: 0.3 }
     attack_speed: 0.9
     effectiveness: [0.8, 0.88, 0.97, 1.06, 1.14, 1.22, 1.31, 1.39, 1.46, 1.53, 1.61, 1.69, 1.77, 1.86, 1.96, 2.05, 2.16, 2.26, 2.38, 2.5, 2.62, 2.75, 2.89, 3.03, 3.18, 3.34, 3.51, 3.69, 3.87, 4.06, 4.27, 4.48, 4.7, 4.94, 5.19, 5.45, 5.72, 6, 6.31, 6.62]

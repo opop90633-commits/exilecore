@@ -10476,7 +10476,7 @@ ab_aeterno_boots:        # 2026-11-04 照 PoE2 0.5 的「Ab Aeterno」（poe2db�
 
 morior_invictus:        # 2026-11-04 照 PoE2 0.5 的「Morior Invictus」（poe2db：不敗亡者）
   name: 百死不滅        # 2026-11-04 照站長「那些傳奇要改名」（自己的名字）；這次之前「不敗亡者」（原作的中文名）
-  base: body_str_dex_18        # 原作基底 Grand Regalia（宏偉華服，力敏智三防）；我們的胸甲沒有三防的，用力敏那一類（65 級）
+  base: body_str_dex_int_02        # 2026-11-11 照站長：原作基底 Grand Regalia（宏偉華服，力敏智三防：冕紋華服）；這次之前 body_str_dex_18（星紋鱗甲，力敏、沒有能量護盾，已經掉出來的讀的時候換過去）
   drop_level: 65
   sources: [legion]
   weight: 100

@@ -2111,7 +2111,7 @@ final class SkillExecutor {
     }
 
     /** 稜光裂：脈衝的範圍（PoE2 5 格）、最多用掉幾隻的異常、冰爆與雷爆是火爆的幾倍（PoE2 350% ÷ 125%、140% ÷ 125%）。 */
-    static final double SUNDER_PULSE = tw.exilecore.core.Units.metres(5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    static final double SUNDER_PULSE = tw.exilecore.core.Units.metres(5); // 2026-10-29 照站長：照 PoE2 公尺的常數用 Units 換算（2026-10-30 起 1 公尺 = 1 格，所以是 5 格）
     static final int SUNDER_MAX = 20;
     static final double SUNDER_COLD = 2.8;
     static final double SUNDER_LIGHTNING = 1.12;

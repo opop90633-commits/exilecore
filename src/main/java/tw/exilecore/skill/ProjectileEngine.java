@@ -1653,6 +1653,10 @@ final class ProjectileEngine implements Listener {
         final SkillProfile profile = beam != null ? SkillStages.profile(shot.build, shot.profile, BEAM)
                 : shot.profile.scaled(splash.damage(level) / 100.0, "濺射");
         final int beamChains = beam == null ? 0 : Math.max(0, beam.count().intAt(level));
+        if (splash.rain()) {
+            rainSplash(owner, target, splash.radius(), bolts, profile);
+            return;
+        }
         final List<Location> points = new ArrayList<>();
         points.add(SkillTargets.center(target));
         int count = 0;
@@ -1706,6 +1710,86 @@ final class ProjectileEngine implements Listener {
         for (final LivingEntity other : beamed) {
             chainBeam(shot, owner, target, other, profile, beamChains, splash.radius());
         }
+    }
+
+    // 2026-11-11 照站長「萬古箭雨沒有箭雨的感覺」：splash 寫 rain 的（萬古箭雨）不射雷束，改成「停滯的箭」從頭上落下：
+    //   每隻被選到的敵人頭上 RAIN_HEIGHT 格出現一支發光的箭（冰藍外框、雪花），停 RAIN_HOVER tick、一支接一支（RAIN_STAGGER），
+    //   再 RAIN_FALL tick 落到牠身上打一下（傷害、隻數跟原本的濺射一樣，只是晚一點到；落下時牠已經死了、離開太遠就不打）。
+    //   附近的敵人不夠 RAIN_MIN_ARROWS 支的，剩下的落在被射中那隻附近（只有樣子、不打人），一次至少看得到一小片箭雨。
+    //   這次之前跟雷鳴箭一樣是瞬間的雷束（visual 用 thunderclap_arrow 的閃電線），看起來是電人
+    static final double RAIN_HEIGHT = 5.5;
+    static final long RAIN_HOVER = 8;
+    static final long RAIN_STAGGER = 2;
+    static final int RAIN_FALL = 3;
+    static final int RAIN_MIN_ARROWS = 4;
+    static final org.bukkit.Color RAIN_GLOW = org.bukkit.Color.fromRGB(0x9fe6ff);
+
+    private void rainSplash(final Player owner, final LivingEntity target, final double radius, final int bolts, final SkillProfile profile) {
+        final List<LivingEntity> picked = new ArrayList<>();
+        for (final LivingEntity other : targets.around(target.getLocation(), radius, owner)) {
+            if (other != target && picked.size() < bolts) {
+                picked.add(other);
+            }
+        }
+        int index = 0;
+        for (final LivingEntity enemy : picked) {
+            dropArrow(owner, enemy, enemy.getLocation(), profile, index++ * RAIN_STAGGER);
+        }
+        for (int extra = picked.size(); extra < RAIN_MIN_ARROWS; extra++) {
+            final double angle = random.nextDouble() * Math.PI * 2;
+            final double distance = 0.8 + random.nextDouble() * Math.max(0.5, radius * 0.6);
+            final Location spot = target.getLocation().add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+            dropArrow(owner, null, spot, null, index++ * RAIN_STAGGER);
+        }
+    }
+
+    /** 一支停滯的箭：delay tick 後在 at 上方出現、停一下、落下；enemy 不是 null 時落地打牠（profile）。 */
+    private void dropArrow(final Player owner, final LivingEntity enemy, final Location at, final SkillProfile profile, final long delay) {
+        if (at.getWorld() == null) {
+            return;
+        }
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (!owner.isOnline()) {
+                return;
+            }
+            final Location top = (enemy != null && enemy.isValid() ? enemy.getLocation() : at).clone().add(0, RAIN_HEIGHT, 0);
+            final org.bukkit.entity.ItemDisplay arrow = top.getWorld().spawn(top, org.bukkit.entity.ItemDisplay.class, d -> {
+                d.setItemStack(new org.bukkit.inventory.ItemStack(org.bukkit.Material.ARROW));
+                d.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.FIXED);
+                d.setPersistent(false);
+                d.setBillboard(org.bukkit.entity.Display.Billboard.VERTICAL);
+                d.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+                d.setGlowing(true);
+                d.setGlowColorOverride(RAIN_GLOW);
+                d.setTeleportDuration(RAIN_FALL);
+                // 箭的圖是斜的（箭頭在右上）：轉 -135 度箭頭朝下
+                d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
+                        new org.joml.Vector3f(1.3f, 1.3f, 1.3f), new org.joml.Quaternionf().rotationZ((float) Math.toRadians(-135))));
+            });
+            tw.exilecore.skill.Fx.spawn(top.getWorld(), org.bukkit.Particle.SNOWFLAKE, top, 6, 0.25, 0.25, 0.25, 0.01);
+            top.getWorld().playSound(top, org.bukkit.Sound.BLOCK_AMETHYST_BLOCK_CHIME, org.bukkit.SoundCategory.PLAYERS, 0.4f, 1.6f);
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!arrow.isValid()) {
+                    return;
+                }
+                final Location ground = (enemy != null && enemy.isValid() && !enemy.isDead() ? enemy.getLocation() : at).clone().add(0, 0.8, 0);
+                if (ground.getWorld() != arrow.getWorld()) {
+                    arrow.remove();
+                    return;
+                }
+                arrow.teleport(ground); // 照 teleportDuration 滑下去
+                plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                    arrow.remove();
+                    tw.exilecore.skill.Fx.spawn(ground.getWorld(), org.bukkit.Particle.SNOWFLAKE, ground, 10, 0.3, 0.2, 0.3, 0.05);
+                    tw.exilecore.skill.Fx.spawn(ground.getWorld(), org.bukkit.Particle.CRIT, ground, 4, 0.2, 0.1, 0.2, 0.1);
+                    ground.getWorld().playSound(ground, org.bukkit.Sound.ENTITY_ARROW_HIT, org.bukkit.SoundCategory.PLAYERS, 0.5f, 0.9f);
+                    if (enemy != null && profile != null && owner.isOnline() && enemy.isValid() && !enemy.isDead()
+                            && enemy.getWorld().equals(ground.getWorld()) && enemy.getLocation().distanceSquared(ground) <= 9) {
+                        damage.hit(owner, enemy, profile, null);
+                    }
+                }, RAIN_FALL);
+            }, RAIN_HOVER);
+        }, Math.max(0, delay));
     }
 
     /** 2026-11-01 照 PoE2 Lightning Arrow：雷束那一段（skills.yml 的 stages.beam；count = 每道雷束連鎖幾次）。 */

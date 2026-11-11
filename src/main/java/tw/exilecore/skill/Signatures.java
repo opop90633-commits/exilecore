@@ -143,7 +143,41 @@ final class Signatures {
     record ConsumedWhirl(int stage, tw.exilecore.stats.DamageType element) {
     }
 
-    private record Lance(Location at, SkillBuild build, long until, long[] nextZap, long zapEvery) {
+    /** 2026-11-11：display＝插在地上的那支矛（看得到的實體，矛消失時拿掉；沒做出來是 null）。 */
+    private record Lance(Location at, SkillBuild build, long until, long[] nextZap, long zapEvery, org.bukkit.entity.ItemDisplay display) {
+    }
+
+    // 2026-11-11 照站長「霆落矛插在地上的矛要明顯一點」：插著的矛畫成一支 2 格多高、倒插在地上的三叉戟（永遠轉向看的人、全亮、外框發光：
+    //   一般的淡藍、消耗怒星的金黃），再加上沿著矛身往上竄的電光。這次之前只有每 0.2 秒 3 顆電火花，幾乎看不到
+    static final float LANCE_DISPLAY_SCALE = 1.6f;
+    static final org.bukkit.Color LANCE_GLOW = org.bukkit.Color.fromRGB(0x7fd8ff);
+    static final org.bukkit.Color LANCE_CHARGED_GLOW = org.bukkit.Color.fromRGB(0xffe14a);
+
+    /** 插在地上的矛（三叉戟的圖倒過來、尖端朝下）；世界是 null 回傳 null。 */
+    private static org.bukkit.entity.ItemDisplay lanceDisplay(final Location at, final boolean charged) {
+        if (at.getWorld() == null) {
+            return null;
+        }
+        return at.getWorld().spawn(at.clone().add(0, 1.0, 0), org.bukkit.entity.ItemDisplay.class, d -> {
+            d.setItemStack(new org.bukkit.inventory.ItemStack(org.bukkit.Material.TRIDENT));
+            d.setItemDisplayTransform(org.bukkit.entity.ItemDisplay.ItemDisplayTransform.FIXED); // 平面的圖（斜的，尖端在右上）
+            d.setPersistent(false);
+            d.setBillboard(org.bukkit.entity.Display.Billboard.VERTICAL);
+            d.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));
+            d.setGlowing(true);
+            d.setGlowColorOverride(charged ? LANCE_CHARGED_GLOW : LANCE_GLOW);
+            // 轉 -135 度：右上的尖端轉到正下方（插進地裡），握柄朝上
+            d.setTransformation(new org.bukkit.util.Transformation(new org.joml.Vector3f(), new org.joml.Quaternionf(),
+                    new org.joml.Vector3f(LANCE_DISPLAY_SCALE, LANCE_DISPLAY_SCALE, LANCE_DISPLAY_SCALE),
+                    new org.joml.Quaternionf().rotationZ((float) Math.toRadians(-135))));
+        });
+    }
+
+    /** 矛不在了（引爆、擠掉、時間到、離開）：地上的那支拿掉。 */
+    private static void unlodge(final Lance lance) {
+        if (lance.display() != null && lance.display().isValid()) {
+            lance.display().remove();
+        }
     }
 
     private static final class Embers {
@@ -541,7 +575,16 @@ final class Signatures {
         }
         // 2026-11-11 照站長「霆落矛自己也能引爆，但傷害更少 20%」：霆落矛放下去（準心處）也引爆 3 格內插著的矛，這種引爆更少 20%；
         //   這次之前霆落矛自己不算
-        final boolean own = "lance".equals(service.config().signature(definition.id()));
+        if ("lance".equals(service.config().signature(definition.id()))) {
+            // 2026-11-11 照站長「自己引爆自己的那下是不是要丟得很準？判定感覺怪怪的」：霆落矛是投射物，這裡的位置是你站的地方
+            //   （useLocation），同日稍早照這個位置引爆——要站在舊的矛旁邊才炸，丟到矛那邊反而不炸。改成新的矛落地那一點引爆（lanceLanded）
+            return 0;
+        }
+        return detonateAround(player, at, 1);
+    }
+
+    /** at 附近（{@link #LANCE_DETONATE_RANGE}）插著的矛全部引爆，傷害 × scale；回傳引爆了幾支。 */
+    private int detonateAround(final Player player, final Location at, final double scale) {
         final Deque<Lance> mine = lances.get(player.getUniqueId());
         if (mine == null || mine.isEmpty()) {
             return 0;
@@ -552,7 +595,8 @@ final class Signatures {
             final Lance lance = it.next();
             if (lance.at().getWorld() == at.getWorld() && lance.at().distance(at) <= LANCE_DETONATE_RANGE) {
                 it.remove();
-                detonate(player, lance, true, own ? 1 - LANCE_SELF_DETONATE_LESS : 1); // 2026-10-31：被其他技能引爆（2026-11-11 起沒有更多 50%；霆落矛自己引爆更少 20%）
+                unlodge(lance); // 2026-11-11
+                detonate(player, lance, true, scale); // 2026-10-31：被其他技能引爆（2026-11-11 起沒有更多 50%；霆落矛自己引爆更少 20%）
                 count++;
             }
         }
@@ -582,6 +626,9 @@ final class Signatures {
         // 2026-10-31 照 PoE2（RePoE StormLancePlayer：擲出的矛只有投射物的那一下，沒有落地範圍傷害）：只插地；
         // 同一天稍早落地還炸 2 公尺（沿用以前 impact 的落地傷害）
         final boolean own = profile != null && SkillZones.localFlat(profile, LANCE_CHARGED_MARK) > 0;
+        // 2026-11-11 照站長「霆落矛自己也能引爆，但傷害更少 20%」：新的矛落地那一點附近插著的矛先引爆（更少 20%），再插新的這支；
+        //   同日稍早是放出去的瞬間照你站的位置找，丟得再準也不一定炸
+        detonateAround(player, ground, 1 - LANCE_SELF_DETONATE_LESS);
         lodge(player, build, ground, now, own);
     }
 
@@ -717,6 +764,7 @@ final class Signatures {
             // 2026-11-11 照站長「照原作」（PoE2 Limit：超過上限時最舊的那支消失）：兩種被擠掉都直接消失、沒有傷害。
             //   這次之前（2026-10-31 起）被擠掉會引爆；今天先改成一般的放一次電、消耗怒星的消失，再改成都消失
             it.remove();
+            unlodge(old); // 2026-11-11
             same--;
         }
         final SkillBuild unstaged = own ? unstagedLance.remove(player.getUniqueId()) : null;
@@ -726,7 +774,7 @@ final class Signatures {
         // 2026-11-11 照 PoE2（PoB2 StormLancePlayer 只有 overcharged_spear_base_frequency_ms 800／200，沒有另外的第一次延遲）：
         //   插下後隔一個放電間隔就第一次放電；這次之前一般的多等 0.5 秒（1.3 秒）、消耗怒星的多等 0.2 秒（0.4 秒）
         mine.addLast(new Lance(at.clone(), lodged, now + (charged ? LANCE_CHARGED_LIFE : LANCE_LIFE),
-                new long[] {now + zap}, zap));
+                new long[] {now + zap}, zap, lanceDisplay(at, charged)));
     }
 
     /** enhanced：被其他技能引爆（沒有額外加成；一般的矛也照原作射 16 道）。 */
@@ -893,18 +941,25 @@ final class Signatures {
             final Lance lance = it.next();
             if (lance.at().getWorld() != player.getWorld() || !service.eligible(player)) {
                 it.remove();
+                unlodge(lance); // 2026-11-11
                 continue;
             }
             if (now >= lance.until()) {
                 it.remove();
+                unlodge(lance); // 2026-11-11
                 // 2026-10-31 照 PoE2 Storm Lance：只有消耗怒星的那一支時間到自動引爆；一般的時間到就消失。這次之前每一支時間到都炸開
                 if (lance.zapEvery() < LANCE_ZAP) {
                     detonate(player, lance, false);
                 }
                 continue;
             }
-            if (now % 4 == 0) {
-                Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, lance.at().clone().add(0, 1.0 + (now % 8) / 8.0, 0), 3, 0.1, 0.5, 0.1, 0.02);
+            if (now % 2 == 0) {
+                // 2026-11-11：電光沿著矛身往上竄（矛 2 格多高；這次之前每 0.2 秒 3 顆）
+                final double height = 0.2 + (now % 12) / 12.0 * 2.0;
+                Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, lance.at().clone().add(0, height, 0), 4, 0.08, 0.15, 0.08, 0.02);
+                if (now % 10 == 0) {
+                    Fx.ring(player.getWorld(), lance.at().clone().add(0, 0.1, 0), 0.6, Particle.ELECTRIC_SPARK, null);
+                }
             }
             if (now >= lance.nextZap()[0]) {
                 lance.nextZap()[0] = now + lance.zapEvery();
@@ -1000,7 +1055,10 @@ final class Signatures {
     void forget(final UUID uuid) {
         whirls.remove(uuid);
         twisters.forget(uuid);
-        lances.remove(uuid);
+        final Deque<Lance> gone = lances.remove(uuid);
+        if (gone != null) {
+            gone.forEach(Signatures::unlodge); // 2026-11-11：地上的矛一起拿掉
+        }
         embers.remove(uuid);
         chargedLance.remove(uuid);
     }

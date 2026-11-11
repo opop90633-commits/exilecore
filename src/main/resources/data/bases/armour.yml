@@ -6709,6 +6709,25 @@ body_str_dex_int_01:
     mods:
       - { stat: gem.corrupted_level, type: FLAT, value: "{value}" }
 
+# 2026-11-11 照站長「不敗亡者這個基底有護甲、閃避、能量護盾，我們現在好像只有護甲跟閃避」：PoE2 Grand Regalia
+#   （poe2db：宏偉華服；力敏智三防胸甲），原作只有傳奇「Morior Invictus」（不敗亡者，我們叫百死不滅）用，所以傳奇專用
+#   （retired，跟野紋纏衣一樣）。數值照 poe2db（Armour 182、Evasion 165、Energy Shield 50、需求 65 級 41／41／41；沒有固有詞綴）。
+#   這次之前百死不滅借力敏胸甲星紋鱗甲（body_str_dex_18：沒有能量護盾，還多一條 +60～80 最大生命的固有詞綴）。材質、模型照祭紋華袍
+body_str_dex_int_02:
+  name: 冕紋華服
+  fixed: true
+  retired: true        # 2026-11-11：傳奇專用（原作只有不敗亡者用）
+  family: body_str_dex_int
+  material: DIAMOND_CHESTPLATE
+  model: exilecore:armour/plate_body
+  slot: CHEST
+  tags: [armour, body, str_armour, dex_armour, int_armour, str_dex_int_armour]
+  drop_level: 65
+  requirements: { level: 65, str: 41, dex: 41, int: 41 }   # 2026-11-11 照 PoE2（Grand Regalia，固定不隨物品等級變）
+  armour: 182   # 2026-11-11 照 PoE2 原值（Grand Regalia）
+  evasion: 165   # 2026-11-11 照 PoE2 原值（Grand Regalia）
+  es: 50   # 2026-11-11 照 PoE2 原值（Grand Regalia）
+
 # 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：PoE2 Primal Markings（poe2db：野性標記；PoB2 Data/Bases/body.lua hidden = true）：
 #   閃避＋能量護盾胸甲，原作只有傳奇「Forgotten Warden」（遺忘看守）用，所以傳奇專用（retired：哪裡都不掉、不出現在基底清單，
 #   跟祭紋華袍原本、素面指環 jring_plain 一樣）。數值照 poe2db／PoB2（Evasion 268、Energy Shield 82、需求 70 級 0／67／67）；

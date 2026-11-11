@@ -7931,7 +7931,9 @@ public final class SkillService {
                             params.splash().targets(build.level()), Math.round(beamStage.effectiveness().at(build.level()) * 100),
                             beamStage.count().intAt(build.level())));
                 } else if (params.splash() != null) {
-                    lines.add(String.format(Locale.ROOT, "<gray>打中時電到附近 <white>%d</white> 個敵人（<white>%d%%</white> 傷害）",
+                    lines.add(String.format(Locale.ROOT, params.splash().rain() // 2026-11-11：萬古箭雨是落下的箭
+                                    ? "<gray>打中時附近 <white>%d</white> 個敵人頭上落下停滯的箭（<white>%d%%</white> 傷害，約 0.5 秒後落地）"
+                                    : "<gray>打中時電到附近 <white>%d</white> 個敵人（<white>%d%%</white> 傷害）",
                             params.splash().targets(build.level()) // 2026-11-10 照站長「擲雷槍品質照原作」：品質多射的雷彈
                                     + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.SPLASH_TARGETS_EXTRA)),
                             Math.round(params.splash().damage(build.level()))));
@@ -8042,7 +8044,12 @@ public final class SkillService {
                 }
             }
             case IMPACT -> {
-                if (SkillZones.localFlat(build.profile(), FireSpells.SELF_CENTRED) > 0) {
+                if (SkillConfig.current() != null && "sunder".equals(SkillConfig.current().signature(build.definition().id()))) {
+                    // 2026-11-11 照站長「這個是指矛的 5 格還是玩家的 5 格」：稜光裂的脈衝以自己為中心（SkillExecutor.sunder），不會在準心落下；
+                    //   這次之前照 impact 的通用說明寫「準心指的地方 0.5 秒後落下」，看起來像丟到準心
+                    lines.add(String.format(Locale.ROOT, "<gray>以自己為中心放脈衝，半徑 <white>%.1f</white> 格；每個用掉的異常在那隻身上炸開，半徑 <white>%.1f</white> 格",
+                            SkillExecutor.SUNDER_PULSE * build.areaScale(), build.radius()));
+                } else if (SkillZones.localFlat(build.profile(), FireSpells.SELF_CENTRED) > 0) {
                     // 2026-11-01 照 PoE2 Flameblast：以自己為中心（指著自己的烈陽珠時在珠上）
                     lines.add(String.format(Locale.ROOT, "<gray>以自己為中心炸開（準心指著自己的烈陽珠時在珠上），一層半徑 <white>%.1f</white> 格", build.radius()));
                 } else {

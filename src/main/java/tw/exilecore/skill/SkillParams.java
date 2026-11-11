@@ -76,7 +76,14 @@ public record SkillParams(double reach, double angle, int targets, double knockb
      * 2026-10-26：targets、damage 可以寫逐級表（照 PoE2 雷鳴箭的雷束：2→4→5 個、雷束是 100% 基礎攻擊傷害）；
      * 沒帶等級的 {@link #targets()}、{@link #damage()} 是 20 級的值（說明、估算用）。
      */
-    public record Splash(Scaled targetsByLevel, double radius, Scaled damageByLevel) {
+    /**
+     * @param rain 2026-11-11 照站長「萬古箭雨沒有箭雨的感覺」：true＝不是雷束，是在每隻敵人頭上停一下再落下來的箭（ProjectileEngine.rainSplash）
+     */
+    public record Splash(Scaled targetsByLevel, double radius, Scaled damageByLevel, boolean rain) {
+        public Splash(final Scaled targetsByLevel, final double radius, final Scaled damageByLevel) {
+            this(targetsByLevel, radius, damageByLevel, false);
+        }
+
         public Splash(final int targets, final double radius, final double damage) {
             this(Scaled.of(targets), radius, Scaled.of(damage));
         }
@@ -330,7 +337,8 @@ public record SkillParams(double reach, double angle, int targets, double knockb
                     splash = new Splash(scaled(sub.path(), sub, "targets", 3, 1, 10),
                             m(f, check(sub.path(), "radius", sub.decimal("radius", 5), 1, 12)),
                             // 2026-10-28 照 PoE2：上限 100 → 200（雷鳴箭 1～3 級的雷束是基礎攻擊傷害 100%，比箭本身 80%～97% 還高）
-                            scaled(sub.path(), sub, "damage", 50, 1, 200));
+                            scaled(sub.path(), sub, "damage", 50, 1, 200),
+                            sub.bool("rain", false)); // 2026-11-11：落下的箭（萬古箭雨）
                 }
                 if (node.has("burst")) {
                     final YamlNode sub = node.node("burst");
