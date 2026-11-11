@@ -4819,6 +4819,31 @@ public final class MinionService implements Listener, MinionHooks {
         return 0;
     }
 
+    /**
+     * 2026-11-11 照站長「偷到的怪物詞綴照原作補」：替身的（PoE2 Damage Taken From Minions First）——center 周圍 radius 格內 owner 的任何一隻召喚物
+     * 先承受 amount（留 1 點不會打死）；回傳承受了多少。這次之前只有夥伴（absorbForOwner）會替你承受。
+     */
+    public double absorbForOwnerNear(final UUID owner, final double amount, final org.bukkit.Location center, final double radius) {
+        if (amount <= 0 || center == null || center.getWorld() == null) {
+            return 0;
+        }
+        for (final Minion minion : List.copyOf(minions)) {
+            if (!minion.owner.equals(owner) || minion.decoy || !minion.mob.isValid() || minion.mob.isDead() || minion.undamageable()
+                    || !minion.mob.getWorld().equals(center.getWorld()) || minion.mob.getLocation().distanceSquared(center) > radius * radius) {
+                continue;
+            }
+            final double life = minion.mob.getHealth() / Math.max(1e-6, minion.healthScale);
+            final double taken = Math.min(amount, Math.max(0, life - 1));
+            if (taken <= 0) {
+                continue;
+            }
+            minion.mob.setHealth(Math.max(1e-3, minion.mob.getHealth() - taken * minion.healthScale));
+            minion.lastHurt = now();
+            return taken;
+        }
+        return 0;
+    }
+
     /** 2026-11-01 照 PoE2 Alchemist's Boon：只治療 center 周圍 radius 格內（存在範圍）owner 的召喚物。 */
     public void healOwnedNear(final Player owner, final org.bukkit.Location center, final double radius, final double amount) {
         if (amount <= 0 || center == null || center.getWorld() == null) {

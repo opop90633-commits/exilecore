@@ -1282,7 +1282,7 @@ star_mirror:
   operation: MIRROR
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }   # 2026-10-26 照 PoE2：傳奇也可以；這次之前 [NORMAL, MAGIC, RARE]
   drop_weight: 0
-  description: "複製一件裝備（傳奇也可以）；複製品不能再改造、不能再複製"
+  description: "複製一件裝備（傳奇也可以）；複製品不能再改造、不能再複製。也能在鑑定師（/starmirror）換一件自選的追逐級傳奇"   # 2026-11-11 照站長：多了兌換
   flavor: "照過它的東西，世上就多了一件。星骸裡最稀有的一種。"
 
 # 2026-10-18：共鳴石——用在一顆「專屬掉落的輔助寶石」上，那顆就共鳴：不佔一個技能只能掛一顆專屬輔助的名額
@@ -3576,7 +3576,7 @@ rune_core_tacati:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之中毒的幅度；防具、副手 +13% 混沌抗性。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之中毒的幅度；防具、副手 +13% 混沌抗性。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_opiloti:
@@ -3588,7 +3588,7 @@ rune_core_opiloti:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 你所施加之流血的幅度；頭盔 增加 25% 釘身持續時間。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 你所施加之流血的幅度；頭盔 增加 25% 釘身持續時間。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_jiquani:
@@ -3600,7 +3600,7 @@ rune_core_jiquani:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 5% 最大生命；胸甲 增加 5% 最大生命。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_jiquani_automation:   # 2026-11-08 照站長：Jiquani's Soul Core of Automation（星坑 BOSS 1%）
@@ -3612,7 +3612,7 @@ rune_core_jiquani_automation:   # 2026-11-08 照站長：Jiquani's Soul Core of 
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部圖騰技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部圖騰技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_malediction:   # 2026-11-08 照站長：Jiquani's Soul Core of Malediction（星坑 BOSS 1%）
@@ -3624,7 +3624,7 @@ rune_core_jiquani_malediction:   # 2026-11-08 照站長：Jiquani's Soul Core of
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部詛咒技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部詛咒技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_targeting:   # 2026-11-08 照站長：Jiquani's Soul Core of Targeting（星坑 BOSS 1%）
@@ -3636,7 +3636,7 @@ rune_core_jiquani_targeting:   # 2026-11-08 照站長：Jiquani's Soul Core of T
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部印記技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部印記技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_rallying:   # 2026-11-08 照站長：Jiquani's Soul Core of Rallying（星坑 BOSS 1%）
@@ -3648,7 +3648,7 @@ rune_core_jiquani_rallying:   # 2026-11-08 照站長：Jiquani's Soul Core of Ra
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部戰吼技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部戰吼技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_radiance:   # 2026-11-08 照站長：Jiquani's Soul Core of Radiance（星坑 BOSS 1%）
@@ -3660,7 +3660,7 @@ rune_core_jiquani_radiance:   # 2026-11-08 照站長：Jiquani's Soul Core of Ra
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部捷光環技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部捷光環技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_severing:   # 2026-11-08 照站長：Jiquani's Soul Core of Severing（星坑 BOSS 1%）
@@ -3672,7 +3672,7 @@ rune_core_jiquani_severing:   # 2026-11-08 照站長：Jiquani's Soul Core of Se
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部打擊技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部打擊技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_rippling:   # 2026-11-08 照站長：Jiquani's Soul Core of Rippling（星坑 BOSS 1%）
@@ -3684,7 +3684,7 @@ rune_core_jiquani_rippling:   # 2026-11-08 照站長：Jiquani's Soul Core of Ri
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部新星技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部新星技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_quaking:   # 2026-11-08 照站長：Jiquani's Soul Core of Quaking（星坑 BOSS 1%）
@@ -3696,7 +3696,7 @@ rune_core_jiquani_quaking:   # 2026-11-08 照站長：Jiquani's Soul Core of Qua
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部猛擊技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部猛擊技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_munitions:   # 2026-11-08 照站長：Jiquani's Soul Core of Munitions（星坑 BOSS 1%）
@@ -3708,7 +3708,7 @@ rune_core_jiquani_munitions:   # 2026-11-08 照站長：Jiquani's Soul Core of M
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部榴彈技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部榴彈技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_snares:   # 2026-11-08 照站長：Jiquani's Soul Core of Snares（星坑 BOSS 1%）
@@ -3720,7 +3720,7 @@ rune_core_jiquani_snares:   # 2026-11-08 照站長：Jiquani's Soul Core of Snar
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部危險區域技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部危險區域技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_abundance:   # 2026-11-08 照站長：Jiquani's Soul Core of Abundance（星坑 BOSS 1%）
@@ -3732,7 +3732,7 @@ rune_core_jiquani_abundance:   # 2026-11-08 照站長：Jiquani's Soul Core of A
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部植物技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部植物技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_squalls:   # 2026-11-08 照站長：Jiquani's Soul Core of Squalls（星坑 BOSS 1%）
@@ -3744,7 +3744,7 @@ rune_core_jiquani_squalls:   # 2026-11-08 照站長：Jiquani's Soul Core of Squ
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部疾風技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部疾風技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_jiquani_thundering:   # 2026-11-08 照站長：Jiquani's Soul Core of Thundering（星坑 BOSS 1%）
@@ -3756,7 +3756,7 @@ rune_core_jiquani_thundering:   # 2026-11-08 照站長：Jiquani's Soul Core of 
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部風暴技能等級。別的裝備嵌了沒效果（需求等級 50）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +1 全部風暴技能等級。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "吉卡尼把一種節奏刻進核心裡，握著它的武器就跟著那個節奏走。"
 
 rune_core_zalatl:
@@ -3768,7 +3768,7 @@ rune_core_zalatl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 4% 最大魔力；頭盔 增加 5% 最大魔力。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 擊殺時回復 4% 最大魔力；頭盔 增加 5% 最大魔力。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_citaqualotl:
@@ -3780,7 +3780,7 @@ rune_core_citaqualotl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 攻擊的元素傷害；防具、副手 +6% 全部元素抗性。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 攻擊的元素傷害；防具、副手 +6% 全部元素抗性。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_puhuarte:
@@ -3792,7 +3792,7 @@ rune_core_puhuarte:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 點燃幅度；手套（腿甲） +2% 火焰抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 40% 點燃幅度；手套（腿甲） +2% 火焰抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_tzamoto:
@@ -3804,7 +3804,7 @@ rune_core_tzamoto:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 60% 凍結累積；頭盔 +2% 冰冷抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 60% 凍結累積；頭盔 +2% 冰冷抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_xopec:
@@ -3816,7 +3816,7 @@ rune_core_xopec:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之感電的幅度；鞋子 +2% 閃電抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 25% 你所施加之感電的幅度；鞋子 +2% 閃電抗性上限。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_azcapa:
@@ -3828,7 +3828,7 @@ rune_core_azcapa:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 +15 精魂；手套（腿甲） 增加 10% 殺死敵人時掉落的金幣數量。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +15 精魂；手套（腿甲） 增加 10% 殺死敵人時掉落的金幣數量。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_topotante:
@@ -3840,7 +3840,7 @@ rune_core_topotante:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 這把武器的攻擊穿透 25% 元素抗性；鞋子 減少 25% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 這把武器的攻擊穿透 25% 元素抗性；鞋子 減少 25% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_quipolatl:
@@ -3852,7 +3852,7 @@ rune_core_quipolatl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 增加 5% 攻擊速度；鞋子 減少 15% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器 增加 5% 攻擊速度；鞋子 減少 15% 你身上的減速幅度。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_ticaba:
@@ -3864,7 +3864,7 @@ rune_core_ticaba:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器 +5% 暴擊傷害加成；胸甲、盾、輕盾 擊中你的暴擊傷害加成減少 50%。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）"
+  description: "嵌進一個空的符文孔（魂核）：武器 +5% 暴擊傷害加成；胸甲、盾、輕盾 擊中你的暴擊傷害加成減少 50%。別的裝備嵌了沒效果（需求等級 65）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_atmohua:
@@ -3876,7 +3876,7 @@ rune_core_atmohua:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為力量。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為力量。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_cholotl:
@@ -3888,7 +3888,7 @@ rune_core_cholotl:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為敏捷。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為敏捷。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 rune_core_zantipi:
@@ -3900,7 +3900,7 @@ rune_core_zantipi:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 65
-  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）"
+  description: "嵌進一個空的符文孔（魂核）：武器、防具、副手 40% 需求轉換為智慧。別的裝備嵌了沒效果（需求等級 65）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）"
   flavor: "從混沌試煉裡帶出來的一小塊心跳，還是溫的。"
 
 # ---- 2026-11-08 照站長「一起補」：有名字的魂核 19 顆（runes.yml core_<人名>_<詞>；絕境之主・審判者各 1%）----
@@ -3914,7 +3914,7 @@ rune_core_hayoxi_heatproofing:   # Hayoxi's Soul Core of Heatproofing
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：頭盔 +40% 的護甲也套用在冰冷傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：頭盔 +40% 的護甲也套用在冰冷傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_zalatl_insulation:   # Zalatl's Soul Core of Insulation
@@ -3926,7 +3926,7 @@ rune_core_zalatl_insulation:   # Zalatl's Soul Core of Insulation
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：鞋子 +40% 的護甲也套用在閃電傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：鞋子 +40% 的護甲也套用在閃電傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_topotante_dampening:   # Topotante's Soul Core of Dampening
@@ -3938,7 +3938,7 @@ rune_core_topotante_dampening:   # Topotante's Soul Core of Dampening
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）+40% 的護甲也套用在火焰傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）+40% 的護甲也套用在火焰傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_atmohua_retreat:   # Atmohua's Soul Core of Retreat
@@ -3950,7 +3950,7 @@ rune_core_atmohua_retreat:   # Atmohua's Soul Core of Retreat
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：胸甲 增加 40% 已裝備法器的能量護盾；法器 增加 30% 已裝備胸甲的能量護盾。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：胸甲 增加 40% 已裝備法器的能量護盾；法器 增加 30% 已裝備胸甲的能量護盾。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_quipolatl_flow:   # Quipolatl's Soul Core of Flow
@@ -3962,7 +3962,7 @@ rune_core_quipolatl_flow:   # Quipolatl's Soul Core of Flow
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：頭盔 增加 8% 技能效果持續時間、增加 8% 冷卻回復速度。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：頭盔 增加 8% 技能效果持續時間、增加 8% 冷卻回復速度。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_tzamoto_ferocity:   # Tzamoto's Soul Core of Ferocity
@@ -3974,7 +3974,7 @@ rune_core_tzamoto_ferocity:   # Tzamoto's Soul Core of Ferocity
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：頭盔 +4 最大怒氣。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：頭盔 +4 最大怒氣。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_uromoti_attenuation:   # Uromoti's Soul Core of Attenuation
@@ -3986,7 +3986,7 @@ rune_core_uromoti_attenuation:   # Uromoti's Soul Core of Attenuation
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 20% 詛咒持續時間、增加 20% 中毒持續時間。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 20% 詛咒持續時間、增加 20% 中毒持續時間。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_opiloti_assault:   # Opiloti's Soul Core of Assault
@@ -3998,7 +3998,7 @@ rune_core_opiloti_assault:   # Opiloti's Soul Core of Assault
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得狂星時 50% 機率多獲得一顆狂星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得狂星時 50% 機率多獲得一顆狂星。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_guatelitzi_endurance:   # Guatelitzi's Soul Core of Endurance
@@ -4010,7 +4010,7 @@ rune_core_guatelitzi_endurance:   # Guatelitzi's Soul Core of Endurance
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得恆星時 50% 機率多獲得一顆恆星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得恆星時 50% 機率多獲得一顆恆星。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_xopec_power:   # Xopec's Soul Core of Power
@@ -4022,7 +4022,7 @@ rune_core_xopec_power:   # Xopec's Soul Core of Power
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得銳星時 50% 機率多獲得一顆銳星。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：武器（軍用武器、法杖類）獲得銳星時 50% 機率多獲得一顆銳星。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_estazunti_convalescence:   # Estazunti's Soul Core of Convalescence
@@ -4034,7 +4034,7 @@ rune_core_estazunti_convalescence:   # Estazunti's Soul Core of Convalescence
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 15% 補償效果速度；頭盔 受到的傷害有 10% 之後回復為生命。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：鞋子 增加 15% 補償效果速度；頭盔 受到的傷害有 10% 之後回復為生命。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_tacati_affliction:   # Tacati's Soul Core of Affliction
@@ -4046,7 +4046,7 @@ rune_core_tacati_affliction:   # Tacati's Soul Core of Affliction
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：頭盔 你詛咒的敵人 -5% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：頭盔 你詛咒的敵人 -5% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_cholotl_war:   # Cholotl's Soul Core of War
@@ -4058,7 +4058,7 @@ rune_core_cholotl_war:   # Cholotl's Soul Core of War
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：弓 投射物有 20% 機率從地形額外連鎖一次。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：弓 投射物有 20% 機率從地形額外連鎖一次。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_citaqualotl_foulness:   # Citaqualotl's Soul Core of Foulness
@@ -4070,7 +4070,7 @@ rune_core_citaqualotl_foulness:   # Citaqualotl's Soul Core of Foulness
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：軍用武器 附加 19 到 29 混沌傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：軍用武器 附加 19 到 29 混沌傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_xipocado_dominion:   # Xipocado's Soul Core of Dominion
@@ -4082,7 +4082,7 @@ rune_core_xipocado_dominion:   # Xipocado's Soul Core of Dominion
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：法杖類、權杖 召喚物的指令技能增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：法杖類、權杖 召喚物的指令技能增加 40% 傷害。別的裝備嵌了沒效果（需求等級 50）（一個角色僅限 1 顆）；嵌上去拿不出來，可以被別的符文蓋掉（蓋掉不還）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_atziri_devotion:   # Atziri's Soul Core of Devotion
@@ -4094,7 +4094,7 @@ rune_core_atziri_devotion:   # Atziri's Soul Core of Devotion
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：頭盔 每件已腐化的裝備增加 1% 精魂。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：頭盔 每件已腐化的裝備增加 1% 精魂。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉（一個角色僅限 1 顆）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_atziri_vitality:   # Atziri's Soul Core of Vitality
@@ -4106,7 +4106,7 @@ rune_core_atziri_vitality:   # Atziri's Soul Core of Vitality
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：胸甲 每件已腐化的裝備增加 1% 最大生命。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：胸甲 每件已腐化的裝備增加 1% 最大生命。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉（一個角色僅限 1 顆）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_atziri_alacrity:   # Atziri's Soul Core of Alacrity
@@ -4118,7 +4118,7 @@ rune_core_atziri_alacrity:   # Atziri's Soul Core of Alacrity
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）每件已腐化的裝備增加 1% 技能速度。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：褲子（原作的手套）每件已腐化的裝備增加 1% 技能速度。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉（一個角色僅限 1 顆）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 rune_core_atziri_inoculation:   # Atziri's Soul Core of Inoculation
@@ -4130,7 +4130,7 @@ rune_core_atziri_inoculation:   # Atziri's Soul Core of Inoculation
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 50
-  description: "嵌進一個空的符文孔（魂核）：鞋子 每件已腐化的裝備 +2% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉｜絕境之主・審判者 1% 掉落"
+  description: "嵌進一個空的符文孔（魂核）：鞋子 每件已腐化的裝備 +2% 混沌抗性。別的裝備嵌了沒效果（需求等級 50）；嵌上去拿不下來，也不能被換掉（一個角色僅限 1 顆）｜絕境之主・審判者 1% 掉落"
   flavor: "審判者秤盤上的砝碼之一，刻著一個古老的名字。"
 
 # ---- 2026-11-04 照站長「這些放地圖內軍團掉落」：魔偶符文（runes.yml 檔尾；只有地圖裡的軍團給，不走掉落表）----
@@ -4603,7 +4603,7 @@ extraction_orb:
   applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
   drop_weight: 0
   drop_level: 1
-  description: "毀掉一件裝備（要在自己的背包裡），嵌在上面的符文、魂核還給你（遠古魂核嵌死了，不還）"
+  description: "毀掉一件裝備（要在自己的背包裡），嵌在上面的符文、魂核全部還給你（遠古魂核、增幅、阿茲里的魂核也還）；符文、魂核嵌上去拿不出來，這是唯一拿回來的辦法"   # 2026-11-11 同日停用又照站長「剝符石再加回來」恢復
   flavor: "敲碎外殼，把裡面還能用的東西挖出來。"
 
 crystal_corruption:
@@ -4779,3 +4779,273 @@ rune_thesis_citaqualotl:
   description: "嵌進武器或防具的一個空的符文孔（遠古魂核）：胸甲 你的祭品承受的傷害 50% 補償為你的生命；手套 祭品的持續時間結束時，你的一個常駐召喚物復活；鞋子 閃避翻滾時犧牲 10% 最大生命，獲得等量的守護。別的部位沒效果；嵌上去拿不下來，也不能被換掉；遠古魂核一個角色僅限 1 顆（需求等級 60）"
   flavor: "用擾核石打亂魂核時偶爾會冒出來的古老節奏。"
 
+
+# 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」：流浪女巫艾珊德菈的智慧符文那一系列（runes.yml 的 special_＊，原作 RuneSpecial5～25）。
+#   嵌進增幅（符文孔）、一個角色僅限 1 顆、需求等級 50；拿不出來，但可以被別的增幅換掉（不嵌死）。晶淵之王・黯冕各 1% 掉
+rune_special_assandra_wisdom:
+  name: 流浪女巫艾珊德菈的智慧符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_assandra_wisdom
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進法杖或長杖的一個空的符文孔（增幅）：+1 全部法術技能等級。羈絆（命定）：統治者增益效果恢復期加快 30%（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「她在林邊住了三十年，沒人知道她到底會幾種咒。」"
+
+rune_special_saqawal_sky:
+  name: 斯卡沃的天空符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_saqawal_sky
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器的一個空的符文孔（增幅）：獲得等同於 5% 傷害的全元素額外傷害。羈絆（命定）：軍用武器 獲得戰星時 8% 機率多一顆隨機種類的；法杖或長杖 獲得元素灌注時 12% 機率多一個同類型的（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「天空的主人從不低頭看地上的獵物。」"
+
+rune_special_fenumus_agony:
+  name: 菲恩絲的苦痛符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_fenumus_agony
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進武器的一個空的符文孔（增幅）：獲得等同於 13% 傷害的額外混沌傷害。羈絆（命定）：獲得等同於 8% 傷害的額外物理傷害（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「網上的每一根絲，都記得掙扎的形狀。」"
+
+rune_special_farrul_grace:
+  name: 費爾羅的優雅符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_farrul_grace
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進鞋子的一個空的符文孔（增幅）：移動時增加 8% 偏斜值。羈絆（命定）：被偏斜的擊中多擋 3% 傷害（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「她走過的地方，連影子都撲不到。」"
+
+rune_special_farrul_chase:
+  name: 費爾羅的追擊符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_farrul_chase
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進鞋子的一個空的符文孔（增幅）：增加 5% 移動速度。羈絆（命定）：增加 10% 冷卻回復速度（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「獵物還沒聽見腳步，就已經沒有退路。」"
+
+rune_special_craiceann_warding:
+  name: 奎爾珊的守護符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_craiceann_warding
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進胸甲的一個空的符文孔（增幅）：減少 50% 你身上的詛咒效果。羈絆（命定）：增加 8% 詛咒幅度（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「殼硬的，咒語就從邊上滑走了。」"
+
+rune_special_saqawal_memory:
+  name: 斯卡沃的記憶符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_saqawal_memory
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進頭盔的一個空的符文孔（增幅）：增加 2% 獲得的經驗。羈絆（命定）：+10% 全部元素抗性（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「飛得夠高，才看得見自己走過的路。」"
+
+rune_special_saqawal_erosion:
+  name: 斯卡沃的侵蝕符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_saqawal_erosion
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進頭盔的一個空的符文孔（增幅）：增加 25% 曝曬效果。羈絆（命定）：增加 15% 你所施加之非傷害型異常狀態（冰緩、感電）的幅度（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「風吹久了，石頭也會露出裡面。」"
+
+rune_special_farrul_hunt:
+  name: 費爾羅的狩獵符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_farrul_hunt
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進軍用武器的一個空的符文孔（增幅）：增加 50% 對稀有或傳奇敵人的攻擊傷害。羈絆（命定）：+1 全部攻擊技能等級（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「越大的獵物，越值得等。」"
+
+rune_special_craiceann_recovery:
+  name: 奎爾珊的恢復符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_craiceann_recovery
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進胸甲的一個空的符文孔（增幅）：增加 30% 能量護盾回充速度。羈絆（命定）：獲得等同於最大能量護盾 50% 的額外異常狀態門檻與暈眩門檻（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「退回殼裡，等潮水退了再出來。」"
+
+rune_special_mannan_cruelty:
+  name: 花魁蔓南的殘酷符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_mannan_cruelty
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進手套（褲子）的一個空的符文孔（增幅）：增加 20% 你所施加之傷害型異常狀態（點燃、流血、中毒）的幅度。羈絆（命定）：增加 15% 敵人身上的傷害型異常狀態持續時間（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「她笑著的時候，最好別讓她碰到你。」"
+
+rune_special_grannell_mastery:
+  name: 爵士格蘭內爾的專精符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_grannell_mastery
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進手套（褲子）的一個空的符文孔（增幅）：增加 30% 你所施加之非傷害型異常狀態（冰緩、感電）的幅度。羈絆（命定）：增加 15% 敵人身上的元素異常狀態持續時間（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「一招練一萬次，就不用想了。」"
+
+rune_special_fenumus_spinning:
+  name: 菲恩絲的轉動符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_fenumus_spinning
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進手套（褲子）的一個空的符文孔（增幅）：增加 8% 施法速度。羈絆（命定）：低魔力時，增加 20% 魔力消耗效率（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「八隻腳一起動，網就織得比誰都快。」"
+
+rune_special_seske_archery:
+  name: 伯爵夫人瑟絲可的箭術符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_seske_archery
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進弓的一個空的符文孔（增幅）：弓的攻擊額外發射 1 支箭矢。羈絆（命定）：增加 20% 投射物速度（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「舞會上她總是第一個離場——去打獵。」"
+
+rune_special_girt_wildness:
+  name: 爵士格特的野性符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_girt_wildness
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進法杖或長杖的一個空的符文孔（增幅）：法術技能有 25% 機率額外發射 2 個投射物。羈絆（命定）：每 1 點怒氣同時增加 1% 法術傷害（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「咒語念到一半就吼出來了，威力反而更大。」"
+
+rune_special_fenumus_draining:
+  name: 菲恩絲的流失符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_fenumus_draining
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進手套（褲子）的一個空的符文孔（增幅）：增加 20% 凋零幅度。羈絆（命定）：+7% 混沌抗性（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「被咬過的地方，會慢慢變得不是自己的。」"
+
+rune_special_myrk_summer:
+  name: 爵士邁爾克的盛夏符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_myrk_summer
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進軍用武器的一個空的符文孔（增幅）：對點燃敵人的攻擊附加 23 到 34 火焰傷害。羈絆（命定）：+2% 火焰抗性上限（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「夏天的火，要往燒著的地方再添一把。」"
+
+rune_special_hestra_winter:
+  name: 赫絲緹菈女士的寒冬符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_hestra_winter
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進軍用武器的一個空的符文孔（增幅）：對冰緩敵人的攻擊附加 19 到 28 冰冷傷害。羈絆（命定）：+2% 冰冷抗性上限（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「冬天不急，它知道你遲早會慢下來。」"
+
+rune_special_leld_spring:
+  name: 爵士勒爾德的暖春符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_leld_spring
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進軍用武器的一個空的符文孔（增幅）：對感電敵人的攻擊附加 1 到 60 閃電傷害。羈絆（命定）：+2% 閃電抗性上限（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「春雷不挑地方，哪裡帶電就劈哪裡。」"
+
+rune_special_greatwolf_claws:
+  name: 巨狼之爪符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_greatwolf_claws
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進手套（褲子）的一個空的符文孔（增幅）：攻擊附加 5 到 12 物理傷害。羈絆（命定）：裂地技能 +2 上限（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「爪子落下的地方，地面會記很久。」"
+
+rune_special_greatwolf_willpower:
+  name: 巨狼意志符文
+  material: ECHO_SHARD
+  stack: 10
+  operation: RUNE
+  rune: special_greatwolf_willpower
+  applies_to: { rarity: [NORMAL, MAGIC, RARE, UNIQUE] }
+  drop_weight: 0
+  drop_level: 65
+  description: "嵌進胸甲的一個空的符文孔（增幅）：受到的傷害 15% 先從魔力扣（再扣生命）。羈絆（命定）：8% 的最大生命轉換為能量護盾（只有昇華・聖賢智慧才有效果）。嵌上去拿不出來，但可以被別的增幅換掉；一個角色僅限 1 顆（需求等級 50）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "「狼王不靠皮毛擋刀，靠的是不肯倒。」"
+
+# 2026-11-11 照站長「新增第一個圖片的通貨，放進深坑 boss」：PoE2 0.5 的星界合金（Celestial Alloy，原作遠征的 Verisium 合金之一）。
+#   稀有物品隨機移除一條詞綴，再加一條必定的前綴（affixes/essences.yml 的 celestial_＊，跟完美星魄同一套做法；需求等級 52）
+celestial_alloy:
+  name: 星界合金
+  material: AMETHYST_SHARD
+  stack: 10
+  operation: ESSENCE
+  affix: celestial_caster,celestial_martial
+  essence_tier: perfect
+  applies_to: { rarity: [RARE] }
+  pick_weight: 0   # 寶箱、精髓怪、星諭卡給星魄時不抽（只有晶淵之王掉）
+  drop_weight: 0
+  drop_level: 65
+  description: "稀有物品：隨機移除一條詞綴，再加一條必定的前綴——長杖、法杖「+142～188 最大魔力、+1 全部法術技能等級」；軍用武器「+327～427 命中、增加 5～8% 攻擊速度」（需求等級 52；別的裝備不能用）｜晶淵之王・黯冕 1% 掉落"
+  flavor: "從星脈最深處熔出來的金屬，一碰到兵器就想變成它的一部分。"

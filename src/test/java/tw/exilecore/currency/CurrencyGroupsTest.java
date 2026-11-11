@@ -89,7 +89,7 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.BASIC, CurrencyGroups.first(currencies.all(), type -> 0));
         final int[] counts = CurrencyGroups.kindsHeld(currencies.all(), type -> held.getOrDefault(type.id(), 0));
         // 2026-10-26：星魄分三組、星籤自己一組、符文兩組
-        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・星魄・攻擊 0 種・星魄・法術與腐化 0 種・催化劑・蒸餾情緒 1 種・瓦爾通貨 0 種・星籤 0 種・符文 0 種・高階符文 0 種・魂核符文 0 種・增幅・吉卡尼魂核 0 種・有名字的魂核 0 種・魔偶符文 0 種・門票・劫盜・活動 0 種・星諭卡 0 種", // 2026-11-04：＋魂核、魔偶兩組
+        assertEquals("一般通貨 0 種・未切割寶石 0 種・星魄 0 種・星魄・攻擊 0 種・星魄・法術與腐化 0 種・催化劑・蒸餾情緒 1 種・瓦爾通貨 0 種・星籤 0 種・符文 0 種・高階符文 0 種・魂核符文 0 種・增幅・吉卡尼魂核 0 種・命定增幅符文 0 種・有名字的魂核 0 種・魔偶符文 0 種・門票・劫盜・活動 0 種・星諭卡 0 種", // 2026-11-11：＋命定增幅符文；2026-11-04：＋魂核、魔偶兩組
                 CurrencyGroups.summary(counts));
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.Group.BASIC.next());
         assertEquals(CurrencyGroups.Group.CARDS, CurrencyGroups.Group.BASIC.previous()); // 2026-10-19：星諭卡在最後

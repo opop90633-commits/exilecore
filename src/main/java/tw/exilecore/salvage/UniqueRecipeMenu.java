@@ -601,12 +601,10 @@ public final class UniqueRecipeMenu extends Menu {
                     null, counter, player.getUniqueId(), player.getName()));
             // 放進這一組第一件空出來的那一格：一定放得下，不會因為背包滿了掉在地上
             inventory.setItem(group.getFirst().slot(), item);
-            if (pick.chase() && !chaseMode) {
+            if (pick.chase()) {
+                // 2026-11-11 照站長「追逐級三換一換出來後也要廣播」：追逐級換追逐級也全服廣播（broadcastChase 順便記產出）；
+                //   這次之前只有一般傳奇換到追逐級才廣播，追逐級換追逐級只記產出（2026-11-02）
                 chaseResults.add(result);
-            } else if (pick.chase() && plugin.economy() != null) {
-                // 2026-11-02 照站長：追逐級換追逐級也算新產出（不廣播）；這次之前不記
-                plugin.economy().ledger().of(player).produced(tw.exilecore.loot.LootService.CHASE_KIND + pick.id(),
-                        tw.exilecore.economy.EconomySources.UNIQUE_RECIPE, 1);
             }
         }
         selected.clear();
@@ -634,7 +632,7 @@ public final class UniqueRecipeMenu extends Menu {
         player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 0.6f, 1.4f);
         if (plugin.loot() != null) {
             for (final ItemData result : chaseResults) {
-                plugin.loot().broadcastChase(player, result, tw.exilecore.economy.EconomySources.UNIQUE_RECIPE); // 一般傳奇換到追逐級：全服廣播（追逐級換追逐級不廣播）
+                plugin.loot().broadcastChase(player, result, tw.exilecore.economy.EconomySources.UNIQUE_RECIPE); // 換到追逐級：全服廣播（2026-11-11 起追逐級換追逐級也廣播）
             }
         }
     }

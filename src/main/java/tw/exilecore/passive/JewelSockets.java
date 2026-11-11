@@ -372,6 +372,9 @@ public final class JewelSockets {
             if (voice && (repository.base(data.base()) == null || repository.base(data.base()).isRadiusJewel())) {
                 continue; // 嗓音的孔不在天賦樹上：半徑珠寶沒有範圍可以影響（放不進去，以前放的也不算）
             }
+            if (voice && data.rarity() == tw.exilecore.item.Rarity.UNIQUE) {
+                continue; // 2026-11-11 照 PoE2（不祥珠寶孔不能放傳奇珠寶）：放不進去，以前放的也不算；這次之前照算
+            }
             if (TimelessJewels.isTimeless(repository.base(data.base()))) {
                 continue; // 2026-10-26：永恆珠寶沒有自己的屬性，效果是征服節點（TimelessJewels.treeModifiers），也不佔傳奇珠寶的名額
             }
@@ -585,13 +588,10 @@ public final class JewelSockets {
         if (voiceCount(plugin.items().repository(), data) > 0) {
             return PassiveState.Result.fail("低語之門不能放進低語之門的孔");
         }
-        final String unique = uniqueOf(plugin, stack);
-        if (unique != null) {
-            for (final ItemStack placed : state.jewels().values()) {
-                if (unique.equals(uniqueOf(plugin, placed))) {
-                    return PassiveState.Result.fail("同一種傳奇珠寶只能配一顆（天賦樹上已經有一顆了）");
-                }
-            }
+        // 2026-11-11 照站長「不祥珠寶孔原作不能放傳奇珠寶」：PoE2 Sinister Jewel Sockets「Unique Jewels cannot be socketed」；
+        //   這次之前傳奇珠寶（同一種沒配過的）放得進去
+        if (data.rarity() == tw.exilecore.item.Rarity.UNIQUE) {
+            return PassiveState.Result.fail("低語之門的孔不能放傳奇珠寶");
         }
         final ItemStack one = stack.clone();
         one.setAmount(1);

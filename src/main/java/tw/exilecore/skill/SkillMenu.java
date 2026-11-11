@@ -428,7 +428,9 @@ public final class SkillMenu extends Menu {
             return List.of("<#b4a0ff>⚔ 武器賦予的技能", "<red>沒拿著賦予這個技能的武器：不能用（輔助、按鍵都留著）");
         }
         // 2026-10-28 照 PoE2：輔助孔照等級自動開，不能用鑿星石開；這次之前寫「可以掛輔助、開孔」
-        return List.of("<#b4a0ff>⚔ 武器賦予的技能：等級照武器的物品等級", "<dark_gray>不是寶石：不能升級、取出、腐化、加品質、開孔；可以掛輔助",
+        // 2026-11-11 照站長「這個技能等級好像沒按照物品等級」（暮色瓣落的午夜天頂固定 13 級，照 poe2db）：寫清楚傳奇寫明等級的照那一級；
+        //   這次之前一律寫「等級照武器的物品等級」，項鍊、衣服賦予的、固定等級的看起來像算錯
+        return List.of("<#b4a0ff>⚔ 裝備賦予的技能：等級照物品等級（傳奇寫明「等級 X」的固定那一級）", "<dark_gray>不是寶石：不能升級、取出、腐化、加品質、開孔；可以掛輔助",
                 "<dark_gray>輔助孔照等級自動開：Lv." + SkillLoadout.grantedSocketLevel(3) + " 第 3 孔、Lv." + SkillLoadout.grantedSocketLevel(4)
                         + " 第 4 孔、Lv." + SkillLoadout.grantedSocketLevel(5) + " 第 5 孔（等級變低時多出來的輔助放回背包）");
     }

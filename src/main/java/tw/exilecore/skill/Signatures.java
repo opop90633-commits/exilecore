@@ -481,8 +481,8 @@ final class Signatures {
         }
         if ("lance".equals(signature)) {
             chargedLance.put(player.getUniqueId(), benefit);
-            state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：插 1.5 秒、每 " + (benefit > 1 ? "0.1" : "0.2")
-                    + " 秒放電" + (benefit > 1 ? "（倍星）" : ""), now + 30);
+            // 2026-11-11 照站長「原作沒有的刪掉」：倍星不再讓放電間隔減半（原作 Storm Lance 消耗怒星只有固定的 0.2 秒）
+            state.notice("<#ffe14a>" + tw.exilecore.item.ItemRenderer.escape(definition.name()) + " 消耗怒星：插 1.5 秒、每 0.2 秒放電", now + 30);
             plugin.players().display(player, state);
             // 2026-10-28 照 PoE2 Storm Lance 的 Frenzy-Charged：消耗怒星的那一支擲出去的傷害照自己的表（25% → 91% → 329%）、
             // 物理全部轉閃電（SkillStages 的 infused）；這次之前照一般那支的表、多轉 30% 閃電。
@@ -536,9 +536,12 @@ final class Signatures {
 
     /** 你的其他技能打在插著的霆落矛附近：把它提早引爆（2026-10-15，照 PoE2「被其他技能引爆」）。 */
     int detonateNear(final Player player, final SkillDefinition definition, final Location at) {
-        if (at == null || "lance".equals(service.config().signature(definition.id()))) {
+        if (at == null) {
             return 0;
         }
+        // 2026-11-11 照站長「霆落矛自己也能引爆，但傷害更少 20%」：霆落矛放下去（準心處）也引爆 3 格內插著的矛，這種引爆更少 20%；
+        //   這次之前霆落矛自己不算
+        final boolean own = "lance".equals(service.config().signature(definition.id()));
         final Deque<Lance> mine = lances.get(player.getUniqueId());
         if (mine == null || mine.isEmpty()) {
             return 0;
@@ -549,7 +552,7 @@ final class Signatures {
             final Lance lance = it.next();
             if (lance.at().getWorld() == at.getWorld() && lance.at().distance(at) <= LANCE_DETONATE_RANGE) {
                 it.remove();
-                detonate(player, lance, true); // 2026-10-31：被其他技能引爆更多 50%
+                detonate(player, lance, true, own ? 1 - LANCE_SELF_DETONATE_LESS : 1); // 2026-10-31：被其他技能引爆（2026-11-11 起沒有更多 50%；霆落矛自己引爆更少 20%）
                 count++;
             }
         }
@@ -691,51 +694,67 @@ final class Signatures {
 
     private void lodge(final Player player, final SkillBuild build, final Location at, final long now, final boolean own) {
         final Deque<Lance> mine = lances.computeIfAbsent(player.getUniqueId(), uuid -> new ArrayDeque<>());
-        // 2026-10-31 照站長（A＋B 統整成只要 A）：新的矛落地時，引爆附近已經插著的矛（原作只有其他技能能引爆）
-        if (own) {
-            for (final Iterator<Lance> it = mine.iterator(); it.hasNext(); ) {
-                final Lance old = it.next();
-                if (old.at().getWorld() == at.getWorld() && old.at().distance(at) <= LANCE_DETONATE_RANGE) {
-                    it.remove();
-                    detonate(player, old, false);
-                }
-            }
-        }
+        // 2026-11-11 照站長「改成自己的矛落地不會引爆別支矛」（照 PoE2：只有別的技能能引爆）：拿掉。
+        //   這次之前（2026-10-31 起）消耗怒星的矛落地會引爆 3 格內已經插著的矛
         // 2026-10-28 照 PoE2 Storm Lance 的品質：超載的矛上限 +(0—1)（無條件捨去）
         // 2026-10-28 照 PoE2：「上限 3 支插著的矛」吃 +x 上限（過剩）
-        while (mine.size() >= LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
-                + SkillLimits.bonus(plugin.players().sheet(player), build)) {
-            // 2026-10-31 照站長：超過上限時最舊的那支引爆（原作是直接消失：Limit：the oldest effect will disappear）
-            final Lance oldest = mine.pollFirst();
-            if (oldest != null && oldest.at().getWorld() == player.getWorld()) {
-                detonate(player, oldest, false);
-            }
-        }
         final Integer chargedBenefit = own ? chargedLance.remove(player.getUniqueId()) : null;
         final boolean charged = chargedBenefit != null;
+        // 2026-11-11 照站長「兩種分開算」（PoE2 Storm Lance：一般的矛、消耗怒星的矛各自最多 3 支）：只數同一種的；這次之前兩種共用 3 支
+        final int cap = LANCE_MAX + OriginalSkills.qualityInt(build.qualityFlat(tw.exilecore.stats.GemQualityKeys.OVERCHARGED_LIMIT))
+                + SkillLimits.bonus(plugin.players().sheet(player), build);
+        int same = 0;
+        for (final Lance each : mine) {
+            if ((each.zapEvery() < LANCE_ZAP) == charged) {
+                same++;
+            }
+        }
+        for (final Iterator<Lance> it = mine.iterator(); same >= cap && it.hasNext(); ) {
+            final Lance old = it.next();
+            if ((old.zapEvery() < LANCE_ZAP) != charged) {
+                continue;
+            }
+            // 2026-11-11 照站長「照原作」（PoE2 Limit：超過上限時最舊的那支消失）：兩種被擠掉都直接消失、沒有傷害。
+            //   這次之前（2026-10-31 起）被擠掉會引爆；今天先改成一般的放一次電、消耗怒星的消失，再改成都消失
+            it.remove();
+            same--;
+        }
         final SkillBuild unstaged = own ? unstagedLance.remove(player.getUniqueId()) : null;
         final SkillBuild lodged = charged && unstaged != null ? unstaged : build;
-        // 2026-10-24：倍星觸發（算兩顆）：放電間隔減半 = 放電次數加倍
-        final long zap = charged ? Math.max(1, LANCE_CHARGED_ZAP / Math.max(1, chargedBenefit)) : LANCE_ZAP;
+        // 2026-11-11 照站長「原作沒有的刪掉」：倍星不再讓放電間隔減半（這次之前 0.2 秒 ÷ 倍星的 2）
+        final long zap = charged ? LANCE_CHARGED_ZAP : LANCE_ZAP;
+        // 2026-11-11 照 PoE2（PoB2 StormLancePlayer 只有 overcharged_spear_base_frequency_ms 800／200，沒有另外的第一次延遲）：
+        //   插下後隔一個放電間隔就第一次放電；這次之前一般的多等 0.5 秒（1.3 秒）、消耗怒星的多等 0.2 秒（0.4 秒）
         mine.addLast(new Lance(at.clone(), lodged, now + (charged ? LANCE_CHARGED_LIFE : LANCE_LIFE),
-                new long[] {now + (charged ? 4 : 10) + zap}, zap));
+                new long[] {now + zap}, zap));
     }
 
-    /** enhanced：被其他技能引爆（原作的條件）——更多 {@link Primed#MORE}；自己引爆、時間到、擠掉的是基礎數值。 */
+    /** enhanced：被其他技能引爆（沒有額外加成；一般的矛也照原作射 16 道）。 */
+    /** 2026-11-11 照站長：霆落矛自己引爆插著的矛，傷害更少 20%。 */
+    static final double LANCE_SELF_DETONATE_LESS = 0.2;
+
     private void detonate(final Player player, final Lance lance, final boolean enhanced) {
+        detonate(player, lance, enhanced, 1);
+    }
+
+    /** scale：這次引爆的傷害倍率（霆落矛自己引爆 0.8）。 */
+    private void detonate(final Player player, final Lance lance, final boolean enhanced, final double scale) {
         if (lance == null) {
             return;
         }
         // 2026-11-11 照站長「超過上限時最舊的那支一樣會擠掉造成傷害，但閃電數量要跟沒擠之前一樣，只有消耗怒星的那支時間到引爆才有那一大把雷」：
         //   一般的矛（沒消耗怒星）被擠掉、被引爆時只放一次平常的電（連鎖閃電），不再射 16 道。
         //   這次之前一般的矛被擠掉也射 16 道 405%（單體 Boss 全部打在牠身上），每丟一次就多好幾次引爆（輸出紀錄 4500 萬～7700 萬的主因）
-        if (lance.zapEvery() >= LANCE_ZAP) {
+        // 2026-11-11 照站長「被別的技能引爆時照原作射 16 道」（PoB2 StormLancePlayer：「If the Spear is Detonated by another Skill,
+        //   it immediately unleashes a volley of bolts」）：一般的矛被別的技能引爆（enhanced）照樣 16 道；被擠掉、被消耗怒星的矛落地引爆只放一次電
+        if (lance.zapEvery() >= LANCE_ZAP && !enhanced) {
             zap(player, lance);
             lance.at().getWorld().playSound(lance.at(), Sound.ENTITY_LIGHTNING_BOLT_IMPACT, SoundCategory.PLAYERS, 0.4f, 1.6f);
             return;
         }
         final SkillBuild raw = subBuild(player, "storm_lance_burst", lance.build(), share("storm_lance_burst", lance.build(), LANCE_BURST_SHARE));
-        final SkillBuild sub = raw != null && enhanced ? raw.withProfile(raw.profile().scaled(Primed.MORE, "被其他技能引爆")) : raw;
+        // 2026-11-11 照站長「被別的技能引爆應該沒更多 50%」：拿掉（原作 Storm Lance 被引爆沒有額外加成）；這次之前更多 Primed.MORE
+        final SkillBuild sub = raw != null && scale != 1 ? raw.withProfile(raw.profile().scaled(scale, "霆落矛自己引爆")) : raw;
         if (sub != null) {
             // 2026-10-31 照站長：引爆的 3 格吃範圍加成（半徑 × 範圍倍率）
             // 2026-10-26 照 PoE2：不是一圈爆炸，是往 3 格內的敵人射 16 道閃電（每道隨機挑一個敵人；這次之前是一圈 nova）
@@ -763,7 +782,12 @@ final class Signatures {
             }
         }
         // 2026-10-15（PoE2）：炸開的地方留下帶電地。2026-10-26 照 PoE2：只有消耗怒星的那一支炸開才留（感電地面，不造成傷害）
-        final SkillBuild ground = lance.zapEvery() >= LANCE_ZAP ? null : subBuild(player, "storm_lance_ground", lance.build(), LANCE_GROUND_SHARE);
+        final SkillBuild groundRaw = lance.zapEvery() >= LANCE_ZAP ? null : subBuild(player, "storm_lance_ground", lance.build(), LANCE_GROUND_SHARE);
+        // 2026-11-11 照站長「檢查輸出有沒有 bug」（輸出紀錄「霆矛帶電地」一場 3300 萬）：subBuild 換成矛的設定時把帶電地自己的
+        //   ground.effect（感電地面、不造成傷害）丟掉了，變成每 0.5 秒打矛那一下的 20%、8 秒、最多 3 塊。補回來：照原作只感電、不打傷害
+        final SkillBuild ground = groundRaw == null ? null : groundRaw.withProfile(groundRaw.profile().withLocal(List.of(
+                tw.exilecore.stats.Modifier.flat(GroundEffects.FLAG, 1, "感電地面"),
+                tw.exilecore.stats.Modifier.flat(GroundEffects.SHOCK, 20, "感電地面"))));
         if (ground != null) {
             service.procCast(Origin.at(player, lance.at().clone().add(0, 0.1, 0), SkillTargets.facing(player)), ground, null);
         }

@@ -587,6 +587,18 @@ public final class SkillService {
         return (int) Math.max(2, Math.round(seconds * 20 / speed));
     }
 
+    /**
+     * 2026-11-11 照站長「幻影放弩技能不用裝填…照原作改」（PoE2 幻影射完彈匣才換下一招、彈匣空了要裝填）：幻影用的彈匣大小與裝填 tick
+     * （照玩家自己的彈匣、裝填速度算）；不用彈匣的技能回傳 null。
+     */
+    public int[] mirageAmmo(final Player player, final SkillBuild build) {
+        if (build == null || !ammoSkill(build.definition())) {
+            return null;
+        }
+        final tw.exilecore.stats.StatSheet sheet = plugin.players().sheet(player);
+        return new int[] {clipSize(config, build, sheet), reloadTicks(build, sheet)};
+    }
+
     private void useAmmo(final Player player, final SkillRuntime runtime, final PlayerState state, final SkillDefinition definition,
                          final SkillBuild build, final tw.exilecore.stats.StatSheet sheet, final long now) {
         final int clip = clipSize(config, build, sheet);
@@ -1079,6 +1091,11 @@ public final class SkillService {
         if (spec.perfect()) {
             hold = Math.max(hold, spec.perfectTick(interval));
         }
+        // 2026-11-11 照站長「弩的部分 做」（熾漿砲輸出紀錄：幻弓影＞熾漿砲中位數 90 萬、自己射 6.6 萬）：充滿才射的（Plasma Blast）幻影也要引導滿一次攻擊時間
+        //   （含總攻擊時間 +2 秒）；這次之前沒有疊層、完美時機就只等 1 tick，幻影每 0.25 秒射一發全額的熾漿砲
+        if (FullCharge.required(build.definition().id())) {
+            hold = Math.max(hold, FullCharge.fullTicks(interval));
+        }
         hold = Math.max(1, hold);
         return new MirageRelease(hold, Signatures.released(build, spec, stages, spec.perfect(), sheet, hold / 20.0));
     }
@@ -1318,6 +1335,18 @@ public final class SkillService {
     /** 召喚物數量（動作列：快捷欄右邊）。 */
     public java.util.List<MinionService.HudCount> minionCounts(final Player player) {
         return minions.hudCounts(player.getUniqueId());
+    }
+
+    /**
+     * 2026-11-11 照站長「偷到的怪物詞綴照原作補」：喚靈的、復甦的（PoE2 Reviving Minions）——倒下等復活的常駐召喚物馬上回來，最多 max 隻；回傳幾隻。
+     * 這次之前沒有這個入口（只有骸餘饗用）。
+     */
+    public int reviveWaitingMinions(final Player player, final int max) {
+        final AuraService auras = auras();
+        if (auras == null || max <= 0) {
+            return 0;
+        }
+        return auras.reviveWaiting(player.getUniqueId(), skillId -> 1, new double[] {max}, plugin.getServer().getCurrentTick());
     }
 
     /** 給玩家一個有時限的增益（神龕之類；同代號再給一次就重新計時）。 */
@@ -4855,9 +4884,9 @@ public final class SkillService {
      * 2026-11-10 照站長「估算補上霆落矛的引爆」：霆落矛（signature lance）擲出那一下之外的每秒傷害——插地矛的放電（storm_lance_bolt）
      * 與引爆的 16 道雷（storm_lance_burst）。假設單體目標、矛都插在目標身上、一直丟：
      * <ul>
-     *   <li>2026-11-11 照站長：一般的矛插滿 3 支之後，新的落地把最舊的擠掉，擠掉時只放一次平常的電（不再射 16 道）；
+     *   <li>2026-11-11 照站長：霆落矛自己也引爆準心 3 格內插著的矛（更少 20%），所以一直丟在同一隻身上時每丟一支就引爆前一支（16 道）；
      *       16 道只有消耗怒星的那支時間到引爆才有（這裡不算消耗怒星的那種）。這次之前照「每擲一支就引爆前一支、16 道」算。</li>
-     *   <li>放電：一支矛插下後 1.3 秒第一次、之後每 0.8 秒一次，直到被下一支引爆（最多 6 秒）；丟得快的話根本來不及放電。</li>
+     *   <li>放電：一支矛插下後 0.8 秒第一次、之後每 0.8 秒一次，直到被擠掉（最多 6 秒）。</li>
      *   <li>每道、每次的傷害 = 擲出那一下（含暴擊期望）× 自己的傷害表 ÷ 擲出的傷害表（同 Signatures.share）；消耗怒星的那種不算。</li>
      * </ul>
      * 不是霆落矛回傳 0。純計算（測試用 {@link #lanceExtraDps}）。
@@ -4875,15 +4904,14 @@ public final class SkillService {
 
     /** 2026-11-10：{@link #lanceExtra} 的算式（純函式）。 */
     static double lanceExtraDps(final double perThrow, final double throwsPerSecond, final double burstShare, final double zapShare) {
-        // 2026-11-11：同時插 3 支，一支插多久 = 被擠掉前（3 次擲）或時間到（6 秒）
-        final double pushedAfter = Signatures.LANCE_MAX * 20.0 / throwsPerSecond;
-        final double lifeTicks = Math.min(Signatures.LANCE_LIFE, pushedAfter);
-        final double firstZap = 10 + Signatures.LANCE_ZAP;
-        int zaps = lifeTicks < firstZap ? 0 : 1 + (int) Math.floor((lifeTicks - firstZap) / Signatures.LANCE_ZAP);
-        if (pushedAfter < Signatures.LANCE_LIFE) {
-            zaps++; // 被擠掉時多放一次電
-        }
-        return throwsPerSecond * perThrow * zaps * zapShare;
+        // 2026-11-11 照站長「霆落矛自己也能引爆，但傷害更少 20%」：一直丟在同一隻身上，每丟一支就引爆前一支（16 道 × 0.8）；
+        //   一支插多久 = 下一次丟之前（最多 6 秒）
+        final double lifeTicks = Math.min(Signatures.LANCE_LIFE, 20.0 / throwsPerSecond);
+        final double firstZap = Signatures.LANCE_ZAP;
+        final int zaps = lifeTicks < firstZap ? 0 : 1 + (int) Math.floor((lifeTicks - firstZap) / Signatures.LANCE_ZAP);
+        final boolean detonated = lifeTicks < Signatures.LANCE_LIFE;
+        return throwsPerSecond * perThrow * (zaps * zapShare
+                + (detonated ? Signatures.LANCE_BURST_BOLTS * burstShare * (1 - Signatures.LANCE_SELF_DETONATE_LESS) : 0));
     }
 
     /**

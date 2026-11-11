@@ -284,7 +284,8 @@ public final class CardService {
             case "essence" -> {
                 final List<CurrencyType> essences = new ArrayList<>();
                 for (final CurrencyType type : plugin.currencies().repository().all()) {
-                    if (type.operation() == CurrencyOperation.ESSENCE) {
+                    // 2026-11-11：pick_weight 0 的（裂隙／妄念／深淵／極恐星魄、星界合金：只有 Boss 掉）不抽；這次之前照 1 抽得到
+                    if (type.operation() == CurrencyOperation.ESSENCE && type.pickWeight() != 0) {
                         essences.add(type);
                     }
                 }

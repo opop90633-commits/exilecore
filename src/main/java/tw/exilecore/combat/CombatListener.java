@@ -1026,6 +1026,7 @@ public final class CombatListener implements Listener {
             hitByRare = !attackerIsPlayer && !attackerIsMinion && plugin.monsters() != null && plugin.monsters().data(attacker)
                     .map(data -> data.rarity() == tw.exilecore.monster.MonsterRarity.RARE || data.rarity() == tw.exilecore.monster.MonsterRarity.UNIQUE)
                     .orElse(false);
+            hitAttacker = attacker; // 2026-11-11（偷到的近身的）：只有近的敵人打得到你
             tw.exilecore.ascendancy.AscendancyEffects.hitBy(attacker); // 2026-11-01 照 PoE2 Navira's Embrace：泡泡只擋泡泡外面的敵人
             hitDeflected = result.deflected(); // 2026-11-07（遺忘看守）：被偏斜的擊中有 x% 先由夥伴承受
             applyToPlayer((Player) defender, defenderState, result.esDamage(), result.lifeDamage(), event,
@@ -1033,6 +1034,7 @@ public final class CombatListener implements Listener {
                     (!attackerIsPlayer && !attackerIsMinion) || pvpAttacker != null, pvpAttacker);
             tw.exilecore.ascendancy.AscendancyEffects.hitBy(null);
             hitByRare = false;
+            hitAttacker = null;
             hitDeflected = false;
             if (pvpAttacker != null) {
                 pvpRewards(attackerIsPlayer, credit, attackerSheet, skill, result, defender);
@@ -1593,6 +1595,8 @@ public final class CombatListener implements Listener {
      */
     /** 2026-10-28：這一下是稀有、傳奇怪物打的（applyToPlayer 的補償用；主執行緒，呼叫完就清掉）。 */
     private boolean hitByRare;
+    /** 2026-11-11：這一下是誰打的（敵人打玩家時才有；偷到的近身的要看距離）。 */
+    private LivingEntity hitAttacker;
 
     /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：這一下被偏斜了（applyToPlayer 的「偏斜的擊中先由夥伴承受」用；主執行緒，呼叫完就清掉）。 */
     private boolean hitDeflected;
@@ -1712,6 +1716,12 @@ public final class CombatListener implements Listener {
             esTaken = asc[0];
             lifeTaken = asc[1];
             ascMana = asc[2];
+        }
+        // 2026-11-11 照站長「偷到的怪物詞綴照原作補（PoE2）」：近身的、替身的、熔盾的先吃，幻雷的、晶爆的被擊中時觸發（StolenMods）；這次之前偷到這些沒效果
+        if (byEnemy && esTaken + lifeTaken > 0 && plugin.combat() != null && plugin.combat().stolenMods() != null) {
+            final double[] stolen = plugin.combat().stolenMods().absorb(player, sheet, hitAttacker, esTaken, lifeTaken, effect -> defer(player, effect));
+            esTaken = stolen[0];
+            lifeTaken = stolen[1];
         }
         // 傳奇「受到的傷害先從魔力扣」與「受到的傷害有 x% 之後慢慢回成生命」
         final IncomingDamage rawSplit = IncomingDamage.split(esTaken, lifeTaken, Math.max(0, state.mana() - ascMana),

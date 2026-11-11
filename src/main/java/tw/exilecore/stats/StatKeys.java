@@ -70,6 +70,16 @@ public final class StatKeys {
     public static final String DROP_RARITY = "drop.rarity";
     /** 2026-10-18：打怪的經驗多幾 %（INCREASED；稱號這類加成用，跟累積贊助的經驗加成加在一起算）。 */
     public static final String EXPERIENCE_GAIN = "experience.gain";
+    /**
+     * 2026-11-11 照站長（S2 贊助禮包的稱號「死亡時經驗懲罰 -5%」）：死亡扣的經驗加減幾個百分點（FLAT；−5 = 原本扣 10% 變 5%，
+     * 跟累積贊助的減免疊加、最低 0；PlayerStateService.deathPenaltyRatio）。這次之前只有累積贊助那一階能減。
+     */
+    public static final String DEATH_PENALTY = "death.penalty";
+
+    /** 2026-11-11：照 {@link #DEATH_PENALTY} 調過的死亡懲罰比例（ratio 是 0～1，points 是屬性表上的百分點；純函式）。 */
+    public static double deathPenaltyWith(final double ratio, final double points) {
+        return ratio <= 0 ? ratio : Math.max(0, ratio + points / 100.0);
+    }
     /** 2026-10-18：怪物掉給你的金幣多幾 %（INCREASED；稱號這類加成用，跟累積贊助的金幣加成加在一起算）。 */
     public static final String GOLD_FIND = "gold.find";
 

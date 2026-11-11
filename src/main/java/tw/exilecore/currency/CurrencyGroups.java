@@ -31,6 +31,8 @@ public final class CurrencyGroups {
         CORES("魂核符文", "嵌進符文孔：只有武器（法杖類沒有）與某些防具部位有效果，有的僅限 1 顆（地圖絕境給）"), // 2026-11-05 照站長：「軍用武器」改成遊戲內通用的「武器」；這次之前寫軍用武器
         // 2026-11-08 照站長「吉卡尼的…魂核」：魂核那組 36 格放不下，增幅（深淵王）與吉卡尼的技能等級魂核（星坑 BOSS）另外一組
         AUGMENTS("增幅・吉卡尼魂核", "嵌進符文孔：增幅解鎖專屬詞綴（深淵王）；吉卡尼的魂核讓武器 +1 某一類技能等級（星坑 BOSS）"),
+        // 2026-11-11 照站長「流浪女巫艾珊德菈的智慧符文那整個系列」：21 顆增幅符文（晶淵之王掉），增幅那組放不下
+        SPECIAL_AUGMENTS("命定增幅符文", "嵌進符文孔：艾珊德菈、斯卡沃、費爾羅…那一系列，每顆只能嵌某種裝備、一個角色僅限 1 顆、可以被別的增幅換掉（晶淵之王掉）"),
         // 2026-11-08 照站長「一起補」：有名字的魂核 19 顆（某某的…魂核，絕境之主・審判者掉）；魂核那組放不下
         NAMED_CORES("有名字的魂核", "嵌進符文孔：某某的…魂核，每顆只在寫著的部位有效果（阿茲里的嵌上去拿不下來；絕境之主・審判者掉）"),
         IDOLS("魔偶符文", "嵌進符文孔：每顆只在某個部位與權杖有效果，一個角色僅限 1 顆（地圖軍團給）"),
@@ -171,6 +173,9 @@ public final class CurrencyGroups {
         if (type.uncutGem()) {
             return Group.GEM;
         }
+        if (CELESTIAL_ALLOY.equals(type.id())) {
+            return Group.VAAL; // 2026-11-11：星界合金（晶淵之王掉的，跟晶淵鑿放一起；這個是星魄的做法，不放星魄那組）
+        }
         if (VAAL_KEYS.contains(type.id())) {
             return Group.VAAL; // 2026-11-07：深坑首領鑰匙
         }
@@ -184,6 +189,7 @@ public final class CurrencyGroups {
             case VAAL_INFUSE_ARMOUR, VAAL_INFUSE_WEAPON, VAAL_INFUSE_JEWELLERY, VAAL_INFUSE_CASTER, ARCHITECT, EXTRACT, CULTIVATE,
                  SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT, BONUS_RUNE_SOCKET -> Group.VAAL; // 2026-11-07：瓦爾通貨；2026-11-08：晶淵鑿
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
+                    : type.affix() != null && type.affix().startsWith(SPECIAL_AUGMENTS) ? Group.SPECIAL_AUGMENTS // 2026-11-11：艾珊德菈、斯卡沃…那一系列
                     : type.affix() != null && (type.affix().startsWith("augment_") || type.affix().startsWith(JIQUANI_SKILL_CORES))
                     ? Group.AUGMENTS // 2026-11-08：增幅、吉卡尼的技能等級魂核（這次之前增幅在魂核那組）
                     : type.affix() != null && tw.exilecore.item.Runes.possessiveCore(type.affix()) ? Group.NAMED_CORES // 2026-11-08 照站長「一起補」
@@ -194,6 +200,11 @@ public final class CurrencyGroups {
             default -> Group.BASIC;
         };
     }
+
+    /** 2026-11-11 照站長「流浪女巫艾珊德菈的智慧符文那整個系列」（原作 RuneSpecial5～25）：runes.yml 的 special_＊。 */
+    static final String SPECIAL_AUGMENTS = "special_";
+    /** 2026-11-11：星界合金（Celestial Alloy）。 */
+    static final String CELESTIAL_ALLOY = "celestial_alloy";
 
     /** 2026-11-08：吉卡尼的技能等級魂核（runes.yml core_jiquani_<類>；魂核符文・吉卡尼本身是 core_jiquani，不算）。 */
     static final String JIQUANI_SKILL_CORES = "core_jiquani_";

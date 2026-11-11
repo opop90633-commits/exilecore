@@ -465,3 +465,29 @@ ess_horror_socketed:
     - { tier: 1, ilvl: 65, weight: 1, value: [60, 60] }
   mods:
     - { stat: local.rune_effect, type: INCREASED, value: "{value}" }
+
+# ---- 2026-11-11 照站長「新增第一個圖片的通貨」：星界合金（Celestial Alloy，poe2db：前綴、需求等級 52；一條詞綴兩行）----
+#   currencies.yml 的 celestial_alloy（ESSENCE、完美的做法：稀有物品隨機移除一條，再加這條）。照基底挑第一條出得來的
+celestial_caster:
+  type: prefix
+  group: celestial_alloy
+  spawn_tags: [essence, wand, staff]
+  names: [星界的]
+  text: "+{value} 最大魔力、+1 全部法術技能等級"
+  tiers:
+    - { tier: 1, ilvl: 52, weight: 1, value: [142, 188] }
+  mods:
+    - { stat: mana.max, type: FLAT, value: "{value}" }
+    - { stat: skill.level, type: FLAT, value: 1, tags: [spell] }
+
+celestial_martial:
+  type: prefix
+  group: celestial_alloy
+  spawn_tags: [essence, melee_1h, melee_2h, quarterstaff, spear, bow, crossbow]
+  names: [星界的]
+  text: "+{value} 命中、增加 {speed}% 攻擊速度"
+  tiers:
+    - { tier: 1, ilvl: 52, weight: 1, value: [327, 427], speed: [5, 8] }
+  mods:
+    - { stat: accuracy, type: FLAT, value: "{value}" }
+    - { stat: local.attack_speed, type: INCREASED, value: "{speed}" }

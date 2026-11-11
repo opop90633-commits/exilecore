@@ -95,7 +95,7 @@ public final class CurrencyListener implements Listener {
             return;
         }
         if (clicked != null && clicked.operation() == CurrencyOperation.EXTRACT) {
-            // 2026-11-07 照 PoE2 的萃取石：毀掉裝備、符文還給你
+            // 2026-11-07 照 PoE2 的萃取石：毀掉裝備、符文還給你（2026-11-11 同日停用又照站長「剝符石再加回來」恢復；符文、魂核拿不出來之後，這是唯一拿回來的辦法）
             VaalCrafting.extract(plugin, player, event, clicked, target, why);
             return;
         }
@@ -355,11 +355,10 @@ public final class CurrencyListener implements Listener {
         player.closeInventory();
         plugin.dialogs().form(player, "<dark_gray>覆蓋符文",
                 List.of("<gray>這件的符文孔都滿了。", "<gray>選一顆舊的符文換成「<white>" + tw.exilecore.item.ItemRenderer.escape(rune.name()) + "</white>」",
-                        data.corrupted() ? "<red>已腐化：被換掉的那顆會消失（拿不回來）"
-                                // 2026-11-11 照站長「照原作改」：增幅、遠古增幅、阿茲里的魂核那一孔不能被覆蓋（清單裡不列）
-                                : data.runes().stream().anyMatch(VaalCrafting::socketBound)
-                                ? "<green>被換掉的那顆會還給你<gray>（增幅、遠古增幅、阿茲里的魂核嵌死了，那一孔不能換，不在清單裡）"
-                                : "<green>被換掉的那顆會還給你"),
+                        // 2026-11-11 照站長「一般符文也照原作」：被換掉的一律消失（這次之前沒腐化的會還）
+                        data.runes().stream().anyMatch(VaalCrafting::socketBound)
+                                ? "<red>被換掉的那顆會消失（拿不回來）<gray>；增幅、遠古增幅、阿茲里的魂核嵌死了，那一孔不能換，不在清單裡"
+                                : "<red>被換掉的那顆會消失（照原作，符文、魂核嵌上去就拿不回來）"),
                 List.of(new tw.exilecore.gui.Dialogs.Choice("slot", "要覆蓋哪一顆", options, "0")),
                 "覆蓋", answers -> {
                     final ItemStack stack = player.getInventory().getItem(slot);
@@ -387,7 +386,7 @@ public final class CurrencyListener implements Listener {
                     }
                     final String before = plugin.items().toJson(now);
                     final String old = now.runes().get(index);
-                    final boolean refund = !now.corrupted() && !VaalCrafting.socketBound(old) && currencies.returnRune(player, plugin.economy().wallet(), old); // 2026-11-07：遠古增幅（假說）嵌死了，換掉不還
+                    final boolean refund = false; // 2026-11-11 照站長「一般符文也照原作」：符文、魂核被蓋掉都不還（原作拿不出來）；這次之前沒腐化的會還（currencies.returnRune）
                     now.replaceRune(index, rune.affix());
                     if (plugin.guide() != null) {
                         plugin.guide().milestone(player, tw.exilecore.guide.GuideService.RUNE); // 2026-10-30 新手教學

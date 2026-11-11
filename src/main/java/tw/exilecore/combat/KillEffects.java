@@ -311,22 +311,8 @@ public final class KillEffects implements Listener {
      * 2026-11-07 從 stealMods 抽出來，算法沒變。
      */
     public static List<Modifier> stolenModifiers(final tw.exilecore.monster.MonsterConfig.MonsterMod mod, final String source) {
-        final List<Modifier> modifiers = new java.util.ArrayList<>();
-        for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
-            modifiers.add(affixMod.toModifier(Map.of(), source));
-        }
-        for (final Map.Entry<DamageType, Double> entry : mod.addedFromPhysical().entrySet()) {
-            modifiers.add(Modifier.flat(StatKeys.damageGain(entry.getKey()), entry.getValue() * 100, source));
-        }
-        if (mod.vanillaSpeedBonus() > 0) {
-            modifiers.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, mod.vanillaSpeedBonus(), source));
-        }
-        if (mod.aura() != null) {
-            for (final tw.exilecore.item.AffixMod affixMod : mod.aura().stats()) {
-                modifiers.add(affixMod.toModifier(Map.of(), source));
-            }
-        }
-        return modifiers;
+        // 2026-11-11 照站長「偷到的怪物詞綴照原作補（PoE2）」：交給 StolenMods（怪物專用的屬性換成玩家版、行為詞綴掛旗標）；這次之前在這裡照套，招式詞綴是空的
+        return StolenMods.modifiers(mod, source);
     }
 
     /** 2026-10-26：改成 public（天賦「用斧擊殺時疾速」TreeMechanics 也給）。 */

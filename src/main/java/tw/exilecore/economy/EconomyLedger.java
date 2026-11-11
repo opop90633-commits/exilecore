@@ -53,6 +53,7 @@ public final class EconomyLedger {
     public static final String CARD_GAMBLE = EconomySources.CARD_GAMBLE;
     public static final String SLOTS_BET = EconomySources.SLOTS_BET; // 2026-11-02 拉霸機
     public static final String SLOTS = EconomySources.SLOTS;
+    public static final String UNIQUE_RECIPE = EconomySources.UNIQUE_RECIPE; // 2026-11-11 映星鏡換追逐級傳奇
 
     /** 來源給人看的名字。 */
     public static String sourceName(final String source) {

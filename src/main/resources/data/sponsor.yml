@@ -81,7 +81,7 @@ boosts:
 #   move_speed: N        移動速度 +N%（2026-10-24；到過的每一階疊加，跟 experience、gold 一樣：6 階各 5% = 共 30%）
 #   login_message: true  自訂上線訊息（/sponsor login 一句話，最多 40 字，過髒話表）
 #   level_fireworks: true 升級在頭上放一發煙火
-#   all_cosmetics: true  所有非限定的時裝不用抽就能套（限定的：S1、節慶、箱子限定的照舊）
+#   all_cosmetics: true  所有非限定的時裝不用抽就能套（限定的：S1、S2、節慶、箱子限定的照舊）
 #   lifetime_card: true  終身月卡（月卡的每日福利、免手續費、多組裝備等功能永遠有）
 #   2026-10-23 晚（最高階再多的）：join_announce 上線全服公告＋音效；badge 名字前的徽章（最多兩個字）；
 #   custom_name_color 名字顏色自選（/sponsor color #rrggbb… 或 rainbow）；monthly_rename_cards 每月送幾張改名卡；
@@ -293,6 +293,26 @@ cosmetics:
                       description: "金色翼骨、三層青藍漸層的羽片，羽尖拖著星砂" }
   s1_genesis_whale: { type: skin, slot: pet, art: pet_genesis_whale, name: 創世小星鯨, rarity: legendary, fashion_price: 0, limited: "S1 贊助禮包",
                       description: "圓滾滾的星空小鯨，噴氣孔冒極光、尾巴拖著星砂" }
+  # 2026-11-11 照站長「S2 贊助禮包的內容物，這次主打可愛點的時裝」→ 選了「企鵝冰淇淋」系列（絕版）：企鵝深藍 × 奶白 × 薄荷綠，
+  #   點綴草莓粉、甜筒、櫻桃。規則同 S1（不能抽、不能換、fashion_price 0）；發放：管理網頁「發放 → 時裝」選整組，
+  #   或 /ec sponsor give <玩家> cosmetic bundle:s2_penguin（贊助商城 Tebex 的 S2 贊助禮包就寫這一行）。這次之前沒有 S2 的時裝。
+  #   模型在 tools/gen_models3d.py 的 s2_*、armor3d_penguin；戰甲的身、腿、腳在 tools/gen_skin_art.py 的 penguin。
+  s2_penguin_armor: { type: skin, slot: armor, art: armor3d_penguin, name: 企鵝連帽鎧, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                      description: "企鵝兜帽（額頭上一張企鵝臉、頭頂倒扣一支冰淇淋）、奶白肚子與毛邊的絨布裝、領口一個草莓粉蝴蝶結（頭、身、腿、腳可以分開套）" }
+  s2_penguin_pop: { type: skin, slot: weapon, art: s2_penguin_pop, name: 企鵝雪糕劍, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                    description: "一整支企鵝造型的雪糕：頭上淋薄荷糖霜、撒糖粒、頂一顆櫻桃（近戰武器、法杖都能套）" }
+  s2_cone_staff: { type: skin, slot: weapon, art: s2_cone_staff, name: 霜淇淋甜筒杖, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                   description: "捲心酥杖身綁著蝴蝶結，杖頂一支雙球甜筒（薄荷球上有企鵝臉），頂上飄一片發光的雪花（近戰武器、法杖都能套）" }
+  s2_popsicle_bow: { type: skin, slot: bow, art: s2_popsicle_bow, name: 薄荷冰棒弓, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                     description: "薄荷色的冰棒弓臂、握把上一顆企鵝頭、上下各一球草莓冰淇淋，拉弓時弓臂會彎" }
+  s2_cone_crossbow: { type: skin, slot: crossbow, art: s2_cone_crossbow, name: 甜筒連發弩, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                      description: "甜筒餅的弩身、薄荷弩臂，前面一球草莓冰淇淋、托上坐一隻小企鵝，上弦有動作" }
+  s2_waffle_shield: { type: skin, slot: offhand, art: s2_waffle_shield, name: 企鵝威化盾, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                      description: "格子威化餅的盾，中間一張企鵝大臉、頭上頂一球薄荷冰淇淋，盾緣淋草莓醬（盾、箭袋都能套）" }
+  s2_frost_wings: { type: skin, slot: back, art: s2_frost_wings, name: 霜淇淋之翼, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                    description: "甜筒餅的翼骨，羽片是一支支薄荷、奶白、草莓的小冰棒，翼尖一片發光的雪花" }
+  s2_pet_penguin: { type: skin, slot: pet, art: s2_pet_penguin, name: 冰淇淋小企鵝, rarity: legendary, fashion_price: 0, limited: "S2 贊助禮包",
+                    description: "圓滾滾的小企鵝，戴薄荷毛線帽、圍草莓粉圍巾，舉著一支草莓甜筒" }
 
   # 2026-10 萬燈夜（萬聖節活動）限定：活動的兌換商店用糖果、燈芯換，南瓜王也有機會掉（data/festival.yml）。
   #   limited 寫來源，選單上顯示「萬燈夜限定」；沒有的人在商城、裝備幻化都看不到。
@@ -379,12 +399,18 @@ cosmetics:
 limited_titles:
   s1_founder: { name: 創世拓荒者, color: "gradient:#39e7ff:#f2c14e", limited: "S1 贊助禮包",
                 stats: [ { stat: drop.quantity, type: INCREASED, value: 5 }, { stat: drop.rarity, type: INCREASED, value: 5 } ] }   # 擁有就有：物品數量 +5%、物品稀有度 +5%（2026-10）
+  # 2026-11-11 照站長（S2 的稱號「物品數量+5% 死亡時經驗懲罰-5%」）：death.penalty 是百分點（原本死亡扣 10% 就變 5%，跟累積贊助的減免疊加、最低 0）
+  s2_penguin: { name: 冰原甜點師, color: "gradient:#8fe0c4:#ff9ab8", limited: "S2 贊助禮包",
+                stats: [ { stat: drop.quantity, type: INCREASED, value: 5 }, { stat: death.penalty, type: FLAT, value: -5 } ] }   # 擁有就有：物品數量 +5%、死亡扣的經驗 −5%
 
 # 一組時裝（2026-10）：管理網頁「發放 → 時裝」選【整組】、或 /ec sponsor give <玩家> cosmetic bundle:<代號> 一次發整組（已經有的不重複給）；
 #   項目可以是時裝代號或 title:稱號代號
 bundles:
   s1_genesis: { name: S1 贊助禮包・創世系列, cosmetics: [s1_genesis_armor, s1_genesis_blade, s1_genesis_staff, s1_genesis_bow, s1_genesis_crossbow,
                                                        s1_genesis_aegis, s1_genesis_wings, s1_genesis_whale, "title:s1_founder"] }
+  # 2026-11-11 照站長：S2 贊助禮包（企鵝冰淇淋系列 8 件＋限定稱號）
+  s2_penguin: { name: S2 贊助禮包・企鵝冰淇淋系列, cosmetics: [s2_penguin_armor, s2_penguin_pop, s2_cone_staff, s2_popsicle_bow, s2_cone_crossbow,
+                                                              s2_waffle_shield, s2_frost_wings, s2_pet_penguin, "title:s2_penguin"] }
 
 # 抽到已經有的特效：退回時裝幣（照稀有度）
 duplicate_refund: { common: 1, rare: 2, epic: 4, legendary: 8 }

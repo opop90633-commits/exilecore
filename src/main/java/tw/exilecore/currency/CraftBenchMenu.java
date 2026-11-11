@@ -529,6 +529,11 @@ public final class CraftBenchMenu extends Menu {
 
     /** 不能取出符文的原因；可以回傳 null。 */
     private static String runeProblem(final ItemData data) {
+        // 2026-11-11 照站長「一般符文也照原作」（原作符文、魂核都「cannot be retrieved but can be replaced」）：一律不能取出；
+        //   這次之前沒腐化的可以取出、還給你
+        if (data.runes().stream().allMatch(VaalCrafting::unretrievable)) {
+            return "符文、魂核嵌上去就拿不出來（照原作；拿新的符文點它可以換掉，換掉的不還）";
+        }
         if (data.corrupted()) {
             return "已腐化：不能取出符文（拿新的符文點它可以換掉）";
         }
@@ -553,8 +558,8 @@ public final class CraftBenchMenu extends Menu {
         final tw.exilecore.item.ItemBase base = plugin.items().repository().base(data.base());
         final List<tw.exilecore.gui.Dialogs.Option> options = new ArrayList<>();
         for (int i = 0; i < data.runes().size(); i++) {
-            if (VaalCrafting.socketBound(data.runes().get(i))) {
-                continue; // 2026-11-07 修正：遠古魂核拿不下來，不列
+            if (VaalCrafting.unretrievable(data.runes().get(i))) {
+                continue; // 2026-11-07 修正：遠古魂核拿不下來，不列；2026-11-11 照原作：魂核也拿不出來（可以被別的蓋掉）
             }
             final tw.exilecore.item.Runes.Rune rune = plugin.items().repository().rune(data.runes().get(i));
             final String text = rune == null ? data.runes().get(i) : rune.name()
@@ -562,7 +567,7 @@ public final class CraftBenchMenu extends Menu {
             options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
         }
         if (options.isEmpty()) {
-            fail("遠古魂核嵌上去就拿不下來");
+            fail("符文、魂核嵌上去就拿不出來（照原作；可以拿別的符文點裝備蓋掉，蓋掉的不還）");
             return;
         }
         final int slot = itemSlot;
@@ -588,7 +593,7 @@ public final class CraftBenchMenu extends Menu {
                         return;
                     }
                     final String id = current.runes().get(index);
-                    if (currencies().runeType(id) == null || VaalCrafting.socketBound(id)) { // 2026-11-07 修正（檢查發現）：遠古魂核（遠古增幅）嵌上去就拿不下來；這次之前工作台取得出來、可以一直搬
+                    if (currencies().runeType(id) == null || VaalCrafting.unretrievable(id)) { // 2026-11-07 修正（檢查發現）：遠古魂核（遠古增幅）嵌上去就拿不下來；這次之前工作台取得出來、可以一直搬
                         fail("這顆符文拿不出來");
                         return;
                     }

@@ -478,6 +478,28 @@ event_bosses:
         - { currency: rune_core_jiquani_squalls, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的狂風（Jiquani's Soul Core of Squalls）
         - { currency: rune_core_jiquani_thundering, chance: 0.01 }   # 2026-11-08 照站長「吉卡尼系列沒加進來」：魂核符文・吉卡尼的雷鳴（Jiquani's Soul Core of Thundering）
         - { currency: delve_socket_chisel, chance: 0.01 }   # 2026-11-08 照站長「新增一個通貨（多一個符文孔），在礦坑 BOSS 1% 掉落」：晶淵鑿
+        - { currency: celestial_alloy, chance: 0.01 }   # 2026-11-11 照站長「新增第一個圖片的通貨…都放進深坑 boss」：星界合金
+        - { currency: rune_special_assandra_wisdom, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_saqawal_sky, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_fenumus_agony, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_farrul_grace, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_farrul_chase, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_craiceann_warding, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_saqawal_memory, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_saqawal_erosion, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_farrul_hunt, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_craiceann_recovery, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_mannan_cruelty, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_grannell_mastery, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_fenumus_spinning, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_seske_archery, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_girt_wildness, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_fenumus_draining, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_myrk_summer, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_hestra_winter, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_leld_spring, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_greatwolf_claws, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_special_greatwolf_willpower, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
         - { skill: crystal_spike_burst, chance: 0.01 }   # 2026-11-08 照站長「星坑 BOSS 新增專屬的傳奇技能與輔助 1% 機率掉落」
         - { skill: shadow_volley_shafts, chance: 0.01 }
         - { support: azurite_resonance, chance: 0.01 }

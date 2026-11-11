@@ -12,15 +12,15 @@ import org.junit.jupiter.api.Test;
 class LanceEstimateTest {
 
     @Test
-    void fastThrowsPushOutWithOneZap() {
-        // 每秒 3 支：同時 3 支，每支插 20 tick 就被擠掉：26 tick 才第一次放電 → 0 次；擠掉時放 1 次
-        assertEquals(3 * 100 * 1 * 0.38, SkillService.lanceExtraDps(100, 3, 2.27, 0.38), 1e-6);
+    void eachThrowDetonatesThePreviousLance() {
+        // 每秒 3 支：每支插 6.7 tick 就被下一次丟引爆，來不及放電；每次引爆 16 道 × 2.27 倍 × 0.8（霆落矛自己引爆）
+        assertEquals(3 * 100 * 16 * 2.27 * 0.8, SkillService.lanceExtraDps(100, 3, 2.27, 0.38), 1e-6);
     }
 
     @Test
-    void slowThrowsZapUntilExpiry() {
-        // 每 2 秒 1 支：3 支要 120 tick 才擠（= 6 秒，時間到先消失，不算擠掉）：26、42、58、74、90、106 → 6 次
-        assertEquals(0.5 * 100 * 6 * 0.5, SkillService.lanceExtraDps(100, 0.5, 2, 0.5), 1e-6);
+    void slowThrowsZapThenDetonate() {
+        // 每 2 秒 1 支（40 tick）：16、32 放兩次電，再被下一支引爆
+        assertEquals(0.5 * 100 * (2 * 0.5 + 16 * 2 * 0.8), SkillService.lanceExtraDps(100, 0.5, 2, 0.5), 1e-6);
     }
 
     @Test

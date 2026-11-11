@@ -62,9 +62,13 @@ public final class VoicesMenu extends Menu {
             final ItemStack held = state.jewel(JewelSockets.voiceKey(node.id(), i));
             if (held == null) {
                 set(FIRST + i - 1, icon(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<#c77dff>低語之門的孔 " + i + "（空的）",
-                        "<gray>只能放基礎珠寶（赤星晶、翠星晶、蒼星晶、白星晶）", "<gray>半徑、恆時珠寶不行", "", "<yellow>左鍵：選一顆珠寶放進去"));
+                        "<gray>只能放基礎珠寶（赤星晶、翠星晶、蒼星晶、白星晶）", "<gray>半徑、恆時、傳奇珠寶不行", "", "<yellow>左鍵：選一顆珠寶放進去"));
             } else {
-                set(FIRST + i - 1, appendLore(held.clone(), List.of("", "<dark_gray>低語之門的孔 " + i, "<yellow>左鍵：拿回背包")));
+                // 2026-11-11：以前放進去的傳奇珠寶不算（PoE2 不祥珠寶孔不能放傳奇珠寶），標出來提醒拿回去
+                final boolean unique = plugin.items().read(held).map(data -> data.rarity() == tw.exilecore.item.Rarity.UNIQUE).orElse(false);
+                set(FIRST + i - 1, appendLore(held.clone(), unique
+                        ? List.of("", "<dark_gray>低語之門的孔 " + i, "<red>傳奇珠寶在這裡沒有作用（只能放基礎珠寶）", "<yellow>左鍵：拿回背包")
+                        : List.of("", "<dark_gray>低語之門的孔 " + i, "<yellow>左鍵：拿回背包")));
             }
         }
         final ItemStack voices = state.jewel(node.id());

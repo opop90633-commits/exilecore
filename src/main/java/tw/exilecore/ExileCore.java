@@ -198,6 +198,7 @@ public final class ExileCore extends JavaPlugin {
             event.registrar().register(StashModule.command(this), "ExileCore 倉庫");
             event.registrar().register(tw.exilecore.salvage.SalvageModule.lockCommand(this), "ExileCore 鎖定裝備（防止誤拆）");
             event.registrar().register(tw.exilecore.currency.CraftBenchMenu.command(this), "ExileCore 洗裝台（左邊星籤、右邊通貨、中間裝備）"); // 2026-10-19
+            event.registrar().register(tw.exilecore.currency.StarMirrorExchangeMenu.command(this), "ExileCore 映星鏡：換一件自選的追逐級傳奇"); // 2026-11-11
             event.registrar().register(tw.exilecore.combat.DeathRecap.command(this), "ExileCore 死亡回顧（上一次是被誰打死的）");
             event.registrar().register(tw.exilecore.combat.DeathRecap.hitsCommand(this), "ExileCore 最近受到的傷害是誰打的"); // 2026-10-30
             event.registrar().register(tw.exilecore.combat.CombatHud.command(this), "ExileCore 這一段戰鬥每個技能打了多少（分傷害類型）");

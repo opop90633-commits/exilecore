@@ -129,6 +129,10 @@ public final class ModifierText {
         final double value = modifier.value();
         final String percent = number(Math.abs(value) * 100);
         final String stat = modifier.stat();
+        final String stolen = tw.exilecore.combat.StolenMods.describe(stat); // 2026-11-11：偷到的行為詞綴（斬獲腰環之類）的玩家版效果
+        if (stolen != null) {
+            return stolen;
+        }
         if (stat.startsWith(StatKeys.GRANT_PREFIX)) { // 2026-10：精魂輔助
             return "被輔助的技能生效時你得到：" + describe(new Modifier(stat.substring(StatKeys.GRANT_PREFIX.length()), modifier.type(), value,
                     modifier.tags(), modifier.source()));

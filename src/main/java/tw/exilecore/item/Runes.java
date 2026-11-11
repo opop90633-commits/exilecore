@@ -261,8 +261,9 @@ public final class Runes {
         if (slot == null) {
             return null;
         }
-        if (!"weapon".equals(slot) && !SLOT_KEYS.contains(slot)) {
-            throw new IllegalArgumentException(node.path() + ".augment：不認得的部位 " + slot + "（weapon 或 " + String.join("、", SLOT_KEYS) + "）");
+        // 2026-11-11 照站長「流浪女巫艾珊德菈的智慧符文那整個系列」：＋caster（法杖或長杖）、martial（軍用武器）；這次之前只有 weapon（任何武器）跟部位
+        if (!"weapon".equals(slot) && !AUGMENT_CASTER.equals(slot) && !AUGMENT_MARTIAL.equals(slot) && !SLOT_KEYS.contains(slot)) {
+            throw new IllegalArgumentException(node.path() + ".augment：不認得的部位 " + slot + "（weapon、caster、martial 或 " + String.join("、", SLOT_KEYS) + "）");
         }
         return slot;
     }
@@ -293,13 +294,27 @@ public final class Runes {
         if ("weapon".equals(rune.augment())) {
             return base.isWeapon();
         }
+        // 2026-11-11（原作 Wand or Staff／Martial Weapon）：法杖或長杖、軍用武器（沒有 caster 標籤的武器；權杖兩邊都不算）
+        if (AUGMENT_CASTER.equals(rune.augment())) {
+            return base.isWeapon() && base.tags().contains(CASTER_TAG) && !base.tags().contains("sceptre");
+        }
+        if (AUGMENT_MARTIAL.equals(rune.augment())) {
+            return base.isWeapon() && !base.tags().contains(CASTER_TAG) && !base.tags().contains("sceptre");
+        }
         return rune.augment().equals(slotKey(base)) || "shield".equals(rune.augment()) && base.isShield();
     }
+
+    /** 2026-11-11：增幅只能嵌法杖或長杖（原作 Wand or Staff）。 */
+    public static final String AUGMENT_CASTER = "caster";
+    /** 2026-11-11：增幅只能嵌軍用武器（原作 Martial Weapon）。 */
+    public static final String AUGMENT_MARTIAL = "martial";
 
     /** 2026-11-08：增幅部位的中文。 */
     public static String slotName(final String key) {
         return switch (key) {
             case "weapon" -> "武器";
+            case "caster" -> "法杖或長杖";   // 2026-11-11
+            case "martial" -> "軍用武器";   // 2026-11-11
             case "head" -> "頭盔";
             case "chest" -> "胸甲";
             case "legs" -> "褲子";

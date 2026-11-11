@@ -47,6 +47,9 @@ THEMES = {
     # 2026-11-03 照站長：星潮祭限定「珊瑚海妖鎧」（3D 戰甲 armor3d_coral 的身、腿、腳）：深海藍紫的布料、橘粉的珊瑚當滾邊、
     #   珍珠白的光、珊瑚粉的寶石；這次之前星潮祭沒有戰甲
     "coral":     ("珊瑚海妖", ("1c1450", "33228a", "6a4ac0"), ("c8504a", "ff7a4a", "ffb09a"), ("f4ecff", "ffffff"), "ff9ab0", "moon"),
+    # 2026-11-11 照站長「S2 贊助禮包…主打可愛點的時裝」（企鵝冰淇淋系列；3D 戰甲 armor3d_penguin 的身、腿、腳）：
+    #   企鵝深藍的絨布、奶白的滾邊與毛邊、薄荷綠的光、草莓粉的寶石，紋章用雪花；這次之前沒有 S2 的戰甲
+    "penguin":   ("企鵝", ("23304f", "3a4e7c", "5a70a0"), ("d8c8a8", "fff6e6", "ffffff"), ("8fe0c4", "d8fff0"), "ff9ab8", "snow"),
 }
 
 
@@ -567,6 +570,9 @@ OUTFIT = {
     #   這次之前沒有 pearl／shoulder／cape 這幾項、也沒有 kelp、scale（只有 coral 用，其他套不變）
     "coral":     dict(collar="v", front="none", belt="kelp", motif="none", hem="trim", legs="scale", boot="wrap",
                       pearl=True, shoulder="coral", cape="tentacle"),
+    # 2026-11-11 照站長：S2 贊助禮包「企鵝連帽鎧」——毛領、毛邊的下襬與袖口、毛靴，正面一大片奶白的肚子（belly=True）、
+    #   領口一個草莓粉的蝴蝶結，背後一片雪花刺繡。這次之前沒有 belly 這一項（只有 penguin 用，其他套不變）
+    "penguin":   dict(collar="fur", front="none", belt="none", motif="snow", hem="fur", legs="plain", boot="fur", belly=True),
 }
 FUR = ((236, 232, 222, 255), (206, 198, 186, 255))
 # 2026-11-03 星潮祭「珊瑚海妖鎧」的海草、貝殼、觸手吸盤、鱗片亮面
@@ -711,8 +717,19 @@ def coat_face(px, x0, y0, w, h, pal, st, kind):
         if kind == "front" and w >= 6:
             for (dx, dy, k) in ((3, 8, 1), (4, 8, 1), (3, 9, 0), (4, 9, 2), (2, 8, 0), (5, 8, 0)):
                 px[x0 + dx, y0 + dy] = SHELL[k]                            # 貝殼（扇形：中間亮、兩邊暗）
+    # 2026-11-11（企鵝連帽鎧）：正面一大片奶白的肚子（圓角）、領口一個草莓粉的蝴蝶結；有肚子的那一面不蓋刺繡
+    if st.get("belly") and kind == "front" and w >= 6:
+        for y in range(3, h - 2):
+            for x in range(w):
+                d = abs(x - mid)
+                edge = 3.3 if 3 < y < h - 3 else 2.3
+                if d < edge:
+                    px[x0 + x, y0 + y] = pal.m[2] if d < edge - 1 and y < h - 4 else pal.m[1]
+        cx = int(mid)
+        for (dx, c) in ((-1, pal.gem), (0, pal.g[1]), (1, pal.g[1]), (2, pal.gem)):
+            px[x0 + cx + dx, y0 + 2] = c
     # 刺繡
-    if st["motif"] != "none":
+    if st["motif"] != "none" and not (st.get("belly") and kind == "front"):
         if kind == "front" and w >= 6:
             stamp(px, x0, y0, st["motif"], pal, w, h, 0, 8 if 8 not in belt_rows else 9)
             stamp(px, x0, y0, st["motif"], pal, w, h, w - 3, 3)
@@ -944,9 +961,21 @@ def garment_icon(pal, theme):
                 px[x, y] = FUR[(x + y) % 2]
             elif st["collar"] == "high" and y < 7 and dx < 4:
                 px[x, y] = pal.m[1]
-    for (mx, my) in ((10, 23), (19, 11)):
-        for (dx, dy), k in motif_pixels(st["motif"]):
-            put(px, S, mx + dx, my + dy, pal.g[k])
+    if st.get("belly"):
+        # 2026-11-11（企鵝連帽鎧）：圖示上也畫奶白的肚子與領口的草莓粉蝴蝶結（不蓋刺繡）
+        for y in range(10, 26):
+            for x in range(10, 22):
+                dx = abs(x + 0.5 - 16)
+                edge = 5.0 if 11 < y < 24 else 3.6
+                if dx < edge:
+                    px[x, y] = pal.m[2] if dx < edge - 1.2 and y < 23 else pal.m[1]
+        for (x, y, c) in ((13, 8, pal.gem), (14, 8, pal.gem), (14, 9, pal.gem), (15, 9, pal.g[1]), (16, 9, pal.g[1]),
+                          (17, 9, pal.gem), (17, 8, pal.gem), (18, 8, pal.gem), (13, 10, pal.gem), (18, 10, pal.gem)):
+            put(px, S, x, y, c)
+    else:
+        for (mx, my) in ((10, 23), (19, 11)):
+            for (dx, dy), k in motif_pixels(st["motif"]):
+                put(px, S, mx + dx, my + dy, pal.g[k])
     # 2026-11-03 星潮祭（珊瑚海妖鎧）：腰間的海草與貝殼、胸口的大珍珠、肩上的珊瑚枝
     if st["belt"] == "kelp":
         for x in range(9, 24):

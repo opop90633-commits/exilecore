@@ -1806,11 +1806,17 @@ public final class PlayerStateService {
     public double deathPenaltyRatio(final Player player, final int level) {
         final double base = config.deathPenaltyAt(level);
         final double normal = config.mapDeathPenalty();
-        if (base <= 0 || plugin.sponsors() == null) {
+        if (base <= 0) {
             return base;
         }
+        // 2026-11-11 照站長（S2 贊助禮包的稱號「死亡時經驗懲罰 -5%」）：屬性表的 death.penalty（百分點）再加減，跟累積贊助的減免疊加、最低 0；
+        //   這次之前只有累積贊助那一階能減
+        final double points = sheet(player).flat(tw.exilecore.stats.StatKeys.DEATH_PENALTY, java.util.Set.of());
+        if (plugin.sponsors() == null) {
+            return tw.exilecore.stats.StatKeys.deathPenaltyWith(base, points);
+        }
         final double reduction = Math.max(0, normal - plugin.sponsors().deathPenalty(player, normal));
-        return Math.max(0, base - reduction);
+        return tw.exilecore.stats.StatKeys.deathPenaltyWith(Math.max(0, base - reduction), points);
     }
 
     /** 管理指令：直接設定等級（經驗歸零）。 */

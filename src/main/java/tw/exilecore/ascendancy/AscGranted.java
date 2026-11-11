@@ -59,6 +59,7 @@ final class AscGranted implements Listener {
         int index;
         int generation; // 2026-10-28：第幾個幻影（舊幻影排好的下一步作廢）
         final Map<String, Long> cooldowns = new HashMap<>(); // 2026-10-28 照 PoE2：這個幻影自己的冷卻（技能代號 → 好的 tick）
+        final Map<String, Integer> ammo = new HashMap<>(); // 2026-11-11：這個幻影弩技能彈匣裡還剩幾發（沒有＝滿的）
         Location at;
     }
 
@@ -1110,24 +1111,12 @@ final class AscGranted implements Listener {
         return "<#ffb347>" + tw.exilecore.item.ItemRenderer.escape(mod.name()) + "<gray>：" + tw.exilecore.item.ItemRenderer.escape(String.join("、", effects));
     }
 
-    /** 怪物詞綴換成給玩家的修飾器（屬性、物理轉元素、移動速度、光環的屬性）；行為詞綴（召喚、傳送…）是空的。 */
+    /**
+     * 怪物詞綴換成給玩家的修飾器。2026-11-11 照站長「偷到的怪物詞綴照原作補（PoE2）」：改用 {@link tw.exilecore.combat.StolenMods#modifiers}
+     * （怪物專用的屬性換成玩家版、行為詞綴掛旗標做玩家版的效果）；這次之前自己算一份，怪物專用的屬性照套（沒作用）、招式詞綴是空的。
+     */
     private static List<Modifier> modModifiers(final tw.exilecore.monster.MonsterConfig.MonsterMod mod, final String source) {
-        final List<Modifier> modifiers = new ArrayList<>();
-        for (final tw.exilecore.item.AffixMod affixMod : mod.mods()) {
-            modifiers.add(affixMod.toModifier(Map.of(), source));
-        }
-        for (final Map.Entry<DamageType, Double> entry : mod.addedFromPhysical().entrySet()) {
-            modifiers.add(Modifier.flat(StatKeys.damageGain(entry.getKey()), entry.getValue() * 100, source));
-        }
-        if (mod.vanillaSpeedBonus() > 0) {
-            modifiers.add(Modifier.increased(StatKeys.MOVEMENT_SPEED, mod.vanillaSpeedBonus(), source));
-        }
-        if (mod.aura() != null) {
-            for (final tw.exilecore.item.AffixMod affixMod : mod.aura().stats()) {
-                modifiers.add(affixMod.toModifier(Map.of(), source));
-            }
-        }
-        return modifiers;
+        return tw.exilecore.combat.StolenMods.modifiers(mod, source);
     }
 
     // =====================================================================
@@ -2060,6 +2049,7 @@ final class AscGranted implements Listener {
         m.until = now + DeadeyeMetas.ticks(seconds);
         m.ready = now + DeadeyeMetas.ticks((archer ? DeadeyeMetas.ARCHER_COOLDOWN : DeadeyeMetas.MIRAGE_COOLDOWN) * DeadeyeMetas.cooldownFactor(effective, context));
         m.cooldowns.clear();
+        m.ammo.clear(); // 2026-11-11：新的幻影彈匣是滿的
         final int generation = ++m.generation;
         effects.later(6, () -> mirageStep(player, hostId, generation));
         tw.exilecore.skill.Fx.spawn(player.getWorld(), Particle.CLOUD, m.at.clone().add(0, 1, 0), 20, 0.3, 0.8, 0.3, 0.01);
@@ -2113,6 +2103,19 @@ final class AscGranted implements Listener {
         if (attack.cooldownTicks() > 0) {
             m.cooldowns.put(attack.definition().id(), now + release.holdTicks() + attack.cooldownTicks());
         }
+        // 2026-11-11 照站長「幻影放弩技能不用裝填…照原作改」：弩技能照彈匣射，空了要等一次裝填時間（照你的裝填速度）才能再放這招；
+        //   這次之前幻影的弩技能不用裝填（熾漿砲自己放每發多約 0.4 秒裝填，幻影沒有）
+        final int[] clip = plugin.skills().mirageAmmo(player, attack);
+        if (clip != null) {
+            final String id = attack.definition().id();
+            final int left = m.ammo.getOrDefault(id, clip[0]) - 1;
+            if (left <= 0) {
+                m.ammo.remove(id);
+                m.cooldowns.merge(id, now + release.holdTicks() + clip[1], Math::max);
+            } else {
+                m.ammo.put(id, left);
+            }
+        }
         final long gap = Math.max(4, Math.round(attack.intervalTicks(sheet)));
         if (release.holdTicks() > 0) {
             final Location at = m.at.clone().add(0, 1.2, 0);
@@ -2124,7 +2127,8 @@ final class AscGranted implements Listener {
                 });
             }
             effects.later(release.holdTicks(), () -> mirageFire(player, hostId, generation, fired));
-            effects.later(release.holdTicks() + 4, () -> mirageStep(player, hostId, generation));
+            // 2026-11-11：下一次至少隔一次攻擊間隔（引導很短的也不會比自己放得快）；這次之前固定引導完 4 tick 就再放
+            effects.later(Math.max(release.holdTicks() + 4, gap), () -> mirageStep(player, hostId, generation));
         } else {
             mirageFire(player, hostId, generation, fired);
             effects.later(gap, () -> mirageStep(player, hostId, generation));

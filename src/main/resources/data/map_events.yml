@@ -302,7 +302,7 @@ delve:
       vaal_siphoner: 50             # 蝕吸器
       vaal_infuser_jewellery: 40    # 蝕環灌注器
       core_destabiliser: 35         # 擾核石
-      extraction_orb: 35            # 剝符石
+      extraction_orb: 35            # 剝符石（2026-11-11 同日拿掉又照站長加回來）
       ancient_infuser: 30           # 古蝕灌注器
       vaal_cultivation_orb: 30      # 蝕培石
       crystal_corruption: 15        # 晶蝕石

@@ -61,6 +61,14 @@ public final class VaalCrafting {
     /** 2026-11-08 照站長「一起補」（PoE2 Atziri's Soul Core of …，Socket-bound）：阿茲里的魂核（runes.yml core_atziri_＊）嵌上去拿不下來。 */
     public static final String ATZIRI_CORE_PREFIX = "core_atziri_";
 
+    /**
+     * 2026-11-11 照站長「魂核照原作」（poe2db 每顆魂核：「Once socketed it cannot be retrieved but can be replaced by other Augment items」）：
+     * 嵌上去就拿不出來的（工作台取不出、被蓋掉不還）：嵌死的（{@link #socketBound}，連蓋都不能蓋）＋所有魂核。這次之前魂核取得出來、蓋掉會還
+     */
+    public static boolean unretrievable(final String runeId) {
+        return runeId != null; // 2026-11-11 照站長「一般符文也照原作」（原作所有符文都「cannot be retrieved but can be replaced」）：全部拿不出來；同日稍早只有魂核
+    }
+
     public static boolean socketBound(final String runeId) {
         return runeId != null && (runeId.startsWith(THESIS_PREFIX) || runeId.startsWith(AUGMENT_PREFIX) // 2026-11-08：增幅（梅德偉的照料…）也嵌死
                 || runeId.startsWith(ATZIRI_CORE_PREFIX)); // 2026-11-08 照站長「一起補」：阿茲里的魂核原作 Socket-bound
@@ -183,7 +191,7 @@ public final class VaalCrafting {
         return null;
     }
 
-    /** 萃取石：裝備毀掉，符文、魂核還給玩家（遠古增幅不還）。 */
+    /** 萃取石：裝備毀掉，符文、魂核還給玩家（2026-11-11 起嵌死的遠古魂核、增幅、阿茲里的魂核也還）。 */
     static void extract(final ExileCore plugin, final Player player, final InventoryClickEvent event, final CurrencyType orb,
                         final ItemStack target, final String why) {
         final ItemData data = plugin.items().read(target).orElse(null);
@@ -203,12 +211,9 @@ public final class VaalCrafting {
         }
         final List<ItemStack> back = new ArrayList<>();
         final List<String> names = new ArrayList<>();
-        int bound = 0;
+        // 2026-11-11 照站長「遠古魂核、增幅、阿茲里的魂核這些也照還」：剝符石毀掉裝備時嵌死的也還；這次之前嵌死的不還
+        final int bound = 0;
         for (final String rune : data.runes()) {
-            if (socketBound(rune)) {
-                bound++;
-                continue;
-            }
             final CurrencyType type = runeCurrency(plugin.currencies().repository(), rune);
             if (type != null) {
                 back.add(plugin.currencies().create(type, 1));

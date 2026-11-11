@@ -47,6 +47,8 @@ public final class CombatModule implements Module {
     private BukkitTask vaalTask;
     /** 2026-10-27：身上減益的冷卻時間這類放進屬性表（遲滯詛咒）。 */
     private BukkitTask selfDebuffTask;
+    private StolenMods stolenMods;
+    private BukkitTask stolenTask;
 
     public CombatModule(final ExileCore plugin) {
         this.plugin = plugin;
@@ -135,6 +137,16 @@ public final class CombatModule implements Module {
         final SelfDebuffs selfDebuffs = new SelfDebuffs(plugin, debuffs);
         plugin.players().addSituationalSource(selfDebuffs::modifiers);
         selfDebuffTask = plugin.repeat("self-debuffs", selfDebuffs::tick, SelfDebuffs.PERIOD, SelfDebuffs.PERIOD);
+        // 2026-11-11 照站長「偷到的怪物詞綴照原作補（PoE2）」：斬獲腰環、斬首、儀典獻祭、皮囊偶符偷到的行為詞綴，玩家版的效果（StolenMods）
+        stolenMods = new StolenMods(plugin);
+        plugin.getServer().getPluginManager().registerEvents(stolenMods, plugin);
+        plugin.players().addBuffSource(stolenMods::modifiers); // 噬魂的魂
+        stolenTask = plugin.repeat("stolen-mods", stolenMods::tick, StolenMods.PERIOD, StolenMods.PERIOD);
+    }
+
+    /** 2026-11-11：偷到的怪物詞綴的玩家版效果；模組沒啟用時 null。 */
+    public StolenMods stolenMods() {
+        return stolenMods;
     }
 
     /** 2026-11-07：瓦爾傳奇要記狀態的進攻效果；模組沒啟用時 null。 */
@@ -238,6 +250,10 @@ public final class CombatModule implements Module {
         if (selfDebuffTask != null) {
             selfDebuffTask.cancel();
             selfDebuffTask = null;
+        }
+        if (stolenTask != null) {
+            stolenTask.cancel();
+            stolenTask = null;
         }
         if (uniqueTask != null) {
             uniqueTask.cancel();

@@ -39,3 +39,5 @@ summer_pet_icecream pet idle
 sf_kraken_wings wings idle,move
 sf_pet_kraken pet idle
 sf_pet_jellyfish pet idle
+s2_frost_wings wings idle,move
+s2_pet_penguin pet idle

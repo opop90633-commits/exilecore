@@ -133,6 +133,19 @@ public final class MonsterListener implements Listener {
         }, DEATH_REMOVE_TICKS);
         // 傳奇的擊殺效果（回復、爆炸、疾速）：在清掉屬性表之前拿怪物的最大生命；召喚出來的小怪也算
         final Player killer = entity.getKiller();
+        // 2026-11-11 照站長「召喚物擊殺的能算在原版遊戲內玩家統計擊殺嗎」：召喚物（含牠射的投射物）打死的，算進主人的原版統計
+        //   （生物擊殺數、各種生物擊殺數）；原版只算玩家本人最後一下，這次之前召喚物殺的都不算
+        if (killer == null && plugin.skills() != null && plugin.skills().minions() != null) {
+            final Player owner = minionKiller(entity);
+            if (owner != null) {
+                owner.incrementStatistic(org.bukkit.Statistic.MOB_KILLS);
+                try {
+                    owner.incrementStatistic(org.bukkit.Statistic.KILL_ENTITY, entity.getType());
+                } catch (final IllegalArgumentException ignored) {
+                    // 這種生物沒有原版的擊殺統計
+                }
+            }
+        }
         if (plugin.combat() != null) {
             final double maxLife = monsters.sheet(entity, data).get(StatKeys.LIFE_MAX);
             if (killer != null && plugin.combat().signatures() != null) {

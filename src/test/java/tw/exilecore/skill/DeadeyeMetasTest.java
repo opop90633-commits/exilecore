@@ -183,5 +183,10 @@ class DeadeyeMetasTest {
         final SkillService.MirageRelease snipeRelease = SkillService.mirageRelease(snipeSpec, snipe, sheet);
         assertEquals(snipeSpec.perfectTick(snipe.intervalTicks(sheet)), snipeRelease.holdTicks());
         assertTrue(snipeRelease.build().profile().id().endsWith(SupportProcs.PERFECT_SUFFIX));
+        // 2026-11-11：熾漿砲（充滿才射）幻影也要引導滿一次攻擊時間（含 +2 秒）；這次之前只等 1 tick
+        final SkillBuild plasma = build("searing_slurry_cannon", List.of());
+        final long plasmaHold = SkillService.mirageRelease(config.charge("searing_slurry_cannon"), plasma, sheet).holdTicks();
+        assertEquals(FullCharge.fullTicks(plasma.intervalTicks(sheet)), plasmaHold);
+        assertTrue(plasmaHold >= 40, "至少 2 秒");
     }
 }
