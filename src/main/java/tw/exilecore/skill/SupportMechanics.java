@@ -759,6 +759,9 @@ public final class SupportMechanics implements Listener {
         if (radiusScale > 1) {
             build = build.withAreaAndProjectiles(build.areaScale() * radiusScale, build.projectiles());
         }
+        if (!supports.isEmpty()) {
+            service.chargeEffects().triggeredJagged(player, build, plugin.players().sheet(player), at); // 2026-11-11：火山步吃熔魂嘯的碎地 I
+        }
         final org.bukkit.util.Vector direction = target != null
                 ? SkillTargets.center(target).toVector().subtract(at.toVector()) : SkillTargets.facing(player);
         service.procCast(Origin.at(player, at.clone().add(0, 0.2, 0), direction.lengthSquared() < 1e-6 ? SkillTargets.facing(player)

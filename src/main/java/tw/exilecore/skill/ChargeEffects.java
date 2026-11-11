@@ -140,20 +140,9 @@ public final class ChargeEffects implements Listener {
         }
         final double jagged = effective.flat(ChargeService.SUP_JAGGED, tags);
         if (jagged > 0 && tags.contains(Tags.SLAM)) {
-            final int benefit = charges.spend(player, "endurance", effective, tags);
-            if (benefit > 0) {
-                final Vector facing = SkillTargets.facing(player).setY(0);
-                final Location at = player.getLocation().add(facing.lengthSquared() < 1e-6 ? new Vector() : facing.normalize().multiply(2));
-                final double radius = JAGGED_RADIUS * build.areaScale();
-                // 2026-10-26 照 PoE2：天賦的碎地效果（減速幅度）、碎地持續時間
-                final long ticks = tw.exilecore.combat.HitEffects.scaledTicks(Math.round(jagged * 20) * benefit,
-                        effective.increased(tw.exilecore.stats.TreeMechanicKeys.JAGGED_DURATION, tags));
-                final JaggedPatch patch = new JaggedPatch(player.getUniqueId(), at.clone(), radius, now() + ticks, new boolean[] {true});
-                jaggedPatches.removeIf(old -> !old.alive()[0] || old.end() <= now());
-                jaggedPatches.add(patch); // 2026-10-26 照 PoE2：記下來給崩震圖騰引爆
-                ground(player, at, () -> patch.alive()[0], elapsed -> radius, jaggedSlow(effective.increased(tw.exilecore.stats.TreeMechanicKeys.JAGGED_EFFECT, tags)),
-                        0, ticks, Particle.CRIT, effective.flat(tw.exilecore.stats.TreeNewMechanicKeys.JAGGED_TAKEN, tags) / 100.0);
-            }
+            final Vector facing = SkillTargets.facing(player).setY(0);
+            jagged(player, build, effective, tags, jagged,
+                    player.getLocation().add(facing.lengthSquared() < 1e-6 ? new Vector() : facing.normalize().multiply(2)));
         }
         final double sacrifice = effective.flat(ChargeService.SUP_OFFERING_SACRIFICE, tags);
         if (sacrifice > 0 && build.definition().warcry() != null && build.definition().warcry().spike()) {
@@ -165,6 +154,44 @@ public final class ChargeEffects implements Listener {
             fireSparks(player, build);
         }
         return new OnUse(result, Math.max(0.1, speedMore));
+    }
+
+    /** 碎地 I：消耗一顆磐星，在 at 留下碎石地（沒磐星就不留）。2026-11-11 從 onUse 抽出來（熔魂嘯觸發的火山步也用）。 */
+    private void jagged(final Player player, final SkillBuild build, final StatSheet effective, final Set<String> tags, final double jagged,
+                        final Location at) {
+        final ChargeService charges = charges();
+        if (charges == null) {
+            return;
+        }
+        final int benefit = charges.spend(player, "endurance", effective, tags);
+        if (benefit <= 0) {
+            return;
+        }
+        final double radius = JAGGED_RADIUS * build.areaScale();
+        // 2026-10-26 照 PoE2：天賦的碎地效果（減速幅度）、碎地持續時間
+        final long ticks = tw.exilecore.combat.HitEffects.scaledTicks(Math.round(jagged * 20) * benefit,
+                effective.increased(tw.exilecore.stats.TreeMechanicKeys.JAGGED_DURATION, tags));
+        final JaggedPatch patch = new JaggedPatch(player.getUniqueId(), at.clone(), radius, now() + ticks, new boolean[] {true});
+        jaggedPatches.removeIf(old -> !old.alive()[0] || old.end() <= now());
+        jaggedPatches.add(patch); // 2026-10-26 照 PoE2：記下來給崩震圖騰引爆
+        ground(player, at, () -> patch.alive()[0], elapsed -> radius, jaggedSlow(effective.increased(tw.exilecore.stats.TreeMechanicKeys.JAGGED_EFFECT, tags)),
+                0, ticks, Particle.CRIT, effective.flat(tw.exilecore.stats.TreeNewMechanicKeys.JAGGED_TAKEN, tags) / 100.0);
+    }
+
+    /**
+     * 2026-11-11 照站長「熔魂嘯的火山步要能吃到碎地 I」：觸發的猛擊（熔魂嘯的火山步）掛著碎地 I 時，每一下也消耗一顆磐星、在腳下留碎石地；
+     * 磐星用完就不留。這次之前觸發的隱藏技能不走 {@link #onUse}，碎地 I 掛上去沒作用（只多魔耗）。
+     */
+    void triggeredJagged(final Player player, final SkillBuild build, final StatSheet sheet, final Location at) {
+        if (charges() == null || !build.definition().tags().contains(Tags.SLAM)) {
+            return;
+        }
+        final StatSheet effective = build.profile().effective(sheet);
+        final Set<String> tags = build.profile().tags();
+        final double jagged = effective.flat(ChargeService.SUP_JAGGED, tags);
+        if (jagged > 0 && tags.contains(Tags.SLAM)) {
+            jagged(player, build, effective, tags, jagged, at);
+        }
     }
 
     /**
