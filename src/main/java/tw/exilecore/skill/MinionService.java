@@ -3800,7 +3800,10 @@ public final class MinionService implements Listener, MinionHooks {
             arsonist.startCooldown(COMMAND, now, command.cooldown());
             arsonist.mob.swingMainHand();
             final Location at = victim.mob.getLocation();
-            final double extra = MinionSheets.life(victim.effective) * MinionAbilities.DEMISE_LIFE_PERCENT / 100.0 / MinionAbilities.DEMISE_DAMAGE;
+            // 2026-11-11 照站長「召喚骸骨焰術士還沒做品質」：高階奇術（Skeletal Arsonist 的額外品質）另外附加牠最大生命 +x% 的火焰傷害；這次之前固定 8%
+            final double lifePercent = MinionAbilities.DEMISE_LIFE_PERCENT
+                    + Math.max(0, arsonist.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.DEMISE_LIFE_PERCENT));
+            final double extra = MinionSheets.life(victim.effective) * lifePercent / 100.0 / MinionAbilities.DEMISE_DAMAGE;
             final Set<String> fire = Set.of(tw.exilecore.stats.Tags.FIRE);
             final Attack blast = with(arsonist, attackProfile(arsonist, "explosive_demise", MinionAbilities.DEMISE_DAMAGE,
                     Set.of(tw.exilecore.stats.Tags.AREA, tw.exilecore.stats.Tags.FIRE), Map.of(tw.exilecore.stats.DamageType.FIRE, 1.0),

@@ -724,6 +724,12 @@ advanced:
     - { stat: damage.taken, type: FLAT, per: -2.0 }   # DamageCalculator（召喚物挨打）
   mirage_spirit_freeze:   # Navira's Fracturing：(0—40)% 更多凍結累積（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—40)% more Freeze Buildup（從一般品質移過來）」；這次之前一般的品質效果再算一次）
     - { stat: freeze.buildup, type: MORE, per: 2.0 }
+  sky_column_thunder:   # Lightning Conduit：範圍內有感電中的敵人時多劈 +(0—4) 道雷（2026-11-11 照站長「天柱雷還沒做品質」：poe2db「(0—4) additional bolts if a Shocked enemy is in the target area」；這次之前一般的品質效果再算一次）
+    - { stat: skill.shocked_bolts, type: FLAT, per: 0.2 }   # SkillExecutor（加在 1～2 道上，四捨五入）
+  summon_bone_flamecaster:   # Skeletal Arsonist：爆裂殉身另外附加召喚物最大生命 +(0—4)% 的火焰傷害（2026-11-11 照站長「召喚骸骨焰術士還沒做品質」：poe2db Explosive Demise「Deals additional Fire damage equal to +(0—4)% of Minion's maximum Life」；這次之前一般的品質效果再算一次）
+    - { stat: minion.demise_life_percent, type: FLAT, per: 0.2 }   # MinionService（加在 8% 上）
+  toxic_blast_shaft:   # Poisonburst Arrow：破甲量等於中毒傷害的 (0—20)%（2026-11-11 照站長「爆毒矢還沒做品質」：poe2db「Break Armour equal to (0—20)% of Poison damage」；這次之前一般的品質效果再算一次）
+    - { stat: poison.armour_break, type: FLAT, per: 1.0 }   # AilmentService.poisonBreak（施加中毒時照這層毒的總傷害）
   cold_winter_gaze:   # Eye of Winter：投射物 (0—50)% 機率回歸（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「Projectiles have (0—50)% chance to Return to you」；這次之前一般的品質效果再算一次）
     - { stat: projectile.return_chance, type: FLAT, per: 2.5 }   # ProjectileEngine（每一發各自擲）
   flame_core_detonation:   # Flameblast：每多一層傷害型異常幅度更多 (0—40)%（# 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db「(0—40)% more Magnitude of Damaging Ailments per Stage」；這次之前一般的品質效果再算一次）

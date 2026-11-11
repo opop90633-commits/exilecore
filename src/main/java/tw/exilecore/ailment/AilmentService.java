@@ -149,8 +149,24 @@ public final class AilmentService {
         final long now = now();
         track(target).state.addPoison(dps * resistFactor(defenderSheet, DamageType.CHAOS), now + ticks(seconds), source.getUniqueId(),
                 poisonStacks(sourceSheet, context));
+        poisonBreak(target, data.orElse(null), sourceSheet, defenderSheet, dps * resistFactor(defenderSheet, DamageType.CHAOS) * seconds, context);
         feedback(target, AilmentType.POISON);
         return true;
+    }
+
+    /**
+     * 2026-11-11 照站長「爆毒矢還沒做品質」（Poisonburst Arrow 的額外品質：Break Armour equal to (0—20)% of Poison damage）：
+     * 施加中毒時，照這層毒的總傷害（每秒 × 秒數）的 x% 破甲。原作是毒每跳時破，這裡在施加時一次算（總量一樣）。
+     */
+    private void poisonBreak(final LivingEntity target, final MonsterData data, final StatSheet sourceSheet, final StatSheet defenderSheet,
+                             final double poisonTotal, final Set<String> context) {
+        if (data == null || defenderSheet == null || sourceSheet == null || poisonTotal <= 0) {
+            return;
+        }
+        final double percent = sourceSheet.flat(tw.exilecore.stats.GemQualityKeys.POISON_ARMOUR_BREAK, context);
+        if (percent > 0) {
+            breakArmour(target, data, poisonTotal, percent, defenderSheet.get(StatKeys.ARMOUR));
+        }
     }
 
     // ---- 2026-10-26：傳奇的特殊效果用（tw.exilecore.item.unique） ----
@@ -764,6 +780,9 @@ public final class AilmentService {
                         ? attacker.getUniqueId() : null;
                 entry.state.addPoison(dps, now + ticks(seconds), poisonSource,
                         poisonStacks(attack, context)); // 2026-10-26 照 PoE2：預設 1 層生效，加層數另外算；壓倒性毒性加倍
+                if (!playerTarget) {
+                    poisonBreak(defender, defenderMonster, attack, defenderSheet, dps * seconds, context); // 2026-11-11：爆毒矢的額外品質
+                }
                 if (attacker instanceof Player poisoner && !playerTarget) {
                     plugin.players().conditions().note(poisoner, tw.exilecore.stats.TreeConditions.POISONS, "poison", now); // 2026-10-27：最近讓敵人中毒幾次
                     if (plugin.skills() != null) {

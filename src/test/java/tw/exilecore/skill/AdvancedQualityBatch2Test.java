@@ -29,7 +29,9 @@ class AdvancedQualityBatch2Test {
             "element_prayer_star", "scythe_prayer_star", "ward_prayer_star",
             // 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」
             "chill_fan_shafts", "summon_bone_heavy", "summon_bone_bowmen", "summon_bone_thundermage", "summon_bone_berserker",
-            "summon_bone_frostmage", "soul_attach_art", "summon_bone_priest", "mirage_spirit_freeze", "cold_winter_gaze", "flame_core_detonation");
+            "summon_bone_frostmage", "soul_attach_art", "summon_bone_priest", "mirage_spirit_freeze", "cold_winter_gaze", "flame_core_detonation",
+            // 2026-11-11 照站長「天柱雷、召喚骸骨焰術士、爆毒矢還沒做品質」
+            "sky_column_thunder", "summon_bone_flamecaster", "toxic_blast_shaft");
 
     @BeforeAll
     static void load() throws Exception {
@@ -75,6 +77,16 @@ class AdvancedQualityBatch2Test {
         assertEquals("投射物 50% 機率回到你身邊", SkillService.advancedQualityText(config.skill("cold_winter_gaze"), 20));
         assertEquals("每多一層，傷害型異常的幅度更多 40%", SkillService.advancedQualityText(config.skill("flame_core_detonation"), 20));
         assertTrue(GemQuality.modifiers("mirage_spirit_freeze", 20, "品質 20%").stream().noneMatch(m -> m.stat().equals("freeze.buildup")));
+    }
+
+    @Test
+    void lastThreeFromPoe2db() {
+        assertTrue(SkillService.advancedQualityText(config.skill("sky_column_thunder"), 20).contains("多劈 4 道雷"),
+                SkillService.advancedQualityText(config.skill("sky_column_thunder"), 20));
+        assertTrue(SkillService.advancedQualityText(config.skill("summon_bone_flamecaster"), 20).contains("最大生命 4% 的火焰傷害"),
+                SkillService.advancedQualityText(config.skill("summon_bone_flamecaster"), 20));
+        assertTrue(SkillService.advancedQualityText(config.skill("toxic_blast_shaft"), 20).contains("破甲量等於中毒傷害的 20%"),
+                SkillService.advancedQualityText(config.skill("toxic_blast_shaft"), 20));
     }
 
     @Test

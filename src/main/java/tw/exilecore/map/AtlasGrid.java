@@ -278,7 +278,7 @@ public final class AtlasGrid {
     }
 
     /** 算過的格子（2026-10-21：一格要算二三十次雜訊，選單、掉落一直問同一批格子；最多留 CACHE 格）。 */
-    private static final int CACHE = 8192;
+    private static final int CACHE = 32768; // 2026-11-11：解鎖幾千格的人一掃就超過 8192，LRU 整個洗掉、每格都重算（watchdog 當機）；這次之前 8192
     private final java.util.Map<Long, Cell> cache = java.util.Collections.synchronizedMap(new java.util.LinkedHashMap<>(256, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(final java.util.Map.Entry<Long, Cell> eldest) {

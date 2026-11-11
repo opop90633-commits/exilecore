@@ -132,6 +132,8 @@ public final class AtlasSitesMenu extends Menu {
             set(SLOT_CLOSE, closeButton());
             return;
         }
+        final java.util.Set<String> completed = service.completed(player); // 2026-11-11：拿到迴圈外面算一次（watchdog 當機；這次之前每個城塞各算一次）
+        final int best = Math.max(1, service.bestTier(player));
         for (final AtlasGrid.Cell citadel : atlas.openCitadels()) {
             // 2026-10-24：自己的終局還不能打的城塞順延到下一個能打的終局
             final String target = service.citadelTarget(player, citadel);
@@ -139,10 +141,8 @@ public final class AtlasSitesMenu extends Menu {
             final MapConfig.MapDef map = config.find(target);
             final String name = (map == null ? String.valueOf(target) : map.name())
                     + (target != null && !target.equals(citadel.citadelFinal()) && own != null ? "（" + own.name() + "的城塞）" : "");
-            final java.util.Set<String> completed = service.completed(player);
             final boolean ready = map != null && Atlas.finalRequirementsMet(config, map, completed);
             final String missing = map == null ? "" : Atlas.missingRequirements(config, map, completed);
-            final int best = Math.max(1, service.bestTier(player));
             final ItemStack icon = icon(Material.END_CRYSTAL, (ready ? "<#c48bff>" : "<gray>") + "城塞・" + ItemRenderer.escape(name) + " " + AtlasMenu.where(citadel.q(), citadel.r()) + "",
                     "<gray>距離 " + citadel.distance() + (map == null ? "" : "・Boss：<#af6025>" + ItemRenderer.escape(map.boss().name())),
                     "<gray>第一次從這裡開不用天穹碎片；攻破後那個終局用碎片開",

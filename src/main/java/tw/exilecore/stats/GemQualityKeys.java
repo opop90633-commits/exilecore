@@ -197,6 +197,10 @@ public final class GemQualityKeys {
     public static final String MARK_ENEMY_LESS = "mark.enemy_damage_less";
     /** 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：FLAT（%）：每一發投射物 x% 機率回歸（寒冬之眼）。 */
     public static final String RETURN_CHANCE = "projectile.return_chance";
+    /** 2026-11-11 照站長「天柱雷、召喚骸骨焰術士、爆毒矢還沒做品質」：爆裂殉身另外附加被引爆召喚物最大生命 x% 的火焰傷害（Skeletal Arsonist 的額外品質）。 */
+    public static final String DEMISE_LIFE_PERCENT = "minion.demise_life_percent";
+    /** 2026-11-11 同上：破甲量等於中毒傷害的 x%（Poisonburst Arrow 的額外品質；中毒施加時照這層毒的總傷害算）。 */
+    public static final String POISON_ARMOUR_BREAK = "poison.armour_break";
     /** 2026-11-11：FLAT（%）：每多一層引導，傷害型異常的幅度更多 x%（爆炎 Flameblast）。 */
     public static final String AILMENT_MORE_PER_STAGE = "ailment.more_per_stage";
 }

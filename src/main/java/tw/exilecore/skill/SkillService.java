@@ -6165,6 +6165,9 @@ public final class SkillService {
         return switch (modifier.stat()) {
             // 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：這批高階奇術的額外品質效果
             case tw.exilecore.stats.GemQualityKeys.HERALD_DAMAGE -> "捷放出的傷害增加 " + trimNumber(value) + "%";
+            // 2026-11-11 照站長「天柱雷、召喚骸骨焰術士、爆毒矢還沒做品質」
+            case tw.exilecore.stats.GemQualityKeys.DEMISE_LIFE_PERCENT -> "爆裂殉身另外附加被引爆召喚物最大生命 " + trimNumber(value) + "% 的火焰傷害";
+            case tw.exilecore.stats.GemQualityKeys.POISON_ARMOUR_BREAK -> "破甲量等於中毒傷害的 " + trimNumber(value) + "%";
             case tw.exilecore.stats.GemQualityKeys.FURY_PER_HIT -> "攻擊擊中多獲得 " + (int) Math.floor(value + 1e-9) + " 點獸性";
             case tw.exilecore.stats.GemQualityKeys.CONFLUX_SECONDS -> "換元素的週期多 " + trimNumber(value) + " 秒";
             case tw.exilecore.stats.GemQualityKeys.PRESENCE_AREA -> "磨蝕之志的存在範圍增加 " + trimNumber(value) + "%";

@@ -39,6 +39,14 @@ public final class AtlasProgress {
     private final Set<Long> completed;
     private Set<Long> unlockedCache;
     private int unlockedFor = -1;
+    /**
+     * 2026-11-11 照站長給的當機紀錄（watchdog：塔與城塞選單卡在 AtlasGrid.compute 超過 60 秒）：解鎖的種類、前線、完成的種類記起來，
+     * 完成的格子沒變就不重算。這次之前每次都把幾千格整個掃一遍（格子快取裝不下時每一格都重算雜訊），選單每畫一個城塞就掃三遍。
+     */
+    private Set<String> unlockedSpeciesCache;
+    private Set<String> frontierSpeciesCache;
+    private Set<String> completedSpeciesCache;
+    private int speciesFor = -1;
 
     public AtlasProgress(final AtlasGrid grid, final Collection<Long> completed) {
         this.grid = grid;
@@ -103,8 +111,22 @@ public final class AtlasProgress {
         return unlocked().contains(AtlasGrid.key(q, r));
     }
 
+    /** 2026-11-11：完成的格子變了（只會變多）就清掉種類的快取。 */
+    private void checkSpecies() {
+        if (speciesFor != completed.size()) {
+            unlockedSpeciesCache = null;
+            frontierSpeciesCache = null;
+            completedSpeciesCache = null;
+            speciesFor = completed.size();
+        }
+    }
+
     /** 解鎖了（含完成）的地圖種類。 */
     public Set<String> unlockedSpecies() {
+        checkSpecies();
+        if (unlockedSpeciesCache != null) {
+            return unlockedSpeciesCache;
+        }
         final Set<String> set = new LinkedHashSet<>();
         for (final long key : unlocked()) {
             final AtlasGrid.Cell cell = grid.cell(key);
@@ -112,11 +134,16 @@ public final class AtlasProgress {
                 set.add(cell.mapId());
             }
         }
-        return set;
+        unlockedSpeciesCache = java.util.Collections.unmodifiableSet(set);
+        return unlockedSpeciesCache;
     }
 
     /** 前線：解鎖了還沒完成的格子的地圖種類（掉落時比較常掉）。 */
     public Set<String> frontierSpecies() {
+        checkSpecies();
+        if (frontierSpeciesCache != null) {
+            return frontierSpeciesCache;
+        }
         final Set<String> set = new LinkedHashSet<>();
         for (final long key : unlocked()) {
             if (completed.contains(key)) {
@@ -127,11 +154,16 @@ public final class AtlasProgress {
                 set.add(cell.mapId());
             }
         }
-        return set;
+        frontierSpeciesCache = java.util.Collections.unmodifiableSet(set);
+        return frontierSpeciesCache;
     }
 
     /** 完成過的地圖種類。 */
     public Set<String> completedSpecies() {
+        checkSpecies();
+        if (completedSpeciesCache != null) {
+            return completedSpeciesCache;
+        }
         final Set<String> set = new LinkedHashSet<>();
         for (final long key : completed) {
             final AtlasGrid.Cell cell = grid.cell(key);
@@ -139,7 +171,8 @@ public final class AtlasProgress {
                 set.add(cell.mapId());
             }
         }
-        return set;
+        completedSpeciesCache = java.util.Collections.unmodifiableSet(set);
+        return completedSpeciesCache;
     }
 
     /** 攻破的城塞：哪些終局的入口完成了。 */
