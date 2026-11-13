@@ -33,7 +33,7 @@ public final class ChannelMenu extends Menu {
     protected void draw() {
         frame();
         final TownChannels channels = channels();
-        if (channels == null || !channels.enabled()) {
+        if (channels == null || !channels.enabledFor(player)) { // 2026-11-12：管理員看得到管理員限定的線
             set(22, icon(Material.BARRIER, "<gray>這個伺服器的營地沒有分線"));
             set(SLOT_CLOSE, closeButton());
             return;
@@ -49,11 +49,13 @@ public final class ChannelMenu extends Menu {
             final boolean current = inTown && world.equals(here);
             final boolean chosen = !inTown && remembered == channel;
             final String locked = channels.switchProblem(player, world); // 2026-10-22 晚：低等級只能在第 1 線
+            // 2026-11-12 照站長「開放 2 分流只給管理員進去測試」：關掉的線管理員看得到，名字後面標「管理員限定」
+            final String adminTag = channels.closed(world) ? "<red>（管理員限定）" : "";
             final String state = locked != null ? "<red>" + locked : current ? "<green>你在這一線" : chosen ? "<green>下次回營地到這一線"
                     : inTown ? "<yellow>左鍵：換到這一線" : "<yellow>左鍵：下次回營地到這一線";
             final org.bukkit.inventory.ItemStack stack = icon(locked != null ? Material.GRAY_CONCRETE : current || chosen ? Material.LIME_CONCRETE
                             : count >= 30 ? Material.RED_CONCRETE : count >= 15 ? Material.YELLOW_CONCRETE : Material.WHITE_CONCRETE,
-                    (locked != null ? "<dark_gray>" : current || chosen ? "<green>" : "<#f5b942>") + "第 " + channel + " 線",
+                    (locked != null ? "<dark_gray>" : current || chosen ? "<green>" : "<#f5b942>") + "第 " + channel + " 線" + adminTag,
                     "<gray>現在 <white>" + count + "</white> 人", "", state);
             set(FIRST_SLOT + i, withCount(current || chosen ? highlight(stack) : stack, Math.max(1, Math.min(64, count))));
         }
@@ -72,7 +74,7 @@ public final class ChannelMenu extends Menu {
             return;
         }
         final TownChannels channels = channels();
-        if (channels == null || !channels.enabled()) {
+        if (channels == null || !channels.enabledFor(player)) {
             return;
         }
         final int channel = slot - FIRST_SLOT + 1;

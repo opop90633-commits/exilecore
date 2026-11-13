@@ -5631,6 +5631,137 @@ skills:
     scatter: 5
     at: target
 
+  # ---- 塑星者・蒼冕（maps.yml event_bosses.difficulty_trial）：難度的進階關卡 Boss ----
+  # 2026-11-12 照站長「另外做一隻新的王（歸類災厄級），要完美復刻 POE1 藍王的招式，新的王就當進階關卡的 boss」。
+  #   PoE1 The Shaper（塑界者，玩家叫藍王）的招式一招對一招（資料：pathofexile.fandom The Shaper、maxroll The Shaper Boss Guide）：
+  #   Default Attack 近戰物理 → shaper_strike；Shaper Beam（瞄準後不再轉、3 秒，火 5384／冰 4405／雷 6057 每秒）→ shaper_beam；
+  #   Shaper Projectile（連發 3 顆金色光彈、冰冷）→ shaper_orbs；Teleport Slam（消失、出現在玩家位置砸地，紫圈內 300%）→ shaper_teleport_slam；
+  #   Portal Vortex（慢慢追人的灰球，碰到就在地上留一塊冰冷持續傷害的漩渦 25 秒）→ shaper_vortex＋shaper_vortex_pool；
+  #   Monster Portal（開門放怪）→ shaper_portal；Bullet Hell（全場彈幕，只有 Zana 的護罩裡安全）→ shaper_bullet_hell（全場大招＋1 個安全圈）；
+  #   Clone（第三階段：無敵的分身用一招就消失）→ shaper_clone。50%、25% 換階段（原作離場打未造者／未塑者、藍王回血）→ 階段召喚＋破綻（沒破回血 10%）。
+  #   沒做：Zana 本人（被門困住時要保護她）、換階段時離開場地去打另一張圖。
+  shaper_strike:
+    name: 星塑之擊
+    kind: cone
+    damage: 1.0          # 原作 Default Attack：100% 傷害、純物理、只在近身用
+    type: physical
+    cooldown: 3
+    range: 4.5
+    telegraph: 0.8
+    angle: 100
+    length: 4.5
+  shaper_beam:
+    name: 塑星光束
+    hint: "紅線停住後馬上離開：光束放出來不再轉，持續 3 秒"
+    kind: beam
+    damage: 0.9          # 每 0.3 秒一下、連續 3 秒：站在裡面 1～2 秒就倒（原作每秒 15846）
+    type: physical
+    convert: { fire: 0.34, cold: 0.28, lightning: 0.38 }   # 原作每秒 火 5384／冰 4405／雷 6057
+    cooldown: 16
+    range: 26
+    telegraph: 2.1       # 1.5 秒追＋0.6 秒鎖定
+    track: true
+    lock: 0.6            # 瞄準之後不再跟著轉（原作：aimed at the player when fired, then does not rotate）
+    count: 1
+    angle: 60            # 有 lock 的光束放出來之後不再轉（這個值用不到，照死亡光束寫）
+    length: 34
+    width: 1.3
+    duration: 3          # 原作持續 3 秒
+    interval: 0.3
+    shout: "「這片天，是我塑的。」"
+  shaper_orbs:
+    name: 星塑光彈
+    hint: "三顆金色光彈：往旁邊走，別站在一條線上"
+    kind: volley
+    damage: 2.0          # 原作：每顆都是很重的冰冷傷害
+    type: cold
+    cooldown: 7
+    range: 26
+    telegraph: 1.0
+    count: 3             # 原作連發 3 顆
+    spread: 16
+    speed: 0.85
+    reach: 32
+    size: 0.7
+    explode: 2.0
+  shaper_teleport_slam:
+    name: 瞬移重擊
+    hint: "他消失了：別停下來，離開腳下的紫圈"
+    kind: blink
+    damage: 3.0          # 原作：紫圈內 300% 傷害
+    type: physical
+    cooldown: 11
+    range: 36
+    telegraph: 1.0
+    radius: 4.5
+    shout: "「無處可逃。」"
+  shaper_vortex:
+    name: 漩渦之門
+    hint: "灰球會追你：帶到場地邊再碰，漩渦留 25 秒"
+    kind: orbs
+    damage: 0.8
+    type: cold
+    cooldown: 14
+    range: 30
+    telegraph: 1.0
+    count: 1
+    speed: 0.14          # 原作：slow-moving grey ball that seeks the player
+    duration: 9
+    size: 0.8
+    explode: 3.0
+    shout: "「虛空，張開。」"
+  shaper_vortex_pool:    # 灰球碰到人（或時間到）的地方留下這塊漩渦（BossSkills：光球代號＋_pool 的地面招）
+    name: 漩渦
+    kind: zone
+    damage: 0.55         # 每 0.5 秒一下：很重的冰冷持續傷害
+    type: cold
+    radius: 3.2
+    duration: 25         # 原作每塊留 25 秒
+    interval: 0.5
+    slow: 1
+  shaper_portal:
+    name: 異界之門
+    kind: summon
+    summon: ENDERMITE
+    count: 5
+    summon_max: 10
+    duration: 30
+    cooldown: 32
+    telegraph: 1.2
+    shout: "「門開了。」"
+  shaper_bullet_hell:
+    name: 群星彈幕
+    hint: "全場彈幕：躲進綠圈，結束馬上離開（光束會接著來）"
+    kind: sanctuary
+    damage: 6.75         # 同其他災厄級的全場大招
+    type: physical
+    convert: { cold: 0.5 }
+    cooldown: 38
+    range: 30
+    telegraph: 3.0
+    radius: 32
+    count: 1             # 原作只有 Zana 的一個護罩
+    safe: 3.5
+    scatter: 9
+    shout: "「群星，為我而落。」"
+  shaper_clone:
+    name: 星塑分身
+    hint: "分身會射一道光束：看紅線往旁邊走"
+    kind: echoes
+    damage: 2.2
+    type: physical
+    convert: { fire: 0.34, cold: 0.28, lightning: 0.38 }
+    cooldown: 20
+    range: 26
+    telegraph: 1.2
+    count: 1             # 原作一個分身用一招就消失（Uber 版兩個）
+    scatter: 9
+    stagger: 0.8
+    delay: 1.2
+    reach: 30
+    width: 1.3
+    shout: "「我無所不在。」"
+
 defaults:
   default: [slam, charge]
   ZOMBIE: [slam, charge, summon_zombies]

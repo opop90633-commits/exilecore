@@ -305,6 +305,8 @@ public final class CraftBenchMenu extends Menu {
                     "<dark_gray>（裝備留在背包裡，直接改那一件）"));
         } else {
             set(SLOT_ITEM, appendLore(stack.clone(), List.of("", "<yellow>左鍵：換一件（再點背包裡的）")));
+            // 2026-11-12 照站長「只有插槽綁定的符文不能取出與覆蓋，其他一律可以取出與覆蓋，腐化裝備只能覆蓋」：「取出符文」放回來
+            //   （同一天稍早照原作整個拿掉）
             drawRunes(stack);
         }
 
@@ -529,13 +531,13 @@ public final class CraftBenchMenu extends Menu {
 
     /** 不能取出符文的原因；可以回傳 null。 */
     private static String runeProblem(final ItemData data) {
-        // 2026-11-11 照站長「一般符文也照原作」（原作符文、魂核都「cannot be retrieved but can be replaced」）：一律不能取出；
-        //   這次之前沒腐化的可以取出、還給你
-        if (data.runes().stream().allMatch(VaalCrafting::unretrievable)) {
-            return "符文、魂核嵌上去就拿不出來（照原作；拿新的符文點它可以換掉，換掉的不還）";
-        }
+        // 2026-11-12 照站長：只有插槽綁定的（增幅、遠古魂核、阿茲里的魂核）拿不出來，其他都能取出；腐化的只能蓋掉。
+        //   這次之前（2026-11-11）照原作所有符文都拿不出來
         if (data.corrupted()) {
-            return "已腐化：不能取出符文（拿新的符文點它可以換掉）";
+            return "已腐化：不能取出符文（拿新的符文點它可以蓋掉，蓋掉的不還）";
+        }
+        if (data.runes().stream().allMatch(VaalCrafting::unretrievable)) {
+            return "插槽綁定的符文（增幅、遠古魂核、阿茲里的魂核）嵌上去就拿不出來，也不能被蓋掉";
         }
         if (data.mirrored()) {
             return "鏡像複製品不能改";
@@ -567,7 +569,7 @@ public final class CraftBenchMenu extends Menu {
             options.add(new tw.exilecore.gui.Dialogs.Option(String.valueOf(i), "第 " + (i + 1) + " 孔：" + text));
         }
         if (options.isEmpty()) {
-            fail("符文、魂核嵌上去就拿不出來（照原作；可以拿別的符文點裝備蓋掉，蓋掉的不還）");
+            fail("插槽綁定的符文（增幅、遠古魂核、阿茲里的魂核）嵌上去就拿不出來，也不能被蓋掉");
             return;
         }
         final int slot = itemSlot;

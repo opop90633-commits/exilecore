@@ -30,6 +30,11 @@ final class SkillRuntime {
 
     /** 下一次可以動作的 tick（有小數，見 {@link SkillMath#nextReady}）。 */
     double readyAt = Double.NEGATIVE_INFINITY;
+    /**
+     * 2026-11-12 照站長「動作時間的快捷列遮罩」：上一招動作時間 1 秒以上的技能代號（快捷列上它的圖示照 {@link #readyAt} 蓋遮罩、顯示剩幾秒）；
+     * 動作時間短的、還沒放過是 null。
+     */
+    String actionSkill;
     /** 排隊的按鍵（-1 = 沒有）與想打的目標。 */
     int queuedKey = -1;
     UUID queuedTarget;

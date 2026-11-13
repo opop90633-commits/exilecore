@@ -617,6 +617,17 @@ final class SkillZones implements SkillTargets.Strikeable {
         newest.shardRadius = shardRadius;
     }
 
+    /** 2026-11-13（自動量技能）：這個玩家這個技能還在的地面效果有幾個。 */
+    int count(final UUID owner, final String skill) {
+        int count = 0;
+        for (final Zone zone : zones) {
+            if (!zone.gone && zone.owner.equals(owner) && skill.equals(zone.skill)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** 這個玩家剛放下的這個技能的地面效果（清單照放的順序，最後一個是剛放的；沒有回傳 null）。 */
     private Zone newest(final UUID owner, final String skill) {
         Zone newest = null;
@@ -1250,6 +1261,28 @@ final class SkillZones implements SkillTargets.Strikeable {
         return false;
     }
 
+    /**
+     * 2026-11-12 照站長「再按一次提早炸」（{@link EarlyDetonation}）：你這一招還沒落下的延遲落下裡最舊的一個（放出去
+     * {@link EarlyDetonation#MIN_AGE} tick 以上）下一 tick 落下，傷害照經過的時間 50%～100%（寒晶雷不扣）。回傳它的位置（沒有回傳 null）。
+     */
+    Location detonateEarly(final UUID owner, final String skillId, final long now) {
+        for (int i = 0; i < impacts.size(); i++) {
+            final Impact impact = impacts.get(i);
+            final String id = impact.profile().id();
+            if (!impact.owner().equals(owner) || impact.atTick() <= now + 1 || now - impact.startTick() < EarlyDetonation.MIN_AGE
+                    || !(id.equals(skillId) || id.startsWith(skillId + "."))) {
+                continue;
+            }
+            final double scale = EarlyDetonation.NO_SCALE.contains(skillId) ? 1.0
+                    : EarlyDetonation.scale(now - impact.startTick(), impact.atTick() - impact.startTick());
+            final SkillProfile profile = scale < 1 ? impact.profile().scaled(scale, "提早引爆") : impact.profile();
+            impacts.set(i, new Impact(impact.owner(), impact.center(), impact.radius(), profile, impact.visual(), now + 1, impact.startTick(),
+                    impact.lodge(), impact.level(), impact.rod()));
+            return impact.center();
+        }
+        return null;
+    }
+
     /** 延遲落下：atTick 時在 center 半徑 radius 內打一圈。 */
     void addImpact(final Player owner, final Location center, final double radius, final SkillProfile profile, final String visual,
                    final int delayTicks) {
@@ -1297,11 +1330,23 @@ final class SkillZones implements SkillTargets.Strikeable {
         rod.display = spawnRodDisplay(at);
         rod.label = spawnRodLabel(at, rod, now); // 2026-10-29 照站長「更明顯」：頭上顯示剩幾秒、還能被連幾次
         rods.place(rod, spec.max(), this::rodRemoved);
+        if (STAKE_SHAFT.equals(skill)) {
+            // 2026-11-12 照站長（A＋B 統整成只要 A，10-31 的規則；跟伏霆彈一樣）：雷樁矢自己的下一發落在插著的箭附近（這一發的爆炸範圍內）
+            //   也算連到那支箭（充能 1 秒後再炸一次）；這次之前（照原作）只有閃電連鎖、雷束連得到
+            for (final LightningRods.Rod other : rods.around(owner.getUniqueId(), at.getWorld().getUID(), at.toVector(), radius)) {
+                if (other != rod && STAKE_SHAFT.equals(other.skill) && !other.charging()) {
+                    chainToRod(owner, other, null);
+                }
+            }
+        }
         final double extra = effective.flat(LightningRods.EXTRA_BURST, profile.tags());
         if (extra > 0 && plugin.random().nextDouble() * 100 < extra) {
             rods.extraBurst(rod, now);
         }
     }
+
+    /** 2026-11-12：雷樁矢（自己的下一發也連得到插著的箭）。 */
+    static final String STAKE_SHAFT = "thunder_stake_shaft";
 
     /** 箭的樣子：一根細細的避雷針方塊（展示實體，不存檔）。 */
     private UUID spawnRodDisplay(final Location at) {

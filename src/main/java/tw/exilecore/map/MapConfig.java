@@ -687,6 +687,7 @@ public final class MapConfig {
             return;
         }
         final YamlNode root = YamlNode.load(file);
+        difficulty = Difficulty.Table.read(root.node("difficulty")); // 2026-11-12 照站長「難度系統」
         final YamlNode s = root.node("settings");
         final YamlNode bossTierLife = s.node("boss_tier_life");
         bossTierLifeFrom = Math.max(1, bossTierLife.integer("from", 16));
@@ -1580,6 +1581,13 @@ public final class MapConfig {
     }
 
     /** 地圖的階級表（T1–T16 的怪物等級）。 */
+    /** 2026-11-12 照站長「難度系統」：難度表（maps.yml 的 difficulty）。 */
+    public Difficulty.Table difficulty() {
+        return difficulty;
+    }
+
+    private Difficulty.Table difficulty = Difficulty.Table.DEFAULT;
+
     public MapStats.Tiers tiers() {
         return settings.tiers();
     }

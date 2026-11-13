@@ -458,6 +458,12 @@ public final class IceCrystals implements Listener {
         final List<Crystal> mine = crystals.get(owner);
         if (mine != null && mine.remove(crystal)) {
             crystal.display.remove();
+            // 2026-11-13 照站長「要配別的技能才有傷害的，改成自己也能觸發、但更少傷害 20%」：霜壁的冰晶時間到自己碎開炸
+            //   （更少 20%）；這次之前時間到直接消失，要你的技能打碎才炸
+            final Player player = plugin.getServer().getPlayer(owner);
+            if (crystal.wall != null && player != null && player.getWorld().equals(crystal.at.getWorld())) {
+                wallBurst(player, crystal, false, OriginalSkills.SELF_TRIGGER_DAMAGE);
+            }
             tw.exilecore.skill.Fx.spawn(crystal.at.getWorld(), Particle.SNOWFLAKE, crystal.at, 8, 0.3, 0.4, 0.3, 0.01);
         }
     }
@@ -575,6 +581,10 @@ public final class IceCrystals implements Listener {
      * 用了電灌注的再炸一次 2.8 公尺的閃電（自己的閃電表、暴擊 9%）。晶刺（穿刺）照一般冰晶。
      */
     private void wallBurst(final Player owner, final Crystal crystal, final boolean early) {
+        wallBurst(owner, crystal, early, 1.0);
+    }
+
+    private void wallBurst(final Player owner, final Crystal crystal, final boolean early, final double scale) {
         final SkillBuild build = crystal.wall;
         final SkillConfig config = service.config();
         // 2026-11-07 修正（檢查發現）：引星觸發的霜壁，冰晶爆炸也要帶著「觸發的」記號（MetaGems.TRIGGERED_SUFFIX）——
@@ -588,6 +598,9 @@ public final class IceCrystals implements Listener {
         if (early) {
             cold = cold.scaled(1 - WALL_EARLY_LESS, "剛放下就被推碎");
         }
+        if (scale != 1.0) {
+            cold = cold.scaled(scale, "時間到自己碎開");
+        }
         final double radius = ColdSpells.tableRadius(config, ColdSpells.WALL_BURST, build.level(), 2.0) * build.areaScale();
         service.executor().burst(owner, cold, crystal.at, radius, 0, ColdSpells.ICE_NOVA);
         if (crystal.volt) {
@@ -598,6 +611,9 @@ public final class IceCrystals implements Listener {
             volt = volt.withLocal(List.of(tw.exilecore.stats.Modifier.flat(StatKeys.SPELL_BASE_CRIT, -2, "閃電爆炸")));
             if (early) {
                 volt = volt.scaled(1 - WALL_EARLY_LESS, "剛放下就被推碎");
+            }
+            if (scale != 1.0) {
+                volt = volt.scaled(scale, "時間到自己碎開");
             }
             final double voltRadius = ColdSpells.tableRadius(config, ColdSpells.WALL_VOLT, build.level(), 2.8) * build.areaScale();
             service.executor().burst(owner, volt, crystal.at, voltRadius, 0, "chain_thunder");

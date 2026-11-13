@@ -226,8 +226,10 @@ final class Signatures {
                final SkillBuild build, final ChargeSpec spec, final LivingEntity preferred, final StatSheet sheet, final long now) {
         final SkillRuntime.Charging charging = runtime.charging;
         if (charging != null && charging.skillId.equals(definition.id()) && charging.key == key) {
-            if (!SkillLoadout.mouseKey(key) && now - charging.last > 3) {
-                charging.releaseNow = true; // 數字鍵：再按一下放出
+            // 2026-11-13 照站長「蓄力、引導不用一直按著」（A）：滑鼠鍵也是「按一下開始、再按一下結束／出手」——停了一下再按才算新的一下
+            //   （按住左鍵每 tick、右鍵每 4 tick 會送一次）。這次之前只有數字鍵這樣，滑鼠鍵要一直按著、放開就結束
+            if (now - charging.last > freshGap(key)) {
+                charging.releaseNow = true; // 再按一下：引導結束、蓄力提早出手
             }
             charging.last = now;
             return false;
@@ -248,11 +250,52 @@ final class Signatures {
         runtime.charging = started;
         final boolean channel = spec.mode() != ChargeSpec.Mode.RELEASE;
         // 2026-11-01 照站長：引導技能（PoE2 Channel）不叫蓄力；這次之前放開型的都寫「蓄力中…」
-        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + " " + (channel ? "引導" : chargeWord(definition)) + "中…" + (SkillLoadout.mouseKey(key)
-                ? (channel ? "（放開結束）" : "（放開出手）") : (channel ? "（再按一次結束）" : "（再按一次出手）")), now + 20);
+        // 2026-11-13 照站長（A）：滑鼠鍵、數字鍵一樣——引導再按一次結束；蓄力會自己蓄到最好的時候出手，再按一次提早出手
+        state.notice("<#ffd27f>" + ItemRenderer.escape(definition.name()) + " " + (channel ? "引導" : chargeWord(definition)) + "中…"
+                + (channel ? "（再按一次結束）" : "（自動出手，再按一次提早出手）"), now + 20);
         plugin.players().display(player, state);
         player.playSound(player.getLocation(), Sound.ITEM_CROSSBOW_LOADING_START, SoundCategory.PLAYERS, 0.6f, 1.2f);
         return true;
+    }
+
+    /** 2026-11-12：引導中的提示多久補一次（tick）。 */
+    static final long CHANNEL_HINT_EVERY = 10;
+
+    /** 2026-11-12：引導中的提示列文字。2026-11-13 照站長（A）：滑鼠鍵也是「再按一次結束」（這次之前滑鼠鍵寫「放開結束」）。純函式。 */
+    static String channelHint(final String name, final boolean mouse) {
+        return "<#ffd27f>" + ItemRenderer.escape(name) + " 引導中…（再按一次結束）";
+    }
+
+    /**
+     * 2026-11-13 照站長（A）：同一個鍵停了多久再按才算「再按一下」（tick）：按住左鍵每 tick 送一次、右鍵每 4 tick，
+     * 數字鍵只會送一次。純函式。
+     */
+    static long freshGap(final int key) {
+        if (!SkillLoadout.mouseKey(key)) {
+            return 3;
+        }
+        return key == SkillLoadout.KEY_LEFT || key == SkillLoadout.KEY_SNEAK_LEFT ? 3 : 7;
+    }
+
+    /**
+     * 2026-11-13 照站長（A）：放開出手的蓄力自己蓄到什麼時候出手（按住的 tick 數）：有完美時機的抓完美時機；要充滿才能射的照充滿；
+     * 累積型照疊滿；有段數的照疊滿；都沒有的照最短引導（至少 2 tick）。純函式。
+     */
+    static long autoReleaseTicks(final ChargeSpec spec, final long perfectAt, final double speed, final int perStage, final boolean fullOnly,
+                                 final double interval, final long minTicks) {
+        double ticks;
+        if (fullOnly) {
+            ticks = FullCharge.fullTicks(interval);
+        } else if (spec.perfect() && perfectAt > 0) {
+            ticks = perfectAt;
+        } else if (spec.accumulate()) {
+            ticks = spec.fullTicks(speed, perStage);
+        } else if (spec.stages() > 1) {
+            ticks = spec.fullStageTicks(speed);
+        } else {
+            ticks = 0;
+        }
+        return Math.max(Math.max(2, minTicks), (long) Math.ceil(ticks));
     }
 
     /** 每 tick：蓄力中的提示、完美時機的叮一聲、放開的偵測。 */
@@ -271,7 +314,9 @@ final class Signatures {
         final boolean mouse = SkillLoadout.mouseKey(charging.key);
         final boolean pressedAgain = charging.releaseNow;
         charging.releaseNow = false;
-        boolean released = pressedAgain || mouse && now - charging.last > (left ? 3 : 7);
+        // 2026-11-13 照站長（A）：滑鼠鍵放開不再結束（要再按一下）；這次之前滑鼠鍵停送就算放開
+        boolean released = pressedAgain;
+        boolean auto = false;
         // 2026-11-01：最短引導照 ChargeSpec.minTicks（Kelari's Judgment 的 locked_start：第一段，吃珂芮絲的施法速度）；這次之前只看 min_time
         final long minTicks = spec.minTicks(charging.speed);
         if (spec.mode() == ChargeSpec.Mode.RELEASE && minTicks > 0) {
@@ -284,6 +329,18 @@ final class Signatures {
             }
         }
         if (spec.mode() != ChargeSpec.Mode.RELEASE) {
+            // 2026-11-12 照站長「引導的提示列」：引導中一直顯示「X 引導中…（再按一次結束／放開結束）」（提示列沒有別的訊息時才補上）；
+            //   這次之前只在開始時顯示 1 秒，數字鍵開的引導之後看不出要再按一次才會結束
+            if (!released && held % CHANNEL_HINT_EVERY == 0) {
+                final PlayerState hinted = plugin.players().get(player);
+                final SkillDefinition shown = service.config().skill(charging.skillId);
+                final String hint = channelHint(shown == null ? charging.skillId : shown.name(), mouse);
+                final String current = hinted.notice(now);
+                if (current == null || current.equals(hint) || current.startsWith(hint.substring(0, hint.indexOf('…') + 1))) {
+                    hinted.notice(hint, now + CHANNEL_HINT_EVERY + 4);
+                    plugin.players().display(player, hinted);
+                }
+            }
             // 2026-10-26 照 PoE2：衝鋒（盾衝、蠻衝）、持續作用（凋蝕術）：按住期間一直有效，放開（過了最短引導時間）結束
             if (service.channelling().tick(player, charging, spec, released, now)) {
                 runtime.charging = null;
@@ -314,6 +371,10 @@ final class Signatures {
                 : Math.round(spec.stageTicks(charging.speed) * spec.stages()) + ChargeSpec.OVERHOLD;
         if (held > limit) {
             released = true; // 蓄太久：自動放出
+        }
+        if (!released && held >= autoReleaseTicks(spec, charging.perfectAt, charging.speed, perStage, fullOnly, charging.interval, minTicks)) {
+            released = true; // 2026-11-13 照站長（A）：蓄到最好的時候自己出手
+            auto = true;
         }
         final PlayerState state = plugin.players().get(player);
         final SkillDefinition definition = service.config().skill(charging.skillId);
@@ -349,7 +410,7 @@ final class Signatures {
         }
         runtime.charging = null;
         final long releaseHeld = Math.max(minTicks, // 2026-11-01：最短引導時間（上面撐到了才會走到這裡）
-                (pressedAgain || charging.letGo ? now : Math.min(now, charging.last + 1)) - charging.start);
+                (pressedAgain || charging.letGo || auto ? now : Math.min(now, charging.last + 1)) - charging.start);
         final StatSheet windowSheet = charging.build == null ? plugin.players().sheet(player)
                 : charging.build.profile().effective(plugin.players().sheet(player)); // 2026-10-28 照 PoE2：技能自己的（穿雲箭的品質）也算；這次之前只看角色
         final boolean perfect = spec.isPerfect(releaseHeld, charging.interval, Math.max(0.05, 1 + windowSheet

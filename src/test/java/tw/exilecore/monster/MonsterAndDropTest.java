@@ -87,10 +87,11 @@ class MonsterAndDropTest {
     void monsterSheetsScaleWithRarityAndMods() {
         final StatSheet normal = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.NORMAL, List.of(), "殭屍"), "ZOMBIE");
         final StatSheet rare = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.RARE, List.of("sturdy", "fiery", "fire_resistant"), "焰牙殭屍"), "ZOMBIE");
-        assertEquals(249, normal.get(StatKeys.LIFE_MAX), 1e-9, "2026-10-26 照 PoE2：20 級 249");
-        assertEquals(249 * 8 * 1.5, rare.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 稀有怪 ×8（+700%）");
+        final double all = config.lifeMultiplier(); // 2026-11-13 照站長：全部怪物生命 ×2（monsters.yml life_multiplier）
+        assertEquals(249 * all, normal.get(StatKeys.LIFE_MAX), 1e-9, "2026-10-26 照 PoE2：20 級 249");
+        assertEquals(249 * 8 * 1.5 * all, rare.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 稀有怪 ×8（+700%）");
         final StatSheet unique = MonsterSheets.build(config, new MonsterData(20, MonsterRarity.UNIQUE, List.of(), "王"), "ZOMBIE");
-        assertEquals(249 * 29, unique.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 傳奇 ×29（+2800%）");
+        assertEquals(249 * 29 * all, unique.get(StatKeys.LIFE_MAX), 1e-9, "PoE2 傳奇 ×29（+2800%）");
         assertEquals(30, unique.get(StatKeys.RESIST_FIRE), 1e-9, "PoE2 的 Boss 元素抗性 30%");
         assertEquals(0, normal.get(StatKeys.RESIST_FIRE), 1e-9);
         assertEquals(50, rare.get(StatKeys.RESIST_FIRE), 1e-9, "2026-10-23：抗性拆成另一條詞綴（耐火的），燃焰的只加火焰傷害");

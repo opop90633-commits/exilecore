@@ -4,7 +4,8 @@
 # 四種事件：
 #   shrine     神龕：地上一座發光的石柱，旁邊一群守衛。碰到它，附近 12 格內的人一起拿 duration 秒的增益（哪一種照石柱上寫的）。
 #   strongbox  寶箱：點開會跳出一群怪（照這張圖的魔法／稀有群比例），殺光才打開；radius 格內的每個人各拿自己那份。
-#   breach     裂隙：踩進去就打開，duration 秒內每 wave_seconds 秒從越來越大的邊緣湧出一波怪；裂隙的怪物品數量 +quantity_bonus%。
+#   breach     裂隙：踩進去就打開，每 wave_seconds 秒從越來越大的邊緣湧出一波怪，殺得越快擴得越快，到最大收縮吞掉剩下的怪（2026-11-12 照 PoE1，見下面 breach）；
+#              裂隙的怪物品數量 +quantity_bonus%。（這次之前固定開 duration 秒）
 #   exile      流寇：穿著整套裝備的稀有怪，招式像 Boss（mods 裡的招式詞綴），生命是同等稀有怪的 life 倍；殺了照稀有怪掉，另外多掉 drops 件稀有裝備。
 # 2026-10-18 新增兩種：
 #   abyss      深淵裂縫：走近時地上裂開一條縫往地圖裡延伸，每段湧怪；有人跟著才繼續，沒人跟就合上（沒獎勵）；盡頭一隻小 Boss＋一個深淵寶箱。
@@ -89,11 +90,45 @@ strongbox:
     artisan:      { name: 匠心寶箱, weight: 25, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, currency: [2, 4], essences: [1, 2] }
     cartographer: { name: 星圖寶箱, weight: 15, rolls: 1, quantity_bonus: 0, rarity_bonus: 50, maps: [1, 2], essences: [0, 1] }
 
+# 2026-11-12 照站長「進度條，殺怪會延長；進度條滿 100% 變成穩定裂隙，分波冒稀有怪（每波 5 隻），首領是費許的元帥維倫，打完才崩解；
+#   專屬的巢生怪；維倫只在穩定裂隙出」（PoE2 0.5 Breach；tw.exilecore.map.MapEventConfig.BreachFeel）：
+#   踩進去打開，巢生怪（hiveborn）從邊緣湧出。timer：一開始 start 秒、每殺一隻加 kill 秒、最多累積 cap 秒；歸零就收縮
+#   （collapse_seconds 秒內收到 0，圈外的怪被吞掉、沒有掉落），開了 max_seconds 秒也收。stabilise：每殺一隻加 kill 點，滿 need 點（100%）
+#   變成穩定裂隙（圈跟著進度從 radius 的小長到大）。stable：不再湧一般的怪，起點分 waves 波、每波 wave_size 隻稀有的巢生怪
+#   （殺光或過了 wave_seconds 秒出下一波），最後是 vruun；seconds 秒內全部打完才崩解：關閉獎勵＋每人 rolls 次稀有怪的掉落（物品數量 +quantity_bonus%），
+#   沒打完就收縮（沒有穩定的獎勵）。全部殺光約 15 秒穩定（照每秒湧 5.6 隻算），每秒殺不到約 3.3 隻時間會一直掉。
+#   這次之前（同一天稍早，PoE1 手感版）：圈每秒自己長、殺怪推，到最大就收縮；裂痕首領 30% 在擴張途中出現；怪是地圖本身的。
+#   站長：先不做碎片、裂痕石、祝福、裂痕戒指加倍。
 breach:
-  duration: 12.5                   # 開幾秒；2026-11-02 照站長「時間加快兩倍」：25 → 12.5（波數、怪物總數不變）
   wave_seconds: 1.25               # 幾秒一波；2026-11-02：2.5 → 1.25
   wave: [6, 8]                     # 一波幾隻（照地圖的魔法群比例，有時整波是魔法怪）；2026-10-30 照站長「裂痕增加怪物數量」：[3, 4] → [6, 8]（一次約 35 → 70 隻）
-  radius: [4, 14]                  # 邊緣從幾格長到幾格（怪從邊緣湧出）
+  radius: [4, 16]                  # 邊緣從幾格長到幾格（照穩定進度；怪從邊緣湧出）；2026-11-12：[4, 14] → [4, 16]
+  timer:
+    start: 8                       # 打開時有幾秒
+    kill: { normal: 0.3, magic: 0.8, rare: 2.5 }   # 殺一隻加幾秒
+    cap: 12                        # 最多累積到幾秒
+    collapse_seconds: 2.0          # 收縮要幾秒
+    max_seconds: 90                # 最多開幾秒（還沒穩定就收）
+  stabilise:
+    need: 80                       # 滿幾點變成穩定裂隙
+    kill: { normal: 1, magic: 2.5, rare: 10 }   # 殺一隻加幾點
+  stable: { waves: 3, wave_size: 5, wave_seconds: 15, seconds: 90, rolls: 2, quantity_bonus: 100 }   # 穩定裂隙（PoE2 0.5.5：稀有怪每波 5 隻）
+  vruun: { name: 費許的元帥・維倫, life: 6.0, quantity_bonus: 300, mods: [slammer, charger] }   # 穩定裂隙的首領（稀有、生命 ×life，另外帶 mods）；只在穩定裂隙出
+  hiveborn:                        # 專屬的巢生怪：原版生物 → 名字、權重（稀有的叫「巢生精英・名字」）
+    ENDERMITE:   { name: 巢生幼蟲, weight: 30 }
+    SILVERFISH:  { name: 巢生蠹蟲, weight: 20 }
+    SPIDER:      { name: 巢生節肢, weight: 20 }
+    CAVE_SPIDER: { name: 巢生刺蛛, weight: 15 }
+    ENDERMAN:    { name: 巢生行者, weight: 15 }
+  lords:                           # PoE1 的五個裂痕領主：weight 出現權重、mods 這個裂隙的怪都帶的詞綴（monsters.yml 的 mods）
+    xoph:      { name: 索伏, weight: 100, color: "#ff7a2f", mods: [fiery] }       # 火焰
+    tul:       { name: 圖爾, weight: 100, color: "#8fd8ff", mods: [frosty] }      # 冰冷
+    esh:       { name: 艾許, weight: 100, color: "#ffe84a", mods: [shocking] }    # 閃電
+    uul_netol: { name: 烏爾尼托, weight: 60, color: "#c9a27a", mods: [armoured] } # 物理
+    chayula:   { name: 夏烏拉, weight: 30, color: "#b76bff", mods: [withering] }  # 混沌
+  # 緊握之手：幾隻、radius 格內的人各拿 rolls 次稀有怪的掉落（PoE1 是碎片，我們沒有碎片）。
+  #   2026-11-12 照站長「緊握之手 25% 刪掉」：catalyst_chance 0.25 → 0；同日「緊握之手刪除」：count [0, 2] → [0, 0]（不再出現）
+  hands: { count: [0, 0], rolls: 2, quantity_bonus: 50, catalyst_chance: 0, radius: 12 }
   quantity_bonus: 50               # 裂隙怪的物品數量 +%
   catalyst_chance: 0.012           # 2026-10-22：0.06 → 0.03（催化劑每種每週 2 千、只用掉 1～16%）；2026-10-24：0.03 → 0.012（還是只用掉 3～17%）；2026-10-30 照站長：怪物多一倍、機率維持 0.012（每次裂隙的催化劑跟著變多）。每隻裂隙怪死掉時掉一顆催化劑（currencies.yml 裡 operation: CATALYST 的，隨機一種）的機率
   unique_chance: 0.01              # 裂隙關上時 30 格內的人各擲一次：掉裂隙的專屬傳奇

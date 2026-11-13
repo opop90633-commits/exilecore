@@ -70,6 +70,20 @@ final class MapEvents implements Listener {
     private static final String SAFE_COLOR = "<#c8d0d8>";
 
     /** 一個事件。 */
+    /** 2026-11-12 照站長「裂痕以 PoE1 手感為主」：緊握之手（藏在裂隙範圍裡，圈長到才露出來，走到旁邊打開）。 */
+    private static final class BreachHand {
+        final Location at;
+        final double distance;
+        boolean revealed;
+        boolean opened;
+        TextDisplay label;
+
+        BreachHand(final Location at, final double distance) {
+            this.at = at;
+            this.distance = distance;
+        }
+    }
+
     private final class Event {
         final MapInstance instance;
         final MapEventConfig.Kind kind;
@@ -116,6 +130,35 @@ final class MapEvents implements Listener {
         UUID safeOpener;
         /** 這個結構的方塊（還原用）。 */
         final List<Block> structure = new ArrayList<>();
+        // 2026-11-12 照站長「裂痕以 PoE1 手感為主」
+        /** 這個裂隙的領主（怪的元素、圈的顏色）；null = 沒設定領主。 */
+        MapEventConfig.BreachLord lord;
+        /** 現在的半徑；收縮開始時的半徑。 */
+        double breachRadius;
+        double collapseFrom;
+        /** 上一次算擴張的 tick；開始收縮的 tick（0 = 還在擴張）。 */
+        long breachTick;
+        long collapseTick;
+        // 2026-11-12 照站長「進度條、穩定裂隙、維倫」（PoE2 0.5）
+        /** 還剩幾秒（殺怪會加）；穩定進度（點）。 */
+        double breachLeft;
+        double breachPoints;
+        /** 變成穩定裂隙了沒、從哪一 tick 開始；出到第幾波、這一波從哪一 tick 開始。 */
+        boolean stabilised;
+        long stableTick;
+        int stableWave;
+        long stableWaveTick;
+        /** 穩定裂隙這一波的稀有怪＋維倫（還活著的）。 */
+        final List<LivingEntity> stableMonsters = new ArrayList<>();
+        boolean vruunSpawned;
+        /** 2026-11-12：這次關上算不算打完穩定裂隙（給穩定的獎勵）。 */
+        boolean stableCleared;
+        /** 2026-11-12 照站長「裂痕要以殺死裂痕產生的怪物來拿到獎勵，在圈外打也行」：殺過（有份）這個裂隙的怪的人。 */
+        final java.util.Set<UUID> breachKillers = new java.util.HashSet<>();
+        /** 裂隙湧出來、還活著的怪 → 稀有度（死了推擴張用；首領算稀有）。 */
+        final Map<LivingEntity, MonsterRarity> breachSpawned = new java.util.IdentityHashMap<>();
+        /** 緊握之手。 */
+        final List<BreachHand> hands = new ArrayList<>();
 
         Event(final MapInstance instance, final MapEventConfig.Kind kind, final Location center, final MapEventConfig.Shrine shrine,
               final MapEventConfig.Box box, final String exileName) {
@@ -131,7 +174,7 @@ final class MapEvents implements Listener {
             return switch (kind) {
                 case SHRINE -> shrine.name();
                 case STRONGBOX -> box.name();
-                case BREACH -> "裂隙";
+                case BREACH -> lord == null ? "裂隙" : lord.name() + "的裂隙"; // 2026-11-12
                 case EXILE -> "流寇";
                 case ABYSS -> "深淵裂縫"; // 2026-10-18
                 case SAFE -> "保險箱";
@@ -399,7 +442,11 @@ final class MapEvents implements Listener {
             final Event event = switch (kind) {
                 case SHRINE -> new Event(instance, kind, center, config.shrines().get(random.nextInt(config.shrines().size())), null, null);
                 case STRONGBOX -> new Event(instance, kind, center, null, pickBox(random), null);
-                case BREACH -> new Event(instance, kind, center, null, null, null);
+                case BREACH -> { // 2026-11-12 照站長「裂痕以 PoE1 手感為主」：放的時候抽一個領主
+                    final Event breach = new Event(instance, kind, center, null, null, null);
+                    breach.lord = config.breachFeel().pickLord(random);
+                    yield breach;
+                }
                 case EXILE -> new Event(instance, kind, center, null, null,
                         config.exileNames().get(random.nextInt(config.exileNames().size())));
                 case ABYSS, SAFE -> new Event(instance, kind, center, null, null, null); // 2026-10-18
@@ -706,9 +753,19 @@ final class MapEvents implements Listener {
                 if (!event.started) {
                     yield line("裂隙", 0xC48BFF, "走進去打開", -1, idle);
                 }
-                final double duration = breachDuration(event);
-                final double elapsed = (now - event.startTick) / 20.0;
-                yield line("裂隙", 0xC48BFF, "還有 " + Math.max(0, Math.round(duration - elapsed)) + " 秒", percent(elapsed / duration), active);
+                // 2026-11-12 照站長「進度條，殺怪會延長；滿 100% 變成穩定裂隙」：進度條是穩定進度，後面寫剩幾秒；這次之前顯示擴張了幾成
+                final int color = event.lord == null ? 0xC48BFF : event.lord.color();
+                if (event.collapseTick > 0) {
+                    yield line(event.title(), color, "收縮中（圈外的怪會被吞掉）", 100, active);
+                }
+                if (event.stabilised) {
+                    final MapEventConfig.BreachFeel feel = config.breachFeel();
+                    yield line("穩定裂隙", color, (event.vruunSpawned ? feel.vruunName() : "第 " + event.stableWave + "／" + feel.stableWaves() + " 波")
+                            + "（剩 " + event.stableMonsters.size() + " 隻）", 100, active);
+                }
+                final double progress = breachProgress(event);
+                yield line(event.title(), color, "穩定 " + Math.round(progress * 100) + "%・剩 " + Math.max(0, Math.round(event.breachLeft)) + " 秒（殺怪延長）",
+                        percent(progress), active);
             }
             case EXILE -> event.done ? line("流寇", 0xFF7B3D, "已擊敗", -1, done)
                     : event.started || event.revealed ? line("流寇", 0xFF7B3D, event.exileName == null ? "還在" : event.exileName, -1, active)
@@ -1078,101 +1135,444 @@ final class MapEvents implements Listener {
 
     // ---- 裂隙 ----
 
+    /**
+     * 2026-11-12 照站長「進度條，殺怪會延長；進度條滿 100% 變成穩定裂隙，分波冒稀有怪（每波 5 隻），首領是費許的元帥維倫，打完才崩解；
+     * 專屬的巢生怪；維倫只在穩定裂隙出」（PoE2 0.5 Breach，設定見 {@link MapEventConfig.BreachFeel}）：
+     * 踩進去打開，巢生怪從邊緣一波一波湧出；計時一直往下掉、每殺一隻加幾秒，同時累積穩定進度（圈跟著進度變大）。
+     * 計時歸零：收縮，圈外的怪被吞掉。進度滿：穩定裂隙——不再湧一般的怪，從起點分波出稀有的巢生怪，最後是維倫；全部打完才崩解、給穩定的獎勵。
+     * 這次之前（同一天稍早，PoE1 手感版）：圈每秒自己長、殺怪推，到最大就收縮；裂痕首領 30% 在擴張途中出現；怪是地圖本身的。
+     */
     private void tickBreach(final Event event, final List<Player> players, final double nearest, final long now) {
         final Location center = event.center;
+        final MapEventConfig.BreachFeel feel = config.breachFeel();
+        final double longer = event.instance.atlas().increased("atlas.breach.duration"); // 星圖天賦「開得更久」：起始時間、上限、每殺一隻加的秒數都多
         if (!event.started) {
             if (nearest <= config.breachStart() - 1) {
                 event.started = true;
                 event.startTick = now;
                 event.nextWaveTick = now;
+                event.breachTick = now;
+                event.breachRadius = config.breachStart();
+                event.breachLeft = feel.startSeconds() * (1 + Math.max(0, longer));
+                placeHands(event, feel, service.random());
                 center.getWorld().playSound(center, Sound.BLOCK_END_PORTAL_SPAWN, 1.0f, 0.7f);
                 for (final Player player : players) {
                     if (player.getLocation().distanceSquared(center) <= 30 * 30) {
-                        tw.exilecore.gui.Titles.show(player, plugin.text().parse("<#c48bff>裂隙打開了"),
-                                plugin.text().parse("<#c48bff>怪會從邊緣湧出 " + Math.round(breachDuration(event)) + " 秒"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
+                        tw.exilecore.gui.Titles.show(player, plugin.text().parse(breachColor(event) + ItemRenderer.escape(event.title()) + "打開了"),
+                                plugin.text().parse("<gray>殺怪延長時間；進度滿 100% 變成穩定裂隙"), Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
                     }
                 }
             } else {
-                ring(center, config.breachStart(), 16);
+                ring(event, config.breachStart(), 16);
                 tw.exilecore.skill.Fx.spawn(center.getWorld(), Particle.REVERSE_PORTAL, center.getX(), center.getY() + 0.5, center.getZ(), 8, 0.6, 0.4, 0.6, 0.02);
             }
             return;
         }
-        final double elapsed = (now - event.startTick) / 20.0;
-        final double duration = breachDuration(event);
-        if (elapsed > duration) {
-            if (!event.done) {
-                event.done = true;
-                countEvent(event, players);
-                if (plugin.skills() != null) {
-                    plugin.skills().decals().remove(decalId(center));
-                }
-                if (event.label != null && event.label.isValid()) {
-                    event.label.remove();
-                    event.label = null;
-                }
-                center.getWorld().playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 1.0f, 0.6f);
-                // 裂隙關上：附近（30 格內）的人各擲一次裂隙的專屬傳奇
-                final RandomGenerator random = service.random();
-                for (final Player player : players) {
-                    if (player.getLocation().distanceSquared(center) > 30 * 30) {
-                        continue;
-                    }
-                    final List<DropTable.Drop> uniques = eventUniques(MapEventConfig.Kind.BREACH, event.instance, player, random);
-                    if (!uniques.isEmpty()) {
-                        deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), uniques, 0);
-                    }
-                    rollTicket(MapEventConfig.Kind.BREACH, player, center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
-                    // 2026-11-04 照站長「裂隙指環放進裂痕掉落」：各擲一次（吃物品稀有度），魔法或稀有、未鑑定；這次之前裂隙指環在劫盜掉
-                    final DropTable.Drop ring = eventBase(MapEventConfig.Kind.BREACH, event.instance, player, random);
-                    if (ring != null) {
-                        deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), List.of(ring), 0);
-                    }
-                }
-            }
+        tickHands(event, feel, players);
+        if (event.done) {
             return;
         }
-        final double progress = Math.min(1, elapsed / duration);
-        final double radius = config.breachStart() + (config.breachEnd() - config.breachStart()) * progress;
-        ring(center, radius, (int) Math.max(16, radius * 4));
-        if (event.label != null && event.label.isValid()) {
-            event.label.text(plugin.text().parse("<#c48bff>裂隙<newline><gray>還有 " + Math.round(duration - elapsed) + " 秒"));
+        final double dt = Math.max(0, (now - event.breachTick) / 20.0);
+        event.breachTick = now;
+        if (event.collapseTick > 0) {
+            collapseBreach(event, feel, players, now);
+            return;
         }
+        // 殺掉的怪：加時間、加穩定進度（穩定之後只看那幾波稀有怪與維倫）
+        final Iterator<Map.Entry<LivingEntity, MonsterRarity>> spawned = event.breachSpawned.entrySet().iterator();
+        while (spawned.hasNext()) {
+            final Map.Entry<LivingEntity, MonsterRarity> entry = spawned.next();
+            final LivingEntity monster = entry.getKey();
+            if (monster.isValid()) {
+                continue;
+            }
+            if (monster.getHealth() <= 0 && !event.stabilised) {
+                event.breachLeft = feel.addTime(event.breachLeft, feel.killTime(entry.getValue(), longer), longer);
+                event.breachPoints += feel.killPoints(entry.getValue());
+            }
+            spawned.remove();
+        }
+        if (event.stabilised) {
+            tickStable(event, feel, players, now);
+            return;
+        }
+        event.breachLeft -= dt;
+        event.breachRadius = config.breachStart() + (config.breachEnd() - config.breachStart()) * breachProgress(event);
+        if (breachProgress(event) >= 1) {
+            stabilise(event, feel, players, now);
+            return;
+        }
+        if (event.breachLeft <= 0 || (now - event.startTick) / 20.0 >= feel.maxSeconds()) {
+            startCollapse(event, feel, players, now);
+            return;
+        }
+        final double radius = event.breachRadius;
+        ring(event, radius, (int) Math.max(16, radius * 4));
+        if (event.label != null && event.label.isValid()) {
+            event.label.text(plugin.text().parse(breachColor(event) + ItemRenderer.escape(event.title()) + "<newline><gray>穩定 "
+                    + Math.round(breachProgress(event) * 100) + "%・剩 <white>" + Math.max(0, Math.round(event.breachLeft)) + "</white> 秒（殺怪延長）"));
+        }
+        final RandomGenerator random = service.random();
         if (now >= event.nextWaveTick) {
             event.nextWaveTick = now + Math.round(config.waveSeconds() * 20);
-            final RandomGenerator random = service.random();
-            final ZoneConfig.SpawnEntry entry = service.spawner().chooseMonster(event.instance.map().monsters(), random);
-            if (entry == null) {
+            final MapEventConfig.Hiveborn kind = feel.pickHiveborn(random);
+            if (kind == null) {
                 return;
             }
             final int count = config.minWave() + (config.maxWave() > config.minWave() ? random.nextInt(config.maxWave() - config.minWave() + 1) : 0);
             final MapStats stats = event.instance.stats();
             final boolean magicWave = random.nextDouble() < 0.25 * (1 + stats.magicPacks() / 100.0);
-            final List<String> mods = magicWave ? plugin.monsters().rollMods(MonsterRarity.MAGIC, event.instance.level()) : List.of();
+            final List<String> mods = breachMods(event, magicWave ? plugin.monsters().rollMods(MonsterRarity.MAGIC, event.instance.level()) : List.of());
+            final MonsterRarity rarity = magicWave ? MonsterRarity.MAGIC : MonsterRarity.NORMAL;
             for (int i = 0; i < count; i++) {
-                final LivingEntity monster = service.spawner().spawn(event.instance, entry, around(event, Math.max(1.5, radius - 1.5), radius + 0.5, random),
-                        magicWave ? MonsterRarity.MAGIC : MonsterRarity.NORMAL, mods);
+                final LivingEntity monster = spawnHiveborn(event, kind, around(event, Math.max(1.5, radius - 1.5), radius + 0.5, random), rarity, mods,
+                        config.breachQuantity(), null, 1);
                 if (monster != null) {
-                    monster.getPersistentDataContainer().set(quantityKey, PersistentDataType.DOUBLE, config.breachQuantity());
-                    event.monsters.add(monster);
-                    tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.REVERSE_PORTAL, monster.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
+                    event.breachSpawned.put(monster, rarity);
                 }
             }
             center.getWorld().playSound(center, Sound.ENTITY_ENDERMAN_TELEPORT, 0.8f, 0.6f);
         }
     }
 
-    /** 這個裂隙開幾秒（星圖天賦可以拉長，怪多幾波）。 */
-    private double breachDuration(final Event event) {
-        return config.breachDuration() * (1 + event.instance.atlas().increased("atlas.breach.duration"));
+    /** 2026-11-12：穩定進度（0～1）。 */
+    private double breachProgress(final Event event) {
+        return Math.max(0, Math.min(1, event.breachPoints / Math.max(1, config.breachFeel().needPoints())));
+    }
+
+    /**
+     * 2026-11-12 照站長「專屬的巢生怪」：刷一隻巢生怪（原版生物 kind.type，名字 kind.name，稀有的叫「巢生精英・」），帶 mods，
+     * 物品數量 +quantity（小數）；name 不是 null 就用它當名字（維倫），生命再乘 life。刷不出來回傳 null。
+     */
+    private LivingEntity spawnHiveborn(final Event event, final MapEventConfig.Hiveborn kind, final Location at, final MonsterRarity rarity,
+                                       final List<String> mods, final double quantity, final String name, final double life) {
+        final LivingEntity monster = service.spawner().spawn(event.instance, new tw.exilecore.zone.ZoneConfig.SpawnEntry(kind.type(), 1), at, rarity, mods);
+        if (monster == null) {
+            return null;
+        }
+        final MonsterData data = plugin.monsters().data(monster).orElse(null);
+        if (data != null) {
+            final String shown = name != null ? name : rarity == MonsterRarity.RARE ? "巢生精英・" + kind.name() : kind.name();
+            plugin.monsters().decorateData(monster, new MonsterData(data.level(), data.rarity(), data.mods(), shown,
+                    data.lifeMultiplier() * life, data.damageMultiplier(), data.boss()));
+        }
+        monster.getPersistentDataContainer().set(quantityKey, PersistentDataType.DOUBLE, quantity);
+        event.monsters.add(monster);
+        tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.REVERSE_PORTAL, monster.getLocation().add(0, 1, 0), 12, 0.3, 0.5, 0.3, 0.05);
+        return monster;
+    }
+
+    private static List<String> breachMods(final Event event, final List<String> rolled) {
+        if (event.lord == null || event.lord.mods().isEmpty()) {
+            return rolled;
+        }
+        final List<String> mods = new ArrayList<>(event.lord.mods());
+        for (final String mod : rolled) {
+            if (!mods.contains(mod)) {
+                mods.add(mod);
+            }
+        }
+        return mods;
+    }
+
+    private static String breachColor(final Event event) {
+        return String.format("<#%06x>", event.lord == null ? 0xC48BFF : event.lord.color());
+    }
+
+    /** 2026-11-12：進度滿了，變成穩定裂隙（圈停在最大；還沒死的一般巢生怪留著、不再算進度）。 */
+    private void stabilise(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players, final long now) {
+        event.stabilised = true;
+        event.stableTick = now;
+        event.stableWave = 0;
+        event.breachRadius = config.breachEnd();
+        event.center.getWorld().playSound(event.center, Sound.BLOCK_END_PORTAL_FRAME_FILL, 1.0f, 0.5f);
+        event.center.getWorld().playSound(event.center, Sound.ENTITY_WITHER_SPAWN, 0.5f, 1.6f);
+        for (final Player player : players) {
+            if (player.getLocation().distanceSquared(event.center) <= 40 * 40) {
+                tw.exilecore.gui.Titles.show(player, plugin.text().parse(breachColor(event) + "裂隙穩定了"),
+                        plugin.text().parse("<gray>起點會分 " + feel.stableWaves() + " 波湧出稀有的巢生怪，最後是" + ItemRenderer.escape(feel.vruunName())),
+                        Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2500), Duration.ofMillis(500)));
+            }
+        }
+        spawnStableWave(event, feel, now);
+    }
+
+    /** 2026-11-12：穩定裂隙的下一波：stableWaveSize 隻稀有的巢生怪，從起點附近出來。 */
+    private void spawnStableWave(final Event event, final MapEventConfig.BreachFeel feel, final long now) {
+        event.stableWave++;
+        event.stableWaveTick = now;
+        final RandomGenerator random = service.random();
+        for (int i = 0; i < feel.stableWaveSize(); i++) {
+            final MapEventConfig.Hiveborn kind = feel.pickHiveborn(random);
+            if (kind == null) {
+                return;
+            }
+            final LivingEntity rare = spawnHiveborn(event, kind, around(event, 1.5, 4.5, random), MonsterRarity.RARE,
+                    breachMods(event, plugin.monsters().rollMods(MonsterRarity.RARE, event.instance.level())), config.breachQuantity(), null, 1);
+            if (rare != null) {
+                event.stableMonsters.add(rare);
+                event.breachSpawned.put(rare, MonsterRarity.RARE);
+            }
+        }
+        event.center.getWorld().playSound(event.center, Sound.ENTITY_ENDERMAN_SCREAM, 0.9f, 0.6f);
+    }
+
+    /** 2026-11-12：維倫（穩定裂隙最後一隻）：稀有、生命 ×vruunLife、物品數量 +vruunQuantity%，帶領主的詞綴＋vruunMods＋稀有詞綴。 */
+    private void spawnVruun(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players) {
+        event.vruunSpawned = true;
+        final RandomGenerator random = service.random();
+        final MapEventConfig.Hiveborn kind = new MapEventConfig.Hiveborn("ENDERMAN", feel.vruunName(), 1);
+        final List<String> mods = new ArrayList<>(breachMods(event, plugin.monsters().rollMods(MonsterRarity.RARE, event.instance.level())));
+        for (final String mod : feel.vruunMods()) {
+            if (!mods.contains(mod)) {
+                mods.add(mod);
+            }
+        }
+        final LivingEntity vruun = spawnHiveborn(event, kind, around(event, 1.0, 2.5, random), MonsterRarity.RARE, mods,
+                feel.vruunQuantity() / 100.0, feel.vruunName(), feel.vruunLife());
+        if (vruun == null) {
+            return;
+        }
+        final org.bukkit.attribute.AttributeInstance size = vruun.getAttribute(org.bukkit.attribute.Attribute.SCALE);
+        if (size != null) {
+            size.setBaseValue(1.4);
+        }
+        event.stableMonsters.add(vruun);
+        event.breachSpawned.put(vruun, MonsterRarity.RARE);
+        vruun.getWorld().playSound(vruun.getLocation(), Sound.ENTITY_WITHER_SPAWN, 0.7f, 1.2f);
+        for (final Player player : players) {
+            if (player.getLocation().distanceSquared(event.center) <= 40 * 40) {
+                tw.exilecore.gui.ActionBar.send(player, plugin.text().parse(breachColor(event) + "✦ " + ItemRenderer.escape(feel.vruunName()) + "從裂隙裡出來了"));
+            }
+        }
+    }
+
+    /**
+     * 2026-11-12：穩定裂隙每 tick——這一波殺光（或過了 stableWaveSeconds 秒）出下一波；波數出完、這一波也殺光了出維倫；
+     * 維倫與剩下的都死了：崩解（給穩定的獎勵）。stableSeconds 秒內沒打完就收縮（沒有穩定獎勵）。
+     */
+    private void tickStable(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players, final long now) {
+        event.stableMonsters.removeIf(monster -> !monster.isValid());
+        final double radius = config.breachEnd();
+        ring(event, radius, (int) Math.max(16, radius * 4));
+        if ((now - event.stableTick) / 20.0 >= feel.stableSeconds()) {
+            startCollapse(event, feel, players, now);
+            return;
+        }
+        final boolean waveClear = event.stableMonsters.isEmpty();
+        if (event.stableWave < feel.stableWaves()) {
+            if (waveClear || (now - event.stableWaveTick) / 20.0 >= feel.stableWaveSeconds()) {
+                spawnStableWave(event, feel, now);
+            }
+        } else if (!event.vruunSpawned) {
+            if (waveClear) {
+                spawnVruun(event, feel, players);
+            }
+        } else if (waveClear) {
+            event.stableCleared = true;
+            closeBreach(event, players);
+            return;
+        }
+        if (event.label != null && event.label.isValid()) {
+            final long left = Math.max(0, Math.round(feel.stableSeconds() - (now - event.stableTick) / 20.0));
+            final String what = event.vruunSpawned ? ItemRenderer.escape(feel.vruunName()) : "第 " + event.stableWave + "／" + feel.stableWaves() + " 波";
+            event.label.text(plugin.text().parse(breachColor(event) + "穩定裂隙<newline><gray>" + what + "（剩 " + event.stableMonsters.size()
+                    + " 隻）・<white>" + left + "</white> 秒內打完"));
+        }
+    }
+
+    /** 2026-11-12：開始收縮（計時歸零、開太久、穩定裂隙沒打完）。 */
+    private void startCollapse(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players, final long now) {
+        event.collapseTick = now;
+        event.collapseFrom = event.stabilised ? config.breachEnd() : event.breachRadius;
+        event.center.getWorld().playSound(event.center, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 1.0f, 0.5f);
+        event.center.getWorld().playSound(event.center, Sound.ENTITY_WARDEN_SONIC_CHARGE, 0.8f, 0.6f);
+        collapseBreach(event, feel, players, now);
+    }
+
+    /**
+     * 收縮：collapseSeconds 秒內從 collapseFrom 收到 0，還在圈外的裂隙怪被吞掉（直接消失，沒有掉落）；
+     * 收完就關上（附近的人各擲專屬傳奇、入場券、裂隙指環）。
+     */
+    private void collapseBreach(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players, final long now) {
+        final double t = Math.min(1, (now - event.collapseTick) / 20.0 / feel.collapseSeconds());
+        final double radius = event.collapseFrom * (1 - t);
+        final Iterator<LivingEntity> spawned = event.breachSpawned.keySet().iterator();
+        while (spawned.hasNext()) {
+            final LivingEntity monster = spawned.next();
+            if (!monster.isValid()) {
+                spawned.remove();
+                continue;
+            }
+            final double dx = monster.getLocation().getX() - event.center.getX();
+            final double dz = monster.getLocation().getZ() - event.center.getZ();
+            if (t >= 1 || dx * dx + dz * dz > (radius + 0.5) * (radius + 0.5)) {
+                tw.exilecore.skill.Fx.spawn(monster.getWorld(), Particle.REVERSE_PORTAL, monster.getLocation().add(0, 1, 0), 16, 0.3, 0.6, 0.3, 0.08);
+                monster.remove();
+                spawned.remove();
+            }
+        }
+        if (t < 1) {
+            ring(event, Math.max(0.5, radius), (int) Math.max(12, radius * 4));
+            if (event.label != null && event.label.isValid()) {
+                event.label.text(plugin.text().parse(breachColor(event) + ItemRenderer.escape(event.title()) + "<newline><red>收縮中（圈外的怪會被吞掉）"));
+            }
+            return;
+        }
+        closeBreach(event, players);
+    }
+
+    /**
+     * 裂隙關上：殺過這個裂隙的怪（有份）的人各擲一次裂隙的專屬傳奇、入場券、裂隙指環；打完穩定裂隙的再各拿 stableRolls 次稀有怪的掉落
+     * （物品數量 +stableQuantity%）。2026-11-12 照站長「裂痕要以殺死裂痕產生的怪物來拿到獎勵，在圈外打也行」：
+     * 照 {@link Event#breachKillers}（站在哪都算，人要在這張圖裡）；這次之前是關上時裂隙中心 30 格內的人。
+     */
+    private void closeBreach(final Event event, final List<Player> players) {
+        final Location center = event.center;
+        event.done = true;
+        countEvent(event, players);
+        if (plugin.skills() != null) {
+            plugin.skills().decals().remove(decalId(center));
+        }
+        if (event.label != null && event.label.isValid()) {
+            event.label.remove();
+            event.label = null;
+        }
+        center.getWorld().playSound(center, Sound.BLOCK_RESPAWN_ANCHOR_DEPLETE, 1.0f, 0.6f);
+        final RandomGenerator random = service.random();
+        final MapEventConfig.BreachFeel feel = config.breachFeel();
+        for (final Player player : players) {
+            if (!event.breachKillers.contains(player.getUniqueId())) {
+                continue;
+            }
+            final List<DropTable.Drop> uniques = eventUniques(MapEventConfig.Kind.BREACH, event.instance, player, random);
+            if (!uniques.isEmpty()) {
+                deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), uniques, 0);
+            }
+            rollTicket(MapEventConfig.Kind.BREACH, player, center, event.bonus ? BONUS_TICKET : 1.0); // 2026-10-18：入場券
+            // 2026-11-04 照站長「裂隙指環放進裂痕掉落」：各擲一次（吃物品稀有度），魔法或稀有、未鑑定；這次之前裂隙指環在劫盜掉
+            final DropTable.Drop ring = eventBase(MapEventConfig.Kind.BREACH, event.instance, player, random);
+            if (ring != null) {
+                deliver(player, center, new MonsterData(event.instance.level(), MonsterRarity.MAGIC, List.of(), "裂隙"), List.of(ring), 0);
+            }
+            if (event.stableCleared) {
+                breachLoot(event, player, center, "穩定裂隙", feel.stableRolls(), feel.stableQuantity(), 0, random);
+            }
+        }
+        if (event.stableCleared) {
+            for (final Player player : players) {
+                if (event.breachKillers.contains(player.getUniqueId())) {
+                    tw.exilecore.gui.Titles.show(player, plugin.text().parse(breachColor(event) + "穩定裂隙崩解了"), plugin.text().parse("<gray>打完了，獎勵送到你身上"),
+                            Title.Times.times(Duration.ofMillis(100), Duration.ofMillis(2000), Duration.ofMillis(500)));
+                }
+            }
+        }
+    }
+
+    /** 2026-11-12：一個人拿 rolls 次稀有怪的掉落（物品數量 +quantityPct%）＋catalystChance 機率一顆催化劑（緊握之手、穩定裂隙共用）。 */
+    private void breachLoot(final Event event, final Player player, final Location at, final String source, final int rolls, final double quantityPct,
+                            final double catalystChance, final RandomGenerator random) {
+        final MapInstance instance = event.instance;
+        final DropTable drops = plugin.monsterModule().drops();
+        final int level = instance.level();
+        final double month = plugin.events() == null ? 0 : plugin.events().quantityBonus();
+        final double monthRarity = plugin.events() == null ? 0 : plugin.events().rarityBonus();
+        final double quantity = quantityPct / 100.0 + instance.stats().quantity() / 100.0
+                + tw.exilecore.loot.LootBonus.personalQuantity(plugin, player) + month;
+        final double rarity = instance.stats().rarity() / 100.0 + tw.exilecore.loot.LootBonus.personalRarity(plugin, player) + monthRarity;
+        final List<DropTable.Drop> rolled = new ArrayList<>();
+        for (int i = 0; i < rolls; i++) {
+            rolled.addAll(drops.roll(level, MonsterRarity.RARE, quantity + drops.serverQuantity(), rarity + drops.serverRarity(),
+                    plugin.items().generator(), plugin.currencies().repository(), random, plugin.characters().lootBias(player)));
+        }
+        if (catalystChance > 0 && random.nextDouble() < catalystChance) {
+            final tw.exilecore.currency.CurrencyType catalyst = pickCurrency(tw.exilecore.currency.CurrencyOperation.CATALYST, level, random);
+            if (catalyst != null) {
+                rolled.add(DropTable.Drop.currency(catalyst));
+            }
+        }
+        final long gold = drops.rollGold(level, MonsterRarity.RARE, quantity, random) * Math.max(1, rolls);
+        deliver(player, at, new MonsterData(level, MonsterRarity.RARE, List.of(), source), rolled, gold);
+    }
+
+    /** 2026-11-12：緊握之手藏在圈裡（離中心 30%～95% 的地方），圈長到那裡才露出來。 */
+    private void placeHands(final Event event, final MapEventConfig.BreachFeel feel, final RandomGenerator random) {
+        final int count = feel.minHands() + (feel.maxHands() > feel.minHands() ? random.nextInt(feel.maxHands() - feel.minHands() + 1) : 0);
+        final double span = config.breachEnd() - config.breachStart();
+        for (int i = 0; i < count; i++) {
+            final Location at = around(event, config.breachStart() + span * 0.3, config.breachEnd() * 0.95, random);
+            final double distance = Math.hypot(at.getX() - event.center.getX(), at.getZ() - event.center.getZ());
+            event.hands.add(new BreachHand(at, distance));
+        }
+    }
+
+    /**
+     * 2026-11-12 照站長「裂痕以 PoE1 手感為主」：緊握之手——圈長過它就露出來（字＋粒子），有人走到 2 格內就打開：
+     * handRadius 格內的人各拿 handRolls 次稀有怪的掉落（物品數量 +handQuantity%），再擲 handCatalyst 機率一顆催化劑。
+     * 裂隙關上之後沒開的照樣能開（地圖關了就沒了）。
+     */
+    private void tickHands(final Event event, final MapEventConfig.BreachFeel feel, final List<Player> players) {
+        for (final BreachHand hand : event.hands) {
+            if (hand.opened) {
+                continue;
+            }
+            if (!hand.revealed) {
+                if (event.breachRadius + 0.5 < hand.distance) {
+                    continue;
+                }
+                hand.revealed = true;
+                hand.label = hand.at.getWorld().spawn(hand.at.clone().add(0, 1.2, 0), TextDisplay.class, created -> {
+                    created.setBillboard(Display.Billboard.CENTER);
+                    created.setPersistent(false);
+                    created.setSeeThrough(false);
+                    created.setShadowed(true);
+                });
+                hand.label.text(plugin.text().parse(breachColor(event) + "✋ 緊握之手<newline><gray>走過去打開"));
+                hand.at.getWorld().playSound(hand.at, Sound.BLOCK_SCULK_SHRIEKER_SHRIEK, 0.6f, 1.4f);
+            }
+            tw.exilecore.skill.Fx.spawn(hand.at.getWorld(), Particle.REVERSE_PORTAL, hand.at.getX(), hand.at.getY() + 0.4, hand.at.getZ(), 6, 0.25, 0.3, 0.25, 0.02);
+            Player opener = null;
+            for (final Player player : players) {
+                if (player.getWorld() == hand.at.getWorld() && player.getLocation().distanceSquared(hand.at) <= 4) {
+                    opener = player;
+                    break;
+                }
+            }
+            if (opener != null) {
+                openHand(event, hand, feel, players);
+            }
+        }
+    }
+
+    private void openHand(final Event event, final BreachHand hand, final MapEventConfig.BreachFeel feel, final List<Player> players) {
+        hand.opened = true;
+        if (hand.label != null && hand.label.isValid()) {
+            hand.label.remove();
+        }
+        hand.label = null;
+        final RandomGenerator random = service.random();
+        for (final Player player : players) {
+            if (player.getWorld() != hand.at.getWorld() || player.getLocation().distanceSquared(hand.at) > feel.handRadius() * feel.handRadius()) {
+                continue;
+            }
+            breachLoot(event, player, hand.at, "緊握之手", feel.handRolls(), feel.handQuantity(), feel.handCatalyst(), random);
+        }
+        tw.exilecore.skill.Fx.spawn(hand.at.getWorld(), Particle.REVERSE_PORTAL, hand.at.getX(), hand.at.getY() + 0.6, hand.at.getZ(), 40, 0.4, 0.5, 0.4, 0.15);
+        hand.at.getWorld().playSound(hand.at, Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 0.7f);
+    }
+
+    /** 2026-11-12：裂隙的圈用領主的顏色。 */
+    private void ring(final Event event, final double radius, final int points) {
+        final int color = event.lord == null ? 0xC48BFF : event.lord.color();
+        ring(event.center, radius, points, color, color == 0xC48BFF ? BREACH_DUST : new Particle.DustOptions(Color.fromRGB(color), 1.3f));
     }
 
     /** 地上一圈紫色的點（套了資源包的人看平面的圈，粒子只送給沒套的人）。 */
-    private void ring(final Location center, final double radius, final int points) {
+    private void ring(final Location center, final double radius, final int points, final int color, final Particle.DustOptions dust) {
         final GroundDecals decals = plugin.skills() == null ? null : plugin.skills().decals();
         final List<Player> viewers;
         if (decals != null) {
-            decals.ring(decalId(center), center, radius, 0xC48BFF);
+            decals.ring(decalId(center), center, radius, color);
             viewers = decals.viewers(center);
             if (viewers.isEmpty()) {
                 return;
@@ -1183,7 +1583,7 @@ final class MapEvents implements Listener {
         for (int i = 0; i < points; i++) {
             final double angle = Math.PI * 2 * i / points;
             GroundDecals.particle(viewers, Particle.DUST, new Location(center.getWorld(), center.getX() + Math.cos(angle) * radius, center.getY() + 0.2,
-                    center.getZ() + Math.sin(angle) * radius), 1, 0, 0, 0, 0, BREACH_DUST);
+                    center.getZ() + Math.sin(angle) * radius), 1, 0, 0, 0, 0, dust);
         }
     }
 
@@ -1299,6 +1699,21 @@ final class MapEvents implements Listener {
         final Player killer = entity.getKiller();
         final RandomGenerator random = service.random();
         final Event found = exiles.remove(entity.getUniqueId());
+        if (found == null && entity.getPersistentDataContainer().has(quantityKey)) {
+            // 2026-11-12 照站長「裂痕要以殺死裂痕產生的怪物來拿到獎勵，在圈外打也行」：記下這隻裂隙怪有份的人（不管站在哪）
+            final MapInstance where = service.instanceOf(entity);
+            for (final Event breach : where == null ? List.<Event>of() : byInstance.getOrDefault(where.id(), List.of())) {
+                if (breach.kind == MapEventConfig.Kind.BREACH && breach.breachSpawned.containsKey(entity)) {
+                    for (final Player sharer : plugin.monsterModule().credit().sharers(entity, killer)) {
+                        breach.breachKillers.add(sharer.getUniqueId());
+                    }
+                    if (killer != null) {
+                        breach.breachKillers.add(killer.getUniqueId());
+                    }
+                    break;
+                }
+            }
+        }
         if (found == null) {
             // 裂隙的怪：催化劑
             if (killer != null && entity.getPersistentDataContainer().has(quantityKey)
@@ -2084,7 +2499,9 @@ final class MapEvents implements Listener {
             case SHRINE -> event.shrine.color() + "✦ " + ItemRenderer.escape(event.shrine.name()) + "<newline><gray>右鍵石柱：附近的人一起拿 "
                     + Math.round(config.shrineDuration() * (1 + event.instance.atlas().increased("atlas.shrine.duration"))) + " 秒增益";
             case STRONGBOX -> "<#f5b942>" + ItemRenderer.escape(event.box.name()) + "<newline><gray>右鍵打開（會跳出一群怪，殺光才開）";
-            case BREACH -> "<#c48bff>裂隙<newline><gray>踩進去開啟：怪會一波一波湧出，掉的東西多 " + Math.round(config.breachQuantity() * 100) + "%";
+            case BREACH -> breachColor(event) + ItemRenderer.escape(event.title()) // 2026-11-12：領主的名字、顏色，說明照 PoE1 的玩法
+                    + "<newline><gray>踩進去開啟：巢生怪從邊緣湧出，殺怪延長時間；進度滿了變成穩定裂隙（掉的東西多 "
+                    + Math.round(config.breachQuantity() * 100) + "%）";
             case EXILE -> "";
             // 2026-10-18
             case ABYSS -> ABYSS_COLOR + "深淵裂縫<newline><gray>走近它：地會裂開往前延伸，跟著縫走到盡頭（縫裡的怪掉的東西多 "
@@ -2107,6 +2524,15 @@ final class MapEvents implements Listener {
             }
         }
         event.monsters.clear();
+        event.breachSpawned.clear();
+        event.stableMonsters.clear();
+        event.breachKillers.clear();
+        for (final BreachHand hand : event.hands) { // 2026-11-12：緊握之手的字
+            if (hand.label != null && hand.label.isValid()) {
+                hand.label.remove();
+            }
+        }
+        event.hands.clear();
         if (event.kind == MapEventConfig.Kind.STRONGBOX) {
             boxes.values().removeIf(other -> other == event);
         }

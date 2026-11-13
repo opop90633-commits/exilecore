@@ -119,6 +119,16 @@ public final class CharacterListener implements Listener {
             characters.save(player);
             return;
         }
+        if (plugin.maps() != null && plugin.maps().inDifficultyTrial(player)) {
+            // 2026-11-12 照站長「難度的進階關卡：在裡面死掉不會噴經驗」（死亡次數照算）
+            final tw.exilecore.character.CharacterRecord character = states.get(player).character();
+            if (character != null) {
+                character.setDeaths(character.deaths() + 1);
+            }
+            player.sendMessage(plugin.text().prefixed("<gray>死在進階關卡：不扣經驗"));
+            characters.save(player);
+            return;
+        }
         final boolean inMap = plugin.maps() != null && plugin.maps().inMap(player);
         final long loss = states.applyDeathPenalty(player, inMap);
         if (loss > 0) {

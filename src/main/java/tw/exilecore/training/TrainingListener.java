@@ -97,7 +97,9 @@ final class TrainingListener implements Listener {
         return id == null ? null : skillName(id);
     }
 
-    private String skillName(final String profileId) {
+    private String skillName(final String rawId) {
+        // 2026-11-12 照站長「霆落矛傷害歸屬修正」：霆落矛的放電、炸裂這種衍生子技能算在霆落矛上（跟戰鬥數據一樣）
+        final String profileId = tw.exilecore.combat.CombatListener.meterParent(rawId);
         final int dot = profileId.indexOf('.');
         final String id = dot < 0 ? profileId : profileId.substring(0, dot);
         final tw.exilecore.skill.SkillDefinition definition = plugin.skills() == null ? null : plugin.skills().config().skill(id);

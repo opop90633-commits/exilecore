@@ -52,17 +52,21 @@ public final class UniqueDefence {
         final double fire = Math.max(0, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_FIRE, Set.of()));
         // 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：也可以視為混沌（完美混抗星魄）；兩種加起來最多 100%
         final double chaos = Math.max(0, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_CHAOS, Set.of()));
+        // 2026-11-11（高階領導符文）：也可以視為閃電；三種加起來最多 100%
+        final double lightning = Math.max(0, defender.flat(UniqueStats.TAKEN_PHYSICAL_AS_LIGHTNING, Set.of()));
         final double physical = incoming.get(DamageType.PHYSICAL);
-        if (fire + chaos <= 0 || physical <= 0) {
+        if (fire + chaos + lightning <= 0 || physical <= 0) {
             return incoming;
         }
-        final double scale = fire + chaos > 100 ? 100 / (fire + chaos) : 1;
+        final double scale = fire + chaos + lightning > 100 ? 100 / (fire + chaos + lightning) : 1;
         final DamagePacket copy = new DamagePacket(incoming);
         final double toFire = physical * fire * scale / 100.0;
         final double toChaos = physical * chaos * scale / 100.0;
-        copy.set(DamageType.PHYSICAL, physical - toFire - toChaos);
+        final double toLightning = physical * lightning * scale / 100.0;
+        copy.set(DamageType.PHYSICAL, physical - toFire - toChaos - toLightning);
         copy.add(DamageType.FIRE, toFire);
         copy.add(DamageType.CHAOS, toChaos);
+        copy.add(DamageType.LIGHTNING, toLightning);
         return copy;
     }
 

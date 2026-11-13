@@ -205,6 +205,44 @@ public final class ItemService {
         return data.isPresent() && repository.deletedUnique(data.get().unique()) ? ItemStack.empty() : voucher();
     }
 
+    /**
+     * 2026-11-12 照站長「斬獲腰環顯示成拴繩」：基底換過原版物品的舊裝備（例如 10-26 斬獲腰環的基底從筋索束帶（拴繩）換成重革束帶
+     * （氧化的銅鎖鏈），資料已經升級、底層的原版物品還是舊的），換成基底現在的原版物品（資料、詞綴都不動，照新的原版物品重畫）。
+     * 傳奇、基底的圖是掛在基底現在的原版物品上，不換的話資源包找不到圖、畫成原版的樣子。
+     * 不用換（不是我們的裝備、讀不出來、基底不見了、已經對了）回傳原本那個；換了回傳新的（呼叫的地方要放回原位）。
+     */
+    public ItemStack fixMaterial(final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || !codec.isEquipment(stack)) {
+            return stack;
+        }
+        final Optional<ItemData> data = codec.read(stack);
+        final ItemBase base = data.isEmpty() ? null : repository.base(data.get().base());
+        final org.bukkit.Material want = base == null ? null : org.bukkit.Material.matchMaterial(base.material());
+        if (want == null || want == stack.getType() || !want.isItem()) {
+            return stack;
+        }
+        try {
+            final ItemStack fixed = stack.withType(want);
+            renderer.render(fixed, data.get());
+            return fixed;
+        } catch (final RuntimeException e) {
+            return stack; // 換不了就原樣不動
+        }
+    }
+
+    /** 陣列裡基底換過原版物品的舊裝備原地換成對的（{@link #fixMaterial}；倉庫、隨身背包、飾品欄、離線資料）；回傳換了幾件。 */
+    public int fixMaterials(final ItemStack[] stacks) {
+        int count = 0;
+        for (int i = 0; i < stacks.length; i++) {
+            final ItemStack fixed = fixMaterial(stacks[i]);
+            if (fixed != stacks[i]) {
+                stacks[i] = fixed;
+                count++;
+            }
+        }
+        return count;
+    }
+
     /** 陣列裡的退役傳奇原地換成傳奇兌換券（倉庫、隨身背包、離線資料）；回傳換了幾件。 */
     public int replaceRetired(final ItemStack[] stacks) {
         int count = 0;

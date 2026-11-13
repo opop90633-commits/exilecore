@@ -152,7 +152,7 @@ public final class AtlasTree {
         stats.put("atlas.strongbox.unique", "寶箱掉專屬傳奇的機率增加 {v}%");
         stats.put("atlas.breach.weight", "裂隙出現的機會增加 {v}%");
         stats.put("atlas.breach.extra", "每張地圖多 {v} 個裂隙");
-        stats.put("atlas.breach.duration", "裂隙開著的時間 +{v}%（怪多幾波）");
+        stats.put("atlas.breach.duration", "裂隙開著的時間 +{v}%（擴張變慢，怪多幾波）"); // 2026-11-12：裂隙改 PoE1 手感後是擴張的速度除以 1 + x%
         stats.put("atlas.breach.unique", "裂隙掉專屬傳奇的機率增加 {v}%");
         stats.put("atlas.exile.weight", "流寇出現的機會增加 {v}%");
         stats.put("atlas.exile.extra", "每張地圖多 {v} 個流寇");

@@ -190,7 +190,8 @@ public final class CurrencyGroups {
                  SIPHON, DESTABILISE, ANCIENT_INFUSE, CRYSTAL_CORRUPT, BONUS_RUNE_SOCKET -> Group.VAAL; // 2026-11-07：瓦爾通貨；2026-11-08：晶淵鑿
             case RUNE -> type.affix() != null && type.affix().startsWith("idol_") ? Group.IDOLS // 2026-11-04
                     : type.affix() != null && type.affix().startsWith(SPECIAL_AUGMENTS) ? Group.SPECIAL_AUGMENTS // 2026-11-11：艾珊德菈、斯卡沃…那一系列
-                    : type.affix() != null && (type.affix().startsWith("augment_") || type.affix().startsWith(JIQUANI_SKILL_CORES))
+                    : type.affix() != null && (type.affix().startsWith("augment_") || type.affix().startsWith(JIQUANI_SKILL_CORES)
+                    || type.affix().startsWith("legacy_")) // 2026-11-11：阿德爾的傳承（傳承・灰製）也放增幅那組
                     ? Group.AUGMENTS // 2026-11-08：增幅、吉卡尼的技能等級魂核（這次之前增幅在魂核那組）
                     : type.affix() != null && tw.exilecore.item.Runes.possessiveCore(type.affix()) ? Group.NAMED_CORES // 2026-11-08 照站長「一起補」
                     : type.affix() != null && (type.affix().startsWith(tw.exilecore.item.Runes.CORE_PREFIX)

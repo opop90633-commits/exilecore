@@ -1054,7 +1054,7 @@ final class AscGranted implements Listener {
             rares.remove(best);
             final List<String> got = new ArrayList<>();
             for (final String modId : best.mods()) {
-                final String line = grantMod(player, modId, "儀典獻祭", "ritual." + modId, ticks);
+                final String line = grantMod(player, modId, "儀典獻祭", "ritual", ticks);
                 if (line != null) {
                     got.add(line);
                 }
@@ -1069,7 +1069,7 @@ final class AscGranted implements Listener {
             return;
         }
         if (own.sacrificeMod != null) {
-            plugin.skills().removeBuff(player, "ritual.self");
+            plugin.skills().revokeStolen(player, own.sacrificeMod, "ritual.self"); // 2026-11-12：只拿掉上次獻祭自己給的那份（被斬獲換掉的不動）
         }
         final tw.exilecore.monster.MonsterConfig.MonsterMod mod = all.get(plugin.random().nextInt(all.size()));
         own.sacrificeMod = mod.id();
@@ -1093,8 +1093,12 @@ final class AscGranted implements Listener {
         }
     }
 
-    /** 拿到一個怪物詞綴（增益）；回傳要列給玩家看的一行（「名字：效果、效果」），對玩家沒效果的回傳 null。 */
-    private String grantMod(final Player player, final String modId, final String sourceName, final String buffId, final int ticks) {
+    /**
+     * 拿到一個怪物詞綴（增益）；回傳要列給玩家看的一行（「名字：效果、效果」），對玩家沒效果的回傳 null。
+     * 2026-11-12 照站長「（斬獲＋儀典獻祭）同一條只算一次」：交給 SkillService.stolenBuff（同一條詞綴跟斬獲腰環共用一個增益）；
+     * source 是來源代號（ritual 獻祭屍體、ritual.self 獻祭自己）。這次之前代號 ritual.詞綴／ritual.self，跟斬獲各算各的。
+     */
+    private String grantMod(final Player player, final String modId, final String sourceName, final String source, final int ticks) {
         final tw.exilecore.monster.MonsterConfig.MonsterMod mod = plugin.monsters().config().mod(modId);
         if (mod == null) {
             return null;
@@ -1103,7 +1107,7 @@ final class AscGranted implements Listener {
         if (modifiers.isEmpty()) {
             return null;
         }
-        plugin.skills().buff(player, buffId, mod.name() + "（" + sourceName + "）", ticks, modifiers);
+        plugin.skills().stolenBuff(player, mod.id(), mod.name() + "（" + sourceName + "）", source, "rite_offering", ticks, modifiers);
         final List<String> effects = new ArrayList<>();
         for (final Modifier modifier : modifiers) {
             effects.add(tw.exilecore.skill.ModifierText.describe(modifier));

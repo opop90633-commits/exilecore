@@ -60,7 +60,7 @@ final class ShockchainArrows {
     /**
      * 純函式：perAilment 是 {@link #CHAINS_ON_AILMENT}；afflicted＝目標身上有感電或電擊；charged＝箭已經充能過（變成連鎖的次級投射物）。
      * 2026-10-28 照 PoE2「on first hitting」：還沒充能、打中閃電異常的：充能、多連鎖 perAilment 次、放震波；充能過的每一下都放震波、不再多給連鎖；
-     * 都不是：普通的一箭。這次之前（chained 參數）連鎖打中閃電異常的再多給一次。
+     * 都不是：2026-11-12 起也照樣充能（A＋B 統整成只要 A）；這次之前是普通的一箭。這次之前（chained 參數）連鎖打中閃電異常的再多給一次。
      */
     static Outcome onHit(final int perAilment, final boolean afflicted, final boolean charged) {
         if (perAilment <= 0) {
@@ -71,7 +71,9 @@ final class ShockchainArrows {
             //   連鎖的箭打中另一隻閃電異常的敵人再多連鎖 perAilment 次（總共最多 MAX_CHAINS 次，見 capChains）；這次之前不再多給
             return new Outcome(afflicted ? perAilment : 0, true, false);
         }
-        return afflicted ? new Outcome(perAilment, true, true) : new Outcome(0, false, false);
+        // 2026-11-12 照站長（A＋B 統整成只要 A，10-31 的規則）：第一隻打中的沒有閃電異常也照樣充能、放震波、多連鎖 perAilment 次
+        //   （不用掉什麼；有感電的照舊用掉感電）；之後的連鎖照原作只有打到閃電異常的才再多連鎖。這次之前沒有異常就是普通的一箭
+        return new Outcome(perAilment, true, true);
     }
 
     /** 2026-10-29 照 PoE2「箭矢連鎖 8 次後消失」：一支箭總共最多連鎖幾次。 */

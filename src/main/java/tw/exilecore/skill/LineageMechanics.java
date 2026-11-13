@@ -965,7 +965,8 @@ public final class LineageMechanics implements Listener {
             if (modifiers.isEmpty()) {
                 continue;
             }
-            service.buff(killer, "lineage_steal." + mod.id(), mod.name() + "（掠獸）", (int) Math.round(seconds * 20), modifiers);
+            // 2026-11-12 照站長「同一條只算一次」：跟斬獲腰環、儀典獻祭共用一個增益；這次之前代號 lineage_steal.詞綴，各算各的
+            service.stolenBuff(killer, mod.id(), mod.name() + "（掠獸）", "lineage", null, (int) Math.round(seconds * 20), modifiers);
             if (++taken >= 2) {
                 break;
             }

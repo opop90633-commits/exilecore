@@ -535,6 +535,14 @@ public record SkillBuild(SkillDefinition definition, int level, int gemLevel, bo
         return withAreaAndProjectiles(areaScale * (base + meters) / base, projectiles);
     }
 
+    /** 2026-11-13：傷害乘 factor（自己觸發的更少 20%：雷流場自己掛的電球）。 */
+    public SkillBuild withDamageScale(final double factor, final String source) {
+        return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile.scaled(factor, source),
+                reach, angle, targets, knockback, projectiles, spread, speed, range, size, pierce, chains, explode, wobble, arrow,
+                radius, length, chainRange, manaCost, areaScale, bonusLevel, cooldownTicks, durationScale, forks, returning, echo,
+                deploy, totems, minions, reserve, minionReserve, auraEffect, generosity, exerts, repeats, groundDurationScale);
+    }
+
     /** 2026-11-01 照 PoE2 Gale Force（wind_dancer_knockback_+%_final_per_stage）：擊退換掉（風之舞步每層更多 25% 擊退距離）。 */
     public SkillBuild withKnockback(final double newKnockback) {
         return new SkillBuild(definition, level, gemLevel, isDefault, supports, profile,

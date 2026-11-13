@@ -12047,3 +12047,30 @@ item forgotten_warden
   ...adddddddda...
   ................
   ................
+
+# 2026-11-12 補圖：觀鳥者（The Auspex，精美背心）：深灰的羽紋背心、肩上一隻渡鴉、胸口一顆紫色的眼
+item the_auspex
+  a=14121c
+  b=2b2838
+  c=3f3b52
+  d=5a5570
+  e=8a84a8
+  r=0b0a10
+  y=c8a6ff
+  w=efe6ff
+  ................
+  .rr..........rr.
+  rwrraaa..aaarrr.
+  .rraabbaabbaar..
+  ..abbcbbbbcbba..
+  ..abccddddccba..
+  ..abcdeyyedcba..
+  ..abcdywwydcba..
+  ..abcdeyyedcba..
+  ..abccddddccba..
+  ..abbcdccdcbba..
+  ..abbccddccbba..
+  ..abcbcddcbcba..
+  ..abbbbccbbbba..
+  ..aabbbaabbbaa..
+  ...aaaa..aaaa...

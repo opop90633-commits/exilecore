@@ -372,8 +372,15 @@ public final class UniqueDerived {
         return map == null ? java.util.Map.of() : map;
     }
 
-    /** 2026-11-07：grant_skill 的值換成固定等級（≥ 2 四捨五入；1 以下 = 0，照物品等級）。 */
+    /**
+     * 2026-11-07：grant_skill 的值換成固定等級（≥ 2 四捨五入；1 = 0，照物品等級）。
+     * 2026-11-12 照站長「磐石之拳是昇華的版本」（驚怖掠影的磐石之拳版本「賦予技能：等級 1 死懼碎擊」）：0 到 1 之間（不含，例如 0.5）= 固定 1 級
+     * （1 已經用來表示照物品等級）；這次之前 1 以下都是照物品等級。
+     */
     public static int fixedGrantLevel(final double value) {
+        if (value > 0 && value < 1) {
+            return 1;
+        }
         final long rounded = Math.round(value);
         return rounded >= 2 ? (int) rounded : 0;
     }

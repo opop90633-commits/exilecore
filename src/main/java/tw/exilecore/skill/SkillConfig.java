@@ -251,6 +251,14 @@ public final class SkillConfig {
         return manaCostScale;
     }
 
+    /** 2026-11-12 照站長「傷害估算準一點」：skills.yml 的 estimate_scale（技能代號 → 估計每秒傷害再乘的倍率）。 */
+    private volatile Map<String, Double> estimateScales = Map.of();
+
+    /** 這個技能的估計每秒傷害要再乘多少（沒寫是 1）。 */
+    public double estimateScale(final String skillId) {
+        return estimateScales.getOrDefault(skillId, 1.0);
+    }
+
     /** 2026-10-29：玩家攻擊、施法速度的基礎倍率（skills.yml 的 player_speed_scale）。 */
     private static volatile double playerSpeedScale = 2.0;
     /** 2026-10-29：召喚物移動速度的基礎倍率（skills.yml 的 minion_move_scale）。 */
@@ -289,6 +297,17 @@ public final class SkillConfig {
         final double extraLevelDamage = root.decimal("extra_level_damage", DEFAULT_EXTRA_LEVEL_DAMAGE);
         // 2026-10-27 照站長「所有技能的魔力消耗砍半」：每個技能的魔力消耗再乘這個（mana_cost_scale，0.1–10）
         manaCostScale = Math.max(0.1, Math.min(10, root.decimal("mana_cost_scale", 1.0)));
+        // 2026-11-12 照站長：估計值的校正（自動量技能的實測 ÷ 估計）
+        final Map<String, Double> parsedEstimateScales = new HashMap<>();
+        final YamlNode estimateNode = root.node("estimate_scale");
+        for (final String key : estimateNode.keys()) {
+            final double value = estimateNode.decimal(key, 1.0);
+            if (!(value > 0 && value <= 100)) {
+                throw new IllegalArgumentException(FILE + ".estimate_scale." + key + "：要在 0 到 100 之間，卻是 " + value);
+            }
+            parsedEstimateScales.put(key, value);
+        }
+        estimateScales = Map.copyOf(parsedEstimateScales);
         playerSpeedScale = Math.max(0.1, Math.min(10, root.decimal("player_speed_scale", 2.0))); // 2026-10-29 照站長
         playerAreaScale = Math.max(0.1, Math.min(10, root.decimal("player_area_scale", 1.5))); // 2026-10-31 照站長
         minionMoveScale = Math.max(0.1, Math.min(10, root.decimal("minion_move_scale", 2.0))); // 2026-10-29 照站長

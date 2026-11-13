@@ -119,6 +119,12 @@ public final class StageAttacks implements Listener {
     static final double DOMAIN_COST = 25;
     static final long BLOOM_LINGER = 15;
     static final String BLOOM_BUFF = "miasma_zone.bloom";
+    /**
+     * 2026-11-13 照站長「要配別的技能才有傷害的，改成自己也能觸發、但更少傷害 20%」：你站在毒花裡時，每 2 秒給花裡還沒有毒苞的敵人掛一顆，
+     * 3 秒後炸開（存的毒照算），更少 20%。這次之前要你的投射物攻擊打中才掛。
+     */
+    static final long SELF_PUSTULE_EVERY = 40;
+    static final long SELF_PUSTULE_TICKS = 60;
     /** 瘴域逐級數值（level_modifiers）：每分鐘回復生命、毒苞每存幾點毒更多 1% 傷害、每存幾點毒半徑 +0.1 公尺。 */
     static final String DOMAIN_REGEN = "domain.regen_per_minute";
     static final String PUSTULE_MORE_PER = "pustule.more_per";
@@ -348,6 +354,8 @@ public final class StageAttacks implements Listener {
         final int level;
         /** 2026-11-11：離開毒花之後增益還留幾 tick（0.75 秒＋高階奇術品質）。 */
         long lingerTicks = BLOOM_LINGER;
+        /** 2026-11-13：下一次自己掛毒苞的 tick。 */
+        long nextSelf;
 
         Bloom(final UUID owner, final Location center, final double radius, final long until, final int level) {
             this.owner = owner;
@@ -367,6 +375,8 @@ public final class StageAttacks implements Listener {
         /** 2026-10-28 照 PoE2：已經倒數了幾 tick（存的毒讓倒數變快）、帶著牠的敵人死掉的地方（之後留在原地倒數）。 */
         double elapsed;
         Location dropped;
+        /** 2026-11-13：自己掛的（毒花裡自動掛）炸開更少 20%；你的投射物攻擊掛的照舊 1。 */
+        double scale = 1.0;
 
         Pustule(final UUID owner, final LivingEntity carrier, final long until, final int level) {
             this.owner = owner;
@@ -768,6 +778,9 @@ public final class StageAttacks implements Listener {
         if (more > 0) {
             burst = burst.withProfile(burst.profile().scaled(1 + more / 100.0, "存的毒"));
         }
+        if (pustule.scale != 1.0) {
+            burst = burst.withProfile(burst.profile().scaled(pustule.scale, "自己掛的毒苞")); // 2026-11-13：毒花自己掛的更少 20%
+        }
         final double base = burst.definition().params().radius().at(burst.level());
         final double extra = tw.exilecore.core.Units.metres(pustuleRadius(pustule.stored, service.levelValue(DOMAIN, PUSTULE_RADIUS_PER, pustule.level))); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（pustuleRadius 回傳公尺）
         if (extra > 0 && base > 0) {
@@ -795,6 +808,19 @@ public final class StageAttacks implements Listener {
             final double regen = service.levelValue(DOMAIN, DOMAIN_REGEN, bloom.level) / 60.0;
             service.buff(player, BLOOM_BUFF, "毒花", (int) bloom.lingerTicks, List.of(Modifier.flat(StatKeys.LIFE_REGEN, regen, "毒花"),
                     Modifier.increased(StatKeys.SKILL_COST, DOMAIN_COST / 100.0, "毒花")));
+            if (now >= bloom.nextSelf) {
+                bloom.nextSelf = now + SELF_PUSTULE_EVERY;
+                for (final LivingEntity target : service.targets().around(bloom.center, bloom.radius, player)) {
+                    if (pustules.containsKey(target.getUniqueId())) {
+                        continue;
+                    }
+                    final Pustule pustule = new Pustule(player.getUniqueId(), target, now + PUSTULE_TICKS, bloom.level);
+                    pustule.scale = OriginalSkills.SELF_TRIGGER_DAMAGE;
+                    pustule.elapsed = PUSTULE_TICKS - SELF_PUSTULE_TICKS;
+                    pustules.put(target.getUniqueId(), pustule);
+                    tw.exilecore.skill.Fx.spawn(target.getWorld(), Particle.SNEEZE, target.getLocation().add(0, 1, 0), 6, 0.3, 0.3, 0.3, 0.01);
+                }
+            }
         }
         for (final Iterator<Map.Entry<UUID, Pustule>> it = pustules.entrySet().iterator(); it.hasNext(); ) {
             final Pustule pustule = it.next().getValue();
@@ -844,6 +870,12 @@ public final class StageAttacks implements Listener {
         final tw.exilecore.item.ItemStats.Snapshot stats = tw.exilecore.item.ItemStats.snapshot(plugin.items().repository(), base, data);
         final List<Modifier> added = shieldAdded(spec, stats.armour(), stats.evasion());
         return added.isEmpty() ? build : build.withProfile(build.profile().withLocal(added));
+    }
+
+    /** 2026-11-13（自動量技能換下一個技能時）：收掉這個人的毒花、毒苞。 */
+    void forgetPlaced(final UUID id) {
+        blooms.removeIf(bloom -> bloom.owner.equals(id));
+        pustules.values().removeIf(pustule -> pustule.owner.equals(id));
     }
 
     @EventHandler

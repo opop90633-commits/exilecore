@@ -1152,7 +1152,39 @@ public final class SupportMechanics implements Listener {
         if (bonus > 0) {
             service.buff(player, "cull_threshold", "撲殺", 400, List.of(Modifier.increased(SupportKeys.CULL_THRESHOLD, bonus / 100.0, "撲殺")));
         }
+        // 2026-11-11 照站長「驚怖掠影照原作」：撲殺時獲得 1 層恐懼化型（每層撲殺門檻增加 10%，10 秒、最多 20 層、再獲得時重新計時）
+        if (skillSheet.flat(SupportKeys.FEAR_INCARNATE_ON_CULL, tags) > 0) {
+            final long now = now();
+            final long[] stack = fearIncarnate.computeIfAbsent(player.getUniqueId(), id -> new long[] {0, 0});
+            final int stacks = stack[1] >= now ? (int) Math.min(FEAR_INCARNATE_MAX, stack[0] + 1) : 1;
+            stack[0] = stacks;
+            stack[1] = now + FEAR_INCARNATE_TICKS;
+            service.buff(player, "fear_incarnate", "恐懼化型 ×" + stacks, (int) FEAR_INCARNATE_TICKS,
+                    List.of(Modifier.increased(SupportKeys.CULL_THRESHOLD, FEAR_INCARNATE_EACH * stacks, "恐懼化型")));
+        }
+        // 2026-11-12 照站長「磐石之拳是昇華的版本」：驚怖掠影的磐石之拳版本，撲殺時獲得 1 層壓倒性恐懼
+        //   （PoE2 Fear Overwhelming：每層攻擊範圍增加 5%，10 秒、最多 20 層、再獲得時全部重新計時）
+        if (skillSheet.flat(SupportKeys.FEAR_OVERWHELMING_ON_CULL, tags) > 0) {
+            final long now = now();
+            final long[] stack = fearOverwhelming.computeIfAbsent(player.getUniqueId(), id -> new long[] {0, 0});
+            final int stacks = stack[1] >= now ? (int) Math.min(FEAR_INCARNATE_MAX, stack[0] + 1) : 1;
+            stack[0] = stacks;
+            stack[1] = now + FEAR_INCARNATE_TICKS;
+            service.buff(player, "fear_overwhelming", "壓倒性恐懼 ×" + stacks, (int) FEAR_INCARNATE_TICKS,
+                    List.of(new Modifier(StatKeys.SKILL_AREA, tw.exilecore.stats.ModType.INCREASED, FEAR_OVERWHELMING_EACH * stacks,
+                            Set.of(tw.exilecore.stats.Tags.ATTACK), "壓倒性恐懼")));
+        }
     }
+
+    /** 2026-11-12（驚怖掠影的磐石之拳版本）：壓倒性恐懼 {層數, 到期 tick}；層數上限、時間跟恐懼化型一樣。 */
+    private final java.util.Map<java.util.UUID, long[]> fearOverwhelming = new java.util.HashMap<>();
+    static final double FEAR_OVERWHELMING_EACH = 0.05;
+
+    /** 2026-11-11（驚怖掠影）：恐懼化型 {層數, 到期 tick}。 */
+    private final java.util.Map<java.util.UUID, long[]> fearIncarnate = new java.util.HashMap<>();
+    static final int FEAR_INCARNATE_MAX = 20;
+    static final long FEAR_INCARNATE_TICKS = 200;
+    static final double FEAR_INCARNATE_EACH = 0.10;
 
     /** 額外的破甲百分比：霜裂甲（打被你凍結的敵人）、烙印深（打被標記的敵人）。碎甲吼的戰吼不能破甲：回傳負無限大。 */
     public double extraBreak(final Player player, final StatSheet skillSheet, final Set<String> context, final LivingEntity defender) {

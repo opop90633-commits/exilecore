@@ -1197,6 +1197,7 @@ final class SkillDeployables implements Listener {
     /**
      * 2026-10-29 照 PoE2 Dark Effigy：對範圍內每一個身上有混沌持續傷害減益的敵人射一發，身上有好幾個就射好幾發（發數不吃多射）；
      * 沒有這種敵人就不放。這次之前每 0.8 秒對最近的一隻（不管有沒有減益）射一發。
+     * 2026-11-12 照站長（A＋B 統整成只要 A）：沒有這種敵人時朝最近的一隻射 1 發。
      */
     private void darkEffigy(final Deployed item, final Player owner, final long now, final long fired) {
         final Origin look = Origin.at(owner, item.feet, item.feet.getDirection());
@@ -1213,7 +1214,23 @@ final class SkillDeployables implements Listener {
             }
         }
         if (shots.isEmpty()) {
-            item.nextTick = now + 5; // 沒有帶混沌持續傷害的敵人：等一下再看
+            // 2026-11-12 照站長（A＋B 統整成只要 A，10-31 的規則）：沒有帶混沌持續傷害的敵人時，朝看得到的最近一隻射 1 發；
+            //   這次之前（照原作）沒有這種敵人就不放
+            LivingEntity nearest = null;
+            double best = Double.MAX_VALUE;
+            for (final LivingEntity candidate : targets.around(item.feet, item.spec.range(), owner)) {
+                final double distance = candidate.getLocation().distanceSquared(item.feet);
+                if (distance < best && look.canSee(candidate)) {
+                    best = distance;
+                    nearest = candidate;
+                }
+            }
+            if (nearest != null) {
+                shots.add(nearest);
+            }
+        }
+        if (shots.isEmpty()) {
+            item.nextTick = now + 5; // 附近沒有敵人：等一下再看
             return;
         }
         item.nextTick = now + schedule(item, exactTotemTicks(item.build, plugin.players().sheet(owner), totemsOf(owner.getUniqueId()))); // 2026-11-06：小數

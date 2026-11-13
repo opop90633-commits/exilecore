@@ -1438,7 +1438,9 @@ public final class AilmentService {
     static double chaosDebuffBase(final StatSheet attack, final tw.exilecore.stats.SkillProfile skill) {
         final java.util.Set<String> context = skill.contextFor(DamageType.CHAOS);
         final double base = attack.flat(tw.exilecore.stats.SkillMechanicKeys.DEBUFF_CHAOS_BASE, context);
-        return base <= 0 ? 0 : Math.max(0, attack.apply(StatKeys.DAMAGE, base, context));
+        // 2026-11-13 照站長：本服平衡倍率也乘（疫染、汲魂彈的減益）；這次之前不乘，平衡倍率對減益沒作用
+        return base <= 0 ? 0 : Math.max(0, attack.apply(StatKeys.DAMAGE, base, context))
+                * tw.exilecore.stats.DamageCalculator.balance(attack, skill.tags());
     }
 
     /**

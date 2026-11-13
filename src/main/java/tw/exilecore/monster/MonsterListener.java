@@ -221,6 +221,12 @@ public final class MonsterListener implements Listener {
             quantityBonus += bonus[0];
             rarityBonus += bonus[1];
         }
+        if (flat && plugin.maps() != null) {
+            // 2026-11-12 照站長「終局以上 Boss 的獎勵要能吃得到難度給的物品數量與物品稀有度」：只加難度給的
+            final double[] difficulty = plugin.maps().difficultyLoot(entity);
+            quantityBonus += difficulty[0];
+            rarityBonus += difficulty[1];
+        }
         if (plugin.events() != null && !flat) {
             // 2026-10：這個月的主題是全域的（以前只有地圖裡吃得到）
             quantityBonus += plugin.events().quantityBonus();
@@ -254,8 +260,13 @@ public final class MonsterListener implements Listener {
         } else {
             for (final Player player : sharers) {
                 final StatSheet sheet = plugin.players().sheet(player);
-                rollAndDeliver(entity, data, player, quantityBonus + (flat ? 0 : tw.exilecore.loot.LootBonus.personalQuantity(plugin, player)),
-                        rarityBonus + (flat ? 0 : tw.exilecore.loot.LootBonus.personalRarity(plugin, player)), location, flat); // 2026-10-19：自己的稀有度遞減
+                // 2026-11-12 照站長「個人的掉寶與稀有藥要影響全域的掉落（包含終局以上 Boss）」：終局以上的 Boss（flat）只加個人加倍藥的那份
+                //   （裝備、天賦給的照樣不加；地圖、全服、主題的照樣不加）；這次之前 flat 一律不加
+                final double personalQuantity = flat ? tw.exilecore.loot.LootBonus.boostQuantity(plugin, player)
+                        : tw.exilecore.loot.LootBonus.personalQuantity(plugin, player);
+                final double personalRarity = flat ? tw.exilecore.loot.LootBonus.boostRarity(plugin, player)
+                        : tw.exilecore.loot.LootBonus.personalRarity(plugin, player); // 2026-10-19：自己的稀有度遞減
+                rollAndDeliver(entity, data, player, quantityBonus + personalQuantity, rarityBonus + personalRarity, location, flat);
                 if (plugin.quests() != null) {
                     plugin.quests().onKill(player, location, data.rarity()); // 任務：擊殺、撿任務物品
                 }

@@ -72,6 +72,8 @@ public final class MapInstance {
     private long bossLastSeenTick;
     /** 特別的實例（每週回響、昇華試煉）；一般地圖是 null。 */
     private MapService.Special special;
+    /** 2026-11-12 照站長「難度系統」：這張圖的難度（開圖的人選的；進階關卡是那一關的難度）。 */
+    private int difficulty = 1;
     /** Uber：這張圖的 Boss 用 Uber 的版本（null = 一般的）。 */
     private MapConfig.Uber uber;
     /** 巔峰（2026-10）：集齊碎片才能開的最終 Boss；跟極境一樣只有 Boss 房、每個人只能進一次。 */
@@ -739,6 +741,20 @@ public final class MapInstance {
 
     void setAtlas(final AtlasBonus atlas) {
         this.atlas = atlas == null ? AtlasBonus.NONE : atlas;
+    }
+
+    /** 2026-11-12：這張圖的難度（1 = 原本的樣子）。 */
+    public int difficulty() {
+        return difficulty;
+    }
+
+    void setDifficulty(final int difficulty) {
+        this.difficulty = Math.max(1, difficulty);
+    }
+
+    /** 2026-11-12：這張是不是難度的進階關卡。 */
+    public boolean isDifficultyTrial() {
+        return special != null && Difficulty.TRIAL_KIND.equals(special.kind());
     }
 
     void setSpecial(final MapService.Special special) {

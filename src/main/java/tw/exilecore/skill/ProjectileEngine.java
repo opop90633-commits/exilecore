@@ -113,6 +113,9 @@ final class ProjectileEngine implements Listener {
         double speed;
         int ticksLeft;
         int fuseLeft;
+        /** 2026-11-12（{@link EarlyDetonation}）：一開始的引信有幾 tick（算提早炸經過了多少）；提早炸之前的傷害描述（子榴彈照這個，不扣）。 */
+        int fuseTotal;
+        SkillProfile unscaled;
         int pierceLeft;
         /** 2026-10-26（穿雲箭袋）：已經穿透過幾次。 */
         int pierced;
@@ -220,6 +223,7 @@ final class ProjectileEngine implements Listener {
             this.secondary = secondary;
             this.ticksLeft = (int) Math.ceil(range / Math.max(0.1, speed));
             this.fuseLeft = build.params().fuse() > 0 ? (int) Math.max(1, Math.round(build.params().fuse() * detonationScale(build) * 20)) : -1;
+            this.fuseTotal = Math.max(0, fuseLeft);
             this.pierceLeft = build.pierce();
             this.chainsLeft = build.chains();
             this.forksLeft = secondary ? 0 : build.forks();
@@ -545,6 +549,10 @@ final class ProjectileEngine implements Listener {
         }
         final Set<UUID> volley = new HashSet<>();
         final String visual = build.definition().visual();
+        // 2026-11-12 照站長（自動量技能的榴彈幾乎都是 0）：榴彈照 PoE2 拋到準心指的點（準心對著敵人就是牠腳下），
+        //   速度照距離算（最快照技能的投射物速度）；這次之前一律用技能的速度、角度看你往哪看，貼著敵人丟會飛過頭滾到好幾格外才炸
+        final Lob lob = wander == null && owner != null && build.params().fuse() > 0 && build.params().gravity() > 0
+                ? lob(origin, build, eye.toVector().add(new Vector(0, -0.15, 0))) : null;
         // 2026-10-26（PoE2 的 Merging）：弩的碎片彈每一片都可以打中同一個敵人（貼臉一發的碎片全部打在同一隻身上）
         final boolean merging = build.definition().tags().contains(MERGING) || build.definition().tags().contains(SPIKE_VOLLEY);
         // 2026-10-26 照 PoE2（纏蝕箭）：每一種傷害各一發（物理一發、混沌一發，各自打中）
@@ -557,12 +565,15 @@ final class ProjectileEngine implements Listener {
         final Map<UUID, Long> hitClear = wander != null && wander.hitCooldownTicks() > 0 ? new HashMap<>() : null;
         int index = 0;
         for (final double[] d : directions) {
-            final Vector direction = new Vector(d[0], d[1], d[2]);
+            Vector direction = new Vector(d[0], d[1], d[2]);
+            if (lob != null) {
+                direction = lob.direction(direction); // 2026-11-12：水平方向照扇形，仰角固定
+            }
             final Vector start = wander != null ? wanderStart(origin.world(), eye.toVector(), direction)
                     : eye.toVector().add(direction.clone().multiply(0.4)).add(new Vector(0, -0.15, 0));
             final SkillProfile profile = split.isEmpty() ? build.profile() : split.get(index++ % split.size());
             final double factor = speedFactor(variation, variation > 0 ? random.nextDouble() : 0.5);
-            final Shot shot = spawn(owner, build, profile, origin.world(), start, direction, build.speed() * factor, build.range() * factor,
+            final Shot shot = spawn(owner, build, profile, origin.world(), start, direction, lob != null ? lob.speed() : build.speed() * factor, build.range() * factor,
                     merging || !split.isEmpty() ? new HashSet<>() : volley, false, visual);
             if (shot != null) {
                 // 2026-11-11 照站長「PoB2 找不到的 18 顆照 poe2db 改」：poe2db Eye of Winter「Projectiles have (0—50)% chance to Return to you」；這次之前一般的品質效果再算一次
@@ -576,6 +587,51 @@ final class ProjectileEngine implements Listener {
             }
         }
         visuals.cast(visual, eye);
+    }
+
+    /** 2026-11-12：榴彈拋出去的仰角（度）。 */
+    static final double LOB_ANGLE = 35;
+    /** 2026-11-12：榴彈最近丟多遠（格；貼臉時也丟到前面一點）。 */
+    static final double LOB_MIN = 1.5;
+
+    /** 2026-11-12：榴彈這一次的拋法：仰角 {@link #LOB_ANGLE}、速度。 */
+    record Lob(double speed) {
+        Vector direction(final Vector look) {
+            final Vector flat = look.clone().setY(0);
+            if (flat.lengthSquared() < 1e-9) {
+                flat.setX(1);
+            }
+            flat.normalize();
+            final double angle = Math.toRadians(LOB_ANGLE);
+            return flat.multiply(Math.cos(angle)).setY(Math.sin(angle));
+        }
+    }
+
+    /** 2026-11-12：落點（準心對著的敵人腳下、不然準心指的地面），照距離算出速度。 */
+    private Lob lob(final Origin origin, final SkillBuild build, final Vector start) {
+        final double gravity = build.params().gravity();
+        final double maxSpeed = Math.max(0.1, build.speed());
+        final double reach = Math.max(LOB_MIN, Math.min(build.range(), maxSpeed * maxSpeed / gravity));
+        final LivingEntity aimed = targets.aimed(origin, reach, 1.2);
+        final Location at = aimed != null ? aimed.getLocation() : targets.aimPoint(origin, reach);
+        final double dx = at.getX() - start.getX();
+        final double dz = at.getZ() - start.getZ();
+        final double distance = Math.max(LOB_MIN, Math.min(reach, Math.sqrt(dx * dx + dz * dz)));
+        return new Lob(Math.min(maxSpeed, lobSpeed(distance, start.getY() - at.getY(), gravity)));
+    }
+
+    /**
+     * 2026-11-12：仰角 {@link #LOB_ANGLE} 丟出去、每 tick 往下掉 gravity，要落在水平 distance、低 drop 格的地方要多快。純函式。
+     * y = d·tanθ − g·d² ÷ (2v²cos²θ) = −drop → v² = g·d² ÷ (2cos²θ·(d·tanθ + drop))。
+     */
+    static double lobSpeed(final double distance, final double drop, final double gravity) {
+        final double angle = Math.toRadians(LOB_ANGLE);
+        final double cos = Math.cos(angle);
+        final double lift = distance * Math.tan(angle) + drop;
+        if (lift <= 1e-6) {
+            return 0.2;
+        }
+        return Math.max(0.1, Math.sqrt(gravity * distance * distance / (2 * cos * cos * lift)));
     }
 
     /** 2026-11-11：熾星彈高階奇術品質的環射多射幾發（原作 8）。 */
@@ -647,7 +703,7 @@ final class ProjectileEngine implements Listener {
 
     /**
      * 2026-10-28 照 PoE2 Spark：貼地游走的一 tick——方向在射出去的那條線左右 width/2 格內亂竄，沿著地面走（爬得上一格高的台階、
-     * 掉得下 {@link #WANDER_DROP} 格；再高是牆、再低是懸崖：停下）；打中敵人就停（同一次施放的其他幾顆 0.66 秒內穿過牠）。
+     * 掉得下 {@link #WANDER_DROP} 格；再高是牆、再低是懸崖：反彈（2026-11-13；這次之前停下））；打中敵人就停（同一次施放的其他幾顆 0.66 秒內穿過牠）。
      */
     private void tickWander(final Shot shot, final Player owner) {
         final long now = plugin.getServer().getCurrentTick();
@@ -668,18 +724,7 @@ final class ProjectileEngine implements Listener {
         }
         // 下一步的地面：從上面一格往下找（爬台階、下坡）；上面那格是實心的 = 牆
         final Vector ahead = from.clone().add(heading.clone().multiply(shot.speed));
-        final double probeY = from.getY() - WANDER_HOVER + WANDER_STEP_UP;
-        final Location probe = new Location(shot.world, ahead.getX(), probeY, ahead.getZ());
-        Vector next = null;
-        if (shot.noTerrain) {
-            next = ahead;
-        } else if (probe.getBlock().isPassable()) {
-            final RayTraceResult floor = shot.world.rayTraceBlocks(probe, new Vector(0, -1, 0), WANDER_STEP_UP + WANDER_DROP,
-                    FluidCollisionMode.ALWAYS, true);
-            if (floor != null) {
-                next = new Vector(ahead.getX(), floor.getHitPosition().getY() + WANDER_HOVER, ahead.getZ());
-            }
-        }
+        final Vector next = shot.noTerrain ? ahead : groundAhead(shot, from, ahead);
         final Vector step = (next != null ? next : ahead).clone().subtract(from);
         final double travel = step.length();
         final Vector direction = travel > 1e-6 ? step.clone().multiply(1 / travel) : heading;
@@ -706,7 +751,37 @@ final class ProjectileEngine implements Listener {
             return;
         }
         if (next == null) {
-            // 牆、懸崖：停在這裡
+            // 2026-11-13 照站長「游雷碰到牆壁會回彈嗎」：照 PoE2，游雷本身碰到牆不會彈；掛了跳彈（Ricochet）的從地形連鎖照算，
+            //   轉向附近最近、還沒打過的敵人，從這裡重新沿著地面游走；這次之前貼地游走的碰到牆一律停下（跳彈對游雷沒作用）
+            if (shot.terrainChains > 0 && !shot.noChain && !shot.noTerrain) {
+                final LivingEntity target = targets.nearest(start, SkillBuild.PROJECTILE_CHAIN_RANGE, shot.hit, owner);
+                if (target != null) {
+                    final Vector flat = SkillTargets.center(target).toVector().subtract(from).setY(0);
+                    if (flat.lengthSquared() > 1e-9) {
+                        shot.terrainChains--;
+                        shot.wanderBase = flat.normalize();
+                        shot.wanderOrigin = from.clone();
+                        shot.wanderAngle = 0;
+                        visuals.impact(shot.visual(), start);
+                        return;
+                    }
+                }
+            }
+            // 2026-11-13 照站長（Google：電球碰到牆壁會反彈；PoE1 Spark 本來就會彈、PoE2 論壇「Walls delete spark projectiles」回報成 bug）：
+            //   牆、懸崖都反彈——撞到的那個軸反過來，從這裡重新沿著地面游走，持續時間照扣；這次之前停下消失
+            final Vector bounced = bounceWander(shot, from, heading);
+            if (bounced != null) {
+                shot.wanderBase = bounced;
+                shot.wanderOrigin = from.clone();
+                shot.wanderAngle = 0;
+                if (--shot.ticksLeft <= 0) {
+                    visuals.fizzle(shot.visual(), start);
+                    stopEffects(shot, owner, start, false);
+                    remove(shot);
+                }
+                return;
+            }
+            // 四面都走不了（卡在洞裡）：停在這裡
             stop(shot, owner, start);
             return;
         }
@@ -727,6 +802,52 @@ final class ProjectileEngine implements Listener {
             stopEffects(shot, owner, next.toLocation(shot.world), false);
             remove(shot);
         }
+    }
+
+    /** 貼地投射物從 from 往 ahead 走一步的落腳點（爬得上 {@link #WANDER_STEP_UP}、掉得下 {@link #WANDER_DROP}）；牆、懸崖回傳 null。 */
+    private Vector groundAhead(final Shot shot, final Vector from, final Vector ahead) {
+        final double probeY = from.getY() - WANDER_HOVER + WANDER_STEP_UP;
+        final Location probe = new Location(shot.world, ahead.getX(), probeY, ahead.getZ());
+        if (!probe.getBlock().isPassable()) {
+            return null; // 上面那格是實心的 = 牆
+        }
+        final RayTraceResult floor = shot.world.rayTraceBlocks(probe, new Vector(0, -1, 0), WANDER_STEP_UP + WANDER_DROP,
+                FluidCollisionMode.ALWAYS, true);
+        return floor == null ? null : new Vector(ahead.getX(), floor.getHitPosition().getY() + WANDER_HOVER, ahead.getZ());
+    }
+
+    /**
+     * 2026-11-13：游雷撞牆的反彈方向——只有 X 走不了就反 X、只有 Z 走不了就反 Z、都走不了（撞到角）就整個掉頭；
+     * 反彈後那一步也走不了就試別的，全部走不了回傳 null。
+     */
+    private Vector bounceWander(final Shot shot, final Vector from, final Vector heading) {
+        final double step = Math.max(0.1, shot.speed);
+        final boolean blockX = Math.abs(heading.getX()) > 1e-6
+                && groundAhead(shot, from, from.clone().add(new Vector(Math.signum(heading.getX()) * step, 0, 0))) == null;
+        final boolean blockZ = Math.abs(heading.getZ()) > 1e-6
+                && groundAhead(shot, from, from.clone().add(new Vector(0, 0, Math.signum(heading.getZ()) * step))) == null;
+        for (final Vector candidate : java.util.List.of(reflect(heading, blockX, blockZ), reflect(heading, true, false),
+                reflect(heading, false, true), reflect(heading, true, true))) {
+            if (candidate != null && groundAhead(shot, from, from.clone().add(candidate.clone().multiply(step))) != null) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    /** 水平方向撞牆反彈：撞到的軸反過來（兩個都沒判斷出來就整個掉頭）；回傳單位向量。純函式（測試用）。 */
+    static Vector reflect(final Vector heading, final boolean blockX, final boolean blockZ) {
+        final Vector flat = heading.clone().setY(0);
+        if (flat.lengthSquared() < 1e-12) {
+            return null;
+        }
+        if (blockX || !blockZ) {
+            flat.setX(-flat.getX());
+        }
+        if (blockZ || !blockX) {
+            flat.setZ(-flat.getZ());
+        }
+        return flat.normalize();
     }
 
     /**
@@ -855,6 +976,7 @@ final class ProjectileEngine implements Listener {
             final tw.exilecore.stats.StatSheet effective = profile.effective(plugin.players().sheet(owner));
             final double scale = effective.apply(tw.exilecore.stats.StatKeys.GRENADE_FUSE, 1.0, profile.tags());
             shot.fuseLeft = (int) Math.max(1, Math.round(shot.fuseLeft * Math.max(0.2, Math.min(3.0, scale))));
+            shot.fuseTotal = shot.fuseLeft; // 2026-11-12（EarlyDetonation）：長、短引信之後的才是原本的倒數
             shot.sticky = tw.exilecore.stats.StatKeys.flag(effective, tw.exilecore.stats.StatKeys.FLAG_NO_BOUNCE);
             // 2026-10-26 照 PoE2（熔球）：每次落地都炸一圈往前彈，彈幾次照 projectile.hops（逐級）
             final int hops = (int) Math.round(effective.flat(tw.exilecore.stats.SkillMechanicKeys.PROJECTILE_HOPS, profile.tags()));
@@ -2353,7 +2475,8 @@ final class ProjectileEngine implements Listener {
 
     /** 2026-11-01 照 PoE2 Cluster Grenade：散出一圈子榴彈（{@link CrossbowParity#BOMBLET}）。 */
     private void bomblets(final Shot shot, final Player owner, final Location at, final SkillParams.Scatter scatter, final SkillStages.Stage bomblet) {
-        final SkillProfile profile = SkillStages.profile(shot.build, shot.profile, CrossbowParity.BOMBLET);
+        // 2026-11-12（EarlyDetonation）：母彈提早炸扣的傷害不帶到子榴彈
+        final SkillProfile profile = SkillStages.profile(shot.build, shot.unscaled != null ? shot.unscaled : shot.profile, CrossbowParity.BOMBLET);
         final Set<UUID> volley = new HashSet<>(shot.struck);
         final Vector base = shot.direction.clone().setY(0);
         if (base.lengthSquared() < 1e-6) {
@@ -2378,6 +2501,29 @@ final class ProjectileEngine implements Listener {
             }
         }
         visuals.scatter(shot.visual(), at);
+    }
+
+    /**
+     * 2026-11-12 照站長「再按一次提早炸」（{@link EarlyDetonation}）：你這一招還沒炸的榴彈裡最舊的一顆（放出去 {@link EarlyDetonation#MIN_AGE}
+     * tick 以上）下一 tick 炸開，傷害照經過的時間 50%～100%。回傳有沒有炸到。
+     */
+    boolean detonateEarly(final Player owner, final String skillId) {
+        for (final Shot shot : shots.values()) { // LinkedHashMap：照放出去的順序，第一個符合的就是最舊的
+            if (!shot.secondary && shot.owner.equals(owner.getUniqueId()) && shot.fuseLeft > 1 && shot.fuseTotal > 0
+                    && shot.build.definition().id().equals(skillId)) {
+                final long elapsed = shot.fuseTotal - shot.fuseLeft;
+                if (elapsed < EarlyDetonation.MIN_AGE) {
+                    continue;
+                }
+                if (!EarlyDetonation.NO_SCALE.contains(skillId)) {
+                    shot.unscaled = shot.profile;
+                    shot.profile = shot.profile.scaled(EarlyDetonation.scale(elapsed, shot.fuseTotal), "提早引爆");
+                }
+                shot.fuseLeft = 1;
+                return true;
+            }
+        }
+        return false;
     }
 
     /** 2026-11-01 照 PoE2 Explosive Shot：at 周圍 radius 格內你還沒炸的榴彈（有引信、帶 grenade 標籤）下一 tick 一起炸。 */

@@ -590,6 +590,17 @@ public final class TrainingService {
         if (dummy == null) {
             return;
         }
+        if (neutral.contains(entity.getUniqueId())) {
+            // 2026-11-12 照站長「一般假人已經移除了，測試能不能自動把首領變成普通的」：自動量技能時沒有防禦
+            //   （護甲、閃避 0，四種抗性 0），比的是技能本身；等級、首領身分照舊
+            sheet.setBase(StatKeys.ARMOUR, 0);
+            sheet.setBase(StatKeys.EVASION, 0);
+            sheet.setBase(StatKeys.RESIST_FIRE, 0);
+            sheet.setBase(StatKeys.RESIST_COLD, 0);
+            sheet.setBase(StatKeys.RESIST_LIGHTNING, 0);
+            sheet.setBase(StatKeys.RESIST_CHAOS, 0);
+            return;
+        }
         sheet.setBase(StatKeys.ARMOUR, sheet.base(StatKeys.ARMOUR) * dummy.armour());
         sheet.setBase(StatKeys.EVASION, sheet.base(StatKeys.EVASION) * dummy.evasion());
         sheet.setBase(StatKeys.RESIST_FIRE, dummy.fire());
@@ -615,8 +626,83 @@ public final class TrainingService {
         refill(entity);
     }
 
+    /**
+     * 2026-11-12 照站長「自動量技能（/ec balance bench）」：量測中的玩家打假人的每一下改送到這裡，不進一般的打靶紀錄
+     * （不跳計量條、不給總結、不寫角色的假人紀錄與輸出紀錄——量測時換的是測試用的武器和技能）。
+     */
+    public interface HitTap {
+        /** 打中（傷害是減免之後的；source 是技能名字，null = 普攻／不知道）。 */
+        void hit(LivingEntity dummy, double damage, boolean crit, String source);
+
+        /** 流血、點燃、中毒的一跳。 */
+        void dot(LivingEntity dummy, double damage);
+    }
+
+    private final Map<UUID, HitTap> taps = new HashMap<>();
+
+    /** 2026-11-12（自動量測）：暫時沒有防禦的假人（護甲、閃避、抗性都是 0；不存檔，量完拿掉）。 */
+    private final java.util.Set<UUID> neutral = new java.util.HashSet<>();
+
+    /** 2026-11-12（自動量測）：這隻假人暫時變成沒有防禦（on = false 恢復設定裡的防禦）；屬性表馬上重算。 */
+    public void neutral(final LivingEntity entity, final boolean on) {
+        if (entity == null || !isDummy(entity) || (on ? !neutral.add(entity.getUniqueId()) : !neutral.remove(entity.getUniqueId()))) {
+            return;
+        }
+        if (plugin.monsters() != null) {
+            plugin.monsters().invalidate(entity.getUniqueId());
+        }
+    }
+
+    /** 2026-11-13（自動量測）：假人現在的等級（不是假人回傳 1）。 */
+    public int dummyLevel(final LivingEntity entity) {
+        return isDummy(entity) ? currentLevel(entity) : 1;
+    }
+
+    /** 2026-11-12（自動量測）：假人的名字（設定裡的名字＋等級；不是假人回傳 null）。 */
+    public String dummyName(final Entity entity) {
+        if (!(entity instanceof LivingEntity living) || !isDummy(entity)) {
+            return null;
+        }
+        final DummyConfig.Dummy dummy = dummy(entity);
+        return (dummy == null ? "訓練假人" : dummy.name()) + "（Lv." + currentLevel(living) + "）";
+    }
+
+    /** 2026-11-12（自動量測）：假人恢復原狀——生命補滿、異常（點燃、感電、冰緩…）、減益（曝露、詛咒、碎甲）、傷害紀錄清掉。 */
+    public void resetDummy(final LivingEntity entity) {
+        if (!isDummy(entity)) {
+            return;
+        }
+        refill(entity);
+        if (plugin.ailments() != null) {
+            plugin.ailments().clear(entity);
+        }
+        if (plugin.combat() != null && plugin.combat().debuffs() != null) {
+            plugin.combat().debuffs().forget(entity.getUniqueId());
+        }
+        if (plugin.monsters() != null) {
+            plugin.monsters().ledger().forget(entity.getUniqueId());
+        }
+    }
+
+    /** 2026-11-12：開始把這個玩家打假人的紀錄送到 tap（null = 停止）。 */
+    public void tap(final UUID player, final HitTap tap) {
+        if (tap == null) {
+            taps.remove(player);
+        } else {
+            taps.put(player, tap);
+            sessions.remove(player); // 量測前打到一半的那一段丟掉（不要混在一起）
+        }
+    }
+
     /** 一次命中算好了（打中、沒打中、被格擋）。 */
     void onHit(final Player player, final LivingEntity entity, final HitResult result, final boolean cancelled, final String source) {
+        final HitTap tap = taps.get(player.getUniqueId());
+        if (tap != null) {
+            if (!cancelled && result.hit() && !result.blocked()) {
+                tap.hit(entity, result.total(), result.crit(), source);
+            }
+            return; // 2026-11-12：自動量測中不記一般的打靶紀錄
+        }
         final Session session = session(player, entity);
         final long now = System.currentTimeMillis();
         if (result.blocked()) {
@@ -636,7 +722,12 @@ public final class TrainingService {
         }
         final Player player = source == null ? null : plugin.getServer().getPlayer(source);
         if (player != null && amount > 0) {
-            session(player, entity).meter.dot(System.currentTimeMillis(), amount);
+            final HitTap tap = taps.get(player.getUniqueId());
+            if (tap != null) {
+                tap.dot(entity, amount); // 2026-11-12：自動量測
+            } else {
+                session(player, entity).meter.dot(System.currentTimeMillis(), amount);
+            }
         }
         return true;
     }
@@ -797,6 +888,7 @@ public final class TrainingService {
     /** 下線：紀錄丟掉。 */
     void forget(final Player player) {
         sessions.remove(player.getUniqueId());
+        taps.remove(player.getUniqueId()); // 2026-11-12
         hideBar(player);
         if (personal.remove(player.getUniqueId()) != null) {
             removePersonal(player.getUniqueId(), null);

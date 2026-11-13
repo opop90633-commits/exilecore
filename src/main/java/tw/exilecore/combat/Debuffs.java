@@ -455,19 +455,41 @@ public final class Debuffs {
         return false;
     }
 
-    /** 移動速度變慢多少（取最大的；1 = 定身）。 */
+    /**
+     * 移動速度變慢多少（取最大的；1 = 定身）。
+     * 2026-11-12 照站長「殘忍瘋狂照原作放大其他減速」：目標身上有殘忍瘋狂（{@link Presence#GRUELLING_ID}）時，其他減速的效力照它的層數更強
+     * （{@link Presence#gruellingFactor}，10 層 ×1.9）；定身（1）照舊，加強之後最多慢到 99%（不會變成定身）。這次之前只取最大的那一條。
+     */
     public double slow(final UUID target, final long now) {
         final List<Debuff> list = entries.get(target);
         if (list == null) {
             return 0;
         }
         double slow = 0;
+        double gruelling = 0;
         for (final Debuff debuff : list) {
-            if (debuff.active(now)) {
+            if (!debuff.active(now)) {
+                continue;
+            }
+            if (Presence.GRUELLING_ID.equals(debuff.id())) {
+                gruelling = Math.max(gruelling, debuff.slow());
+            } else {
                 slow = Math.max(slow, debuff.slow());
             }
         }
-        return slow;
+        return amplified(slow, gruelling);
+    }
+
+    /** 其他減速 slow 加上殘忍瘋狂 gruelling（它自己的減速 = 15% × 倍率）合起來。純函式（測試用）。 */
+    static double amplified(final double slow, final double gruelling) {
+        if (gruelling <= 0) {
+            return slow;
+        }
+        if (slow >= 1) {
+            return slow; // 定身
+        }
+        final double factor = gruelling / Presence.GRUELLING_BASE;
+        return Math.max(gruelling, Math.min(0.99, slow * factor));
     }
 
     /** 前綴：加速牠的「減益」（2026-11-01 照 PoE2 See Red：流血的敵人移動速度增加）；修飾器裡的「增加移動速度」照最大的那條算。 */

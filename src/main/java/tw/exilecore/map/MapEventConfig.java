@@ -223,7 +223,8 @@ public final class MapEventConfig {
     private double boxRadius = 20;
     private final List<Box> boxes = new ArrayList<>();
     // 裂隙
-    private double breachDuration = 25;
+    /** 2026-11-12 照站長「裂痕以 PoE1 手感為主」：擴張、收縮、領主、首領、緊握之手（{@link BreachFeel}）；這次之前固定開 breachDuration 秒。 */
+    private BreachFeel breachFeel = BreachFeel.DEFAULTS;
     private double waveSeconds = 2.5;
     private int minWave = 3;
     private int maxWave = 4;
@@ -232,6 +233,125 @@ public final class MapEventConfig {
     private double breachQuantity = 50;
     /** 裂隙怪死掉時掉催化劑的機率。 */
     private double catalystChance = 0.06;
+    /**
+     * 2026-11-12 照站長「裂痕以 PoE1 手感為主」：裂隙一個領主（PoE1 的 Xoph／Tul／Esh／Uul-Netol／Chayula）——
+     * 這個裂隙湧出來的怪都帶 mods（燃焰的、霜寒的…，傷害跟著那個領主的元素），圈的顏色是 color。
+     */
+    public record BreachLord(String id, String name, int weight, int color, List<String> mods) {
+        public BreachLord {
+            mods = List.copyOf(mods);
+        }
+    }
+
+    /**
+     * 2026-11-12 照站長「進度條，殺怪會延長；進度條滿 100% 變成穩定裂隙，分波冒稀有怪（每波 5 隻），首領是費許的元帥維倫，打完才崩解；
+     * 專屬的巢生怪；維倫只在穩定裂隙出」（PoE2 0.5 Breach）：
+     * <ul>
+     *   <li>計時：打開時有 startSeconds 秒，每殺一隻裂隙的怪加 killTime（一般／魔法／稀有）秒，最多累積到 capSeconds 秒；歸零就收縮
+     *       （collapseSeconds 秒內收到 0，還在圈外的怪被吞掉、沒有掉落），開了 maxSeconds 秒也一樣收。</li>
+     *   <li>穩定進度：每殺一隻加 killPoints（一般／魔法／稀有）點，滿 needPoints 點（100%）變成穩定裂隙；圈的半徑跟著進度長。</li>
+     *   <li>穩定裂隙：不再湧一般的怪，從起點分 stableWaves 波、每波 stableWaveSize 隻稀有的巢生怪（這一波殺光或過了 stableWaveSeconds 秒出下一波），
+     *       全部出完之後是首領維倫（稀有、生命 ×vruunLife、物品數量 +vruunQuantity%、另外帶 vruunMods）。全部打完才崩解：
+     *       附近的人照一般的關閉獎勵，再各拿 stableRolls 次稀有怪的掉落（物品數量 +stableQuantity%）；stableSeconds 秒內沒打完就收縮（沒有穩定獎勵）。</li>
+     *   <li>怪物：巢生怪（hiveborn：原版生物 → 名字、權重），不再用這張地圖本身的怪；都帶這個裂隙領主的詞綴。</li>
+     *   <li>緊握之手：同上一版（minHands～maxHands 隻、圈長到才露出來）。</li>
+     * </ul>
+     * 這次之前（同一天稍早，PoE1 手感版）：圈每秒自己長、殺怪推，到最大就收縮；裂痕首領 30% 在擴張途中出現；怪是地圖本身的。
+     */
+    public record BreachFeel(double startSeconds, double capSeconds, double maxSeconds, double collapseSeconds,
+                             double timeNormal, double timeMagic, double timeRare,
+                             double needPoints, double pointsNormal, double pointsMagic, double pointsRare,
+                             List<BreachLord> lords, List<Hiveborn> hiveborn,
+                             int stableWaves, int stableWaveSize, double stableWaveSeconds, double stableSeconds, int stableRolls, double stableQuantity,
+                             String vruunName, double vruunLife, double vruunQuantity, List<String> vruunMods,
+                             int minHands, int maxHands, int handRolls, double handQuantity, double handCatalyst, double handRadius) {
+        public BreachFeel {
+            lords = List.copyOf(lords);
+            hiveborn = List.copyOf(hiveborn);
+            vruunMods = List.copyOf(vruunMods);
+        }
+
+        static final BreachFeel DEFAULTS = new BreachFeel(8, 12, 90, 2.0,
+                0.3, 0.8, 2.5,
+                80, 1, 2.5, 10,
+                List.of(new BreachLord("xoph", "索伏", 100, 0xFF7A2F, List.of("fiery")),
+                        new BreachLord("tul", "圖爾", 100, 0x8FD8FF, List.of("frosty")),
+                        new BreachLord("esh", "艾許", 100, 0xFFE84A, List.of("shocking")),
+                        new BreachLord("uul_netol", "烏爾尼托", 60, 0xC9A27A, List.of("armoured")),
+                        new BreachLord("chayula", "夏烏拉", 30, 0xB76BFF, List.of("withering"))),
+                List.of(new Hiveborn("ENDERMITE", "巢生幼蟲", 30), new Hiveborn("SILVERFISH", "巢生蠹蟲", 20),
+                        new Hiveborn("SPIDER", "巢生節肢", 20), new Hiveborn("CAVE_SPIDER", "巢生刺蛛", 15), new Hiveborn("ENDERMAN", "巢生行者", 15)),
+                3, 5, 15, 90, 2, 100,
+                "費許的元帥・維倫", 6.0, 300, List.of("slammer", "charger"),
+                0, 0, 2, 50, 0, 12); // 2026-11-12 照站長「緊握之手 25% 刪掉」：催化劑 0.25 → 0；同日「緊握之手刪除」：0～2 隻 → 0 隻
+
+        /** 照權重抽一個領主（沒有領主回傳 null）。 */
+        public BreachLord pickLord(final java.util.random.RandomGenerator random) {
+            int total = 0;
+            for (final BreachLord lord : lords) {
+                total += Math.max(0, lord.weight());
+            }
+            if (total <= 0) {
+                return null;
+            }
+            int roll = random.nextInt(total);
+            for (final BreachLord lord : lords) {
+                roll -= Math.max(0, lord.weight());
+                if (roll < 0) {
+                    return lord;
+                }
+            }
+            return lords.getLast();
+        }
+
+        /** 照權重抽一種巢生怪（沒有回傳 null）。 */
+        public Hiveborn pickHiveborn(final java.util.random.RandomGenerator random) {
+            int total = 0;
+            for (final Hiveborn each : hiveborn) {
+                total += Math.max(0, each.weight());
+            }
+            if (total <= 0) {
+                return null;
+            }
+            int roll = random.nextInt(total);
+            for (final Hiveborn each : hiveborn) {
+                roll -= Math.max(0, each.weight());
+                if (roll < 0) {
+                    return each;
+                }
+            }
+            return hiveborn.getLast();
+        }
+
+        /** 殺一隻加幾秒（longer：星圖天賦「開得更久」+x%）。純函式。 */
+        public double killTime(final tw.exilecore.monster.MonsterRarity rarity, final double longer) {
+            final double base = switch (rarity) {
+                case NORMAL -> timeNormal;
+                case MAGIC -> timeMagic;
+                default -> timeRare;
+            };
+            return base * (1 + Math.max(0, longer));
+        }
+
+        /** 殺一隻加幾點穩定進度。純函式。 */
+        public double killPoints(final tw.exilecore.monster.MonsterRarity rarity) {
+            return switch (rarity) {
+                case NORMAL -> pointsNormal;
+                case MAGIC -> pointsMagic;
+                default -> pointsRare;
+            };
+        }
+
+        /** 加了 add 秒之後剩幾秒（最多 capSeconds ×（1 + longer））。純函式。 */
+        public double addTime(final double left, final double add, final double longer) {
+            return Math.min(capSeconds * (1 + Math.max(0, longer)), left + add);
+        }
+    }
+
+    /** 2026-11-12 照站長「專屬的巢生怪」：裂隙湧出來的怪（原版生物、名字、權重）。 */
+    public record Hiveborn(String type, String name, int weight) {
+    }
+
     /**
      * 2026-11-04 照站長「裂隙指環放進裂痕掉落」「淵印指環放進深淵」：事件完成時有份的人各擲一次，掉一個這種基底
      * （breach.ring、abyss.ring：{ base, chance }；沒寫不掉）。
@@ -576,7 +696,7 @@ public final class MapEventConfig {
         boxes.add(new Box("plain", "寶箱", 60, 3, 0.5, 1.0, 0, 0, 0, 0, 1, 1));
         boxes.add(new Box("artisan", "匠心寶箱", 25, 1, 0, 0.5, 3, 6, 0, 0, 2, 3));
         boxes.add(new Box("cartographer", "星圖寶箱", 15, 1, 0, 0.5, 0, 0, 1, 2, 1, 1));
-        breachDuration = 25;
+        breachFeel = BreachFeel.DEFAULTS;
         waveSeconds = 2.5;
         minWave = 3;
         maxWave = 4;
@@ -645,7 +765,7 @@ public final class MapEventConfig {
         boxRadius = other.boxRadius;
         boxes.clear();
         boxes.addAll(other.boxes);
-        breachDuration = other.breachDuration;
+        breachFeel = other.breachFeel;
         waveSeconds = other.waveSeconds;
         minWave = other.minWave;
         maxWave = other.maxWave;
@@ -769,7 +889,7 @@ public final class MapEventConfig {
         }
 
         final YamlNode breach = root.node("breach");
-        breachDuration = clamp(breach.decimal("duration", breachDuration), 5, 300);
+        breachFeel = readBreachFeel(breach); // 2026-11-12 照站長「裂痕以 PoE1 手感為主」；這次之前讀 duration（固定開幾秒）
         waveSeconds = clamp(breach.decimal("wave_seconds", waveSeconds), 0.5, 60);
         if (breach.has("wave")) {
             final int[] range = breach.range("wave");
@@ -1401,8 +1521,69 @@ public final class MapEventConfig {
         return boxes;
     }
 
-    public double breachDuration() {
-        return breachDuration;
+    /** 2026-11-12：裂隙的擴張、收縮、領主、首領、緊握之手。 */
+    public BreachFeel breachFeel() {
+        return breachFeel;
+    }
+
+    /** 2026-11-12：讀 breach.timer／stabilise／lords／hiveborn／stable／vruun／hands（沒寫的照預設）。 */
+    private static BreachFeel readBreachFeel(final YamlNode breach) {
+        final BreachFeel d = BreachFeel.DEFAULTS;
+        final YamlNode timer = breach.node("timer");
+        final YamlNode killTime = timer.node("kill");
+        final YamlNode stabilise = breach.node("stabilise");
+        final YamlNode killPoints = stabilise.node("kill");
+        List<BreachLord> lords = d.lords();
+        if (breach.has("lords")) {
+            final List<BreachLord> read = new ArrayList<>();
+            final YamlNode node = breach.node("lords");
+            for (final String id : node.keys()) {
+                final YamlNode lord = node.node(id);
+                read.add(new BreachLord(id, lord.string("name", id), Math.max(0, lord.integer("weight", 100)),
+                        MapHudFeed.color(lord.string("color", "#c48bff"), 0xC48BFF), lord.has("mods") ? lord.strings("mods") : List.of()));
+            }
+            if (!read.isEmpty()) {
+                lords = read;
+            }
+        }
+        List<Hiveborn> hiveborn = d.hiveborn();
+        if (breach.has("hiveborn")) {
+            final List<Hiveborn> read = new ArrayList<>();
+            final YamlNode node = breach.node("hiveborn");
+            for (final String type : node.keys()) {
+                final YamlNode each = node.node(type);
+                read.add(new Hiveborn(type.trim().toUpperCase(Locale.ROOT), each.string("name", type), Math.max(0, each.integer("weight", 10))));
+            }
+            if (!read.isEmpty()) {
+                hiveborn = read;
+            }
+        }
+        final YamlNode stable = breach.node("stable");
+        final YamlNode vruun = breach.node("vruun");
+        final YamlNode hands = breach.node("hands");
+        int minHands = d.minHands();
+        int maxHands = d.maxHands();
+        if (hands.has("count")) {
+            final int[] range = hands.range("count");
+            minHands = Math.max(0, Math.min(range[0], range[1]));
+            maxHands = Math.min(8, Math.max(range[0], range[1]));
+        }
+        return new BreachFeel(clamp(timer.decimal("start", d.startSeconds()), 2, 120), clamp(timer.decimal("cap", d.capSeconds()), 2, 300),
+                clamp(timer.decimal("max_seconds", d.maxSeconds()), 10, 900), clamp(timer.decimal("collapse_seconds", d.collapseSeconds()), 0.5, 20),
+                clamp(killTime.decimal("normal", d.timeNormal()), 0, 10), clamp(killTime.decimal("magic", d.timeMagic()), 0, 20),
+                clamp(killTime.decimal("rare", d.timeRare()), 0, 60),
+                clamp(stabilise.decimal("need", d.needPoints()), 1, 10000),
+                clamp(killPoints.decimal("normal", d.pointsNormal()), 0, 100), clamp(killPoints.decimal("magic", d.pointsMagic()), 0, 200),
+                clamp(killPoints.decimal("rare", d.pointsRare()), 0, 1000),
+                lords, hiveborn,
+                (int) clamp(stable.integer("waves", d.stableWaves()), 1, 10), (int) clamp(stable.integer("wave_size", d.stableWaveSize()), 1, 20),
+                clamp(stable.decimal("wave_seconds", d.stableWaveSeconds()), 3, 120), clamp(stable.decimal("seconds", d.stableSeconds()), 15, 900),
+                (int) clamp(stable.integer("rolls", d.stableRolls()), 0, 10), clamp(stable.decimal("quantity_bonus", d.stableQuantity()), 0, 1000),
+                vruun.string("name", d.vruunName()), clamp(vruun.decimal("life", d.vruunLife()), 0.1, 200),
+                clamp(vruun.decimal("quantity_bonus", d.vruunQuantity()), 0, 2000), vruun.has("mods") ? vruun.strings("mods") : d.vruunMods(),
+                minHands, maxHands, (int) clamp(hands.integer("rolls", d.handRolls()), 0, 10),
+                clamp(hands.decimal("quantity_bonus", d.handQuantity()), 0, 1000), clamp(hands.decimal("catalyst_chance", d.handCatalyst()), 0, 1),
+                clamp(hands.decimal("radius", d.handRadius()), 2, 60));
     }
 
     public double waveSeconds() {

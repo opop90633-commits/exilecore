@@ -1353,7 +1353,12 @@ final class MapBosses {
      */
     private tw.exilecore.loot.LootBonus.Bonus bonus(final MapInstance instance, final Player player) {
         if (service.flatLoot(instance)) { // 2026-11-04 照站長：照 maps.yml 的 flat_boss_loot（這次之前寫死：終局以上不吃、災厄級吃）
-            return tw.exilecore.loot.LootBonus.Bonus.NONE; // 2026-10-16：終局以上（終局、極境、巔峰、金庫之主）的掉落不吃物品數量、稀有度
+            // 2026-10-16：終局以上（終局、極境、巔峰、金庫之主）的掉落不吃物品數量、稀有度；
+            // 2026-11-12 照站長「終局以上 Boss 的獎勵要能吃得到難度給的物品數量與物品稀有度」：只加難度給的
+            // 2026-11-12 照站長「個人的掉寶與稀有藥要影響全域的掉落（包含終局以上 Boss）」：個人加倍藥的那份也加
+            //   （裝備、天賦給的、全服、主題、地圖的照樣不加）
+            final double[] difficulty = service.difficultyLoot(instance);
+            return tw.exilecore.loot.LootBonus.boosts(plugin, player).plus(difficulty[0], difficulty[1]);
         }
         return tw.exilecore.loot.LootBonus.of(plugin, player).plus(
                 instance.stats().quantity() / 100.0 + instance.atlas().increased("atlas.boss_quantity") + instance.twist().bossLoot,

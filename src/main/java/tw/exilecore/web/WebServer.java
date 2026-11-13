@@ -247,17 +247,90 @@ public final class WebServer {
             for (final Map.Entry<String, String> header : response.headers().entrySet()) {
                 exchange.getResponseHeaders().set(header.getKey(), header.getValue());
             }
+            // 2026-11-12 照站長「減輕伺服器流量」：文字類（網頁、JSON、JS、CSS、SVG）1 KB 以上、瀏覽器說收得了 gzip 的壓縮再送；
+            //   這次之前一律原樣送
+            byte[] body = response.body();
+            if (compressible(response.contentType()) && !response.headers().containsKey("Content-Encoding")) {
+                exchange.getResponseHeaders().set("Vary", "Accept-Encoding");
+                if (!head && body.length >= GZIP_MIN && acceptsGzip(exchange.getRequestHeaders().getFirst("Accept-Encoding"))) {
+                    body = gzipped(body);
+                    exchange.getResponseHeaders().set("Content-Encoding", "gzip");
+                }
+            }
             if (head) {
                 exchange.sendResponseHeaders(response.status(), -1);
                 return;
             }
-            exchange.sendResponseHeaders(response.status(), response.body().length == 0 ? -1 : response.body().length);
-            if (response.body().length > 0) {
+            exchange.sendResponseHeaders(response.status(), body.length == 0 ? -1 : body.length);
+            if (body.length > 0) {
                 try (OutputStream out = exchange.getResponseBody()) {
-                    out.write(response.body());
+                    out.write(body);
                 }
             }
         }
+    }
+
+    /** 2026-11-12：多大以上才壓縮（太小的壓了反而變大）。 */
+    static final int GZIP_MIN = 1024;
+
+    /**
+     * 2026-11-12：壓縮過的內容（鍵是原本那份陣列本身，不是內容；圖鑑、規劃器這些不會變的資料壓一次就好）。
+     * 弱參照：原本那份不用了（重新產生、每次都新做的回應）就跟著被回收。
+     */
+    private final Map<byte[], byte[]> gzipCache = java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
+
+    private byte[] gzipped(final byte[] body) {
+        final byte[] cached = gzipCache.get(body);
+        if (cached != null) {
+            return cached;
+        }
+        final byte[] packed = gzip(body);
+        gzipCache.put(body, packed);
+        return packed;
+    }
+
+    /** 要不要壓縮這種內容（文字類；zip、png 本來就壓縮過）。純函式。 */
+    static boolean compressible(final String contentType) {
+        if (contentType == null) {
+            return false;
+        }
+        final String type = contentType.toLowerCase(Locale.ROOT);
+        return type.startsWith("text/") || type.startsWith("application/json") || type.startsWith("application/javascript")
+                || type.startsWith("image/svg+xml") || type.startsWith("application/xml");
+    }
+
+    /** 瀏覽器有沒有說收得了 gzip（Accept-Encoding 裡有 gzip、而且沒有寫 q=0）。純函式。 */
+    static boolean acceptsGzip(final String acceptEncoding) {
+        if (acceptEncoding == null) {
+            return false;
+        }
+        for (final String part : acceptEncoding.toLowerCase(Locale.ROOT).split(",")) {
+            final String[] bits = part.trim().split(";");
+            if (bits[0].trim().equals("gzip") || bits[0].trim().equals("*")) {
+                for (int i = 1; i < bits.length; i++) {
+                    final String q = bits[i].trim();
+                    if (q.startsWith("q=")) {
+                        try {
+                            return Double.parseDouble(q.substring(2)) > 0;
+                        } catch (final NumberFormatException e) {
+                            return true;
+                        }
+                    }
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    static byte[] gzip(final byte[] body) {
+        final java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(Math.max(64, body.length / 4));
+        try (java.util.zip.GZIPOutputStream zip = new java.util.zip.GZIPOutputStream(out)) {
+            zip.write(body);
+        } catch (final IOException e) {
+            throw new java.io.UncheckedIOException(e);
+        }
+        return out.toByteArray();
     }
 
     /** {@link #endpoint} 的請求：檢查方法、讀內容（太大回 413）、交給處理器。 */

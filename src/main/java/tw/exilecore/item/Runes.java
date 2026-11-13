@@ -90,7 +90,9 @@ public final class Runes {
 
         /** 2026-11-04：魂核符文（soul core）、魔偶符文（idol）：有部位專屬的加成、只能嵌軍用武器、或一個角色僅限幾顆。 */
         public boolean soulCore() {
-            return martialOnly || limit > 0 || !slots.isEmpty() || id.startsWith(CORE_PREFIX); // 2026-11-08：吉卡尼的技能等級魂核只有 weapon，也是魂核
+            // 2026-11-11（高階領導符文）：只能用在軍用武器的一般符文（不是 core_／idol_ 開頭）不算魂核；這次之前只要 martial_only 就算
+            return martialOnly && (id.startsWith(CORE_PREFIX) || id.startsWith("idol_")) || limit > 0 || !slots.isEmpty()
+                    || id.startsWith(CORE_PREFIX); // 2026-11-08：吉卡尼的技能等級魂核只有 weapon，也是魂核
         }
 
         public Rune(final String id, final String name, final List<Line> weapon, final List<Line> armour) {

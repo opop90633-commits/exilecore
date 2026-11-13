@@ -171,7 +171,7 @@ public final class InstilMenu extends Menu {
                 query.isEmpty() ? "<gray>名稱或說明，例如「生命」、「暴擊」" : "<gray>目前：<white>" + ItemRenderer.escape(query),
                 "", "<yellow>左鍵：輸入關鍵字", query.isEmpty() ? "" : "<yellow>右鍵：清掉"));
         final List<String> info = new ArrayList<>();
-        info.add("<gray>項鍊：" + (amulet == null ? "<red>不見了" : "<white>" + ItemRenderer.escape(amuletName(amulet))));
+        info.add("<gray>物品：" + (amulet == null ? "<red>不見了" : "<white>" + ItemRenderer.escape(amuletName(amulet))));
         info.add(current == null ? "<gray>目前沒有注入" : "<gray>目前注入：<#c77dff>" + ItemRenderer.escape(nodeName(current)));
         info.add("");
         info.add("<gray>每個核心有固定的三種情緒配方（同一種可以重複）");
@@ -206,7 +206,7 @@ public final class InstilMenu extends Menu {
             return null;
         }
         final ItemBase base = plugin.items().repository().base(data.get().base());
-        return base == null || base.slot() != ItemSlot.AMULET ? null : data.get();
+        return Crafting.instilTarget(plugin.items().repository(), base, data.get()) ? data.get() : null; // 2026-11-12：＋渡鴉所觸的傳奇
     }
 
     @Override

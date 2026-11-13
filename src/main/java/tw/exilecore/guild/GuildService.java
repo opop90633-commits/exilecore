@@ -1612,7 +1612,7 @@ public final class GuildService {
         }
         final List<Integer> changed = new ArrayList<>();
         for (int page = 0; page < stash.pageCount(); page++) {
-            boolean any = false;
+            boolean any = plugin.items().fixMaterials(stash.page(page)) > 0; // 2026-11-12：基底換過原版物品的舊裝備換成對的
             for (final org.bukkit.inventory.ItemStack stack : stash.page(page)) {
                 try {
                     any |= stack != null && plugin.items().refresh(stack);

@@ -106,6 +106,7 @@ class VaalItemKeysTest {
         assertEquals(10, granted.get("vital_residue"));
         assertEquals(0, UniqueDerived.fixedGrantLevel(1), "值 1 照物品等級");
         assertEquals(12, UniqueDerived.fixedGrantLevel(12));
+        assertEquals(1, UniqueDerived.fixedGrantLevel(0.5), "2026-11-12：0～1 之間 = 固定 1 級（驚怖掠影的磐石之拳版本）");
     }
 
     @Test

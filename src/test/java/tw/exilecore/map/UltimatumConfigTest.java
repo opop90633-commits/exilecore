@@ -72,8 +72,9 @@ class UltimatumConfigTest {
             assertEquals(3, boss.boss().phases().size(), id + "：三個階段");
             // 2026-11-04 照站長「全新的難度：DPS 1000 萬、3 分半」：災厄級——等級固定 94、生命對準建議每秒 1000 萬
             assertEquals(94, boss.level(), id + "：災厄級 94 級");
-            assertEquals(4_000_000, boss.recommendedDps(), 1e-9, id + "：建議每秒 400 萬（2026-11-04 照站長；這次之前 1000 萬）");
-            final double base = monsters.lifeAt(boss.level()) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * boss.boss().life();
+            assertEquals(8_000_000, boss.recommendedDps(), 1e-9, id + "：建議每秒 800 萬（2026-11-13 照站長怪物血量 ×2；之前 400 萬，2026-11-04 之前 1000 萬）");
+            final double base = monsters.lifeAt(boss.level()) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * boss.boss().life()
+                    * monsters.lifeMultiplier(); // 2026-11-13：跟 MapService.eventBossLifeMultiplier 一樣先乘全部怪物生命倍率
             final double multiplier = boss.recommendedDps() * MapService.RECOMMENDED_SECONDS * MapService.resistFactor(monsters, boss.boss().mods()) / base;
             assertEquals(boss.recommendedDps(), MapService.recommendedDps(monsters, boss.boss(), boss.level(), multiplier), 1, id + "：倍率算回來就是建議每秒");
             assertTrue(multiplier > 40, id + "：比巔峰（每秒 100 萬）硬得多（倍率 " + Math.round(multiplier) + "；2026-11-04 改成 400 萬之後約 72，這次之前門檻 100）");

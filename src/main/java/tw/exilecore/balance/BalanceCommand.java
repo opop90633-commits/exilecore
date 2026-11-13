@@ -21,6 +21,9 @@ import java.util.List;
  * <pre>
  * /ec balance          每 5 級一行的平衡摘要＋區域 Boss，完整報表（每一級＋建議的錨點與 Boss 倍率）寫進 plugins/ExileCore/balance-report.txt
  * /ec balance &lt;等級&gt;  那個等級的明細（參考角色的裝備、輔助、每下傷害、攻速、命中、暴擊）
+ * /ec balance bench [秒數] [篩選]   2026-11-12：自動量技能（站在訓練假人旁邊；一個一個換技能、標準武器，量單體每秒傷害，報表寫進 balance/bench-日期時間.md）
+ * /ec balance bench stop            中途停止（換回原本的技能和武器）
+ *   2026-11-13：每個技能預設連量 3 次取平均；篩選加「1次」（～「5次」）改次數，例：/ec balance bench 10 重測 1次
  * /ec balance export   2026-10-25：平衡報表（真實數據：活躍角色的技能、輔助、傳奇、天賦配置率，Boss 實測，異常值，技能係數 vs PoE2）
  *                      寫進 plugins/ExileCore/balance/日期.md 與 .json（每月 1 號也會自動產生）
  * </pre>
@@ -36,6 +39,15 @@ public final class BalanceCommand {
     public static LiteralArgumentBuilder<CommandSourceStack> node(final ExileCore plugin) {
         return Commands.literal("balance")
                 .executes(context -> summary(plugin, context.getSource().getSender()))
+                .then(Commands.literal("bench") // 2026-11-12 照站長「自動量技能，第一版只量單體」
+                        .executes(context -> bench(plugin, context.getSource(), tw.exilecore.skill.SkillBench.defaultSeconds(), null))
+                        .then(Commands.literal("stop").executes(context -> benchStop(plugin, context.getSource())))
+                        .then(Commands.argument("seconds", IntegerArgumentType.integer(tw.exilecore.skill.SkillBench.minSeconds(),
+                                        tw.exilecore.skill.SkillBench.maxSeconds()))
+                                .executes(context -> bench(plugin, context.getSource(), IntegerArgumentType.getInteger(context, "seconds"), null))
+                                .then(Commands.argument("filter", com.mojang.brigadier.arguments.StringArgumentType.greedyString())
+                                        .executes(context -> bench(plugin, context.getSource(), IntegerArgumentType.getInteger(context, "seconds"),
+                                                com.mojang.brigadier.arguments.StringArgumentType.getString(context, "filter"))))))
                 .then(Commands.literal("export").executes(context -> {
                     final CommandSender sender = context.getSource().getSender();
                     sender.sendMessage(plugin.text().prefixed("<gray>平衡報表產生中（讀資料庫，幾秒）…"));
@@ -46,6 +58,38 @@ public final class BalanceCommand {
                 .then(Commands.argument("level", IntegerArgumentType.integer(1, 200))
                         .executes(context -> detail(plugin, context.getSource().getSender(),
                                 IntegerArgumentType.getInteger(context, "level"))));
+    }
+
+    /** 2026-11-12：/ec balance bench。 */
+    private static int bench(final ExileCore plugin, final CommandSourceStack source, final int seconds, final String filter) {
+        final CommandSender sender = source.getSender();
+        if (!(source.getExecutor() instanceof org.bukkit.entity.Player player)) {
+            sender.sendMessage(plugin.text().prefixed("<red>要在遊戲裡、站在訓練假人旁邊打"));
+            return Command.SINGLE_SUCCESS;
+        }
+        if (plugin.skills() == null) {
+            sender.sendMessage(plugin.text().prefixed("<red>技能模組沒有啟用"));
+            return Command.SINGLE_SUCCESS;
+        }
+        final String problem = plugin.skills().bench().start(player, seconds, filter,
+                message -> {
+                    final org.bukkit.entity.Player online = plugin.getServer().getPlayer(player.getUniqueId());
+                    if (online != null) {
+                        online.sendMessage(plugin.text().prefixed(message));
+                    }
+                });
+        if (problem != null) {
+            sender.sendMessage(plugin.text().prefixed("<red>" + ItemRenderer.escape(problem)));
+        }
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int benchStop(final ExileCore plugin, final CommandSourceStack source) {
+        if (!(source.getExecutor() instanceof org.bukkit.entity.Player player) || plugin.skills() == null
+                || !plugin.skills().bench().stop(player.getUniqueId())) {
+            source.getSender().sendMessage(plugin.text().prefixed("<gray>你沒有在自動量技能"));
+        }
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int summary(final ExileCore plugin, final CommandSender sender) {

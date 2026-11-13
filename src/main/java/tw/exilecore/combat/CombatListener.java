@@ -133,6 +133,28 @@ public final class CombatListener implements Listener {
         return Math.max(0.3, Math.min(3.0, speed));
     }
 
+    /**
+     * 2026-11-12 照站長「霆落矛傷害被記成普攻的歸屬錯誤：修」：技能本身衍生出來的隱藏子技能（霆落矛的放電、炸裂、帶電地；旋矛擊的旋風崩散）
+     * 在戰鬥數據、假人、配裝頁的主技能都算在原本的技能上。這次之前 11-11 之前記成「普攻」、之後記成「霆矛炸裂」這種子技能的名字，
+     * 配裝頁的主技能對不到技能欄（輔助抓不到），霆落矛的傷害也被拆成好幾行。
+     */
+    private static final java.util.Map<String, String> DERIVED_PARENT = java.util.Map.of(
+            "storm_lance_bolt", "thunderfall_spear",
+            "storm_lance_burst", "thunderfall_spear",
+            "storm_lance_ground", "thunderfall_spear",
+            "whirling_slash_collapse", "spinning_spear_strike");
+
+    /** 衍生的子技能 → 原本的技能代號（不是衍生的照原樣）；只看第一段（後面多一段的照樣）。 */
+    public static String meterParent(final String id) {
+        if (id == null) {
+            return null;
+        }
+        final int dot = id.indexOf('.');
+        final String head = dot < 0 ? id : id.substring(0, dot);
+        final String parent = DERIVED_PARENT.get(head);
+        return parent == null ? id : parent + (dot < 0 ? "" : id.substring(dot));
+    }
+
     private String meterName(final SkillProfile skill) {
         final String id = skill.id();
         final String known = meterNames.get(id);
@@ -141,7 +163,7 @@ public final class CombatListener implements Listener {
         }
         String name = null;
         if (plugin.skills() != null) {
-            String probe = id;
+            String probe = meterParent(id);
             while (name == null) {
                 final tw.exilecore.skill.SkillDefinition definition = plugin.skills().config().skill(probe);
                 if (definition != null) {

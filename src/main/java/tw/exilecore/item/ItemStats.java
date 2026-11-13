@@ -709,7 +709,9 @@ public final class ItemStats {
                     * affixMagnitude(magnitudes, affix, rolled); // 2026-11-08（索魯德的強權）：那一類詞綴的數值直接顯示加成後的
 
             // 2026-11-08：技能等級的詞綴乘完捨去（跟屬性表一樣，照 PoE2）
-            final boolean floor = boosted && levelOnly(affix);
+            // 2026-11-12 照站長「投射物等級會跟著上去」：祕法同調的 +25%（VIEW_BOOST）乘技能等級也捨去（+3 × 1.25 = 3.75 → +3），跟屬性表一樣；
+            //   這次之前只有催化劑捨去，祕法同調四捨五入顯示 +4
+            final boolean floor = (boosted || Math.abs(VIEW_BOOST.get() - 1) > 1e-9) && levelOnly(affix);
             final Map<String, Integer> vars = scale != 1 ? (floor ? floored(rolled.vars(), scale) : scaled(rolled.vars(), scale)) : rolled.vars();
             final Map<String, int[]> ranges = scale != 1 ? (floor ? flooredRanges(affix.ranges(rolled.tier()), scale) : scaledRanges(affix.ranges(rolled.tier()), scale)) : affix.ranges(rolled.tier());
             // 2026-11-10 照站長「深淵星魄印記揭露給較高階」：深淵星魄做的隱匿詞綴寫成深淵印記
@@ -808,7 +810,7 @@ public final class ItemStats {
     }
 
     /** 2026-11-08：技能等級捨去成整數（往 0 捨，負的也一樣；浮點誤差 1e-9 以內當整數）。 */
-    static double floorLevel(final double value) {
+    public static double floorLevel(final double value) {
         return value >= 0 ? Math.floor(value + 1e-9) : Math.ceil(value - 1e-9);
     }
 

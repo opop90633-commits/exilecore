@@ -71,7 +71,7 @@
 #   steal.mods           殺死稀有怪物時，獲得牠的詞綴 x 秒（追逐級傳奇「逐星者」）
 #   flag.chaos_immune、flag.always_hit、flag.iron_reflexes：基石的效果（FLAT 1）
 #   2026-10 新機制：
-#   presence.resist.fire／cold／lightning／chaos  你身邊（臨在，6 格）的敵人抗性 -x%；presence.taken 受到的傷害增加 x%、
+#   presence.resist.fire／cold／lightning／chaos  你身邊（臨在，4 格；2026-11-12 照站長改回 PoE2 的 4，這次之前 6）的敵人抗性 -x%；presence.taken 受到的傷害增加 x%、
 #     presence.weaken 造成的傷害更少 x%、presence.slow 變慢 x%、presence.burn 每秒受到你最大生命 x% 的火焰傷害；presence.area 範圍
 #   flag.stun_full_life  擊中滿血的敵人直接重暈；kill.shatter  用擊中殺死完全破甲的敵人時碎裂爆開（牠最大生命 x% 的物理傷害）
 #   屬性代號後面接 @hit／@nohit：最近 4 秒被擊中過／沒被擊中才有效（例如 evasion@nohit、life.regen_percent@hit）
@@ -9571,12 +9571,16 @@ terror_glide:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原作
   base: legs_dex_16        # 原作基底 Engraved Bracers（紋刻護腕：熔鋼皮褲）
   stat_base: legs_dex_12          # 原作基底那一階的數值
   drop_level: 65
-  sources: [map_boss]        # 原作只有「渡鴉欺詐者」掉（Boss 限定）：地圖 Boss，僥倖石做不出來、賭不到
+  sources: [fog_trial]   # 2026-11-12 照站長「驚怖掠影移除地圖 Boss 掉落」：只從迷霧之主掉 1%（maps.yml fog_trial 的 extra）；這次之前 [map_boss]（原作只有「渡鴉欺詐者」掉）
+  drop_chance: 1         # 固定 1%：不進迷霧之主 5% 的傳奇池（ItemRepository.uniquesFor 排除），僥倖石做不出來、賭不到
+  raven_touched: true    # 2026-11-12 照站長「渡鴉所觸能做嗎」：PoE2 Raven-Touched，可以用蒸餾情緒注入一個天賦核心（Crafting.instilTarget）
   rarity: common        # 2026-10-28 照 PoE2 稀有度（石拳之道手套傳奇，NeverSink 分層估）；這次之前 weight: 100
   flavour:
-    - "「害怕跑得比你快，所以它總是先到。」"
-  # 原作的「賦予技能：等級 1–20 死懼碎擊」「撲殺目標時獲得 1 層恐懼化型」（給那個技能用）、「渡鴉之觸」（可以注入）沒做：
-  #   我們沒有這個技能與恐懼化型（不碰技能程式）
+    - "若恐懼沒能殺死你，我會。"   # 2026-11-12 照原作的說明文字（poe2db）；這次之前自己寫的「害怕跑得比你快，所以它總是先到。」
+  # 2026-11-11 照站長「驚怖掠影照原作」：補上原作的「賦予技能：等級 15 死懼碎擊」（crushing_fear）與「撲殺一個目標時獲得 1 層恐懼化型」
+  #   （PoE2 Fear Incarnate：每層撲殺門檻增加 10%，10 秒、最多 20 層）；這次之前這兩條沒做。「渡鴉所觸」（可以注入）2026-11-12 補上（raven_touched）
+  version: 2        # 2026-11-11：多兩條（放在最後，舊的四條數值照舊）
+  legacy: { 1: [1, 2, 3, 4, 0, 0] }
   mods:
     - text: "增加 {value}% 閃避"
       value: [200, 300]
@@ -9596,6 +9600,48 @@ terror_glide:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原作
       stats:
         - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
         - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
+    - text: "賦予技能：等級 15 死懼碎擊"   # 2026-11-11 照 PoE2（Grants Skill: Level 15 Crushing Fear）
+      stats:
+        - { stat: grant_skill.crushing_fear, type: FLAT, value: 15 }
+    - text: "撲殺一個目標時獲得 1 層恐懼化型"   # 2026-11-11 照 PoE2（Gain 1 Fear Incarnate when you Cull a target）
+      stats:
+        - { stat: culling.fear_incarnate, type: FLAT, value: 1 }
+
+the_auspex:        # 2026-11-12 照站長「看有沒有這一件（poe2db The Auspex 觀鳥者），掉落物塞迷霧 Boss 1%」：PoE2 0.5 的新傳奇，以前沒有
+  name: 觀鳥者
+  base: body_dex_22        # 原作基底 Exquisite Vest（精美背心）：我們的隕鐵皮甲（body_dex_19）已經併進炎晶皮甲，放在合併後的基底
+  stat_base: body_dex_19          # 原作基底那一階的數值（隕鐵皮甲：閃避 451、需求 65 級 121 敏捷）
+  drop_level: 65
+  sources: [fog_trial]   # 原作只有「渡鴉欺詐者」掉；照站長只從迷霧之主掉 1%（maps.yml event_bosses.fog_trial 的 extra），不能用僥倖石或賭博
+  drop_chance: 1         # 固定 1%：不進迷霧之主 5% 的傳奇池（ItemRepository.uniquesFor 排除）；實際由 fog_trial 的 extra 擲 1%
+  raven_touched: true    # 2026-11-12 照站長「渡鴉所觸能做嗎」：PoE2 Raven-Touched，可以用蒸餾情緒注入一個天賦核心（Crafting.instilTarget）
+  flavour:
+    - "有人說那孩子是凶兆，烏鴉圍著他打轉。那天夜裡多了一隻新的烏鴉，從此一直跟著他。"
+  # 2026-11-12 照站長「霧鴉技能補做」：補上原作的「賦予技能：等級 15 迷霧渡鴉」（skills.yml mist_raven）；這次之前沒做。
+  #   名字照 poe2db：Gruelling Madness 叫「殘忍瘋狂」（這次之前寫累磨瘋狂），而且照原作加強目標身上其他的減速（Debuffs.slow）
+  version: 2        # 2026-11-12：多一條賦予技能（放在最後，舊的五條數值照舊）
+  legacy: { 1: [1, 2, 3, 4, 5, 0] }
+  mods:
+    - text: "增加 {value}% 閃避"
+      value: [210, 240]
+      stats:
+        - { stat: evasion, type: INCREASED, value: "{value}" }
+    - text: "+{value} 最大生命"
+      value: [70, 120]
+      stats:
+        - { stat: life.max, type: FLAT, value: "{value}" }
+    - text: "增加 100% 屬性需求"
+      stats:
+        - { stat: local.requirements, type: INCREASED, value: 100 }
+    - text: "低血時偏斜機率為幸運"
+      stats:
+        - { stat: deflect.lucky@lowlife, type: FLAT, value: 1 }
+    - text: "存在範圍內的敵人每秒獲得 1 層殘忍瘋狂（第一層移動變慢 15%；每多一層，牠身上所有減速的效力增加 10%，最多 10 層；2 秒沒有新的就少 1 層）"
+      stats:
+        - { stat: presence.gruelling_madness, type: FLAT, value: 1 }
+    - text: "賦予技能：等級 15 迷霧渡鴉"   # 2026-11-12 照 PoE2（Grants Skill: Level 15 Mist Raven）
+      stats:
+        - { stat: grant_skill.mist_raven, type: FLAT, value: 15 }
 
 restless_hands:        # 2026-10-28 照 PoE2 0.5 的「Idle Hands」（原作有、我們以前沒有的）
   name: 閒散之手

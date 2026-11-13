@@ -943,6 +943,83 @@ public final class MapService {
         return null;
     }
 
+    // ---- 難度的進階關卡（2026-11-12）----
+
+    /** 開進階關卡時這一關的難度（open 讀；開完清掉）。 */
+    private int pendingTrialDifficulty;
+
+    /**
+     * 2026-11-12 照站長「難度系統：出一個進階關卡（每個難度都要有），在裡面死掉不會噴經驗，讓玩家體驗該難度用，通關後就不能再打了」
+     * 「進階關卡用災厄級的該階難度；另外做一隻新的王（歸類災厄級），新的王就當進階關卡的 boss」：
+     * 用第 level 階的難度開災厄級的塑星者・蒼冕（maps.yml event_bosses 的 difficulty_trial：怪物 94 級、起點下一間就是牠、2 門），
+     * 打倒牠：裡面已經解鎖到 level − 1 的人解鎖 level。不掉東西、沒有經驗（不用鑰匙就能開，不讓人拿來刷）。
+     * 可以開幾次都行，解鎖之後就開不了。可以開回傳 null，不然回傳原因。
+     * 這次之前（同一天稍早）：開一張 T8～T16 的隨機地圖，最後一間是「進階守衛」（那張圖原本的 Boss）。
+     */
+    public String openDifficultyTrial(final Player player, final int level) {
+        if (!plugin.players().get(player).hasCharacter()) {
+            return "先建立角色";
+        }
+        final Difficulty.Table table = config.difficulty();
+        final int unlocked = Difficulty.unlocked(plugin, player, table);
+        if (level <= unlocked) {
+            return "難度 " + level + " 已經解鎖了（進階關卡通關後就不能再打）";
+        }
+        if (!Difficulty.canChallenge(unlocked, level, table.max())) {
+            return "要先解鎖難度 " + (level - 1);
+        }
+        final MapConfig.EventBoss boss = config.eventBoss(Difficulty.TRIAL_KIND);
+        if (boss == null) {
+            return "maps.yml 的 event_bosses 沒有 " + Difficulty.TRIAL_KIND;
+        }
+        MapConfig.MapDef from = null;
+        final List<MapConfig.MapDef> pool = new ArrayList<>();
+        for (final MapConfig.MapDef map : config.maps()) {
+            if (!map.isFinal() && map.boss() != null && !map.monsters().isEmpty()) {
+                pool.add(map);
+            }
+        }
+        if (!pool.isEmpty()) {
+            from = pool.get(random().nextInt(pool.size()));
+        }
+        if (from == null) {
+            return "沒有能當場地的地圖";
+        }
+        final MapConfig.MapDef arena = new MapConfig.MapDef(Difficulty.TRIAL_KIND, "進階關卡・難度 " + level, null, 0, from.level(), from.theme(), 0, 0,
+                List.of(), false, from.monsters(), boss.boss(), "想要更難的世界，先過塑星者這一關。", false, MapLayout.Style.OPEN);
+        final MapStats stats = eventBossStats(boss, player, 0); // 災厄級固定等級
+        final Special special = new Special(Difficulty.TRIAL_KIND, 0x5c8cff, (instance, players) -> {
+            for (final Player member : players) {
+                if (!plugin.players().get(member).hasCharacter()) {
+                    continue;
+                }
+                if (Difficulty.unlocked(plugin, member, table) != level - 1) {
+                    continue; // 已經解鎖過、或還沒解鎖前一階的隊友不算
+                }
+                Difficulty.unlock(plugin, member, level);
+                member.sendMessage(plugin.text().prefixed("<#ff6a3d>解鎖了難度 " + level + "<gray>：到地圖裝置的「難度」選它（"
+                        + ItemRenderer.escape(DifficultyMenu.describe(table.tier(level))) + "）"));
+                member.playSound(member.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+                plugin.getSLF4JLogger().info("[難度] {} 解鎖難度 {}", member.getName(), level);
+            }
+        }, (instance, drops) -> drops.clear()); // 不掉東西
+        pendingTrialDifficulty = level;
+        final MapInstance opened;
+        try {
+            opened = openSpecialInstance(player, arena, stats, UBER_ROOMS, special);
+        } finally {
+            pendingTrialDifficulty = 0;
+        }
+        if (opened == null) {
+            return lastSpecialProblem == null ? "進階關卡開不起來" : lastSpecialProblem;
+        }
+        if (!plugin.players().hidesSystem(player)) {
+            player.sendMessage(plugin.text().parse("<gray>  進階關卡：" + ItemRenderer.escape(boss.boss().name()) + "（災厄級・怪物 " + stats.monsterLevel()
+                    + " 級）照難度 " + level + "。裡面死了不扣經驗；不掉東西、沒有經驗；打倒牠就解鎖"));
+        }
+        return null;
+    }
+
     // ---- 城塞（2026-10-21）----
 
     /**
@@ -1571,7 +1648,9 @@ public final class MapService {
         if (monsters == null || boss == null) {
             return 0;
         }
-        final double life = monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * boss.life() * multiplier;
+        // 2026-11-13：建議每秒傷害也照全部怪物生命倍率（life_multiplier）算
+        final double life = monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * boss.life() * multiplier
+                * monsters.lifeMultiplier();
         return life / RECOMMENDED_SECONDS / resistFactor(monsters, boss.mods());
     }
 
@@ -1638,7 +1717,10 @@ public final class MapService {
             return 1;
         }
         final int level = eventBoss.fixedLevel() ? eventBoss.level() : config.tiers().level(config.tiers().max());
-        final double base = monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * eventBoss.boss().life();
+        // 2026-11-13 照站長「顯示一致」：maps.yml 的 recommended_dps 是最後的（全部怪物生命倍率 life_multiplier 也算進去），這裡先乘回來再對準；
+        //   這次之前沒乘，生命對準設定值之後又被 life_multiplier 乘 2，實際要的每秒傷害是顯示的 2 倍
+        final double base = monsters.lifeAt(level) * monsters.rarity(tw.exilecore.monster.MonsterRarity.UNIQUE).lifeMultiplier() * eventBoss.boss().life()
+                * monsters.lifeMultiplier();
         if (base <= 0) {
             return 1;
         }
@@ -1723,6 +1805,16 @@ public final class MapService {
             return;
         }
         sheet.addAll(instance.stats().monsterModifiers());
+        if (instance.difficulty() > 1) { // 2026-11-12 照站長「難度系統」：全部的怪物與 Boss 生命、傷害更多
+            final Difficulty.Tier tier = config.difficulty().tier(instance.difficulty());
+            final String source = "難度 " + tier.level();
+            if (tier.life() != 1) {
+                sheet.add(Modifier.more(tw.exilecore.stats.StatKeys.LIFE_MAX, tier.life() - 1, source));
+            }
+            if (tier.damage() != 1) {
+                sheet.add(Modifier.more(tw.exilecore.stats.StatKeys.DAMAGE, tier.damage() - 1, source));
+            }
+        }
         final double atlasEffectiveness = instance.atlas().increased("atlas.monster_effectiveness");
         if (atlasEffectiveness > 0) {
             sheet.add(Modifier.increased(tw.exilecore.stats.StatKeys.EFFECTIVENESS, atlasEffectiveness, "星圖天賦")); // 2026-10-26（PoE2）
@@ -1785,8 +1877,12 @@ public final class MapService {
     /** 掉落加成（小數）：{物品數量, 物品稀有度}。 */
     public double[] dropBonus(final LivingEntity entity) {
         final MapInstance instance = instanceOf(entity);
-        if (instance == null || instance.special() != null && !entity.getPersistentDataContainer().has(bossKey)) {
-            return new double[] {0, 0}; // 特別的實例（回響、試煉）：只有 Boss 有加成，路上的怪照一般掉
+        if (instance == null) {
+            return new double[] {0, 0};
+        }
+        if (instance.special() != null && !entity.getPersistentDataContainer().has(bossKey)) {
+            // 特別的實例（回響、試煉）：只有 Boss 有加成，路上的怪照一般掉；2026-11-12 照站長「難度全部套用」：難度給的照加
+            return difficultyLoot(instance);
         }
         // 2026-10：這個月的主題改成全域的（MonsterListener 在地圖內外都加），這裡不再加，免得地圖裡算兩次
         // 星圖天賦：地圖 Boss 另外的物品數量與稀有度（地圖本身的已經在 stats 裡）
@@ -1855,6 +1951,7 @@ public final class MapService {
             //   它們開在特別的實例裡，這次之前上面直接 return，MapBosses.loot 從來沒被叫到——專屬傳奇、專屬寶石、碎片／徽記／藍晶、
             //   魂核符文（maps.yml 的 event_bosses.<代號>.drops）一件都不會掉；現在跟一般地圖 Boss 一樣走 MapBosses.loot（裡面會擲事件 Boss 那段）
             if (config.eventBoss(instance.map().id()) != null && entity.getPersistentDataContainer().has(bossKey)
+                    && !instance.isDifficultyTrial() // 2026-11-12：難度的進階關卡不掉東西（塑星者也是 event_bosses 的 Boss）
                     && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
                 bosses.loot(instance, player, drops);
                 if (player != null) {
@@ -1949,7 +2046,37 @@ public final class MapService {
     public double experienceBonus(final LivingEntity entity) {
         final MapInstance instance = instanceOf(entity);
         return instance == null ? 0 : instance.atlas().experience() - instance.atlas().increased("atlas.experience_less") // 2026-10-21 核心「無人之地」的代價
-                + effectivenessBonus(entity); // 2026-10-26（PoE2）：怪物效能每 2% 多 1% 經驗
+                + effectivenessBonus(entity) // 2026-10-26（PoE2）：怪物效能每 2% 多 1% 經驗
+                + config.difficulty().tier(instance.difficulty()).experience() / 100.0; // 2026-11-12 照站長「難度系統」
+    }
+
+    /** 2026-11-12 照站長「難度系統」：這隻怪的經驗要不要給（進階關卡沒有經驗）。 */
+    public boolean noExperience(final LivingEntity entity) {
+        final MapInstance instance = instanceOf(entity);
+        return instance != null && instance.isDifficultyTrial();
+    }
+
+    /** 2026-11-12：這個人是不是在難度的進階關卡裡（死了不扣經驗）。 */
+    public boolean inDifficultyTrial(final Player player) {
+        final MapInstance instance = instanceAt(player.getLocation());
+        return instance != null && instance.isDifficultyTrial();
+    }
+
+    /**
+     * 2026-11-12 照站長「終局以上 Boss 的獎勵要能吃得到難度給的物品數量與物品稀有度」：難度給的 {物品數量, 物品稀有度}（小數）。
+     * 終局以上的 Boss 掉落（flat_boss_loot）不吃地圖的數量、稀有度，只加這個；一般的怪已經算在這張圖的數量、稀有度裡。
+     */
+    public double[] difficultyLoot(final LivingEntity entity) {
+        final MapInstance instance = instanceOf(entity);
+        return difficultyLoot(instance);
+    }
+
+    double[] difficultyLoot(final MapInstance instance) {
+        if (instance == null || instance.difficulty() <= 1) {
+            return new double[] {0, 0};
+        }
+        final Difficulty.Tier tier = config.difficulty().tier(instance.difficulty());
+        return new double[] {tier.quantity() / 100.0, tier.rarity() / 100.0};
     }
 
     /** 2026-10-26（PoE2）：這隻怪的效能換成的經驗、物品數量加成（小數；效能 +30% → +15%）。 */
@@ -2646,8 +2773,13 @@ public final class MapService {
         final boolean calamityDoors = calamity != null && calamity.recommendedDps() > 0;
         final int portals = map.isFinal() && special == null || heistFinale || calamityDoors
                 ? pendingPinnacle.map(MapConfig.Pinnacle::attempts).orElse(BOSS_ATTEMPTS) : config.settings().portals();
-        final MapInstance instance = new MapInstance(nextId++, map, stats.plus(atlas), layout, world, cell, origin[0], origin[1],
-                owner.getUniqueId(), owner.getName(), portals, plugin.getServer().getCurrentTick());
+        // 2026-11-12 照站長「難度系統」：開圖的人選的難度（組隊照開圖的人）；進階關卡照那一關。物品數量、稀有度加在這張圖上
+        final int difficulty = special != null && Difficulty.TRIAL_KIND.equals(special.kind()) ? Math.max(1, pendingTrialDifficulty)
+                : Difficulty.selected(plugin, owner, config.difficulty());
+        final Difficulty.Tier tier = config.difficulty().tier(difficulty);
+        final MapInstance instance = new MapInstance(nextId++, map, stats.plus(atlas).plusLoot(tier.quantity(), tier.rarity()), layout, world, cell,
+                origin[0], origin[1], owner.getUniqueId(), owner.getName(), portals, plugin.getServer().getCurrentTick());
+        instance.setDifficulty(difficulty);
         instance.setSpecial(special);
         instance.setCalamityDoors(calamityDoors);
         instance.setAtlas(atlas);
@@ -2661,6 +2793,9 @@ public final class MapService {
                 + "<gray>（怪物等級 " + instance.level() + "）正在成形……"));
         if (!atlas.isEmpty() && !plugin.players().hidesSystem(owner)) {
             owner.sendMessage(plugin.text().parse("<gray>  星圖天賦：<white>" + ItemRenderer.escape(atlasSummary(atlas, 3))));
+        }
+        if (difficulty > 1 && !plugin.players().hidesSystem(owner)) { // 2026-11-12：難度
+            owner.sendMessage(plugin.text().parse("<gray>  " + DifficultyMenu.describe(tier)));
         }
         // 2026-10：算方塊（幾十萬格）、排序在背景執行緒做（以前在主執行緒，每開一張圖卡一下）；只碰 Palette（有鎖），不碰 Bukkit
         final Runnable whenBuilt = () -> {
@@ -2823,7 +2958,7 @@ public final class MapService {
     public Location deviceReturn(final Player player) {
         final Location at = deviceReturn();
         final tw.exilecore.world.TownChannels channels = channels();
-        if (at == null || channels == null || !channels.enabled()) {
+        if (at == null || channels == null || !channels.enabledFor(player)) { // 2026-11-12：管理員從地圖出來回到管理員限定的那條線
             return at;
         }
         return tw.exilecore.world.TownChannels.mapTo(at, channels.pick(player));

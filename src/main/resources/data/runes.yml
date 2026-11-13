@@ -1106,13 +1106,13 @@ runes:
     limit: 1   # 2026-11-11 照站長「魂核照原作」（poe2db：Limited to: 1）；這次之前沒有上限
     level: 50
     weapon:
-      - { text: "獲得狂星時 50% 機率多獲得一顆狂星", stat: charge.extra.frenzy, type: FLAT, value: 50 }
+      - { text: "獲得怒星時 50% 機率多獲得一顆怒星", stat: charge.extra.frenzy, type: FLAT, value: 50 }   # 2026-11-11 照站長「這個恆星是甚麼」：戰星的名字寫錯（我們叫銳星、怒星、磐星）；這次之前寫狂星
   core_guatelitzi_endurance:   # Guatelitzi's Soul Core of Endurance
     name: 魂核符文・瓜特利斯的堅忍
     limit: 1   # 2026-11-11 照站長「魂核照原作」（poe2db：Limited to: 1）；這次之前沒有上限
     level: 50
     weapon:
-      - { text: "獲得恆星時 50% 機率多獲得一顆恆星", stat: charge.extra.endurance, type: FLAT, value: 50 }
+      - { text: "獲得磐星時 50% 機率多獲得一顆磐星", stat: charge.extra.endurance, type: FLAT, value: 50 }   # 2026-11-11 照站長「這個恆星是甚麼」：是磐星（恆星是一顆輔助的名字）；這次之前寫恆星
   core_xopec_power:   # Xopec's Soul Core of Power
     name: 魂核符文・柔派克的威能
     limit: 1   # 2026-11-11 照站長「魂核照原作」（poe2db：Limited to: 1）；這次之前沒有上限
@@ -2000,3 +2000,28 @@ runes:
       slots:
         chest:
           - { text: "8% 的最大生命轉換為能量護盾", stat: life.convert_es, type: FLAT, value: 8 }
+  # 2026-11-11 照站長「這三個目前有嗎？沒有的話新增」：PoE2 Greater Rune of Leadership（poe2db 高階領導符文；原作只有高階這一階）。
+  #   武器只有軍用武器有效果（martial_only：法杖類嵌了沒效果）；防具的那條是召喚物受到的物理傷害有 10% 視為閃電（taken.physical_as_lightning，
+  #   帶 minion 標籤＝給召喚物）。需求等級照我們「高階 30 級」
+  leadership_greater:   # Greater Rune of Leadership
+    name: 高階領導符文
+    level: 30
+    martial_only: true
+    weapon:
+      - { text: "召喚物獲得等同於其物理傷害 10% 的額外閃電傷害", stat: damage.gain.lightning, type: FLAT, value: 10, tags: [minion] }
+    armour:
+      - { text: "召喚物受到的 10% 物理傷害視為閃電傷害", stat: taken.physical_as_lightning, type: FLAT, value: 10, tags: [minion] }
+    bonded:
+      weapon:
+        - { text: "增加 20% 召喚物造成的傷害", stat: damage, type: INCREASED, value: 20, tags: [minion] }
+      armour:
+        - { text: "召喚物 +10% 全部元素抗性", mods: [ { stat: resist.fire, type: FLAT, value: 10, tags: [minion] }, { stat: resist.cold, type: FLAT, value: 10, tags: [minion] }, { stat: resist.lightning, type: FLAT, value: 10, tags: [minion] } ] }
+  # 2026-11-11 照站長：PoE2 Legacy of Greymake（poe2db 傳承．灰製；阿德爾的傳承，原作 63 種，這次只做這一種）。只有頭盔有效果，
+  #   需求等級 65，一個角色僅限 1 顆（原作是「阿德爾的傳承」整類僅限 1 顆；我們目前只有這一種，等於一樣）
+  legacy_greymake:   # Legacy of Greymake
+    name: 傳承・灰製
+    level: 65
+    limit: 1
+    slots:
+      head:
+        - { text: "+50 全部屬性", mods: [ { stat: attr.str, type: FLAT, value: 50 }, { stat: attr.dex, type: FLAT, value: 50 }, { stat: attr.int, type: FLAT, value: 50 } ] }

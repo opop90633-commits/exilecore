@@ -130,6 +130,9 @@ public final class ItemRefresher {
                     final int retired = plugin.items().replaceRetired(stacks); // 退役的傳奇換成傳奇兌換券（2026-10 PoE2 改版）
                     changed |= retired > 0;
                     fixed += retired;
+                    final int retyped = plugin.items().fixMaterials(stacks); // 2026-11-12：基底換過原版物品的舊裝備換成對的原版物品
+                    changed |= retyped > 0;
+                    fixed += retyped;
                     for (final ItemStack stack : stacks) {
                         changed |= refresh(stack);
                     }

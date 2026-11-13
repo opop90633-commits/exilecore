@@ -151,7 +151,7 @@ class SpearSkillsTest {
         final SkillDefinition concoction = config.skill("bleeding_concoction");
         assertTrue(concoction.weaponless());
         final SkillBuild brew = SkillBuild.of(config, concoction, 20, 100, false, List.of(), Set.of(), new StatSheet());
-        assertEquals((314 + 582) / 2.0 * 1.85, tw.exilecore.stats.DamageCalculator.expectedOutgoing(weaponSheet(), brew.profile())
+        assertEquals((314 + 582) / 2.0 * 1.85, tw.exilecore.stats.DamageCalculator.expectedOutgoing(weaponSheet(), brew.profile().withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE)) // 2026-11-13：本服平衡倍率不算
                 .get(tw.exilecore.stats.DamageType.PHYSICAL), 1e-6);
     }
 

@@ -516,7 +516,7 @@ public enum CurrencyOperation {
         @Override
         public boolean canApply(final ItemData data, final ItemGenerator generator) {
             final var base = generator.repository().base(data.base());
-            return base != null && base.slot() == tw.exilecore.item.ItemSlot.AMULET && data.identified();
+            return Crafting.instilTarget(generator.repository(), base, data) && data.identified(); // 2026-11-12：＋渡鴉所觸的傳奇
         }
 
         @Override

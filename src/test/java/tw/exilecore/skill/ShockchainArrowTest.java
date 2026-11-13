@@ -104,11 +104,11 @@ class ShockchainArrowTest {
 
     @Test
     void chargesAndRepeatsOnLightningAilmentHits() {
-        // 第一下打到沒有閃電異常的：普通的一箭（不連鎖、不放震波、不充能、不插杖）
+        // 2026-11-12 照站長（A＋B 統整成只要 A）：第一下打到沒有閃電異常的也照樣充能、震波、多 3 次連鎖；這次之前是普通的一箭
         final ShockchainArrows.Outcome plain = ShockchainArrows.onHit(3, false, false);
-        assertEquals(0, plain.addChains());
-        assertFalse(plain.shockwave());
-        assertFalse(plain.charges());
+        assertEquals(3, plain.addChains());
+        assertTrue(plain.shockwave());
+        assertTrue(plain.charges());
         assertFalse(ShockchainArrows.lodgesRod(3, false));
         // 2026-10-28 照 PoE2「on first hitting」：第一次打到感電／電擊中的：充能、震波、多 3 次連鎖
         final ShockchainArrows.Outcome charged = ShockchainArrows.onHit(3, true, false);

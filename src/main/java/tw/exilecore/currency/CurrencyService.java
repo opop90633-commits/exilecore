@@ -242,6 +242,13 @@ public final class CurrencyService {
             if (!type.flavor().isBlank()) {
                 lore.add(ItemRenderer.line("<dark_gray><i>" + ItemRenderer.escape(type.flavor())));
             }
+            if (type.operation() == CurrencyOperation.RUNE) {
+                // 2026-11-12 照站長「只有原作的插槽綁定符文不能取出與覆蓋，其他的一律可以取出與覆蓋，腐化裝備只能覆蓋」
+                //   （同一天稍早照原作一律寫「不能拔下來，但能替換」）
+                lore.add(ItemRenderer.line(VaalCrafting.socketBound(type.affix())
+                        ? "<#ff9f5a>插槽綁定：嵌上去就不能拔下來，也不能被別的符文蓋掉"
+                        : "<#9fd8ff>嵌上去之後可以在工作台取出（還給你），也能用別的符文蓋掉（被蓋掉的會消失）；已腐化的裝備只能蓋掉"));
+            }
             lore.add(Component.empty());
             // 2026-10-17：不改物品的（碎片、鑰匙、入場券、活動素材…）不寫「點擊裝備來使用」
             if (CurrencyGroups.card(type)) {

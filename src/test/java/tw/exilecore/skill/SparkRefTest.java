@@ -142,4 +142,20 @@ class SparkRefTest {
         assertEquals(null, config.skill("blazing_star_shell").params().wander());
         assertEquals(null, config.resource("chain_thunder").infusedSet());
     }
+
+    @Test
+    void sparkBouncesOffWalls() {
+        // 2026-11-13 照站長「游雷碰到牆壁會反彈」：撞到的軸反過來，撞到角整個掉頭
+        final org.bukkit.util.Vector heading = new org.bukkit.util.Vector(0.6, 0, 0.8);
+        final org.bukkit.util.Vector x = ProjectileEngine.reflect(heading, true, false);
+        assertEquals(-0.6, x.getX(), 1e-9);
+        assertEquals(0.8, x.getZ(), 1e-9);
+        final org.bukkit.util.Vector z = ProjectileEngine.reflect(heading, false, true);
+        assertEquals(0.6, z.getX(), 1e-9);
+        assertEquals(-0.8, z.getZ(), 1e-9);
+        final org.bukkit.util.Vector back = ProjectileEngine.reflect(heading, false, false);
+        assertEquals(-0.6, back.getX(), 1e-9);
+        assertEquals(-0.8, back.getZ(), 1e-9);
+        assertEquals(null, ProjectileEngine.reflect(new org.bukkit.util.Vector(0, 1, 0), true, true));
+    }
 }

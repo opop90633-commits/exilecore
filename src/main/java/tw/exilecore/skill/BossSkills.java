@@ -2612,6 +2612,16 @@ public final class BossSkills implements Listener {
                 for (final LivingEntity victim : victims(brain, orb.position, skill.explode())) {
                     hurt(brain, skill, victim, Tags.AREA);
                 }
+                // 2026-11-12 照站長「完美復刻 POE1 藍王的招式」（Portal Vortex：灰球碰到人就在地上留一塊漩渦）：
+                //   boss_skills.yml 有「這顆光球的代號＋_pool」的地面招（zone）的話，光球爆炸的地方留下那塊地面；這次之前光球只會爆炸
+                final BossSkill pool = config.bossSkills().skill(skill.id() + "_pool");
+                if (pool != null && pool.kind() == BossSkill.Kind.ZONE) {
+                    final Location floor = ground(orb.position);
+                    final ZoneArea zone = new ZoneArea(pool, floor, now, orb.mark + ":pool");
+                    brain.zones.add(zone);
+                    danger.show(zone.mark, zone.center, DangerZones.disc(zone.center, pool.radius()), DangerZones.colorFor(pool.type()));
+                    visuals.zonePulse(pool.visual(), List.of(floor), pool.radius());
+                }
                 iterator.remove();
                 continue;
             }

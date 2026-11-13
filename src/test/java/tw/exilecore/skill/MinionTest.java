@@ -128,7 +128,7 @@ class MinionTest {
         final int level = MinionSheets.monsterLevel(config, zombie.level());
         final MinionSheets.Base base = base(level);
         final StatSheet sheet = MinionSheets.build(spec, base, copied);
-        final SkillProfile profile = MinionSheets.profile(zombie);
+        final SkillProfile profile = MinionSheets.profile(zombie).withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE); // 2026-11-13：本服平衡倍率不算（這裡只看主人給的）
         final StatSheet effective = profile.effective(sheet);
 
         assertEquals(base.life() * spec.life() * 1.2, MinionSheets.life(effective), 1e-6, "生命 = 怪物生命 × 倍率 ×（1 + 召喚物生命 20%）");
@@ -242,7 +242,7 @@ class MinionTest {
         final SkillBuild zombie = build("corpse_summon", 20, owner);
         final int level = MinionSheets.monsterLevel(config, zombie.level());
         final StatSheet sheet = MinionSheets.build(zombie.definition().summon(), base(level), List.of());
-        final SkillProfile profile = MinionSheets.profile(zombie);
+        final SkillProfile profile = MinionSheets.profile(zombie).withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE); // 2026-11-13：本服平衡倍率不算（這裡比的是怪物曲線）
         final StatSheet monster = new StatSheet();
         monster.setBase(StatKeys.EVASION, monsters.evasionAt(level));
         monster.setBase(StatKeys.ARMOUR, monsters.armourAt(level));

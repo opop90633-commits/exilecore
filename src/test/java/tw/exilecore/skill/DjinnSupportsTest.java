@@ -205,7 +205,8 @@ class DjinnSupportsTest {
                 new StatSheet());
         assertEquals(List.of(support("bone_command_ii")), ruzhan.supports(), "掛得上");
         final StatSheet base = new StatSheet();
-        final StatSheet bidding = base.overlay(MinionSheets.stripMinion(MinionSheets.profile(ruzhan).local()));
+        // 2026-11-13：本服平衡倍率（炎刃．羅贊自己的 damage.balance）不算，這裡只看骸令
+        final StatSheet bidding = base.overlay(MinionSheets.stripMinion(MinionSheets.profile(ruzhan).withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE).local()));
         final SkillBuild settle = SkillBuild.of(config, skill("blade_spirit_settle"), 20, 100, false, List.of(), Set.of(), base);
         final double plain = DamageCalculator.expectedOutgoing(base, settle.profile()).total();
         assertTrue(plain > 0);

@@ -140,7 +140,7 @@ public final class HollowForm {
 
     /**
      * 2026-11-01：主人給「存在範圍內的友軍」的修飾器（天賦樹的「增加 x% 你存在範圍內的友軍傷害／攻擊速度／暴擊率…」，
-     * 資料寫成 [minion, in_presence]），拿掉這兩個標籤給幻影用（幻影一定在你身邊 6 格內，算在存在範圍內）。
+     * 資料寫成 [minion, in_presence]），拿掉這兩個標籤給幻影用（幻影一定在你身邊 4 格內，算在存在範圍內）。
      * 只給召喚物、不給友軍的（只有 minion 標籤、或夥伴、不死的）不算。
      */
     public static List<Modifier> allyBuffs(final tw.exilecore.stats.StatSheet owner) {

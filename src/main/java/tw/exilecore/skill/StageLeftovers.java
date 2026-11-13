@@ -677,8 +677,15 @@ public final class StageLeftovers implements Listener {
     }
 
     private void explode(final Player owner, final Wall wall, final List<Location> points, final boolean bySelf) {
+        explode(owner, wall, points, bySelf, false);
+    }
+
+    private void explode(final Player owner, final Wall wall, final List<Location> points, final boolean bySelf, final boolean expired) {
         SkillProfile profile = wall.build.profile().derive(SHIELD_WALL + ".shatter", Set.of(Tags.AREA), Set.of());
-        if (bySelf) {
+        if (expired) {
+            // 2026-11-13 照站長「要配別的技能才有傷害的，改成自己也能觸發、但更少傷害 20%」：時間到自己崩碎
+            profile = profile.scaled(OriginalSkills.SELF_TRIGGER_DAMAGE, "時間到自己崩碎");
+        } else if (bySelf) {
             // 2026-10-28 照 PoE2 Shield Wall 的品質：被自己的技能打碎時再更多 (0—40)%（加在 100% 上）
             profile = profile.scaled(1 + WALL_SELF_MORE + wall.build.qualityFlat(tw.exilecore.stats.GemQualityKeys.WALL_SELF_MORE) / 100.0, "自己打碎");
         } else if (wallEarly(now() - wall.placed)) {
@@ -706,8 +713,22 @@ public final class StageLeftovers implements Listener {
     private void wallsTick(final long now) {
         for (final Wall wall : new ArrayList<>(walls)) {
             final Player owner = plugin.getServer().getPlayer(wall.owner);
-            if (owner == null || now >= wall.until || !owner.getWorld().equals(wall.points.getFirst().getWorld())) {
+            if (owner == null || !owner.getWorld().equals(wall.points.getFirst().getWorld())) {
                 walls.remove(wall);
+                continue;
+            }
+            if (now >= wall.until) {
+                // 2026-11-13 照站長：時間到還沒被打碎的段，自己崩碎炸開（更少 20%）；這次之前時間到直接消失
+                walls.remove(wall);
+                final List<Location> standing = new ArrayList<>();
+                for (int i = 0; i < wall.points.size(); i++) {
+                    if (wall.life[i] > 0) {
+                        standing.add(wall.points.get(i));
+                    }
+                }
+                if (!standing.isEmpty()) {
+                    explode(owner, wall, standing, false, true);
+                }
                 continue;
             }
             if (now % 20 != 0 || plugin.monsters() == null) {
@@ -874,6 +895,12 @@ public final class StageLeftovers implements Listener {
         bomb.extraCap = build.qualityFlat(tw.exilecore.stats.GemQualityKeys.EXPOSURE_CAP); // 2026-10-28 照 PoE2 Frost Bomb 的品質：曝露上限 +(0—10)
         bombs.add(bomb);
         startTimer();
+    }
+
+    /** 2026-11-12（EarlyDetonation）：寒晶雷提早炸了：在 center 的那顆停止脈衝。 */
+    void endFrostBomb(final UUID owner, final Location center) {
+        bombs.removeIf(bomb -> bomb.owner.equals(owner) && bomb.center.getWorld() == center.getWorld()
+                && bomb.center.distanceSquared(center) < 0.01);
     }
 
     private void bombsTick(final long now) {

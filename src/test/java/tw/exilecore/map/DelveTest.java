@@ -125,7 +125,7 @@ class DelveTest {
         final MapConfig.EventBoss boss = maps.eventBoss(Delve.BOSS_KIND);
         assertNotNull(boss, "maps.yml 的 event_bosses 有 delve_boss");
         assertEquals(94, boss.level());
-        assertEquals(4_000_000, boss.recommendedDps(), 1e-9);
+        assertEquals(8_000_000, boss.recommendedDps(), 1e-9); // 2026-11-13 照站長：怪物血量 ×2、顯示一致（之前 400 萬）
         assertEquals(0.01, boss.uniqueChance(), 1e-9, "sources 寫 delve_boss 的傳奇每件各自 1%");
         assertTrue(boss.extra().stream().anyMatch(e -> "currency".equals(e.kind()) && "azurite".equals(e.id()) && e.chance() >= 1), "必掉藍晶");
         assertEquals(3, boss.boss().phases().size());

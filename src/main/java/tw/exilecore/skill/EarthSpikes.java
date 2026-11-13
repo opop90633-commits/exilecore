@@ -4,7 +4,6 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.SoundCategory;
-import org.bukkit.block.data.type.PointedDripstone;
 import org.bukkit.entity.BlockDisplay;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -164,10 +163,9 @@ final class EarthSpikes {
     private void raise(final Player owner, final Location at, final SkillBuild build) {
         // 2026-11-02 照站長：地刺更明顯——放大（1.4×2.8，這次之前 0.9×1.8）、全亮、橘色外框（看得到還剩幾根、在哪）
         final BlockDisplay display = at.getWorld().spawn(at.clone().add(-SPIKE_WIDTH / 2, 0, -SPIKE_WIDTH / 2), BlockDisplay.class, d -> {
-            final PointedDripstone data = (PointedDripstone) Material.POINTED_DRIPSTONE.createBlockData();
-            data.setThickness(PointedDripstone.Thickness.TIP);
-            data.setVerticalDirection(org.bukkit.block.BlockFace.UP);
-            d.setBlock(data);
+            // 2026-11-12 修正（站長的自動量技能跑到這裡丟 ClassCastException：Paper 26.2 的 CraftPointedDripstone 轉不成 PointedDripstone，
+            //   玩家放地刺崩裂也一樣會出錯、地刺立不起來）：改用方塊狀態字串，不轉型別；這次之前 (PointedDripstone) createBlockData() 再設粗細、方向
+            d.setBlock(Material.POINTED_DRIPSTONE.createBlockData("[thickness=tip,vertical_direction=up]"));
             d.setPersistent(false);
             d.setTransformation(new Transformation(new Vector3f(), new Quaternionf(), new Vector3f(SPIKE_WIDTH, SPIKE_HEIGHT, SPIKE_WIDTH), new Quaternionf()));
             d.setBrightness(new org.bukkit.entity.Display.Brightness(15, 15));

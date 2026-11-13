@@ -22,6 +22,8 @@ public final class UniqueStats {
     public static final String TAKEN_PHYSICAL_AS_FIRE = "taken.physical_as_fire";
     /** 2026-11-06 照站長「補上一些沒有的精髓」（poe2db 完美隔絕／解凍／接地／毀滅）：承受的擊中物理傷害有 x% 視為混沌傷害（完美混抗星魄，PoE2 Perfect Essence of Ruin）。 */
     public static final String TAKEN_PHYSICAL_AS_CHAOS = "taken.physical_as_chaos";
+    /** 2026-11-11 照站長（高階領導符文，PoE2 Greater Rune of Leadership）：受到的物理傷害有 x% 視為閃電傷害（防具上的寫 minion 標籤＝召喚物）。 */
+    public static final String TAKEN_PHYSICAL_AS_LIGHTNING = "taken.physical_as_lightning";
     /** 防禦時護甲多 x%（鐵律腰帶：防禦時護甲視為 200% = 100）。 */
     public static final String ARMOUR_DEFEND = "armour.defend";
     /** 物理傷害減免上限 x%（鐵律腰帶）。 */
@@ -185,6 +187,10 @@ public final class UniqueStats {
     public static final String GRANT_SKILL = "grant_skill.";
     /** 2026-11-07 照站長「守衛新增暮色瓣落、遺忘看守」：暮色瓣落賦予午夜天頂（值是固定等級 13，照 poe2db）。 */
     public static final String GRANT_SKILL_MIDNIGHT_ZENITH = GRANT_SKILL + "midnight_zenith";
+    /** 2026-11-11 照站長「驚怖掠影照原作」：賦予死懼碎擊（值是固定等級 15，PoE2 Grants Skill: Level 15 Crushing Fear）。 */
+    public static final String GRANT_SKILL_CRUSHING_FEAR = GRANT_SKILL + "crushing_fear";
+    /** 2026-11-12 照站長「霧鴉技能補做」：觀鳥者賦予迷霧渡鴉（值是固定等級 15，PoE2 Grants Skill: Level 15 Mist Raven）。 */
+    public static final String GRANT_SKILL_MIST_RAVEN = GRANT_SKILL + "mist_raven";
     /**
      * 2026-11-07（暮色瓣落，PoE2 ice_crystal_maximum_life_+%_per_5%_cold_resistance）：FLAT，你每有 5% 冰冷抗性（封頂後），
      * 你的冰晶最大生命增加 x%（物品「減少」寫負的；IceCrystals.coldLifeFactor）。
@@ -494,6 +500,8 @@ public final class UniqueStats {
             tw.exilecore.stats.KeystoneKeys.FLAG_HOLLOW_PALM, tw.exilecore.stats.KeystoneKeys.ES_RECOUP,
             tw.exilecore.stats.SupportExtraKeys.FLAG_LUCKY_SURROUNDED, tw.exilecore.stats.SupportExtraKeys.FLAG_NO_EXTRACT,
             tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL, tw.exilecore.stats.TreeNewMechanicKeys.CRIT_BASE_EXTRA,
+            tw.exilecore.stats.SupportKeys.FEAR_INCARNATE_ON_CULL, // 2026-11-11（驚怖掠影）
+            tw.exilecore.stats.SupportKeys.FEAR_OVERWHELMING_ON_CULL, // 2026-11-12（驚怖掠影的磐石之拳版本）
             tw.exilecore.stats.TreeNewMechanicKeys.VOLATILITY_ON_KILL, tw.exilecore.stats.TreeEffectKeys.SKILL_QUALITY,
             tw.exilecore.ascendancy.AscKeys.DOUBLE_CHILL);
 

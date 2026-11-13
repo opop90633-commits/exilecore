@@ -532,7 +532,10 @@ public final class SkillResources implements Listener {
             }
         }
         if (effective.flat(StatKeys.RAGEFORGED, tags) > 0 && rage(player) >= 10) {
-            spendRage(player, 10); // 2026-10-26：走 spendRage（原初飢餓記得最近消耗的怒氣）；這次之前直接扣
+            // 2026-11-12 照 PoE2 Rageforged II：x% 機率不扣怒氣，但照樣算用掉（照樣更痛）；這次之前一定扣
+            if (plugin.random().nextDouble() * 100 >= effective.flat(StatKeys.RAGEFORGED_KEEP, tags)) {
+                spendRage(player, 10); // 2026-10-26：走 spendRage（原初飢餓記得最近消耗的怒氣）；這次之前直接扣
+            }
             final State s = state(player.getUniqueId());
             s.enragedUntil = now + 12;
         }

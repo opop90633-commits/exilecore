@@ -318,6 +318,11 @@ final class GrantedAuras implements Listener {
     /** 亂鴉狂舞的冷卻（好了的 tick）。 */
     private final Map<UUID, Long> flightReady = new HashMap<>();
 
+    /** 2026-11-12（快捷列遮罩）：亂鴉狂舞還要幾 tick 才能再下（0 = 好了）。 */
+    long flightLeft(final UUID player, final long now) {
+        return Math.max(0, flightReady.getOrDefault(player, 0L) - now);
+    }
+
     /**
      * 2026-10-26 照 PoE2 的指令亂鴉狂舞（Mad Flight）：按鴉群密謀的鍵，用掉 10 隻烏鴉（冷卻 10 秒），
      * 準心的地方出現兩面鏡子（寬 2.2、長 7 格，順著你面對的方向）5 秒，中間的敵人每 0.12 秒被打一下
@@ -345,6 +350,7 @@ final class GrantedAuras implements Listener {
                 Commandables.commandment(build.supports()));
         flightReady.put(id, now + Commandables.readyTicks(MinionAbilities.command(RAVENS).cooldown(),
                 flightSheet.apply(StatKeys.SKILL_COOLDOWN, 1.0, Commandables.CONTEXT), Commandables.rate(flightSheet)));
+        service.showCooldown(player, RAVENS, flightLeft(id, now)); // 2026-11-12 照站長：亂鴉狂舞的冷卻也蓋快捷列遮罩
         final int level = Math.max(1, build.level());
         final Location center = preferred != null && preferred.getWorld().equals(player.getWorld()) ? preferred.getLocation()
                 : service.targets().aimPoint(Origin.of(player), 24);

@@ -390,6 +390,41 @@ public final class PlayerState {
         this.dirty = true;
     }
 
+    /**
+     * 2026-11-12 照站長「自動量技能（/ec balance bench）」：量測中——測試用的武器不看等級、能力值需求，技能寶石不看能力值需求
+     * （不存檔；量完、下線、伺服器關掉都回到 false）。
+     */
+    private boolean benchFree;
+
+    public boolean benchFree() {
+        return benchFree;
+    }
+
+    public void setBenchFree(final boolean value) {
+        if (benchFree != value) {
+            benchFree = value;
+            dirty = true;
+        }
+    }
+
+    /**
+     * 2026-11-13 照站長「天賦點會影響 balance bench 的結果嗎」→「改成白板量」：量測中的白板程度——
+     * 0 = 照角色本身；1 = 白板（天賦樹含珠寶、昇華天賦、任務、護符、稱號公會這類永久加成、武器以外的裝備都不算）；
+     * 2 = 白板但留昇華、任務、護符（量昇華賦予的技能，它們要昇華天賦才動得起來）。暫時的增益照算。不存檔。
+     */
+    private int benchBlank;
+
+    public int benchBlank() {
+        return benchBlank;
+    }
+
+    public void setBenchBlank(final int value) {
+        if (benchBlank != value) {
+            benchBlank = value;
+            dirty = true;
+        }
+    }
+
     void markClean() {
         this.dirty = false;
     }

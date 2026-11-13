@@ -64,7 +64,8 @@ public final class VaalOffence implements Listener {
     /** 「擊中傳奇敵人時吞噬一個靈魂」下一次可以吞的 tick。 */
     private final Map<UUID, Long> uniqueHitReady = new HashMap<>();
     /** 皮囊偶符複製來的詞綴（增益代號），下一次變形時拿掉。 */
-    private final Map<UUID, List<String>> copied = new HashMap<>();
+    private final Map<UUID, List<String>> copied = new HashMap<>(); // 2026-11-12：存複製到的詞綴代號（這次之前存增益代號）
+    private static final String COPY_SOURCE = "vaal.copy";
 
     /** 靈魂層數；last = 最後一次吞的 tick，nextDecay = 下一次少一個的 tick。 */
     static final class Souls {
@@ -270,8 +271,8 @@ public final class VaalOffence implements Listener {
         }
         final List<String> previous = copied.remove(player.getUniqueId());
         if (previous != null) {
-            for (final String id : previous) {
-                plugin.skills().removeBuff(player, id);
+            for (final String modId : previous) {
+                plugin.skills().revokeStolen(player, modId, COPY_SOURCE); // 2026-11-12：只拿掉自己複製的那份（被斬獲、獻祭換掉的不動）
             }
         }
         final StatSheet sheet = plugin.players().sheet(player);
@@ -299,9 +300,9 @@ public final class VaalOffence implements Listener {
                 if (modifiers.isEmpty()) {
                     continue; // 只有招式、沒有數值的詞綴換下一條
                 }
-                final String id = "vaal.copy." + ids.size();
-                plugin.skills().buff(player, id, mod.name() + "（皮囊偶符）", ticks, modifiers);
-                ids.add(id);
+                // 2026-11-12 照站長「同一條只算一次」：跟斬獲腰環、儀典獻祭共用一個增益（兩隻敵人有同一條也只算一次）；這次之前代號 vaal.copy.N，各算各的
+                plugin.skills().stolenBuff(player, mod.id(), mod.name() + "（皮囊偶符）", COPY_SOURCE, null, ticks, modifiers);
+                ids.add(mod.id());
                 break;
             }
         }

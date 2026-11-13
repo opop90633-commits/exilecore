@@ -250,7 +250,7 @@ blocked:
   mad_speed:
     "代放技能不行": [nailfall_crossbow_turret, nether_puppet, phantom_bow_shade, collapse_quake_totem, skyward_crossbow_turret]
     "常駐技能不行": [potion_craft_insight, arcane_heart, grinding_will, wood_armor, crimson_wrath, thorn_body, star_reign_art, battle_spirit_rise, shield_restore_art, bedrock_flag, law_shield, foe_daunt_flag, element_tide, tripod_element_art, unquenched_fury, winter_shell, thunder_resonance, spectral_step, cold_heart, ember_envoy, blood_proclaim, frost_envoy, plague_envoy, thunder_envoy, corrode_guard, phantom_body, evil_thought, magic_spring_well, light_bend_mirror, awe_suppress, flame_guard, frost_guard, thunder_guard, beast_blood_boil, gathered_scales, crystal_pickup_load, element_trace_surge, guard_moment, campaign_flag, wilting_breath]
-    "消耗狂星的技能不行": [explosive_spear, ice_cone_toss, myriad_arrow_fall, snake_squall_thrust, spear_throw, helix_arrow_rain, hurricane_spear]
+    "消耗怒星的技能不行": [explosive_spear, ice_cone_toss, myriad_arrow_fall, snake_squall_thrust, spear_throw, helix_arrow_rain, hurricane_spear]
     "要會造成傷害的技能": [blink, holy_ground, plague_taint, soul_wither_curse, triple_element_curse, hasty_load, strength_sap_curse, corpse_devour_feast, armor_rend_bear_roar, frostbind_seal, prey_kill_mark, magic_absorb_art, magic_surge, wild_whirlwind, filth_array, collapse_heart_chant, might_seal, sluggish_curse, seal_release, thunder_lure_seal, wound_scar_curse, decay_erosion_art]
     "觸發技能不行": [molten_soul_shriek, blood_scent_seal, hellfire_war_shout, silver_moon_shelter, magma_barrier, thornburr_steps, breeze_dance_step]
   corpse_burn:
@@ -587,7 +587,7 @@ blocked:
     "要會造成傷害的技能": [plague_taint, ember_envoy, plague_envoy, magic_absorb_art, wild_whirlwind, filth_array]
   unrest_stir:
     "代放技能不行": [nailfall_crossbow_turret, collapse_quake_totem, skyward_crossbow_turret]
-    "消耗狂星的技能不行": [explosive_spear, ice_cone_toss, myriad_arrow_fall, snake_squall_thrust, spear_throw, helix_arrow_rain, hurricane_spear]
+    "消耗怒星的技能不行": [explosive_spear, ice_cone_toss, myriad_arrow_fall, snake_squall_thrust, spear_throw, helix_arrow_rain, hurricane_spear]
     "要會造成傷害的技能": [wild_whirlwind]
   star_law:
     "瞬發技能不行": [hasty_load]

@@ -66,7 +66,9 @@ public final class VaalCrafting {
      * 嵌上去就拿不出來的（工作台取不出、被蓋掉不還）：嵌死的（{@link #socketBound}，連蓋都不能蓋）＋所有魂核。這次之前魂核取得出來、蓋掉會還
      */
     public static boolean unretrievable(final String runeId) {
-        return runeId != null; // 2026-11-11 照站長「一般符文也照原作」（原作所有符文都「cannot be retrieved but can be replaced」）：全部拿不出來；同日稍早只有魂核
+        // 2026-11-12 照站長「只有原作的插槽綁定符文不能取出與覆蓋，其他的一律可以取出與覆蓋，腐化裝備只能覆蓋」：只有插槽綁定的拿不出來；
+        //   這次之前（2026-11-11）照原作所有符文都拿不出來（cannot be retrieved but can be replaced）
+        return socketBound(runeId);
     }
 
     public static boolean socketBound(final String runeId) {

@@ -266,7 +266,9 @@ final class FireSpells {
         final double base = perMinute / 60.0;
         final double scaled = effective == null ? base : effective.apply(StatKeys.DAMAGE, base, profile.contextFor(DamageType.FIRE));
         final double more = effective == null ? 1.0 : effective.more(tw.exilecore.stats.SupportKeys.DAMAGE_SKILL_DOT, profile.tags());
-        return Math.max(0, scaled * more * Math.max(0, dotMore));
+        // 2026-11-13 照站長：本服平衡倍率也乘（焚流、焰幕的燃燒）；這次之前不乘
+        final double balance = effective == null ? 1.0 : tw.exilecore.stats.DamageCalculator.balance(effective, profile.tags());
+        return Math.max(0, scaled * more * Math.max(0, dotMore) * balance);
     }
 
     /** 這一段時間（秒）裡焚流點燃了幾次（每 0.075 秒一次；純函式）。 */

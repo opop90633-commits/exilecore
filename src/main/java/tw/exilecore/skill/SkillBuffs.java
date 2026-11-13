@@ -65,6 +65,14 @@ final class SkillBuffs {
         return buff != null && buff.active(now());
     }
 
+    /** 2026-11-12 照站長「偷到的詞綴同一條只算一次」：這個增益還剩幾 tick（沒有、過期了是 0）。 */
+    long remaining(final UUID player, final String id) {
+        final Map<String, Buff> mine = buffs.get(player);
+        final Buff buff = mine == null ? null : mine.get(id);
+        final long now = now();
+        return buff == null || !buff.active(now) ? 0 : buff.untilTick() - now;
+    }
+
     /** 提早拿掉一個增益（2026-10：獸血沸的狂暴提早結束）。 */
     void remove(final Player player, final String id) {
         final Map<String, Buff> mine = buffs.get(player.getUniqueId());

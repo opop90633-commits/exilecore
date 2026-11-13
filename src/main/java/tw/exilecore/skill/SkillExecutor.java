@@ -119,6 +119,8 @@ final class SkillExecutor {
                     palm(player, runtime, build, preferred); // 2026-10-28 照 PoE2 斷魂掌：衝過去打、撲殺就連衝；這次之前原地打一下
                 } else if (ChayulaHand.is(build)) {
                     chayula(player, build, preferred); // 2026-10-29 照 PoE2 夏烏拉之手：衝過去打、觸發孔裡的印記與詛咒
+                } else if (CRUSHING_FEAR.equals(build.definition().id())) {
+                    crushingFear(player, build, preferred); // 2026-11-11 照 PoE2 死懼碎擊：衝過去打、打死放震波
                 } else if (TargetDash.range(build.definition().id()) > 0) {
                     dashStrike(player, build, preferred, TargetDash.range(build.definition().id())); // 2026-11-01 照 PoE2：剔殘、引雷棍、血獵鎖敵衝過去打
                 } else {
@@ -2713,6 +2715,57 @@ final class SkillExecutor {
         if (plugin.skills() != null) {
             plugin.skills().chayulaTrigger(player, target);
         }
+    }
+
+    /** 2026-11-11：死懼碎擊（驚怖掠影賦予）。 */
+    static final String CRUSHING_FEAR = "crushing_fear";
+    /** 2026-11-11：死懼碎擊的震波照被打死的那隻的強度，每 1 點範圍更多、傷害更多（PoB2 crushing_fear_area／damage_+%_final_per_power）。 */
+    static final double CRUSHING_FEAR_AREA_PER_POWER = 0.05;
+    static final double CRUSHING_FEAR_DAMAGE_PER_POWER = 0.10;
+
+    /**
+     * 2026-11-11 照站長「驚怖掠影照原作」：PoE2 Crushing Fear——衝向 6.5 公尺內的敵人（打得到就不動）打一掌；這一掌打死牠的話，
+     * 在牠的位置放一道震波（stages.shockwave：3 公尺、80% 轉混沌；照牠的強度每 1 點範圍更多 5%、傷害更多 10%）。附近沒有敵人就原地打。
+     */
+    private void crushingFear(final Player player, final SkillBuild build, final LivingEntity preferred) {
+        final double reach = build.reach();
+        LivingEntity target = null;
+        Location spot = null;
+        for (final LivingEntity candidate : dashCandidates(player, KillingPalm.DASH_RANGE, preferred)) {
+            if (candidate.getLocation().distanceSquared(player.getLocation()) <= reach * reach) {
+                target = candidate;
+                break;
+            }
+            spot = flickerSpot(player, candidate);
+            if (spot != null) {
+                target = candidate;
+                break;
+            }
+        }
+        if (target == null) {
+            strike(Origin.of(player), build, preferred);
+            return;
+        }
+        if (!palmDash(player, build, spot)) {
+            return;
+        }
+        final double power = plugin.monsters() == null ? 0
+                : plugin.monsters().data(target).map(Warcries::power).orElse(0.0);
+        final Location at = target.getLocation().clone();
+        strike(Origin.of(player), build, target);
+        if (!(target.isDead() || !target.isValid() || target.getHealth() <= 0)) {
+            return;
+        }
+        final double radius = SkillStages.radius(build, "shockwave", 3 * build.areaScale()) * (1 + CRUSHING_FEAR_AREA_PER_POWER * power);
+        final SkillProfile profile = SkillStages.profile(build, build.profile(), "shockwave")
+                .scaled(1 + CRUSHING_FEAR_DAMAGE_PER_POWER * power, "牠的強度");
+        final Location center = at.add(0, 0.5, 0);
+        for (final LivingEntity enemy : targets.around(center, radius, player)) {
+            damage.hit(player, enemy, profile, null);
+        }
+        visuals.nova("crushing_fear", center, radius);
+        Fx.spawn(center.getWorld(), org.bukkit.Particle.SCULK_SOUL, center, 18, radius / 3, 0.4, radius / 3, 0.05);
+        center.getWorld().playSound(center, org.bukkit.Sound.ENTITY_WARDEN_SONIC_BOOM, org.bukkit.SoundCategory.PLAYERS, 0.5f, 1.4f);
     }
 
     /** 複擊（裂虛回響）的斷魂掌：算玩家自己再打一下，照樣衝過去、撲殺就連衝（這次之前複擊的那一下原地打）。 */

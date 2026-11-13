@@ -504,7 +504,7 @@ public final class CurrencyListener implements Listener {
             return;
         }
         if (event.getClickedInventory() != player.getInventory()) {
-            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先把項鍊拿到自己的背包再注入"));
+            tw.exilecore.gui.ActionBar.send(player, plugin.text().parse("<red>先把要注入的物品拿到自己的背包再注入"));
             player.playSound(player.getLocation(), Sound.BLOCK_NOTE_BLOCK_BASS, 0.8f, 0.6f);
             return;
         }

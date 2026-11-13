@@ -75,7 +75,8 @@ class CommandablesTest {
                 List.of(config.support("bone_command_ii")), Set.of(), new StatSheet());
         assertEquals(List.of(config.support("bone_command_ii")), brute.supports(), "掛得上");
         final StatSheet plain = new StatSheet();
-        final StatSheet bidding = plain.overlay(MinionSheets.stripMinion(MinionSheets.profile(brute).local()));
+        // 2026-11-13：本服平衡倍率（召喚技能自己的 damage.balance）不算，這裡只看骸令
+        final StatSheet bidding = plain.overlay(MinionSheets.stripMinion(MinionSheets.profile(brute).withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE).local()));
         final tw.exilecore.stats.SkillProfile base = new tw.exilecore.stats.SkillProfile("summon_bone_heavy", Set.of(Tags.ATTACK, Tags.MELEE),
                 1.0, null, null, java.util.Map.of(), List.of());
         final MinionService.CommandStrike roar = MinionService.commandStrike(MinionAbilities.BRUTE, base, 1.0, 20, 0, 1);

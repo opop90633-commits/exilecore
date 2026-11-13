@@ -66,6 +66,8 @@ public final class ItemRepository {
     private final Map<String, Double> uniqueRuneEffect = new java.util.HashMap<>();
     /** 2026-10-26：固定機率的傳奇（uniques.yml 的 drop_chance，存小數）：不在來源的權重池裡，Boss 每次擊殺、每個有份的人各自擲。 */
     private final Map<String, Double> uniqueDropChance = new java.util.HashMap<>();
+    /** 2026-11-12 照站長「渡鴉所觸能做嗎」：渡鴉所觸的傳奇（uniques.yml 的 raven_touched: true；PoE2 Raven-Touched：可以注入一個天賦核心）。 */
+    private final java.util.Set<String> uniqueRavenTouched = new java.util.HashSet<>();
     /** 2026-10-28 照 PoE2：傳奇的稀有度（uniques.yml 的 rarity）與賭博權重（gamble_weight，沒寫照稀有度；兩個都沒寫 = weight）。 */
     private final Map<String, UniqueRarity> uniqueRarity = new java.util.HashMap<>();
     private final Map<String, Integer> uniqueGambleWeight = new java.util.HashMap<>();
@@ -142,6 +144,7 @@ public final class ItemRepository {
         uniqueStatBases.clear();
         uniqueRuneEffect.clear();
         uniqueDropChance.clear();
+        uniqueRavenTouched.clear();
         uniqueRarity.clear();
         uniqueGambleWeight.clear();
         affixes.clear();
@@ -291,6 +294,9 @@ public final class ItemRepository {
                 }
                 if (root.node(id).has("rune_effect")) {
                     uniqueRuneEffect.put(id, root.node(id).decimal("rune_effect", 0) / 100.0);
+                }
+                if (root.node(id).bool("raven_touched", false)) { // 2026-11-12：渡鴉所觸
+                    uniqueRavenTouched.add(id);
                 }
                 if (root.node(id).has("drop_chance")) { // 2026-10-26：永恆珠寶照 PoE2 是 Boss 的獨立掉落（單位 %）
                     final double chance = root.node(id).decimal("drop_chance", 0);
@@ -1052,6 +1058,11 @@ public final class ItemRepository {
             }
         }
         return candidates.getLast();
+    }
+
+    /** 2026-11-12：這件傳奇是不是渡鴉所觸（PoE2 Raven-Touched：可以用蒸餾情緒注入一個天賦核心，不限項鍊）。 */
+    public boolean ravenTouched(final String uniqueId) {
+        return uniqueId != null && uniqueRavenTouched.contains(uniqueId);
     }
 
     /** 這件傳奇的固定掉落機率（小數；0 = 沒有，走來源的權重池）。 */

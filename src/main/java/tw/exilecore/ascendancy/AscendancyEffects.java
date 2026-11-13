@@ -85,7 +85,7 @@ public final class AscendancyEffects implements Listener {
     static final long RECENT = 80;
     /** 存在範圍（PoE2 Presence）。 */
     // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算（這次之前 6 格；實際用的是 combat.Presence）
-    static final double PRESENCE = tw.exilecore.core.Units.metres(6);
+    static final double PRESENCE = tw.exilecore.core.Units.metres(4); // 2026-11-12 照站長：照 PoE2 的 4 公尺（跟 combat.Presence 一樣）；這次之前 6
 
     /** 一個玩家的狀態。 */
     static final class AscState {

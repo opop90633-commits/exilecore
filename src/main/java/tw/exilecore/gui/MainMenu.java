@@ -282,7 +282,7 @@ public final class MainMenu extends Menu {
     private String channelSummary() {
         final tw.exilecore.world.TownChannels channels = plugin.world() == null || plugin.world().worlds() == null ? null
                 : plugin.world().worlds().channels();
-        if (channels == null || !channels.enabled()) {
+        if (channels == null || !channels.enabledFor(player)) { // 2026-11-12：管理員看得到管理員限定的線
             return "營地沒有分線";
         }
         final int here = channels.channelOf(player.getWorld());

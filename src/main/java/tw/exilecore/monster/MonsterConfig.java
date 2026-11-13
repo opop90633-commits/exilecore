@@ -104,6 +104,8 @@ public final class MonsterConfig {
     private final TreeMap<Integer, Double> experienceTable = new TreeMap<>();
     /** 怪物經驗表再乘的倍率（monsters.yml 的 experience_multiplier；沒寫 = 1）。 */
     private double experienceMultiplier = 1.0;
+    /** 2026-11-13 照站長「整體的怪物血量都提升兩倍（包含全部 BOSS）」：怪物最大生命最後再乘的倍率（monsters.yml 的 life_multiplier；沒寫 = 1）。 */
+    private double lifeMultiplier = 1.0;
     private double accuracyPerLevel = 8;
     private double accuracyBase = 10;
     private double evasionPerLevel = 3;
@@ -161,6 +163,7 @@ public final class MonsterConfig {
         experienceTable.clear();
         experienceTable.putAll(other.experienceTable);
         experienceMultiplier = other.experienceMultiplier;
+        lifeMultiplier = other.lifeMultiplier;
         accuracyPerLevel = other.accuracyPerLevel;
         accuracyBase = other.accuracyBase;
         evasionPerLevel = other.evasionPerLevel;
@@ -242,6 +245,11 @@ public final class MonsterConfig {
             throw new IllegalArgumentException("monsters.yml：experience_multiplier 不能是負數");
         }
         experienceMultiplier = multiplier;
+        final double life = root.decimal("life_multiplier", 1.0);
+        if (life <= 0) {
+            throw new IllegalArgumentException("monsters.yml：life_multiplier 要大於 0");
+        }
+        lifeMultiplier = life;
         final YamlNode defence = root.node("defence");
         accuracyBase = defence.decimal("accuracy_base", accuracyBase);
         accuracyPerLevel = defence.decimal("accuracy_per_level", accuracyPerLevel);
@@ -394,6 +402,11 @@ public final class MonsterConfig {
             copy.put(entry.getKey(), entry.getValue().clone());
         }
         return copy;
+    }
+
+    /** 2026-11-13：全部怪物（含所有 Boss）的最大生命最後再乘的倍率；lifeAt 本身不乘（異常門檻、屍體、召喚物表這些照原本的表）。 */
+    public double lifeMultiplier() {
+        return lifeMultiplier;
     }
 
     /** 等級 → 普通怪的生命（錨點之間等比內插，見 {@link LevelCurve}）。 */

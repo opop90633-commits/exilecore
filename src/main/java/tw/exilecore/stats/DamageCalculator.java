@@ -331,7 +331,9 @@ public final class DamageCalculator {
             return 0;
         }
         final double chance = deflectChance(accuracy, deflection);
-        return StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING) ? KeystoneKeys.luckyChance(chance) : chance; // 2026-10-26 側身之擊：偏斜機率為幸運
+        // 2026-10-26 側身之擊：偏斜機率為幸運；2026-11-12 觀鳥者（低血時偏斜機率為幸運，deflect.lucky@lowlife）也一樣
+        return StatKeys.flag(defender, KeystoneKeys.FLAG_GLANCING) || StatKeys.flag(defender, StatKeys.DEFLECT_LUCKY)
+                ? KeystoneKeys.luckyChance(chance) : chance;
     }
 
     /** 被偏斜的擊中少受幾成（0～1）：基礎 40% 加上「被偏斜的擊中／暴擊多擋 x%」。 */
@@ -536,6 +538,18 @@ public final class DamageCalculator {
     }
 
     /** 同上，攻擊方的穿透（penetration，tags 限定類型）在抗性上限之後扣。 */
+    /**
+     * 2026-11-11 照站長「野性殘暴 III」（PoE2 Brutality III）：這一下有沒有無視怪物的物理傷害減免——攻擊者的
+     * {@link SupportKeys#IGNORE_MONSTER_PHYS_REDUCTION}（%）擲一次；只對怪物（玩家這一方的不算）。≥ 100 一定、≤ 0 不會。
+     */
+    static boolean ignorePhysicalReduction(final StatSheet attacker, final StatSheet defender, final Set<String> skillTags) {
+        if (attacker == null || playerSide(defender)) {
+            return false;
+        }
+        final double chance = attacker.flat(SupportKeys.IGNORE_MONSTER_PHYS_REDUCTION, skillTags);
+        return chance >= 100 || chance > 0 && java.util.concurrent.ThreadLocalRandom.current().nextDouble() * 100 < chance;
+    }
+
     public static DamagePacket mitigate(final DamagePacket raw, final StatSheet defender, final StatSheet attacker, final Set<String> skillTags) {
         final DamagePacket dealt = new DamagePacket();
         // 2026-10-26（焚衣）：物理視為火焰；2026-10-26（昇華・變形肉體、演化化身）：承受的傷害視為另一種
@@ -590,7 +604,8 @@ public final class DamageCalculator {
                 final double cap = tw.exilecore.item.unique.UniqueDefence.reductionCap(defender,
                         StatKeys.flag(defender, StatKeys.FLAG_STAY_LIGHT) ? 0.5
                                 : playerSide(defender) ? Formulas.MAX_ARMOUR_REDUCTION : Formulas.MONSTER_MAX_ARMOUR_REDUCTION); // 2026-10-27 照 PoE2：怪物最多 75%（這次之前 90%）
-                final double reduction = Math.min(cap,
+                final double reduction = ignorePhysicalReduction(attacker, defender, skillTags) ? 0 // 2026-11-11（野性殘暴 III）
+                        : Math.min(cap,
                         Formulas.armourReduction(armour, amount) + Math.max(0, defender.flat(StatKeys.PHYS_REDUCTION, Set.of())) / 100.0)
                         - tw.exilecore.item.unique.UniqueDefence.crushed(defender);
                 taken = tw.exilecore.item.unique.UniqueDefence.flatTaken(defender, skillTags, amount * (1 - reduction));
@@ -623,6 +638,18 @@ public final class DamageCalculator {
     }
 
     /** 不擲骰的平均輸出（減免前、不含暴擊），給 /stats 與技能面板顯示。 */
+    /**
+     * 2026-11-13 照站長（bench 0741：疫染掛了 ×106 還是 234）：本服平衡倍率（{@link StatKeys#DAMAGE_BALANCE}，技能自己的 MORE），
+     * 擊中（{@link #outgoing}）跟技能自己的持續傷害（混沌減益的每秒基礎、燃燒地面）都乘；沒有是 1。這次之前只有擊中乘。
+     */
+    public static double balance(final StatSheet attacker, final Set<String> tags) {
+        if (attacker == null) {
+            return 1.0;
+        }
+        final double balance = attacker.apply(StatKeys.DAMAGE_BALANCE, 1.0, tags);
+        return balance > 0 ? balance : 1.0;
+    }
+
     public static DamagePacket expectedOutgoing(final StatSheet attacker, final SkillProfile skill) {
         return outgoing(chargeScaling(skill.effective(attacker), skill.tags()), skill, (min, max) -> (min + max) / 2.0);
     }
@@ -809,6 +836,13 @@ public final class DamageCalculator {
             final double amount = summed[type.ordinal()];
             if (amount > 1e-9) {
                 packet.add(type, attacker.apply(StatKeys.DAMAGE, amount, skill.contextFor(type)));
+            }
+        }
+        // 2026-11-13 照站長「全部技能拉到同組中位數的 16 倍」：本服平衡倍率（StatKeys.DAMAGE_BALANCE，技能自己的 MORE）
+        final double balance = balance(attacker, skill.tags());
+        if (Math.abs(balance - 1) > 1e-9 && balance > 0) {
+            for (final DamageType type : DamageType.values()) {
+                packet.set(type, packet.get(type) * balance);
             }
         }
         // 只造成某一種傷害（隨機元素的稜光裂）：其他類型拿掉

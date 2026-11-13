@@ -1106,7 +1106,7 @@ public final class CodexValues {
             for (int level = 1; level <= top; level++) {
                 final JsonObject l = new JsonObject();
                 l.addProperty("lv", level);
-                l.addProperty("life", Math.round(config.lifeAt(level)));
+                l.addProperty("life", Math.round(config.lifeAt(level) * config.lifeMultiplier())); // 2026-11-13：全部怪物生命倍率（×2）
                 final double[] damage = config.damageAt(level);
                 l.addProperty("dmg", Math.round(damage[0]) + "–" + Math.round(damage[1]));
                 l.addProperty("exp", Math.round(config.experienceAt(level)));

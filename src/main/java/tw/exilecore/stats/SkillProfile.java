@@ -61,6 +61,15 @@ public record SkillProfile(String id, Set<String> tags, double effectiveness, Da
         return withLocal(List.of(Modifier.more(StatKeys.DAMAGE, factor - 1.0, source)));
     }
 
+    /** 2026-11-13：拿掉某一種屬性的技能修飾器（平衡模型不算本服平衡倍率 StatKeys.DAMAGE_BALANCE）。 */
+    public SkillProfile withoutLocal(final String stat) {
+        if (local.stream().noneMatch(mod -> mod.stat().equals(stat))) {
+            return this;
+        }
+        return new SkillProfile(id, tags, effectiveness, spellDamage, spellDamageMax, conversion,
+                local.stream().filter(mod -> !mod.stat().equals(stat)).toList());
+    }
+
     /** 換個代號、多幾個標籤（投射物停下來留下的地面效果不再是投射物）。 */
     public SkillProfile derive(final String newId, final Set<String> addTags, final Set<String> removeTags) {
         final Set<String> newTags = new java.util.HashSet<>(tags);

@@ -47,10 +47,12 @@ class SummerConfigTest {
         assertEquals(-400, config.arena().z());
         // 海妖固定三個時段、大亂鬥每個整點 9～23
         // 2026-11-03 照站長：整點、錯開——不定時活動在偶數整點，星潮祭用奇數整點，海妖跟大亂鬥也不撞
-        assertEquals(List.of(13, 19, 23), List.copyOf(config.boss().hours()));
-        assertEquals(List.of(9, 11, 15, 17, 21), List.copyOf(config.melee().hours()));
+        // 2026-11-12 照站長：開天者結束後，原本開天者的整點穿插一些星潮祭（海妖多 10、16，大亂鬥多 14、20）
+        assertEquals(List.of(10, 13, 16, 19, 23), List.copyOf(config.boss().hours()));
+        assertEquals(List.of(9, 11, 14, 15, 17, 20, 21), List.copyOf(config.melee().hours()));
         for (final int hour : config.melee().hours()) {
-            assertTrue(hour % 2 == 1 && !config.boss().hours().contains(hour), "大亂鬥 " + hour + " 點");
+            // 2026-11-12：開天者結束了，偶數整點也能用；海妖跟大亂鬥照樣不撞（這次之前要求奇數整點）
+            assertTrue(!config.boss().hours().contains(hour), "大亂鬥 " + hour + " 點");
         }
         assertEquals(0, config.meleeMinute());
         assertEquals(0, config.bossMinute());

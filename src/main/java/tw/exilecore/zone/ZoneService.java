@@ -602,7 +602,7 @@ public final class ZoneService {
     /** /channel：看現在在哪條線、每條線幾個人。 */
     public void showChannels(final Player player) {
         final tw.exilecore.world.TownChannels channels = channels();
-        if (channels == null || !channels.enabled()) {
+        if (channels == null || !channels.enabledFor(player)) { // 2026-11-12：管理員看得到管理員限定的線
             player.sendMessage(plugin.text().prefixed("<gray>這個伺服器的營地沒有分線"));
             return;
         }
@@ -619,7 +619,7 @@ public final class ZoneService {
     /** /channel n：換到第 n 線的營地（同一個位置）。要在營地裡、剛被打不行。 */
     public void switchChannel(final Player player, final int channel) {
         final tw.exilecore.world.TownChannels channels = channels();
-        if (channels == null || !channels.enabled()) {
+        if (channels == null || !channels.enabledFor(player)) { // 2026-11-12 照站長：管理員可以換到管理員限定的線；這次之前看 enabled()
             player.sendMessage(plugin.text().prefixed("<gray>這個伺服器的營地沒有分線"));
             return;
         }

@@ -197,8 +197,7 @@ public final class SpearMechanics implements Listener {
             return;
         }
         final Deque<Lodged> mine = lodged.computeIfAbsent(owner.getUniqueId(), uuid -> new ArrayDeque<>());
-        final int limit = EXPLOSIVE_LIMIT[Math.max(0, Math.min(EXPLOSIVE_LIMIT.length - 1, build.level() - 1))]
-                + SkillLimits.bonus(plugin.players().sheet(owner), build); // 2026-10-28 照 PoE2：「上限 1 支插著的矛」吃 +x 上限（過剩）
+        final int limit = explosiveLimit(owner, build);
         while (mine.size() >= limit) {
             // 2026-10-27 照 PoE2（Limit：超過上限時最舊的消失）：最舊的那支消失、不炸；這次之前最舊的提早炸開
             final Lodged gone = mine.pollFirst();
@@ -208,6 +207,34 @@ public final class SpearMechanics implements Listener {
         }
         mine.addLast(new Lodged(at.clone(), build, plugin.getServer().getCurrentTick() + DETONATION_TICKS));
         at.getWorld().playSound(at, Sound.ITEM_TRIDENT_HIT_GROUND, SoundCategory.PLAYERS, 0.7f, 0.9f);
+    }
+
+    /** 炎爆矛同時最多插幾支（照技能等級；2026-10-28 照 PoE2：「上限 1 支插著的矛」吃 +x 上限（過剩））。 */
+    private int explosiveLimit(final Player owner, final SkillBuild build) {
+        return EXPLOSIVE_LIMIT[Math.max(0, Math.min(EXPLOSIVE_LIMIT.length - 1, build.level() - 1))]
+                + SkillLimits.bonus(plugin.players().sheet(owner), build);
+    }
+
+    /**
+     * 2026-11-12 照站長「再按一次提早炸」（{@link EarlyDetonation}）：炎爆矛插滿上限時再按一次＝最舊的那支（插了 {@link EarlyDetonation#MIN_AGE}
+     * tick 以上）馬上炸開，傷害照插了多久 50%～100%（被引爆類技能提早引爆照舊 100%）。沒插滿、沒有夠久的回傳 false（照常擲矛）。
+     */
+    boolean detonateOldestIfFull(final Player owner, final SkillBuild build, final long now) {
+        final Deque<Lodged> mine = lodged.get(owner.getUniqueId());
+        if (mine == null || mine.isEmpty() || mine.size() < explosiveLimit(owner, build)) {
+            return false;
+        }
+        final Lodged oldest = mine.peekFirst();
+        final long elapsed = now - (oldest.until() - DETONATION_TICKS);
+        if (elapsed < EarlyDetonation.MIN_AGE || oldest.at().getWorld() != owner.getWorld()) {
+            return false;
+        }
+        mine.pollFirst();
+        final double scale = EarlyDetonation.scale(elapsed, DETONATION_TICKS);
+        if (service.eligible(owner)) {
+            blast(owner, EXPLOSIVE_BLAST, oldest.build().withProfile(oldest.build().profile().scaled(scale, "提早引爆")), oldest.at());
+        }
+        return true;
     }
 
     /** 你的引爆類技能（detonator 標籤，炎爆矛自己除外）打在插著的炎爆矛附近：提早引爆。 */

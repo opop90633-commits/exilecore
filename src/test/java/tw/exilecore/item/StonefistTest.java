@@ -93,7 +93,11 @@ class StonefistTest {
     void newUniquesDropWhereTheyDropInRef() {
         assertEquals(Set.of("abyss_lich"), repository.unique("binder_grasp").sources(), "骸王的容器");
         assertEquals(Set.of("legion"), repository.unique("peerless").sources(), "灰燼仲裁者 → 2026-11-04 照站長移到不朽統帥");
-        assertEquals(Set.of("map_boss"), repository.unique("terror_glide").sources(), "渡鴉欺詐者（Boss 限定，做不出來）");
+        assertEquals(Set.of("fog_trial"), repository.unique("terror_glide").sources(), "2026-11-12 照站長：只從迷霧之主掉（這次之前地圖 Boss）");
+        // 2026-11-12：渡鴉所觸（可以注入天賦核心）
+        assertTrue(repository.ravenTouched("terror_glide"));
+        assertTrue(repository.ravenTouched("the_auspex"));
+        assertFalse(repository.ravenTouched("binder_grasp"));
         for (final String id : ADDED) {
             if (!Set.of("binder_grasp", "peerless", "terror_glide").contains(id)) {
                 assertEquals(Set.of("map_boss", "chance", "gamble"), repository.unique(id).sources(), id + "：原作是全域掉落");

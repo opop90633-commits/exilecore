@@ -46,6 +46,9 @@ public final class WebModule implements Module, Listener {
     private static final UUID PACK_ID = UUID.nameUUIDFromBytes("exilecore-ui-pack".getBytes(StandardCharsets.UTF_8));
     /** 背景音樂那包的代號（2026-10-21：音樂拆成另一包，更新插件時不用重新下載）。 */
     private static final UUID MUSIC_ID = UUID.nameUUIDFromBytes("exilecore-music-pack".getBytes(StandardCharsets.UTF_8));
+    /** 2026-11-12：帶雜湊的資源包網址的快取（一年、不會變）。 */
+    static final String HASHED_PACK_CACHE = "public, max-age=31536000, immutable";
+
     /** 開服後最多等 BetterModel 的資源包多久（tick）才送資源包（2026-10-21）。 */
     private static final long PACK_WAIT_TICKS = 20L * 60;
 
@@ -385,11 +388,13 @@ public final class WebModule implements Module, Listener {
                     : new WebServer.Response(200, "image/png", png, java.util.Map.of("Cache-Control", "public, max-age=3600"));
         }, "GET");
         // 帶雜湊的網址：照現在的資源包（併了 BetterModel 之後雜湊會變，所以用前綴，什麼雜湊都回現在的）
+        // 2026-11-12 照站長「減輕伺服器流量」：帶雜湊的網址讓 Cloudflare、瀏覽器長期快取（內容一變雜湊就變、網址也不同）；
+        //   這次之前 no-cache（每個玩家每次都從這台主機下載）。固定的 /pack.zip、/music.zip 照舊不快取
         server.prefix("/pack/", path -> new WebServer.Response(200, "application/zip", pack.zip(),
-                java.util.Map.of("Cache-Control", "no-cache")));
+                java.util.Map.of("Cache-Control", HASHED_PACK_CACHE)));
         // 2026-10-21：背景音樂那包（帶雜湊的網址給玩家，固定的給管理員）
         server.prefix("/music/", path -> musicPack == null ? null : new WebServer.Response(200, "application/zip", musicPack.zip(),
-                java.util.Map.of("Cache-Control", "no-cache")));
+                java.util.Map.of("Cache-Control", HASHED_PACK_CACHE)));
         server.route("/music.zip", path -> musicPack == null ? null : new WebServer.Response(200, "application/zip", musicPack.zip(),
                 java.util.Map.of("Cache-Control", "no-cache", "Content-Disposition", "attachment; filename=\"exilecore-music.zip\"")));
         // 固定的下載網址（管理員自己看、放進資源包資料夾用；玩家登入時收到的是上面那個帶雜湊的）

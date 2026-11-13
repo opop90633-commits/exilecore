@@ -17,6 +17,18 @@
 # 在地圖裡死亡：60 級以上扣「目前等級升級所需經驗」的 10%（character.yml 的 death_penalty_from_level、map_death_penalty），
 #   回到營地，要再走傳送門進去（會用掉一次）。
 
+# 2026-11-12 照站長「新增暗黑破壞神那樣的難度系統，讓玩家自己選擇難度，先分 10 階，1 就是現在的樣子」（tw.exilecore.map.Difficulty）：
+#   開圖的人選的難度套在他開的每一張圖（地圖、終局、極境、巔峰、事件、深坑、劫盜…；組隊照開圖的人），地圖外面不套。
+#   life／damage：怪物（含 Boss）生命、傷害更多（倍率）；quantity／rarity：加在這張圖的物品數量、稀有度（%；終局以上 Boss 的掉落平常不吃，難度給的照吃）；
+#   experience：地圖裡的經驗 +%。解鎖下一階要打過那一階的進階關卡：災厄級的塑星者・蒼冕（event_bosses.difficulty_trial），照那一階的難度。
+#   站長選的表：生命、傷害照第一版（每階 ×1.45／×1.18），數量、稀有度、經驗照陡版（每階 +15／+25／+15%）。
+difficulty:
+  life:       [1, 1.45, 2.10, 3.05, 4.42, 6.41, 9.29, 13.5, 19.5, 28.3]
+  damage:     [1, 1.18, 1.39, 1.64, 1.94, 2.29, 2.70, 3.19, 3.76, 4.44]
+  quantity:   [0, 15, 30, 45, 60, 75, 90, 105, 120, 135]
+  rarity:     [0, 25, 50, 75, 100, 125, 150, 175, 200, 225]
+  experience: [0, 15, 30, 45, 60, 75, 90, 105, 120, 135]
+
 settings:
   # 每一階的怪物等級（T1 … T16）。照 PoE：越高階等級差越大，T16 = 84（怪物等級的上限，100 級的角色也是打 84 級的怪）
   tiers: [61, 62, 63, 64, 65, 66, 68, 70, 71, 73, 75, 77, 78, 80, 82, 84]
@@ -208,7 +220,7 @@ event_bosses:
   fog_trial:
     name: 迷霧之主・無面
     level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
-    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    recommended_dps: 8000000   # 2026-11-13 照站長「怪物血量 ×2、顯示一致」：400 萬 → 800 萬（生命跟著 ×2）； 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
     type: STRAY
     named: true
     life: 6.0
@@ -265,11 +277,13 @@ event_bosses:
         - { support: oblivion_chaos, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { support: mist_spread, chance: 0.05 }   # 2026-11-04 照站長「新增獨特的技能與輔助」：專屬寶石每顆各自 5%（跟這隻的傳奇一樣）
         - { currency: essence_delirium, chance: 0.01 }   # 2026-11-08 照站長「譫妄精隨塞迷霧 BOSS 1% 機率掉落」
+        - { unique: the_auspex, chance: 0.01 }   # 2026-11-12 照站長「觀鳥者（The Auspex）掉落物塞迷霧 Boss 1%」
+        - { unique: terror_glide, chance: 0.01 }   # 2026-11-12 照站長「驚怖掠影（Horror's Flight）也放進迷霧 Boss」1%（原本的地圖 Boss 來源照舊）
 
   ultimatum:
     name: 審判者・衡
     level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
-    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    recommended_dps: 8000000   # 2026-11-13 照站長「怪物血量 ×2、顯示一致」：400 萬 → 800 萬（生命跟著 ×2）； 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
     type: VINDICATOR
     named: true
     life: 6.5
@@ -348,7 +362,7 @@ event_bosses:
   legion:
     name: 不朽統帥・磐
     level: 94               # 2026-11-04 照站長「全新的難度」：災厄級——怪物等級固定 94（巔峰 92），生命自動對準下面的 recommended_dps
-    recommended_dps: 4000000   # 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    recommended_dps: 8000000   # 2026-11-13 照站長「怪物血量 ×2、顯示一致」：400 萬 → 800 萬（生命跟著 ×2）； 2026-11-04 照站長「災厄級改成 400 萬每秒、3 分半」；這次之前 1000 萬。單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
     type: WITHER_SKELETON
     named: true
     life: 6.5
@@ -413,7 +427,7 @@ event_bosses:
   delve_boss:
     name: 晶淵之王・黯冕
     level: 94               # 2026-11-07：災厄級——怪物等級固定 94（同迷霧之主、審判者、不朽統帥），生命自動對準下面的 recommended_dps
-    recommended_dps: 4000000   # 2026-11-07：同其他三隻災厄級，單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
+    recommended_dps: 8000000   # 2026-11-13 照站長「怪物血量 ×2、顯示一致」：400 萬 → 800 萬（生命跟著 ×2）； 2026-11-07：同其他三隻災厄級，單人每秒 400 萬、3 分半打完（已算抗性；生命倍率由程式算，boss.life 只是相對尺）
     type: WARDEN
     named: true
     life: 6.5
@@ -483,6 +497,7 @@ event_bosses:
         - { currency: rune_special_saqawal_sky, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
         - { currency: rune_special_fenumus_agony, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
         - { currency: rune_special_farrul_grace, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
+        - { currency: rune_legacy_greymake, chance: 0.01 }   # 2026-11-12 照站長「傳承・灰製放到晶坑 boss 掉落 1%」（原作是阿德爾的傳承用在灰製上合成的，我們沒有那兩樣）
         - { currency: rune_special_farrul_chase, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
         - { currency: rune_special_craiceann_warding, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
         - { currency: rune_special_saqawal_memory, chance: 0.01 }   # 2026-11-11 照站長「第二張圖整個系列的符文，都放進深坑 boss」
@@ -505,6 +520,46 @@ event_bosses:
         - { support: azurite_resonance, chance: 0.01 }
         - { support: burrow_through, chance: 0.01 }
         - { support: eternal_night, chance: 0.01 }
+  # 2026-11-12 照站長「進階關卡用災厄級的該階難度；另外做一隻新的王（歸類災厄級），完美復刻 POE1 藍王的招式，新的王就當進階關卡的 boss」：
+  #   難度的進階關卡（tw.exilecore.map.Difficulty、MapService.openDifficultyTrial）打這一隻，照那一階難度的生命、傷害倍率。
+  #   招式照 PoE1 The Shaper（boss_skills.yml 的 shaper_*）；代號要跟 Difficulty.TRIAL_KIND 一樣。不掉東西（關卡本來就不掉）。
+  difficulty_trial:
+    name: 塑星者・蒼冕
+    level: 94               # 災厄級：怪物等級固定 94，生命自動對準下面的 recommended_dps（再乘那一階難度的倍率）
+    recommended_dps: 8000000   # 2026-11-13 照站長「怪物血量 ×2、顯示一致」：400 萬 → 800 萬（生命跟著 ×2）； 同其他災厄級：單人每秒 400 萬、3 分半打完（難度 1 的基準；難度 N 再 × 那一階的生命）
+    type: ENDERMAN
+    named: true
+    life: 6.5
+    damage: 3.0
+    scale: 1.5
+    mods: [cold_resistant]
+    intro: "「你想要更難的世界？——那就先看看，是誰把它塑成這樣的。」"
+    defeat: "星光一點一點散開。更深的那一層，為你打開了。"
+    skills:
+      - shaper_strike
+      - shaper_beam
+      - shaper_orbs
+      - shaper_teleport_slam
+      - shaper_vortex
+      - shaper_portal
+      - { id: shaper_bullet_hell, phase: 1 }    # 原作第二階段起
+      - { id: shaper_clone, phase: 2 }          # 原作第三階段起
+    phases:
+      - at: 0.5
+        name: 未造之物
+        message: "「你還沒見過，我沒做完的那些。」"
+        speed: 0.1
+        summon: { type: WITHER_SKELETON, count: 3 }   # 原作：離場去打未造者（The Uncreated）
+        mechanic: { type: opening, heal: 10 }          # 原作：50% 時回到 60%
+      - at: 0.25
+        name: 未塑之形
+        message: "「那就連形狀都不要了。」"
+        speed: 0.15
+        summon: { type: WITHER_SKELETON, count: 4 }   # 原作：離場去打未塑者（The Unshaped）
+        mechanic: { type: opening, heal: 10 }
+    hazards:
+      - { skill: shaper_vortex, every: 11, phase: 1 }   # 原作：第二、三階段漩渦越來越常出現
+    enrage: { after: 300, damage: 120, speed: 0.4, message: "「夠了。這片天，收回去。」" }
 
 maps:
   wreck_bay:

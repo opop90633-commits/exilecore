@@ -136,6 +136,9 @@ public final class KillCredit {
         if (recipients.isEmpty()) {
             return;
         }
+        if (plugin.maps() != null && plugin.maps().noExperience(entity)) {
+            return; // 2026-11-12 照站長「難度系統」：進階關卡沒有經驗（免費開的圖，不讓人拿來刷）
+        }
         final Map<UUID, Integer> levels = new LinkedHashMap<>();
         for (final Player player : recipients) {
             levels.put(player.getUniqueId(), plugin.players().get(player).level());
@@ -148,8 +151,11 @@ public final class KillCredit {
         // 這次之前刷怪時的人數（地圖裡整張地圖）全算：隊友在別的房間也讓經驗變多
         final int players = PartyConfig.experiencePlayers(monsters.playersAround(entity),
                 PartyService.nearbyPlayers(plugin, config, entity.getLocation()));
+        // 2026-11-12 照站長「1～60 等的怪物區那邊經驗 ×2」：劇情區域的怪再乘 character.yml 的 zone_experience.bonus
+        final tw.exilecore.zone.Zone zone = plugin.zones() == null ? null : plugin.zones().zoneAt(entity.getLocation()).orElse(null);
+        final double zoneBonus = plugin.players().config().zoneExperience(zone != null, zone != null && zone.town(), zone == null ? 0 : zone.maxLevel());
         final double factor = config.lifeFactor(data.rarity(), players) * config.partyBonus(recipients.size()) * (1 + atlas)
-                * bonus;
+                * bonus * zoneBonus;
         final String bonusText = plugin.players().config().experienceBonusText();
         for (final Player player : recipients) {
             final PlayerState state = plugin.players().get(player);
@@ -181,7 +187,8 @@ public final class KillCredit {
                         recipients.size() > 1 ? String.format(java.util.Locale.ROOT, "（%d 人分，你佔 %.0f%%）", recipients.size(),
                                 shares.getOrDefault(player.getUniqueId(), 0.0) * 100) : "",
                         penalty < 0.995 ? "<dark_gray>（等級差與高等級：剩 " + tw.exilecore.character.LevelPace.percent(penalty) + "）" : "",
-                        bonusText == null ? "" : "<#ffd27f>（全服 " + bonusText + "）")));
+                        bonusText == null ? "" : "<#ffd27f>（全服 " + bonusText + "）")
+                                + (zoneBonus > 1 + 1e-9 ? String.format(java.util.Locale.ROOT, "<#ffd27f>（區域經驗 ×%.3g）", zoneBonus) : "")));
             }
         }
     }

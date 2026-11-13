@@ -958,7 +958,9 @@ public final class FestivalService {
         }
         final FestivalConfig.Candy candy = config.candy();
         // 終局以上的 Boss 不吃物品數量（跟一般掉落一樣）
-        final LootBonus.Bonus bonus = plugin.maps().flatBossLoot(entity) ? LootBonus.Bonus.NONE : LootBonus.of(plugin, player);
+        final LootBonus.Bonus bonus = plugin.maps().flatBossLoot(entity)
+                ? LootBonus.boosts(plugin, player) // 2026-11-12 照站長「個人的掉寶與稀有藥要影響全域的掉落（包含終局以上 Boss）」：只加個人加倍藥；這次之前 NONE
+                : LootBonus.of(plugin, player);
         final int amount;
         if (data.boss()) {
             amount = bonus.amount(candy.boss(), random);

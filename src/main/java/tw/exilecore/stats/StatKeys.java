@@ -36,6 +36,12 @@ public final class StatKeys {
 
     // 傷害：增加／更多用 DAMAGE 配標籤；附加固定值用 DAMAGE_ADDED_*
     public static final String DAMAGE = "damage";
+    /**
+     * 2026-11-13 照站長「全部技能拉到同組中位數的 16 倍」：本服平衡倍率（skills.yml 技能的 modifiers 寫 MORE）。
+     * 跟一般的「更多傷害」分開：最後算完這一下的傷害再整個乘（DamageCalculator），不混進輔助、機制的更多傷害裡；
+     * 平衡模型（BalanceModel）先不算（Boss 血量之後再照新的傷害調）。
+     */
+    public static final String DAMAGE_BALANCE = "damage.balance";
     public static final String DAMAGE_ADDED_MIN = "damage.added.min";  // 配 damageType 標籤
     public static final String DAMAGE_ADDED_MAX = "damage.added.max";
 
@@ -595,6 +601,8 @@ public final class StatKeys {
     public static final String COMBO_FINISHER = "combo.finisher";
     /** 2026-10：怒鑄：放的時候有 10 點怒氣就用掉，這一下更多 x% 傷害（FLAT）。 */
     public static final String RAGEFORGED = "rage.forged";
+    /** 2026-11-12 照 PoE2 Rageforged II：怒鑄用掉怒氣時 x% 機率不扣（照樣算用掉、照樣更痛）。SkillResources */
+    public static final String RAGEFORGED_KEEP = "rage.forged_keep";
     public static final String CROSSBOW_RELOAD = "crossbow.reload_speed";
     public static final String CROSSBOW_AMMO_SAVE = "crossbow.ammo_save";
     /** 2026-10：擊中暈眩中的敵人時立刻裝滿（FLAT 1）。 */
@@ -683,6 +691,13 @@ public final class StatKeys {
     public static final String PRESENCE_WEAKEN = "presence.weaken";
     /** FLAT：存在範圍內的敵人移動速度變慢 x%。 */
     public static final String PRESENCE_SLOW = "presence.slow";
+    /**
+     * FLAT：存在範圍內的敵人每秒獲得 x 層「殘忍瘋狂」（PoE2 Gruelling Madness：第一層讓牠移動變慢 15%，之後每多一層減速效力增加 10%，
+     * 最多 10 層；2 秒沒有新的就少 1 層）。2026-11-12 照站長「觀鳥者照原作」。Presence
+     */
+    public static final String PRESENCE_GRUELLING = "presence.gruelling_madness";
+    /** FLAT（旗標）：偏斜機率為幸運（擲兩次一次中就算）。2026-11-12（觀鳥者「低血時偏斜機率為幸運」寫 deflect.lucky@lowlife）。DamageCalculator */
+    public static final String DEFLECT_LUCKY = "deflect.lucky";
     /** FLAT：存在範圍內的敵人每秒受到你最大生命 x% 的火焰傷害。 */
     public static final String PRESENCE_BURN = "presence.burn";
     /** INCREASED：臨在的範圍（面積）。 */

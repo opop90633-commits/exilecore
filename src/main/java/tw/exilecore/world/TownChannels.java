@@ -414,6 +414,14 @@ public final class TownChannels implements Listener {
         return openCount() > 1;
     }
 
+    /**
+     * 2026-11-12 照站長「開放 2 分流只給管理員進去測試」：管理員看得到、進得去關掉的線（open_channels 以外的線變成管理員限定）；
+     * 一般玩家照舊看 {@link #enabled()}。這次之前關掉的線管理員也進不去（只是人在裡面不會被送走）。
+     */
+    public boolean enabledFor(final Player player) {
+        return enabled() || towns.size() > 1 && player != null && player.hasPermission(ExileCore.PERMISSION_ADMIN);
+    }
+
     /** 2026-11-03：開放幾條線（world.yml 的 open_channels；0 或超過載入的線 = 全部）。 */
     public int openCount() {
         final int open = plugin.world() == null ? 0 : plugin.world().lore().campaignOpenChannels();
@@ -490,7 +498,7 @@ public final class TownChannels implements Listener {
         if (towns.isEmpty()) {
             return null;
         }
-        if (!enabled()) {
+        if (!enabledFor(player)) { // 2026-11-12：管理員在管理員限定的線裡照樣留在那一條；這次之前看 enabled()
             return towns.getFirst();
         }
         if (isTown(player.getWorld())) {
@@ -530,7 +538,7 @@ public final class TownChannels implements Listener {
 
     /** 2026-10-22：這個玩家能不能換到這條線；可以回傳 null，不行回傳原因。 */
     public String switchProblem(final Player player, final World target) {
-        if (closed(target)) {
+        if (closed(target) && !player.hasPermission(ExileCore.PERMISSION_ADMIN)) { // 2026-11-12 照站長：關掉的線管理員進得去；這次之前誰都不行
             return "第 " + channelOf(target) + " 線暫時關閉（大家都在第 1 線）"; // 2026-11-03 照站長
         }
         if (channelOf(target) > 1 && lockedToFirst(player)) {

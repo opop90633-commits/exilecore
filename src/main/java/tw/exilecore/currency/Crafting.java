@@ -82,6 +82,17 @@ public final class Crafting {
         data.addRune(type.affix());
     }
 
+    /**
+     * 2026-11-12 照站長「渡鴉所觸能做嗎」：能用蒸餾情緒注入的物品——項鍊，或渡鴉所觸的傳奇（PoE2 Raven-Touched：驚怖掠影、觀鳥者）。
+     * 原作渡鴉所觸要在迷霧裡的凋萎敗柳注入，這裡跟項鍊一樣拿蒸餾情緒點它就行。這次之前只有項鍊。
+     */
+    public static boolean instilTarget(final tw.exilecore.item.ItemRepository repository, final ItemBase base, final ItemData data) {
+        if (base == null || data == null) {
+            return false;
+        }
+        return base.slot() == ItemSlot.AMULET || repository != null && repository.ravenTouched(data.unique());
+    }
+
     /** 2026-10-26：戒指、項鍊（PoE2 的催化劑只能用在這兩種；腰帶不行）。 */
     static boolean catalystTarget(final ItemBase base) {
         return base.slot() == ItemSlot.RING || base.slot() == ItemSlot.AMULET;
@@ -155,8 +166,8 @@ public final class Crafting {
                 return null;
             }
             case INSTIL -> {
-                if (base.slot() != tw.exilecore.item.ItemSlot.AMULET) {
-                    return "蒸餾情緒只能注入項鍊";
+                if (!instilTarget(generator.repository(), base, data)) {
+                    return "蒸餾情緒只能注入項鍊或渡鴉所觸的物品"; // 2026-11-12：＋渡鴉所觸
                 }
                 if (!data.identified()) {
                     return "要先鑑定";

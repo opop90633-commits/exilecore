@@ -152,4 +152,16 @@ class FireSpellsTest {
         assertEquals(0, FireSpells.burnDps(sheet, wall, 0, 1.0), 1e-9);
         assertEquals(0.25 / 0.075, FireSpells.incinerateIgnites(0.25), 1e-9); // 每 0.075 秒點燃一次
     }
+
+    @Test
+    void burningTakesTheBalanceMultiplier() {
+        // 2026-11-13 照站長（bench 0741：疫染、焚流的持續傷害不吃本服平衡倍率）
+        final SkillProfile wall = new SkillProfile("flame_curtain", Set.of(Tags.SPELL, Tags.AREA, Tags.FIRE), 1.0, new DamagePacket().set(DamageType.FIRE, 5),
+                new DamagePacket().set(DamageType.FIRE, 8), Map.of(), List.of());
+        final tw.exilecore.stats.StatSheet sheet = new tw.exilecore.stats.StatSheet().overlay(List.of(
+                Modifier.more(StatKeys.DAMAGE_BALANCE, 9.0, "本服平衡")));
+        assertEquals(1.75 * 10, FireSpells.burnDps(sheet, wall, 105, 1.0), 1e-9);
+        assertEquals(10, tw.exilecore.stats.DamageCalculator.balance(sheet, wall.tags()), 1e-9);
+        assertEquals(1, tw.exilecore.stats.DamageCalculator.balance(new tw.exilecore.stats.StatSheet(), wall.tags()), 1e-9);
+    }
 }

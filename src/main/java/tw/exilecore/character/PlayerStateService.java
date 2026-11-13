@@ -389,6 +389,9 @@ public final class PlayerStateService {
         passiveModifiers.addAll(virtual != null
                 ? tw.exilecore.passive.JewelSockets.modifiers(plugin.items() == null ? null : plugin.items().repository(), virtual.jewels(), state.passives(), tree)
                 : tw.exilecore.passive.JewelSockets.modifiers(plugin, state, tree));
+        if (state.benchBlank() > 0) {
+            passiveModifiers.clear(); // 2026-11-13 照站長「改成白板量」：自動量技能時天賦樹（含珠寶）不算
+        }
         // 2026-10：半徑珠寶放大的「+x 任一屬性」：照那一點選的屬性換成力量／敏捷／智慧
         // 2026-10-26 照 PoE2 旅者的智慧：選了傷害／防禦／消耗效率的換成那些（choiceModifiers）
         final List<Modifier> amplified = new ArrayList<>();
@@ -426,13 +429,19 @@ public final class PlayerStateService {
                     if (live) {
                         deferredBuffs.add(source);
                     }
-                } else {
+                } else if (state.benchBlank() == 0) { // 2026-11-13：白板量時永久加成（稱號、公會、贊助、分身獎勵、地圖詞綴）不算
                     extra.addAll(source.apply(player));
                 }
             }
         }
-        for (final java.util.function.BiFunction<Player, PlayerState, List<Modifier>> source : stateModifierSources) {
-            extra.addAll(source.apply(player, state));
+        if (state.benchBlank() != 1) { // 2026-11-13：白板量時昇華、任務、護符不算（量昇華賦予的技能時 2：留著）
+            for (final java.util.function.BiFunction<Player, PlayerState, List<Modifier>> source : stateModifierSources) {
+                extra.addAll(source.apply(player, state));
+            }
+        }
+        if (state.benchBlank() > 0) {
+            // 2026-11-13（白板 bench 1515：常駐召喚物全部 0）：白板沒有任務、權杖給的精魂，叫不出召喚物——給夠用的精魂（只拿來保留，不影響傷害）
+            extra.add(Modifier.flat(StatKeys.SPIRIT_MAX, 1000, "自動量技能"));
         }
         sheet.addAll(extra);
 
@@ -440,6 +449,11 @@ public final class PlayerStateService {
         // 2026-10-26（昇華・展露之指）：有「+1 戒指欄位」才算第三個戒指欄（只看裝備以外的來源，不會繞回來）
         final boolean thirdRing = ringExtra(passiveResolved) + ringExtra(extra) > 0;
         final List<EquippedItem> equipped = virtual != null ? equippedItems(state, virtual.gear(), thirdRing) : equippedItems(player, state, thirdRing);
+        if (state.benchBlank() > 0) {
+            // 2026-11-13 照站長「改成白板量」：只留量測用的武器（主手、副手），防具、飾品、腰帶都不算
+            equipped.removeIf(item -> !(item.base().isWeapon() || item.offHandWeapon() || item.base().slot() == ItemSlot.OFF_HAND
+                    || item.base().slot() == ItemSlot.MAIN_HAND));
+        }
         for (final EquippedItem item : equipped) {
             sheet.addAll(item.modifiers());
         }
@@ -497,6 +511,9 @@ public final class PlayerStateService {
         final boolean necroTalisman = StatKeys.flag(sheet, tw.exilecore.stats.KeystoneKeys.FLAG_NECRO_TALISMAN);
         // 2026-10-27 照 PoE2 基石：巨人之血（雙手斧錘劍單手持用，副手可以配盾、法器或再一把雙手斧錘劍雙持）、荒野領主（副手的權杖）——天賦換了也要重看副手
         final java.util.function.Function<EquippedItem, String> ownProblem = item -> {
+            if (state.benchFree()) {
+                return null; // 2026-11-12：自動量技能（/ec balance bench）的測試武器不看需求
+            }
             final ItemBase.Requirements req = scaledRequirements(item.requirements(), requirementScale);
             final double reqScale = giantsBlood && item.base().isWeapon() && tw.exilecore.stats.KeystoneKeys.martial(item.base().tags()) ? 3 : 1;
             // 2026-10-27 照 PoE2（昇華・石拳之道）：腿甲不需要能力值
@@ -650,10 +667,12 @@ public final class PlayerStateService {
         if (inactiveSink != null) {
             inactiveSink.addAll(inactive);
         }
-        ascendancyEquipment(sheet, state, active, tree);
-        // 2026-10-26（昇華）：添煤工、烈焰鑄造、引我行恩典之途、神聖流向、聖賢智慧、嵌晶的寶石顏色…（AscBuild；展露之指改成第三個戒指欄）
-        tw.exilecore.ascendancy.AscBuild.equipment(plugin, sheet, state, active.stream()
-                .map(item -> new tw.exilecore.ascendancy.AscBuild.Gear(item.offHandWeapon() ? ItemSlot.OFF_HAND : item.base().slot(), item.base(), item.data(), item.modifiers())).toList());
+        if (state.benchBlank() != 1) { // 2026-11-13 照站長「改成白板量」：白板量時昇華的裝備效果不算
+            ascendancyEquipment(sheet, state, active, tree);
+            // 2026-10-26（昇華）：添煤工、烈焰鑄造、引我行恩典之途、神聖流向、聖賢智慧、嵌晶的寶石顏色…（AscBuild；展露之指改成第三個戒指欄）
+            tw.exilecore.ascendancy.AscBuild.equipment(plugin, sheet, state, active.stream()
+                    .map(item -> new tw.exilecore.ascendancy.AscBuild.Gear(item.offHandWeapon() ? ItemSlot.OFF_HAND : item.base().slot(), item.base(), item.data(), item.modifiers())).toList());
+        }
         // 2026-10-26（傳奇）：每顆銳星的抗性、每 100 生命的精魂效率、拿著法器的格擋、邪力（tw.exilecore.item.unique.UniqueDerived）
         sheet.addAll(tw.exilecore.item.unique.UniqueDerived.modifiers(sheet,
                 player == null || plugin.combat() == null || plugin.combat().charges() == null ? 0 : plugin.combat().charges().count(player, "power"),
@@ -1188,7 +1207,8 @@ public final class PlayerStateService {
         if (plugin.skills() == null) {
             return;
         }
-        final Map<String, String> unmet = tw.exilecore.skill.GemAttributes.unmet(plugin.skills().config(), state.skills(), sheet);
+        // 2026-11-12：自動量技能中不看技能寶石的能力值需求
+        final Map<String, String> unmet = state.benchFree() ? Map.of() : tw.exilecore.skill.GemAttributes.unmet(plugin.skills().config(), state.skills(), sheet);
         final List<String> added = state.skills().syncUnmet(unmet);
         if (!state.isLoaded() || player == null) {
             return;
@@ -2109,7 +2129,13 @@ public final class PlayerStateService {
             if ((slot == tw.exilecore.item.ItemSlot.RING || slot == tw.exilecore.item.ItemSlot.AMULET) && StatKeys.flag(sheet, StatKeys.FLAG_MYSTIC_ATTUNEMENT)) {
                 for (final Modifier mod : item.modifiers()) {
                     if (mod.type() != ModType.MORE && !mod.stat().startsWith("flag.")) {
-                        sheet.add(new Modifier(mod.stat(), mod.type(), mod.value() * 0.25, mod.tags(), "祭器共鳴"));
+                        // 2026-11-12 照站長「+3 投射物技能等級變 +4」：技能等級照 PoE2 捨去（+3 × 1.25 = 3.75 → 多 0，+4 × 1.25 = 5 → 多 1），
+                        //   跟催化劑一樣（ItemStats.catalysed）；這次之前多 0.75，加總後四捨五入變 +4
+                        final double extra = StatKeys.SKILL_LEVEL.equals(mod.stat())
+                                ? tw.exilecore.item.ItemStats.floorLevel(mod.value() * 1.25) - mod.value() : mod.value() * 0.25;
+                        if (extra != 0) {
+                            sheet.add(new Modifier(mod.stat(), mod.type(), extra, mod.tags(), "祭器共鳴"));
+                        }
                     }
                 }
             }

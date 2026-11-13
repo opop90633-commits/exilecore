@@ -252,6 +252,7 @@ public final class StashService {
         }
         for (int page = 0; page < stash.pageCount(); page++) {
             plugin.items().replaceRetired(stash.page(page)); // 退役的傳奇換成傳奇兌換券（2026-10 PoE2 改版）
+            plugin.items().fixMaterials(stash.page(page)); // 2026-11-12：基底換過原版物品的舊裝備換成對的（斬獲腰環顯示成拴繩）
             for (final org.bukkit.inventory.ItemStack stack : stash.page(page)) {
                 plugin.items().refresh(stack);
                 if (currencies != null) {

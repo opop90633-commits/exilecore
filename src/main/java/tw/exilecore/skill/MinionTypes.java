@@ -51,6 +51,7 @@ public final class MinionTypes {
      * 異常、暈眩、電擊、眩暈、定身照原本的流程）。
      */
     private static final Set<String> HIT_STATS = Set.of(StatKeys.DAMAGE, SupportKeys.DAMAGE_HIT, SupportKeys.DAMAGE_MAX, StatKeys.PENETRATION,
+            SupportKeys.IGNORE_MONSTER_PHYS_REDUCTION, // 2026-11-11（兇殘 III）：召喚物的擊中也擲（DamageCalculator.mitigate 看攻擊者的）
             StatKeys.CRIT_CHANCE, StatKeys.CRIT_BONUS, StatKeys.CRIT_MULTI,
             StatKeys.IGNITE_CHANCE, StatKeys.IGNITE_MAGNITUDE, StatKeys.IGNITE_DURATION, StatKeys.SHOCK_CHANCE, StatKeys.SHOCK_EFFECT,
             StatKeys.SHOCK_DURATION, StatKeys.CHILL_EFFECT, StatKeys.CHILL_DURATION, StatKeys.FREEZE_BUILDUP, StatKeys.FREEZE_DURATION,

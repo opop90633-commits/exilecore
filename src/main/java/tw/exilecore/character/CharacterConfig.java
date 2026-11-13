@@ -173,6 +173,15 @@ public final class CharacterConfig {
                     + " 之間（全服經驗的倍數，1 = 不加倍），卻是 " + bonus);
         }
         experienceBonus = bonus;
+        // 2026-11-12 照站長「1～60 等的怪物區那邊經驗 ×2」
+        final YamlNode zone = root.node("zone_experience");
+        final double zoneBonus = zone.decimal("bonus", 1.0);
+        if (!(zoneBonus >= MIN_EXPERIENCE_BONUS && zoneBonus <= MAX_EXPERIENCE_BONUS)) {
+            throw new IllegalArgumentException("character.yml：zone_experience.bonus 要在 " + MIN_EXPERIENCE_BONUS + " 到 " + MAX_EXPERIENCE_BONUS
+                    + " 之間（1 = 不加倍），卻是 " + zoneBonus);
+        }
+        zoneExperienceBonus = zoneBonus;
+        zoneExperienceMaxLevel = Math.max(0, zone.integer("max_level", 60));
         if (root.has("experience")) {
             // 2026-10-18：先讀到暫存再換上去（寫錯時保留原本的經驗表，不會變成空的沒人能升級）
             final TreeMap<Integer, Long> parsed = new TreeMap<>();
@@ -393,6 +402,19 @@ public final class CharacterConfig {
         // 2026-10-18：改成加起來（設定 ×2 ＋ 在線 +5% = +105%，以前乘起來變 +110%）
         return Math.max(MIN_EXPERIENCE_BONUS,
                 experienceBonus + (tw.exilecore.sponsor.Boosts.experience() - 1) + (OnlineBonus.experience() - 1));
+    }
+
+    /** 2026-11-12：劇情區域（不是營地、等級上限 ≤ zone_experience.max_level）的怪的經驗倍數；沒寫 = 1。 */
+    private double zoneExperienceBonus = 1.0;
+    private int zoneExperienceMaxLevel = 60;
+
+    /** 2026-11-12 照站長「1～60 等的怪物區那邊經驗 ×2」：怪物所在的區域給的經驗倍數（不在區域裡、營地、等級上限超過的回傳 1）。 */
+    public double zoneExperience(final boolean inZone, final boolean town, final int zoneMaxLevel) {
+        return inZone && !town && zoneMaxLevel <= zoneExperienceMaxLevel ? zoneExperienceBonus : 1.0;
+    }
+
+    public double zoneExperienceBonus() {
+        return zoneExperienceBonus;
     }
 
     /** 設定檔（管理網頁）的全服經驗倍數，不含贊助的全服加倍。 */

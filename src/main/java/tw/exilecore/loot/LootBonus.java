@@ -103,7 +103,7 @@ public final class LootBonus {
 
     /** 個人加倍藥給的物品稀有度（小數；屬性表裡已經含這個）。 */
     public static double boostRarity(final ExileCore plugin, final Player player) {
-        if (plugin.sponsors() == null) {
+        if (plugin.sponsors() == null || player == null) {
             return 0;
         }
         double boost = 0;
@@ -111,6 +111,29 @@ public final class LootBonus {
             boost += type.rarity();
         }
         return boost;
+    }
+
+    /** 2026-11-12：個人加倍藥給的物品數量（小數；屬性表裡已經含這個）。 */
+    public static double boostQuantity(final ExileCore plugin, final Player player) {
+        if (plugin.sponsors() == null || player == null) {
+            return 0;
+        }
+        double boost = 0;
+        for (final tw.exilecore.sponsor.SponsorConfig.BoostType type : plugin.sponsors().personalBoosts(player)) {
+            boost += type.quantity();
+        }
+        return boost;
+    }
+
+    /**
+     * 2026-11-12 照站長「個人的物品數量與稀有度要影響全域的掉落（包含終局以上 Boss）」「這個我指的是個人的掉寶與稀有藥」：
+     * 只有個人加倍藥（掉寶藥、稀有藥）給的物品數量、稀有度——終局以上的 Boss（平常不吃任何加成）也吃這份。
+     */
+    public static Bonus boosts(final ExileCore plugin, final Player player) {
+        if (player == null) {
+            return Bonus.NONE;
+        }
+        return new Bonus(boostQuantity(plugin, player), boostRarity(plugin, player));
     }
 
     /** 這個人拿獎勵時的全部加成：自己的＋全服＋主題（player 是 null 就只有全服＋主題）。 */

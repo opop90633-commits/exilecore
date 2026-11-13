@@ -144,6 +144,10 @@ public final class OriginalSkills implements Listener {
     static final long SEED_TICKS = 300;
     static final double SEED_THRESHOLD = 2.0;
     static final double SEED_RADIUS = tw.exilecore.core.Units.metres(2.5); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
+    /** 2026-11-13 照站長「要配別的技能才有傷害的，改成自己也能觸發、但更少傷害 20%」：火種種下 3 秒後自己爆開（照持續時間的加成）。 */
+    static final long SEED_SELF_TICKS = 60;
+    /** 2026-11-13：自己觸發的那一下傷害倍率（更少 20%）；被打到門檻、死掉炸開的照舊。四個技能共用。 */
+    public static final double SELF_TRIGGER_DAMAGE = 0.8;
     static final long REMNANT_TICKS = 160;
     static final double REMNANT_PICKUP = tw.exilecore.core.Units.metres(1.6); // 2026-10-29 照站長：1 公尺 = 1.5 格（Units），照 PoE2 公尺的常數也換算
     static final long CONVALESCENCE_COOLDOWN = 600;
@@ -219,6 +223,7 @@ public final class OriginalSkills implements Listener {
         double threshold;
         double taken;
         long until;
+        long selfAt; // 2026-11-13：自己爆開的時間
     }
 
     private static final class State {
@@ -473,6 +478,13 @@ public final class OriginalSkills implements Listener {
                     // 2026-10-28 照 PoE2：電球的上限（1 + 過剩）與持續時間照雷流場自己的組合（含輔助）；這次之前照電球（沒有輔助）的持續時間
                     pendingGalvanic.put(player.getUniqueId(), new double[] {1 + SkillLimits.bonus(plugin.players().sheet(player), build),
                             build.durationScale()});
+                    // 2026-11-13 照站長「自己也能觸發、但更少傷害 20%」：施放時直接在準心那隻身上掛一顆電球（更少 20%），增益留著，
+                    //   之後你感電敵人照舊掛全額的（上限 1 顆時換掉這顆）；這次之前要別的技能感電敵人才掛
+                    final LivingEntity aimed = seedTarget(player, build, preferred);
+                    if (aimed != null) {
+                        placeOrb(player, aimed, bolt.withDamageScale(SELF_TRIGGER_DAMAGE, "自己掛的電球"),
+                                new double[] {1 + SkillLimits.bonus(plugin.players().sheet(player), build), build.durationScale()}, now);
+                    }
                 }
                 Fx.spawn(player.getWorld(), Particle.ELECTRIC_SPARK, player.getLocation().add(0, 1, 0), 25, 0.5, 0.8, 0.5, 0.1);
             }
@@ -993,6 +1005,7 @@ public final class OriginalSkills implements Listener {
                 : data == null ? target.getHealth() : plugin.monsters().config().ailmentThresholdAt(Math.max(1, data.level()));
         seed.threshold = Math.max(1, threshold * SEED_THRESHOLD);
         seed.until = now + Math.round(SEED_TICKS * build.durationScale());
+        seed.selfAt = now + Math.round(SEED_SELF_TICKS * build.durationScale());
         // 照 PoE2：上限 1 顆（2026-10-28：+x 上限（過剩）多幾顆，滿了最舊的消失；同一隻身上重種換掉舊的）
         s.seeds.removeIf(old -> old.target.equals(seed.target));
         while (s.seeds.size() >= 1 + SkillLimits.bonus(plugin.players().sheet(player), build)) {
@@ -1012,6 +1025,11 @@ public final class OriginalSkills implements Listener {
                 s.seeds.remove(seed);
                 continue;
             }
+            if (now >= seed.selfAt) {
+                // 2026-11-13 照站長：沒被別的傷害引爆，3 秒後自己爆開（更少 20%）；這次之前要別的傷害打到門檻或打死才爆
+                explodeSeed(player, s, seed, living.getLocation(), SELF_TRIGGER_DAMAGE);
+                continue;
+            }
             if (now % 10 == 0) {
                 Fx.spawn(living.getWorld(), Particle.SMALL_FLAME, living.getLocation().add(0, living.getHeight() + 0.2, 0), 3, 0.1, 0.1, 0.1, 0.01);
             }
@@ -1019,10 +1037,14 @@ public final class OriginalSkills implements Listener {
     }
 
     private void explodeSeed(final Player player, final State s, final Seed seed, final Location at) {
+        explodeSeed(player, s, seed, at, 1.0);
+    }
+
+    private void explodeSeed(final Player player, final State s, final Seed seed, final Location at, final double scale) {
         if (seed == null || !s.seeds.remove(seed) || at.getWorld() == null) {
             return;
         }
-        blast(player, at, SEED_RADIUS * seed.build.areaScale(), seed.build.profile());
+        blast(player, at, SEED_RADIUS * seed.build.areaScale(), seed.build.profile().scaled(scale, "自己爆開"));
         Fx.spawn(at.getWorld(), Particle.EXPLOSION, at.clone().add(0, 0.8, 0), 2, 0.3, 0.3, 0.3, 0);
         Fx.spawn(at.getWorld(), Particle.FLAME, at.clone().add(0, 0.8, 0), 40, 1.2, 0.6, 1.2, 0.05);
         at.getWorld().playSound(at, Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.PLAYERS, 0.8f, 1.3f);
@@ -1859,26 +1881,31 @@ public final class OriginalSkills implements Listener {
             final double[] galvanic = pendingGalvanic.remove(player.getUniqueId());
             service.buffs().remove(player, GALVANIC);
             if (bolt != null) {
-                final Orb orb = new Orb();
-                orb.target = target.getUniqueId();
-                orb.until = now + Math.round(GALVANIC_TICKS * (galvanic != null ? galvanic[1] : bolt.durationScale()));
-                orb.next = now + 2;
-                orb.bolt = bolt;
-                orb.last = target.getLocation().add(0, target.getHeight() + 0.4, 0);
-                // 照 PoE2：上限 1 顆（2026-10-28：+x 上限（過剩）多幾顆，滿了最舊的消失）
-                final List<Orb> orbs = state(player).orbs;
-                while (orbs.size() >= Math.max(1, galvanic == null ? 1 : (int) galvanic[0])) {
-                    orbs.removeFirst();
-                }
-                orbs.add(orb);
-                // 2026-11-01 照 PoE2 Eye of Winter：雷流場的電球是法球（跟著敵人走），寒冬之眼飛過拿到閃電
-                final UUID carrier = target.getUniqueId();
-                ColdSpells.markOrb(orb.last, 1.0, tw.exilecore.stats.DamageType.LIGHTNING, orb.until, () -> {
-                    final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(carrier);
-                    return entity == null ? null : entity.getLocation().add(0, entity.getHeight() + 0.4, 0);
-                }, () -> orbs.contains(orb));
+                placeOrb(player, target, bolt, galvanic, now);
             }
         }
+    }
+
+    /** 在 target 身上掛一顆雷流場的電球（galvanic = {上限, 持續時間倍率}，null 照電球自己的）。 */
+    private void placeOrb(final Player player, final LivingEntity target, final SkillBuild bolt, final double[] galvanic, final long now) {
+        final Orb orb = new Orb();
+        orb.target = target.getUniqueId();
+        orb.until = now + Math.round(GALVANIC_TICKS * (galvanic != null ? galvanic[1] : bolt.durationScale()));
+        orb.next = now + 2;
+        orb.bolt = bolt;
+        orb.last = target.getLocation().add(0, target.getHeight() + 0.4, 0);
+        // 照 PoE2：上限 1 顆（2026-10-28：+x 上限（過剩）多幾顆，滿了最舊的消失）
+        final List<Orb> orbs = state(player).orbs;
+        while (orbs.size() >= Math.max(1, galvanic == null ? 1 : (int) galvanic[0])) {
+            orbs.removeFirst();
+        }
+        orbs.add(orb);
+        // 2026-11-01 照 PoE2 Eye of Winter：雷流場的電球是法球（跟著敵人走），寒冬之眼飛過拿到閃電
+        final UUID carrier = target.getUniqueId();
+        ColdSpells.markOrb(orb.last, 1.0, tw.exilecore.stats.DamageType.LIGHTNING, orb.until, () -> {
+            final org.bukkit.entity.Entity entity = plugin.getServer().getEntity(carrier);
+            return entity == null ? null : entity.getLocation().add(0, entity.getHeight() + 0.4, 0);
+        }, () -> orbs.contains(orb));
     }
 
     /** 異常被用掉時（AilmentService.cure 呼叫，怪物身上的冰凍、感電、點燃）：拾晶裝。 */
@@ -2119,6 +2146,15 @@ public final class OriginalSkills implements Listener {
                             times -> state(owner).grimStored = Math.min(cap, state(owner).grimStored + stored * times)); // 2026-10-26：共用殘影（ChargeEffects）
                 }
             }
+        }
+    }
+
+    /** 2026-11-13（自動量技能換下一個技能時）：收掉這個人的火種、電球。 */
+    void forgetPlaced(final UUID id) {
+        final State s = states.get(id);
+        if (s != null) {
+            s.seeds.clear();
+            s.orbs.clear();
         }
     }
 

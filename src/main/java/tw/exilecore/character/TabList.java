@@ -26,6 +26,8 @@ final class TabList {
     private final java.util.Map<java.util.UUID, String> sent = new java.util.HashMap<>();
     /** 增益一行寫幾個。 */
     private static final int BUFFS_PER_LINE = 3;
+    /** 2026-11-11：Tab 最多列幾個增益（太多會斷線，見 buffs）。 */
+    static final int BUFFS_SHOWN = 24;
 
     void tick() {
         final String title = plugin.getConfig().getString("tab.title", DEFAULT_TITLE);
@@ -90,12 +92,25 @@ final class TabList {
             return "";
         }
         all.sort(java.util.Comparator.comparingLong(tw.exilecore.skill.SkillService.BuffTimer::ticks));
-        final StringBuilder text = new StringBuilder("\n\n<#f5b942><b>增益</b>");
-        for (int i = 0; i < all.size(); i++) {
+        return render(all);
+    }
+
+    /** Tab 底下的增益那一段（MiniMessage）；all 已經排好。 */
+    static String render(final java.util.List<tw.exilecore.skill.SkillService.BuffTimer> all) {
+        // 2026-11-11 照站長「Buff 太多會斷線，同時用獻祭跟斬獲好像就會這樣」（客戶端：Failed to decode packet tab_list）：
+        //   MiniMessage 的顏色標籤沒關，每個增益都包在上一個裡面，一層一層疊下去；儀典獻祭＋斬獲腰環一次幾十個增益，
+        //   文字的巢狀層數超過客戶端上限（512）就解不開、直接斷線。現在每一段開頭 <reset>（關掉前面全部的標籤，層數不會累積），
+        //   而且最多列 BUFFS_SHOWN 個，其他的寫「還有 N 個」
+        final StringBuilder text = new StringBuilder("\n\n<#f5b942><b>增益</b><reset>");
+        final int shown = Math.min(all.size(), BUFFS_SHOWN);
+        for (int i = 0; i < shown; i++) {
             final tw.exilecore.skill.SkillService.BuffTimer buff = all.get(i);
-            text.append(i % BUFFS_PER_LINE == 0 ? "\n" : "<dark_gray>　|　");
-            text.append("<#f5b942>").append(tw.exilecore.item.ItemRenderer.escape(buff.name())).append(" ")
-                    .append(buff.ticks() <= 100 ? "<#ff9a3c>" : "<white>").append(HotbarSides.timeText(buff.ticks()));
+            text.append(i % BUFFS_PER_LINE == 0 ? "\n" : "<dark_gray>　|　</dark_gray>");
+            text.append("<#f5b942>").append(tw.exilecore.item.ItemRenderer.escape(buff.name())).append(" </#f5b942>")
+                    .append(buff.ticks() <= 100 ? "<#ff9a3c>" : "<white>").append(HotbarSides.timeText(buff.ticks())).append("<reset>");
+        }
+        if (all.size() > shown) {
+            text.append("\n<gray>…還有 ").append(all.size() - shown).append(" 個增益</gray>");
         }
         return text.toString();
     }

@@ -247,7 +247,7 @@ public final class MinionService implements Listener, MinionHooks {
 
     /** 2026-10-27：指令放出來的那幾招（震地咆哮、毒氣箭、爆裂殉身、死亡風暴、冰甲、從天而降）的技能描述代號結尾。 */
     static final Set<String> COMMAND_PROFILES = Set.of("shattering_roar", "gas_arrow", "gas_cloud", "gas_explosion", "explosive_demise",
-            "death_storm", "ice_armour", "death_from_above");
+            "death_storm", "ice_armour", "death_from_above", "mist_dive"); // 2026-11-12：狂鴉碎裂
 
     /** 這一招是不是指令放的（技能描述代號是「召喚技能.招式」）。 */
     static boolean commandProfile(final String profileId) {
@@ -2581,6 +2581,10 @@ public final class MinionService implements Listener, MinionHooks {
                             "掩護火力：力量"))), MinionAbilities.VOLLEYS, command.cooldown());
             case MinionAbilities.SNIPER -> new CommandStrike(command.name(), attackProfile(base, List.of(), "gas_arrow", MinionAbilities.GAS_IMPACT,
                     Set.of(tw.exilecore.stats.Tags.AREA), null, List.of()), 1, command.cooldown());
+            // 2026-11-12：狂鴉碎裂（估算照每 12 秒下一次指令；撲殺不算）
+            case MinionAbilities.MIST_RAVEN -> new CommandStrike(command.name(), attackProfile(base, List.of(), "mist_dive",
+                    MinionAbilities.MIST_DIVE_DAMAGE, Set.of(tw.exilecore.stats.Tags.AREA), null,
+                    List.of()), 1, command.cooldown());
             default -> null;
         };
     }
@@ -3438,6 +3442,7 @@ public final class MinionService implements Listener, MinionHooks {
             case MinionAbilities.FROST -> each(List.of(nearest(ready, target)), now, command, minion -> iceArmour(minion, player, target));
             case MinionAbilities.REAVER -> enrage(mine, now, command);
             case MinionAbilities.ARTILLERY -> each(ready, now, command, minion -> deathFromAbove(minion, player, target)); // 2026-10-27 照 PoE2
+            case MinionAbilities.MIST_RAVEN -> each(ready, now, command, minion -> mistDive(minion, player, target)); // 2026-11-12 照 PoE2 Mist Raven
             default -> 0;
         };
         if (used <= 0) {
@@ -3457,7 +3462,16 @@ public final class MinionService implements Listener, MinionHooks {
             commandReady.values().removeIf(tick -> tick <= now);
         }
         commandReady.put(commandKey, until);
+        if (plugin.skills() != null) {
+            plugin.skills().showCooldown(player, skillId, until - now); // 2026-11-12 照站長：指令冷卻也蓋快捷列遮罩（這次之前沒有）
+        }
         return "<#8fd3ff>指令：" + name + "（" + used + " 隻）";
+    }
+
+    /** 2026-11-12（快捷列遮罩）：這個召喚技能的指令還要幾 tick 才能再下（0 = 好了；沒下過也是 0）。 */
+    long commandLeft(final UUID player, final String skillId, final long now) {
+        final Long ready = commandReady.get(player + ":" + skillId);
+        return ready == null ? 0 : Math.max(0, ready - now);
     }
 
     /** 2026-10-26 照 PoE2（矛盾命令）：召喚物聽從指令時失去最大生命的 x%（主人的 minion.command_life_loss；扣不死）。 */
@@ -3749,6 +3763,72 @@ public final class MinionService implements Listener, MinionHooks {
                     strike(artillery, near, hit);
                 }
             }, MinionAbilities.VOLLEY_DELAY + i * MinionAbilities.VOLLEY_TICKS);
+        }
+    }
+
+    /**
+     * 2026-11-12 照站長「霧鴉技能補做」（PoE2 Mist Raven 的指令「狂鴉碎裂」）：渡鴉衝向準心、撞碎一面異界的鏡子，打落點周圍的敵人
+     * （{@link MinionAbilities#MIST_DIVE_DAMAGE}，70% 物理轉混沌照技能的 convert）。這一下有撲殺、門檻照<b>主人</b>的撲殺門檻加成（原作 use_owners_culling_threshold）；
+     * 撲殺一個敵人主人得 1 顆怒星（技能上的 charge.minion_cull.frenzy，CombatListener）。打完回到你身邊（standBy）。
+     */
+    private void mistDive(final Minion raven, final Player owner, final Location point) {
+        final Location at = point.clone();
+        final Location from = raven.mob.getLocation().add(0, 1.0, 0);
+        final double radius = MinionAbilities.MIST_DIVE_RADIUS * areaScale(raven);
+        final double ownerCull = plugin.players().sheet(owner).increased(tw.exilecore.stats.SupportKeys.CULL_THRESHOLD, Set.of());
+        final Attack dive = with(raven, attackProfile(raven, "mist_dive", MinionAbilities.MIST_DIVE_DAMAGE, Set.of(tw.exilecore.stats.Tags.AREA),
+                null,
+                List.of(Modifier.flat(tw.exilecore.stats.StatKeys.FLAG_CULLING, 1, "迷霧渡鴉"),
+                        Modifier.increased(tw.exilecore.stats.SupportKeys.CULL_THRESHOLD, ownerCull, "迷霧渡鴉：照你的撲殺門檻"))));
+        final java.util.UUID ownerId = owner.getUniqueId();
+        // 鏡子：落點立起一面紫色的鏡子（END_ROD 框、PORTAL 鏡面），渡鴉沿路拖著墨霧
+        Fx.as(ownerId, () -> {
+            for (int i = 0; i <= 8; i++) {
+                final double h = i * 0.3;
+                Fx.spawn(at.getWorld(), org.bukkit.Particle.END_ROD, at.clone().add(0.6, h, 0), 1, 0, 0, 0, 0);
+                Fx.spawn(at.getWorld(), org.bukkit.Particle.END_ROD, at.clone().add(-0.6, h, 0), 1, 0, 0, 0, 0);
+            }
+            Fx.spawn(at.getWorld(), org.bukkit.Particle.PORTAL, at.clone().add(0, 1.2, 0), 30, 0.4, 0.9, 0.05, 0.1);
+        });
+        at.getWorld().playSound(at, org.bukkit.Sound.ENTITY_PHANTOM_SWOOP, 0.8f, 1.2f);
+        // 2026-11-12 照站長「渡鴉手感」：俯衝期間關掉渡鴉的 AI（這次之前 AI 照樣在動，跟每 tick 的瞬移互相拉扯）；
+        //   每 tick 最多飛 MIST_DIVE_STEP 格，tick 數照距離算（最多 MIST_DIVE_MAX_TICKS）；這次之前固定 8 tick，遠的時候一 tick 跳 3 格
+        final Location end = at.clone().add(0, 1.0, 0);
+        final long ticks = MinionAbilities.diveTicks(from.distance(end));
+        final Mob mob = raven.mob;
+        mob.setAI(false);
+        for (long i = 1; i <= ticks; i++) {
+            final double t = (double) i / ticks;
+            final boolean last = i == ticks;
+            plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+                if (!byEntity.containsKey(mob.getUniqueId()) || !mob.isValid() || !at.getWorld().equals(mob.getWorld())) {
+                    if (mob.isValid()) {
+                        mob.setAI(true);
+                    }
+                    return;
+                }
+                final Location step = from.clone().add(end.clone().subtract(from).toVector().multiply(t));
+                step.setDirection(end.clone().subtract(from).toVector().lengthSquared() < 1e-6 ? mob.getLocation().getDirection()
+                        : end.clone().subtract(from).toVector());
+                mob.teleport(step);
+                Fx.as(ownerId, () -> Fx.spawn(step.getWorld(), org.bukkit.Particle.SQUID_INK, step, 3, 0.15, 0.15, 0.15, 0.01));
+                if (!last) {
+                    return;
+                }
+                mob.setAI(true);
+                if (!owner.isOnline()) {
+                    return;
+                }
+                // 撞碎鏡子
+                at.getWorld().playSound(at, org.bukkit.Sound.BLOCK_GLASS_BREAK, 1.0f, 0.8f);
+                Fx.as(ownerId, () -> {
+                    Fx.spawn(at.getWorld(), org.bukkit.Particle.REVERSE_PORTAL, at.clone().add(0, 1.0, 0), 40, radius / 3, 0.6, radius / 3, 0.05);
+                    Fx.disk(at.getWorld(), org.bukkit.Particle.SQUID_INK, at.clone().add(0, 0.3, 0), 24, radius, 0.2, 0.0);
+                });
+                for (final LivingEntity near : targets.around(at, radius, owner)) {
+                    strike(raven, near, dive);
+                }
+            }, i);
         }
     }
 

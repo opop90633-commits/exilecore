@@ -129,6 +129,9 @@ public final class ModifierText {
         final double value = modifier.value();
         final String percent = number(Math.abs(value) * 100);
         final String stat = modifier.stat();
+        if (stat.equals(StatKeys.DAMAGE_BALANCE)) { // 2026-11-13 照站長：本服平衡倍率
+            return "本服平衡：傷害 ×" + number(1 + value);
+        }
         final String stolen = tw.exilecore.combat.StolenMods.describe(stat); // 2026-11-11：偷到的行為詞綴（斬獲腰環之類）的玩家版效果
         if (stolen != null) {
             return stolen;
@@ -538,6 +541,7 @@ public final class ModifierText {
             case StatKeys.DAMAGE_PER_COMBO -> "每層連擊更多 " + number(value) + "% 傷害（最多 10 層）";
             case StatKeys.COMBO_FINISHER -> "放的時候有 3 層以上連擊就全部用掉，這一下更多 " + number(value) + "% 傷害";
             case StatKeys.RAGEFORGED -> "放的時候有 10 點怒氣就用掉，這一下更多 " + number(value) + "% 傷害";
+            case StatKeys.RAGEFORGED_KEEP -> number(value) + "% 機率不用掉怒氣（照樣更痛）"; // 2026-11-12
             case StatKeys.CROSSBOW_CLIP -> (value >= 0 ? "+" : "") + number(value) + " 弩的彈匣容量";
             case StatKeys.CROSSBOW_RELOAD -> scaled(modifier, "弩的裝填速度", percent);
             case StatKeys.CROSSBOW_AMMO_SAVE -> "弩攻擊有 " + number(value) + "% 機率不消耗弩箭";
@@ -672,6 +676,9 @@ public final class ModifierText {
             case tw.exilecore.stats.SupportKeys.CRIT_VS_IMMOBILISED -> scaled(modifier, "對被定住（凍結、重暈、定身、電擊）的敵人的暴擊率", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_CULLING_RARE -> "對稀有、傳奇怪物與 Boss 有撲殺（生命掉到稀有 10%、傳奇與 Boss 5% 以下直接倒下）";
             case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD_ON_CULL -> "撲殺打死敵人後 20 秒內，撲殺門檻增加 " + number(value) + "%";
+            case tw.exilecore.stats.SupportKeys.IGNORE_MONSTER_PHYS_REDUCTION -> "擊中時 " + number(value) + "% 機率無視敵方的物理傷害減免"; // 2026-11-11（野性殘暴 III）
+            case tw.exilecore.stats.SupportKeys.FEAR_INCARNATE_ON_CULL -> "撲殺一個目標時獲得 1 層恐懼化型（每層撲殺門檻增加 10%，10 秒，最多 20 層）"; // 2026-11-11
+            case tw.exilecore.stats.SupportKeys.FEAR_OVERWHELMING_ON_CULL -> "撲殺一個目標時獲得 1 層壓倒性恐懼（每層攻擊範圍增加 5%，10 秒，最多 20 層）"; // 2026-11-12
             case tw.exilecore.stats.SupportKeys.CULL_THRESHOLD -> scaled(modifier, "撲殺門檻", percent);
             case tw.exilecore.stats.SupportKeys.FLAG_PIN_BUILDUP -> "物理傷害累積定身（暈眩累積的加成改成加在定身累積上），不會累積重暈";
             case tw.exilecore.stats.SupportKeys.PIN_BUILDUP -> scaled(modifier, "定身累積", percent);

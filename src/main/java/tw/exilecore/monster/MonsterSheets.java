@@ -44,7 +44,9 @@ public final class MonsterSheets {
         final MonsterConfig.TypeSettings type = config.type(entityType);
         final int level = data.level();
 
-        sheet.setBase(StatKeys.LIFE_MAX, config.lifeAt(level) * type.lifeMultiplier() * rarity.lifeMultiplier() * data.lifeMultiplier());
+        // 2026-11-13 照站長「整體的怪物血量都提升兩倍（包含全部 BOSS）」：最後再乘 monsters.yml 的 life_multiplier；這次之前沒有這一項
+        sheet.setBase(StatKeys.LIFE_MAX, config.lifeAt(level) * type.lifeMultiplier() * rarity.lifeMultiplier() * data.lifeMultiplier()
+                * config.lifeMultiplier());
         sheet.setBase(StatKeys.ACCURACY, config.accuracyAt(level));
         sheet.setBase(StatKeys.EVASION, config.evasionAt(level));
         sheet.setBase(StatKeys.ARMOUR, config.armourAt(level));

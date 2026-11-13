@@ -801,7 +801,8 @@ public final class Gear {
             final SkillLoadout.Entry entry = loadout.skill(loadout.bound(layout.bindForSlot(slot)));
             long left = 0;
             if (entry != null) {
-                left = plugin.skills().cooldownLeft(player, entry.skillId());
+                // 2026-11-12 照站長「指令和動作時間的快捷列遮罩」：冷卻、動作 1 秒以上還沒做完、召喚物指令冷卻取最長的；這次之前只看冷卻
+                left = plugin.skills().displayCooldownLeft(player, entry.skillId());
                 final net.kyori.adventure.key.Key group = tw.exilecore.skill.SkillService.cooldownGroup(entry.skillId());
                 final int shown = player.getCooldown(group);
                 if (left <= 0 && shown > 0) {

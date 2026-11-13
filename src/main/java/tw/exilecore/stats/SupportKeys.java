@@ -40,6 +40,21 @@ public final class SupportKeys {
     public static final String FLAG_CULLING_RARE = "flag.culling_rare";
     /** FLAT：撲殺打死敵人後 20 秒內，撲殺門檻增加 x%（撲殺 II）。 */
     public static final String CULL_THRESHOLD_ON_CULL = "culling.threshold_on_cull";
+    /**
+     * FLAT：撲殺一個目標時獲得 1 層「恐懼化型」（驚怖掠影，PoE2 Fear Incarnate：每層撲殺門檻增加 10%、10 秒、最多 20 層、再獲得時重新計時）。
+     * 2026-11-11 照站長「驚怖掠影照原作」。SupportMechanics.onCull
+     */
+    public static final String FEAR_INCARNATE_ON_CULL = "culling.fear_incarnate";
+    /**
+     * FLAT：撲殺一個目標時獲得 1 層「壓倒性恐懼」（驚怖掠影的磐石之拳版本，PoE2 Fear Overwhelming：每層攻擊範圍增加 5%、10 秒、最多 20 層、
+     * 再獲得時全部重新計時）。2026-11-12 照站長「磐石之拳是昇華的版本」。SupportMechanics.onCull
+     */
+    public static final String FEAR_OVERWHELMING_ON_CULL = "culling.fear_overwhelming";
+    /**
+     * FLAT：擊中時 x% 機率無視敵方怪物的物理傷害減免（護甲、額外物理減免都不算）。2026-11-11 照站長「野性殘暴 III」
+     * （PoE2 Brutality III hits_ignore_enemy_monster_physical_damage_reduction_%_chance）。DamageCalculator.mitigate
+     */
+    public static final String IGNORE_MONSTER_PHYS_REDUCTION = "physical.ignore_monster_reduction_chance";
     /** INCREASED：撲殺的門檻（給你自己的增益）。 */
     public static final String CULL_THRESHOLD = "culling.threshold";
 

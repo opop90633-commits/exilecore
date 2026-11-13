@@ -58,6 +58,8 @@ public final class MapDeviceMenu extends Menu {
     private static final int SLOT_DELVE = 48;
     /** 2026-11-07 照站長「守衛新增掉落星坑 BOSS 鑰匙，然後再做一隻 BOSS」：晶淵王座（深坑首領鑰匙開，只有深坑的首領）。 */
     private static final int SLOT_DELVE_BOSS = 50;
+    /** 2026-11-12 照站長「新增暗黑破壞神那樣的難度系統」：難度。 */
+    private static final int SLOT_DIFFICULTY = 51;
 
     private final MapService service;
     private int selectedSlot = -1;
@@ -204,7 +206,21 @@ public final class MapDeviceMenu extends Menu {
         drawLegion();
         drawDelve();
         drawDelveBoss(); // 2026-11-07
+        drawDifficulty(); // 2026-11-12
         set(SLOT_CLOSE, closeButton());
+    }
+
+    /** 2026-11-12 照站長「新增暗黑破壞神那樣的難度系統」：現在的難度；點開選難度、打進階關卡。 */
+    private void drawDifficulty() {
+        final Difficulty.Table table = service.config().difficulty();
+        final int selected = Difficulty.selected(plugin, player, table);
+        final int unlocked = Difficulty.unlocked(plugin, player, table);
+        final ItemStack stack = icon(Material.BLAZE_POWDER, "<#ff6a3d>難度 " + selected,
+                "<gray>" + ItemRenderer.escape(DifficultyMenu.describe(table.tier(selected))),
+                "<gray>你開的每一張圖都照這個難度（組隊照開圖的人）",
+                "<gray>已解鎖到 <white>" + unlocked + "</white> / " + table.max() + "<dark_gray>（打進階關卡解鎖下一階）",
+                "<yellow>點一下：選難度、打進階關卡");
+        set(SLOT_DIFFICULTY, selected > 1 ? glowing(stack) : stack);
     }
 
     /** 2026-11-07 照站長「地心礦坑簡化版、新增深坑鑰匙、能組隊、排行不重置」：星脈深坑。 */
@@ -822,6 +838,7 @@ public final class MapDeviceMenu extends Menu {
                     player.closeInventory();
                 }
             }
+            case SLOT_DIFFICULTY -> new DifficultyMenu(plugin, player, service).open(); // 2026-11-12：難度
             case SLOT_DELVE_BOSS -> { // 2026-11-07：晶淵王座
                 final Delve delve = service.events().delve();
                 final CurrencyType key = delve.bossKey();

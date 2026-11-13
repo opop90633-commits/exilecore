@@ -12,16 +12,16 @@ cinder_sprout,Living Bomb,601,已套用；explosion
 erosion_curse_rift,Hexblast,1036,已套用
 searing_slurry_cannon,Plasma Blast,3389,已套用；projectile; explosion 300% L1 / 1225% L20
 thunder_escape,Lightning Warp,543,未套用；approximate match: PoE2 teleports into enemy; explodes on cull
-chill_fan_shafts,Ice Shot,344,未套用；approx match; shards 344% at L20
+chill_fan_shafts,Freezing Salvo,150,已套用；2026-11-12 對照改成 Freezing Salvo（PoB2 FreezingSalvoPlayer 20 級 baseMultiplier 1.5）；這次之前對到 Ice Shot 344（對錯技能，報表顯示 0.44）
 black_oil_rain,Oil Barrage,281,已套用；other components unlabeled (312% @20)
 void_bolt,Chaos Bolt,286,未套用；approx match; PoE2 version does not split
-dig_remains,Bone Cage,434,未套用；physical; PoE2 ring around caster; pins
+dig_remains,Unearth,146.5,已套用；2026-11-12 對照改成 Unearth（PoB2 UnearthPlayer 20 級 117–176，2026-10-27 掘骸已經照它改）；這次之前對到 Bone Cage 434（對錯技能，報表顯示 0.34）
 blazing_star_shell,Fireball,280,已套用；projectile and explosion same range
 frost_drill,Frostbolt,180,已套用
 soul_draw_shot,Essence Drain,197.5,已套用；chaos DoT 9.2/s L1; 443.5/s L20; 4s
 sunder,Sunder,653,已套用；wave; shockwave 265% @20
 frost_orb,Frostbolt,180,未套用；projectile; explosion 230-344 at L20
-volcano,Volcano,151,已套用；eruption; projectiles 92-138 @20
+volcano,Volcano,115,已套用；2026-11-12 對照改成火山彈那一段（PoB2 VolcanoPlayer 20 級 Projectiles 92–138，我們的主要那段）；開場爆發 121–181（151）在 stages.eruption（1.313 倍），也已照原作；這次之前寫爆發的 151（報表顯示 0.76）
 thunder_cloud,Orb of Storms,137,已套用；per chain bolt
 flowing_flame_canopy,Firestorm,139,已套用；per fire bolt; infused cold 95-143; lightning 16-302 at L20
 returning_smith_hammer,Forge Hammer,577,已套用；fissures 198% at L20
@@ -32,7 +32,7 @@ spine_crush,Boneshatter,312,已套用；shockwave L20 724%
 ground_tremor,Earthquake,125,已套用；aftershock L20 666%
 titan_slam,Hammer of the Gods,1529,未套用；low-confidence match
 flame_breath,Flame Breath,109,已套用；channelled; per hit
-roaming_thunder,Spark,129,已套用；per projectile
+roaming_thunder,Spark,113.5,已套用；per projectile；2026-11-12 照 PoB2 SparkPlayer 20 級 11–216（平均 113.5）改；這次之前 129（舊版數值，報表顯示 0.88）
 charged_blow,Perfect Strike,343,已套用；perfect-timing hit 1132% at L20
 shattered_bone_darts,Bonestorm,145.5,已套用；per spike; explosion 89-134 at L20
 frost_star_blast,Ice Nova,163.5,已套用
@@ -90,7 +90,7 @@ tremor_grenade,Flash Grenade,408,未套用；low confidence; Flash Grenade blind
 fallen_star_bear_roar,Walking Calamity,612,已套用；large meteor; small meteor 245% @20; Glory-based
 mother_child_grenade,Cluster Grenade,490,已套用；mini grenades 286% at L20
 plate_crush_hammer,Armour Breaker,181,已套用
-ice_shuttle,Frost Darts,66.5,已套用；per projectile; explosion 2-4 L1 / 66-98 L20
+ice_shuttle,Frost Darts,56.5,已套用；per projectile; explosion 2-4 L1 / 66-98 L20；2026-11-12 照 PoB2 FrostDartsPlayer 20 級投射物 45–68（平均 56.5）改；這次之前 66.5（數字抄錯，報表顯示 0.85）
 flame_vein_rift,Volcanic Fissure,166,已套用；slam/fissure not separated on page
 blood_tear_sweep,Rake,181,已套用
 facet_light_rift,Elemental Sundering,510,已套用；fire; cold 1429%; lightning 572% at L20
@@ -122,7 +122,7 @@ miasma_grenade,Gas Grenade,163,已套用；poison cloud L20 612%; explosion L20 
 cold_spirit_palm,Shattering Palm,109,未套用；approx match; shard explosion 374% at L20
 cold_winter_gaze,Eye of Winter,49.5,已套用；per shard; no final burst in current version
 iron_wall_ram,Shield Charge,94,已套用；collision/end hit L1 70% / L20 254%; PoE2 needs shield
-frost_billow,Glacial Cascade,125,未套用；bursts; final spike 374% at L20
+frost_billow,Wave of Frost,235,已套用；2026-11-12 對照改成 Wave of Frost（PoB2 WaveOfFrostPlayer 20 級 baseMultiplier 2.35，霜浪 2026-10-26 已照它改）；這次之前對到 Glacial Cascade 125（對錯技能，報表顯示 1.88）
 rushing_thunder_stomp,Stampede,125,已套用；footsteps; final slam 374% at L20
 blood_hunt,Blood Hunt,243,已套用；blood explosion 487% at L20
 frozen_wall_shaft,Glacial Bolt,145,已套用；projectile; ice wall 60% L1 / 245% L20
@@ -133,12 +133,12 @@ thunder_shard_scatter,Galvanic Shards,54,已套用；per shard; beam 272% at L20
 thunderfall_spear,Storm Lance,187,已套用；lodged spear bolts 91%; detonation 405% at L20
 blazing_sun_spear,Spear of Solaris,612,已套用；impact; pulse 110%; ignited ground 1429% @20; PoE2 is Glory-based; no cooldown
 shrapnel_shell,Fragmentation Rounds,72,已套用；per fragment; vs frozen 1429% L20
-skyward_crossbow_turret,Siege Ballista,132,已套用；projectile; explosion 50% L1 / 132% L20
+skyward_crossbow_turret,Siege Ballista,66,已套用；2026-11-12 對照改成弩彈落地那一段 66%（我們的主要那段；爆炸 132% 在 cascade，也已照原作）；這次之前寫爆炸的 132（報表顯示 0.50）
 flame_scatter_fire,Incendiary Shot,36,已套用；per fragment
 explosive_spear,Explosive Spear,156,已套用；hit; explosion 489% @20
 fortress_crumble_shell,Siege Cascade,145,已套用；impact; explosion 543% at L20
 triple_stab,Rapid Assault,78,已套用；per strike; final strike 312%; explosion 546% at L20
-armor_punch_slug,Armour Piercing Rounds,91,未套用；per bolt; rapid fire
+armor_punch_slug,High Velocity Rounds,464,已套用；2026-11-12 對照改成 High Velocity Rounds（PoB2 HighVelocityRoundsPlayer 20 級 baseMultiplier 4.64，穿甲重彈 2026-10-26 已照它改）；這次之前對到 Armour Piercing Rounds 91（對錯技能，報表顯示 5.10）
 armor_break_quarrel,Armour Piercing Rounds,91,已套用
 nailfall_crossbow_turret,Artillery Ballista,40,已套用；per bolt
 lurking_thunder_shell,Stormblast Bolts,72,已套用；bolt hit; explosion 470% L20

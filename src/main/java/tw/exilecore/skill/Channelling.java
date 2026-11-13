@@ -410,6 +410,13 @@ final class Channelling {
             }
         }
         player.setVelocity(new Vector(0, 0, 0));
+        // 2026-11-12 照站長「鐵壁衝撞每秒 7,683、10 秒撞 396 下」（自動量技能）：撞上之後要做完一次攻擊時間（0.6 秒 ÷ 攻速）才能再衝，
+        //   照 PoE2 Shield Charge 的撞擊是一次攻擊；這次之前撞完引導就結束、按住的下一 tick 馬上又開始，貼著不會被推開的目標（Boss、假人）
+        //   每 tick 撞一次
+        final SkillRuntime.Charging current = charging(player);
+        final double interval = current != null && current.interval > 0 ? current.interval : build.intervalTicks(plugin.players().sheet(player));
+        final SkillRuntime runtime = service.runtime(player);
+        runtime.readyAt = Math.max(runtime.readyAt, plugin.getServer().getCurrentTick() + Math.max(1, interval));
         player.getWorld().playSound(at, Sound.ITEM_SHIELD_BLOCK, SoundCategory.PLAYERS, 1f, 0.7f);
         final PlayerState state = plugin.players().get(player);
         state.notice(String.format(Locale.ROOT, "<#c9d6e3>%s 撞上！<gray>（衝了 %.1f 格，更多 %.0f%% 傷害）",

@@ -60,6 +60,10 @@ public final class SkillService {
     private final SkillDeployables deployables;
     private final MetaGems metas; // 2026-10：主要寶石（法術圖騰、暴擊時施放這類）
     private final MinionService minions;
+    /** 2026-11-12 照站長「再按一次提早炸」：榴彈、炎爆矛、寒晶雷（{@link EarlyDetonation}）。 */
+    private final EarlyDetonation early = EarlyDetonation.create();
+    /** 2026-11-12 照站長「自動量技能（第一版只量單體）」：/ec balance bench。 */
+    private final SkillBench bench;
     private final SkillBuffs buffs;
     private final AuraService auras;
     /** 常駐的地面圈（套了資源包的人看平面圈，取代一直畫的粒子）。 */
@@ -101,6 +105,7 @@ public final class SkillService {
         this.plugin = plugin;
         this.config = config;
         this.grantedDamage = damage;
+        this.bench = new SkillBench(plugin, this); // 2026-11-12
         this.targets = new SkillTargets(plugin);
         this.visuals = new SkillVisuals(plugin.random());
         // 套了介面資源包的人看地上的平面標示（DangerZones），Boss 招式的警告粒子不用再送給他們
@@ -219,6 +224,7 @@ public final class SkillService {
     void forget(final Player player) {
         runtimes.remove(player.getUniqueId());
         buffOwners.remove(player.getUniqueId()); // 2026-11-01
+        stolenSources.remove(player.getUniqueId()); // 2026-11-12：偷到的詞綴是誰給的
         manaTempest.clear(player.getUniqueId()); // 2026-10-26：魔湧的風暴
         sacredGrounds.clear(player.getUniqueId()); // 2026-11-01：法印、奉獻地面、噬屍宴
         projectiles.forget(player.getUniqueId());
@@ -230,6 +236,7 @@ public final class SkillService {
         auras.forget(player.getUniqueId());
         signatures.forget(player.getUniqueId());
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
+        early.forget(player.getUniqueId()); // 2026-11-12：提早引爆的按鍵紀錄
         stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
         executor.forgetDecompose(player.getUniqueId()); // 2026-10-28：腐屍爆的毒雲
         movePenalty.forget(player); // 2026-10-27：放技能的移動懲罰（這次之前離線的玩家一直留著）
@@ -1356,6 +1363,62 @@ public final class SkillService {
                 : tw.exilecore.stats.TreeEffectKeys.buffTicks(plugin.players().get(player).sheet(), ticks), modifiers); // 不重算（重算時也可能放增益）
     }
 
+    // ---- 2026-11-12 照站長「（斬獲＋儀典獻祭）同一條只算一次」 ----
+
+    /**
+     * 偷到／複製到的怪物詞綴共用的增益代號前綴：同一條詞綴不管從哪裡來（斬獲腰環、斬首、儀典獻祭、皮囊偶符、掠獸）都是同一個增益，只算一次。
+     * 這次之前每個來源各一個代號（steal.／ritual.／vaal.copy.／lineage_steal.），同一條詞綴兩邊都拿到就疊兩次。
+     */
+    public static final String STOLEN_BUFF_PREFIX = "stolenmod.";
+    /** 玩家 → 詞綴 → 這個增益現在是哪個來源給的（{@link #revokeStolen} 只拿掉自己給的那份）。 */
+    private final Map<UUID, Map<String, String>> stolenSources = new HashMap<>();
+
+    public static String stolenBuffId(final String modId) {
+        return STOLEN_BUFF_PREFIX + modId;
+    }
+
+    /** 已經有的剩 remaining tick、這次給 incoming tick：比較久才換成這次的（純函式，測試用）。 */
+    static boolean replacesStolen(final long remaining, final long incoming) {
+        return incoming > remaining;
+    }
+
+    /**
+     * 給一條偷到的怪物詞綴：同一條詞綴身上只有一份。已經有、剩的比這次給的久就不動（照樣只算一次）；
+     * 不然換成這次的（重新計時，名字標這次的來源）。skillOwner：畫在哪個技能格上方（儀典獻祭），null = 不算哪一格。
+     * 回傳這次有沒有換成這個來源。
+     */
+    public boolean stolenBuff(final Player player, final String modId, final String name, final String source, final String skillOwner,
+                              final int ticks, final List<tw.exilecore.stats.Modifier> modifiers) {
+        if (ticks <= 0 || modifiers.isEmpty()) {
+            return false;
+        }
+        final String id = stolenBuffId(modId);
+        final int scaled = plugin.players() == null ? ticks
+                : tw.exilecore.stats.TreeEffectKeys.buffTicks(plugin.players().get(player).sheet(), ticks);
+        final long incoming = tw.exilecore.ascendancy.AscendancyEffects.buffTicks(player, scaled);
+        if (!replacesStolen(buffs.remaining(player.getUniqueId(), id), incoming)) {
+            return false;
+        }
+        buffs.apply(player, id, name, scaled, modifiers);
+        stolenSources.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>()).put(modId, source);
+        final Map<String, String> owners = buffOwners.computeIfAbsent(player.getUniqueId(), k -> new HashMap<>());
+        if (skillOwner != null) {
+            owners.put(id, skillOwner);
+        } else {
+            owners.remove(id);
+        }
+        return true;
+    }
+
+    /** 拿掉 source 給的那條偷到的詞綴（儀典獻祭再獻祭自己、皮囊偶符下一次變形）；已經被別的來源換掉的不動。 */
+    public void revokeStolen(final Player player, final String modId, final String source) {
+        final Map<String, String> mine = stolenSources.get(player.getUniqueId());
+        if (mine != null && source.equals(mine.get(modId))) {
+            mine.remove(modId);
+            buffs.remove(player, stolenBuffId(modId));
+        }
+    }
+
     /** 這個代號的增益還在不在（2026-10：護符效果還在時，同一種護符不再觸發）。 */
     public boolean buffActive(final Player player, final String id) {
         for (final SkillBuffs.Buff buff : buffs.active(player.getUniqueId())) {
@@ -1809,7 +1872,13 @@ public final class SkillService {
         return hold;
     }
 
+    /** 2026-11-12：自動量技能（/ec balance bench）。 */
+    public SkillBench bench() {
+        return bench;
+    }
+
     void shutdown() {
+        bench.shutdown(); // 2026-11-12：量到一半先換回原本的技能和武器
         if (crystals != null) {
             crystals.clearAll();
             warcries.clearSpikes(); // 2026-10：祭柱
@@ -1898,8 +1967,8 @@ public final class SkillService {
         if (spec == null || spec.mode() != ChargeSpec.Mode.STREAM) {
             return false;
         }
-        if (!SkillLoadout.mouseKey(key) && now - held.last > 3) {
-            held.releaseNow = true;
+        if (now - held.last > Signatures.freshGap(key)) {
+            held.releaseNow = true; // 2026-11-13 照站長（A）：滑鼠鍵也是再按一下結束；這次之前只有數字鍵
         }
         held.last = now;
         return true;
@@ -1933,8 +2002,13 @@ public final class SkillService {
             final Interrupt mode = SkillLoadout.mouseKey(key) ? Interrupt.QUEUE : interruptMode(resolve(plugin.players().get(player), key).definition());
             if (mode == Interrupt.INSTANT) {
                 final double saved = runtime.readyAt;
+                final String savedAction = runtime.actionSkill; // 2026-11-12：手上那一招的動作遮罩照舊
                 perform(player, runtime, key, preferred, now);
                 runtime.readyAt = saved; // 手上那一招照原本的時間做完（插隊的這招不另外佔動作時間）
+                if (runtime.actionSkill != null && !runtime.actionSkill.equals(savedAction)) {
+                    player.setCooldown(cooldownGroup(runtime.actionSkill), 0); // 插隊的這招不佔動作時間：不蓋遮罩（真的冷卻由 Gear 補回）
+                }
+                runtime.actionSkill = savedAction;
                 return;
             }
             if (mode == Interrupt.MOVEMENT) {
@@ -2609,6 +2683,11 @@ public final class SkillService {
         final boolean streaming = runtime.charging != null && runtime.charging.skillId.equals(definition.id())
                 && runtime.releasing != null && runtime.releasing.skillId().equals(definition.id());
         final long cooldownLeft = streaming ? 0 : runtime.cooldownLeft(definition.id(), now);
+        // 2026-11-12 照站長「再按一次提早炸」（EarlyDetonation）：這一招不能再放的時候（冷卻中、炎爆矛插滿）新按的一下＝引爆最舊的那個
+        final boolean freshPress = early.press(player.getUniqueId(), definition.id(), now);
+        if (freshPress && earlyDetonate(player, state, definition, build, cooldownLeft, now)) {
+            return;
+        }
         final String bypass = definition.cooldownBypass();
         // 2026-10-26（怒嘯，PoE2 Enraged Warcry）：戰吼改花 x 點怒氣跳過冷卻，而不是一顆磐星
         final int rageBypass = definition.mechanic() == Mechanic.WARCRY && bypass != null
@@ -2912,6 +2991,12 @@ public final class SkillService {
         // 2026-11-01 照 PoE2 Kelari's Judgment：引導的指令放開就結束（引導本身就是你下指令的那段），不用再花一次下指令的 0.4 秒
         runtime.readyAt = SkillMath.nextReady(runtime.readyAt, now, release != null && (chargeSpec.stages() <= 0 || DjinnCommands.channelled(definition.id()))
                 ? interval * RELEASE_RECOVERY : interval);
+        // 2026-11-12 照站長「動作時間的快捷列遮罩」：動作時間 1 秒以上的（天罰巨鎚、弩台、流焰天幕…），快捷列上這一招蓋遮罩到動作做完
+        //   （Gear.cooldowns 照 displayCooldownLeft 對時、顯示剩幾秒）；這次之前只有冷卻才有遮罩，動作中看不出什麼時候能再按
+        runtime.actionSkill = runtime.readyAt - now >= ACTION_MASK_TICKS ? definition.id() : null;
+        if (runtime.actionSkill != null) {
+            showCooldown(player, definition.id(), (long) Math.ceil(runtime.readyAt - now));
+        }
         // 2026-10-27 照站長「放技能減速全部移除」：放技能不再變慢（減少懲罰的效果改成平衡等效的移動速度）；
         // 這次之前（2026-10-26 照 PoE2）放技能的那段時間移動速度更少 70%（SkillMovePenalty.apply）
         if ((key != SkillLoadout.KEY_LEFT && key != SkillLoadout.KEY_SNEAK_LEFT) || runtime.fromQueue) {
@@ -4458,7 +4543,7 @@ public final class SkillService {
             }
             // 2026-10-24：一個技能算不出來只跳過那一格（以前整組丟例外，面板與網頁那個角色就完全沒有估計）
             try {
-                final DpsRow row = dpsOf(state, sheet, fullSheet, full, view, slot, state.skills().bound(slot), resolved);
+                final DpsRow row = calibrated(dpsOf(state, sheet, fullSheet, full, view, slot, state.skills().bound(slot), resolved));
                 if (row != null) {
                     rows.add(row);
                 }
@@ -4472,6 +4557,22 @@ public final class SkillService {
             plugin.getSLF4JLogger().warn("估計主要寶石觸發的每秒傷害失敗", e);
         }
         return rows;
+    }
+
+    /**
+     * 2026-11-12 照站長「傷害估算準一點」：乘上 skills.yml 的 estimate_scale（自動量技能量出來的實測 ÷ 估計）；
+     * 每秒傷害、全開、每下都乘（每秒次數不動）。沒寫的照原樣。
+     */
+    private DpsRow calibrated(final DpsRow row) {
+        if (row == null) {
+            return null;
+        }
+        final double scale = config.estimateScale(row.skillId());
+        if (Math.abs(scale - 1) < 1e-9) {
+            return row;
+        }
+        return new DpsRow(row.slot(), row.position(), row.skillId(), row.name(), row.dps() * scale, row.full() * scale, row.minions(),
+                row.hit() * scale, row.rate(), row.crit(), row.multi());
     }
 
     /** 主要寶石觸發每秒最多算幾次（估計用的上限；2026-10-26 自動觸發已經沒有間隔，照舊用 {@link MetaGems#MIN_GAP} 當估計的上限）。 */
@@ -6465,6 +6566,7 @@ public final class SkillService {
         metas.forget(player.getUniqueId());
         signatures.forget(player.getUniqueId()); // 2026-10-17：換角色也清掉插地的矛、蓄力這些（以前照舊角色的 build 繼續打）
         spears().forget(player.getUniqueId()); // 2026-10-27：插著的炎爆矛、血嗅印
+        early.forget(player.getUniqueId()); // 2026-11-12：提早引爆的按鍵紀錄
         stageEffects().forget(player.getUniqueId()); // 2026-10-28：矛頭、震脈掌的增益
         executor.forgetDecompose(player.getUniqueId()); // 2026-10-28：腐屍爆的毒雲
         // 2026-10-27：換角色也清掉魔湧的風暴、怒氣／連擊／灌注、榮耀與輔助的標記、移動懲罰（這次之前只有離線才清，會帶到另一個角色）
@@ -6801,6 +6903,59 @@ public final class SkillService {
     public long cooldownLeft(final Player player, final String skillId) {
         final SkillRuntime runtime = runtimes.get(player.getUniqueId());
         return runtime == null ? 0 : runtime.cooldownLeft(skillId, plugin.getServer().getCurrentTick());
+    }
+
+    /**
+     * 2026-11-12（{@link EarlyDetonation}）：這一招不能再放（冷卻中；炎爆矛插滿上限）時，引爆你放出去的最舊的一個。不花魔力、不跑冷卻、
+     * 不佔動作時間。回傳有沒有引爆（沒有就照常往下：冷卻中的提示、或照常擲矛）。
+     */
+    private boolean earlyDetonate(final Player player, final PlayerState state, final SkillDefinition definition, final SkillBuild build,
+                                  final long cooldownLeft, final long now) {
+        final String id = definition.id();
+        boolean done = false;
+        if ("explosive_spear".equals(id)) {
+            done = spears().detonateOldestIfFull(player, build, now);
+        } else if (cooldownLeft > 0) {
+            if ("chill_crystal_mine".equals(id)) {
+                final org.bukkit.Location at = zones.detonateEarly(player.getUniqueId(), id, now);
+                if (at != null) {
+                    leftovers().endFrostBomb(player.getUniqueId(), at);
+                    done = true;
+                }
+            } else {
+                done = projectiles.detonateEarly(player, id);
+            }
+        }
+        if (done) {
+            state.notice("<#ff9a4d>" + ItemRenderer.escape(definition.name()) + "：提早引爆", now + 15);
+            plugin.players().display(player, state);
+            player.playSound(player.getLocation(), org.bukkit.Sound.BLOCK_LEVER_CLICK, org.bukkit.SoundCategory.PLAYERS, 0.6f, 1.4f);
+        }
+        return done;
+    }
+
+    /** 2026-11-12：動作時間幾 tick 以上才在快捷列蓋「動作中」的遮罩（1 秒）。 */
+    static final long ACTION_MASK_TICKS = 20;
+
+    /**
+     * 2026-11-12 照站長「指令和動作時間的快捷列遮罩」：快捷列上這個技能的遮罩要蓋幾 tick（Gear.cooldowns 用）——冷卻、
+     * 動作時間 1 秒以上的那一招還沒做完（{@link SkillRuntime#actionSkill}）、召喚物的指令冷卻（{@link MinionService#commandLeft}、
+     * 亂鴉狂舞），取最長的。只管顯示；能不能放照舊看 {@link #cooldownLeft}。
+     */
+    public long displayCooldownLeft(final Player player, final String skillId) {
+        final long now = plugin.getServer().getCurrentTick();
+        long left = cooldownLeft(player, skillId);
+        final SkillRuntime runtime = runtimes.get(player.getUniqueId());
+        if (runtime != null && skillId.equals(runtime.actionSkill)) {
+            left = Math.max(left, (long) Math.ceil(runtime.readyAt - now));
+        }
+        if (minions != null) {
+            left = Math.max(left, minions.commandLeft(player.getUniqueId(), skillId, now));
+        }
+        if (granted != null && MinionAbilities.RAVENS.equals(skillId)) {
+            left = Math.max(left, granted.flightLeft(player.getUniqueId(), now));
+        }
+        return Math.max(0, left);
     }
 
     /** 冷卻開始：快捷列上那個技能的圖示馬上蓋上原版的冷卻遮罩（倒數的數字由 Gear 每 4 tick 更新）。 */
@@ -7291,7 +7446,7 @@ public final class SkillService {
                 final ChargeSpec judgment = ChargeSpec.withQuality(config.charge(definition.id()), build);
                 final double stageSpeed = DjinnCommands.djinnCastSpeed(djinnSheet, definition);
                 final double stage = judgment.stageTicks(stageSpeed) / 20.0;
-                lines.add("<gray>下指令：<white>按住引導<gray>（放開時刀刃落下；你引導多久，珂芮絲就陪你引導多久）");
+                lines.add("<gray>下指令：<white>按一下開始引導<gray>（疊滿自動、或再按一下提早落下刀刃；你引導多久，珂芮絲就陪你引導多久）"); // 2026-11-13 照站長（A）；這次之前「按住引導（放開時刀刃落下…）」
                 lines.add(Math.abs(stage - judgment.stageTime()) < 0.005
                         ? String.format(Locale.ROOT, "<gray>珂芮絲引導：每 <white>%.2f</white> 秒一段 <dark_gray>（照巨靈的施法速度）", stage)
                         : String.format(Locale.ROOT, "<gray>珂芮絲引導：每 <white>%.2f</white> 秒一段 <dark_gray>（基礎 %.2f 秒，照巨靈的施法速度）",

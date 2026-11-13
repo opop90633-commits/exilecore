@@ -212,6 +212,15 @@ public record MapStats(int tier, int monsterLevel, double quantity, double rarit
                 monsterModifiers, bossModifiers, playerModifiers, extra);
     }
 
+    /** 2026-11-12 照站長「難度系統」：物品數量、稀有度再加（百分點）；都是 0 回傳自己。 */
+    public MapStats plusLoot(final double moreQuantity, final double moreRarity) {
+        if (moreQuantity == 0 && moreRarity == 0) {
+            return this;
+        }
+        return new MapStats(tier, monsterLevel, quantity + moreQuantity, rarity + moreRarity, packSize, magicPacks, rarePacks,
+                monsterModifiers, bossModifiers, playerModifiers, extra);
+    }
+
     private static Modifier strip(final Modifier modifier, final String prefix) {
         return new Modifier(modifier.stat().substring(prefix.length()), modifier.type(), modifier.value(), modifier.tags(), modifier.source());
     }

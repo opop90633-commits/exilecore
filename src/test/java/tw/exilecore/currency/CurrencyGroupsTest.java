@@ -60,10 +60,10 @@ class CurrencyGroupsTest {
         assertEquals(CurrencyGroups.Group.RUNES_HIGH, CurrencyGroups.of(currencies.get("rune_vision_perfect")));
         assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES).size());
         assertEquals(15 + 4, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.CORES).size()); // 2026-11-08：增幅移到自己那組； 2026-11-07：＋遠古魂核 4 顆；2026-11-04：魂核符文一組
-        assertEquals(6 + 13, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.AUGMENTS).size()); // 2026-11-08：增幅 6 顆＋吉卡尼的技能等級魂核 13 顆
+        assertEquals(6 + 13 + 1, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.AUGMENTS).size()); // 2026-11-11：＋傳承・灰製 // 2026-11-08：增幅 6 顆＋吉卡尼的技能等級魂核 13 顆
         assertEquals(19, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.NAMED_CORES).size()); // 2026-11-08 照站長「一起補」：有名字的魂核 19 顆
         assertEquals(31, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.IDOLS).size()); // 2026-11-04：魔偶符文一組
-        assertEquals(26, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES_HIGH).size());
+        assertEquals(26 + 1, CurrencyGroups.in(currencies.all(), CurrencyGroups.Group.RUNES_HIGH).size()); // 2026-11-11：＋高階領導符文
         // 未切割寶石（2026-10 算通貨）：技能寶石 1–21 級、輔助寶石 1–3 階各一種
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.of(currencies.get("uncut_skill_1")));
         assertEquals(CurrencyGroups.Group.GEM, CurrencyGroups.of(currencies.get("uncut_support_3")));

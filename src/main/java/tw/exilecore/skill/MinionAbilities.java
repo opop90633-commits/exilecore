@@ -32,6 +32,11 @@ final class MinionAbilities {
     static final String RAVENS = "raven_plot";
     /** 2026-10-27 照 PoE2 昇華：弩衛的支援火力（Supporting Fire）的砲手。 */
     static final String ARTILLERY = "covering_fire";
+    /**
+     * 2026-11-12 照站長「霧鴉技能補做」：觀鳥者（The Auspex）賦予的迷霧渡鴉（PoE2 Mist Raven，PoB2 SummonMistRavenPlayer／CommandMistRavenPlayer）。
+     * 不會受傷（summon.immortal）、平常自己攻擊；指令「狂鴉碎裂」（{@link #MIST_DIVE_DAMAGE}）。
+     */
+    static final String MIST_RAVEN = "mist_raven";
     /** 2026-10-27 照 PoE2 昇華：沙靈使的三位巨靈（Kelari／Navira／Ruzhan）。 */
     static final String KELARI = "foul_sand_spirit";
     static final String NAVIRA = "final_mirage_spirit";
@@ -142,6 +147,28 @@ final class MinionAbilities {
     /** 砲手站在你身後幾格。 */
     static final double ARTILLERY_BEHIND = 2.5;
 
+    // ---- 迷霧渡鴉（Mist Raven，2026-11-12 照 PoE2 0.5：觀鳥者賦予）----
+
+    /**
+     * 狂鴉碎裂（指令，poe2db MistRavenCommandDiveBomb）：1000% 攻擊傷害（普攻 300%），所以是普攻的 10 ÷ 3 倍；70% 物理轉混沌（技能的 convert）。
+     * 2026-11-12 照站長「這個 pob2 有嗎？」改照 poe2db；這次之前（同一天稍早）自己定 250%、一半轉混沌。
+     */
+    static final double MIST_DIVE_DAMAGE = 10.0 / 3.0;
+    /** 落點的範圍半徑（poe2db：衝擊範圍 2.5 公尺）。 */
+    static final double MIST_DIVE_RADIUS = tw.exilecore.core.Units.metres(2.5);
+    /** 2026-11-12：俯衝每 tick 最多飛幾格、最少／最多幾 tick（照距離算，{@link #diveTicks}）。這次之前固定 8 tick。 */
+    static final double MIST_DIVE_STEP = 1.5;
+    static final long MIST_DIVE_MIN_TICKS = 3;
+    static final long MIST_DIVE_MAX_TICKS = 12;
+
+    /** 俯衝飛 distance 格要幾 tick（每 tick 最多 1.5 格，3～12 tick）。純函式。 */
+    static long diveTicks(final double distance) {
+        return Math.max(MIST_DIVE_MIN_TICKS, Math.min(MIST_DIVE_MAX_TICKS, (long) Math.ceil(Math.max(0, distance) / MIST_DIVE_STEP)));
+    }
+    /** 原作指令每次 8 魔力（1～40 級都一樣）。 */
+    static final int[] MIST_MANA = {8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8};
+
     // ---- 通用 ----
 
     /** 能量護盾：最後一次受傷後 4 秒開始回充（PoE2 BaseShieldRegenCooldownTimeMs 4000）。 */
@@ -197,7 +224,9 @@ final class MinionAbilities {
             REAVER, new Command("激怒", 4, BRUTE_MANA),
             RAVENS, new Command("亂鴉狂舞", 10, new int[0]),
             // 2026-10-27 照 PoE2（Command: Death From Above：冷卻 10 秒、魔力 8～83；這次之前支援火力是 4 秒冷卻的箭雨，不花魔力）
-            ARTILLERY, new Command("從天而降", 10, BRUTE_MANA));
+            ARTILLERY, new Command("從天而降", 10, BRUTE_MANA),
+            // 2026-11-12 照 PoE2 Command: Mist Raven：8 魔力、狂鴉碎裂冷卻 12 秒（poe2db）；這次之前（同一天稍早）叫迷霧俯衝、1.5 秒
+            MIST_RAVEN, new Command("狂鴉碎裂", 12, MIST_MANA));
 
     /** 這個精魂召喚有沒有指令（骸骨戰士、祭司、狼、蟲、焚魂沒有）。 */
     static Command command(final String skillId) {

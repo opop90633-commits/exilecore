@@ -499,7 +499,11 @@ public final class ItemRenderer {
                 final double effect = Runes.effect(repository, data, rune); // 2026-11-04：每一顆各自算（魂核另外吃瑪哈薩多的陰謀）
                 // 2026-11-07（艾瑟琳的華儀）：魂核也照別的部位算的，那幾條一起寫（Runes.linesOn）；這次之前只寫 rune.on(base)
                 final List<Runes.Line> runeLines = Runes.linesOn(repository, base, data, rune);
-                if (runeLines.isEmpty()) {
+                if (runeLines.isEmpty() && rune.augment() != null && Runes.augmentFits(repository, base, data, rune)) {
+                    // 2026-11-11 照站長「照料在胸甲上沒效果嗎？」：增幅（梅德偉的照料這類）本身沒有加成，作用是讓這件洗得出專屬詞綴；
+                    //   這次之前跟魂核放錯部位一樣寫「嵌在這種裝備上沒有效果」，看起來像沒作用
+                    lore.add(line("<#7fe0c8>◈ " + escape(rune.name()) + " <gray>（這件洗得出它的專屬詞綴）"));
+                } else if (runeLines.isEmpty()) {
                     lore.add(line("<dark_gray>◈ " + escape(rune.name()) + "（嵌在這種裝備上沒有效果）")); // 2026-11-04：魂核、魔偶只在某些部位有效果
                 }
                 for (final Runes.Line runeLine : runeLines) {
@@ -536,6 +540,13 @@ public final class ItemRenderer {
                     break;
                 }
                 lore.add(line("<#a04040>　" + affix.rangeText(affix.tiers().getFirst().tier())));
+            }
+        }
+        if (unique != null && repository.ravenTouched(unique.id())) {
+            // 2026-11-12 照站長「渡鴉所觸能做嗎」：PoE2 Raven-Touched（原作在凋萎敗柳注入；這裡拿蒸餾情緒點它）
+            lore.add(line("<#9d7cd8>渡鴉所觸"));
+            if (data.instilled() == null) {
+                lore.add(line("<dark_gray>　可以用蒸餾情緒注入一個天賦核心（跟項鍊一樣）"));
             }
         }
         if (unique != null && !unique.flavour().isEmpty()) {

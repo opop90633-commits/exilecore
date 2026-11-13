@@ -320,7 +320,8 @@ public final class BalanceModel {
 
     private StatSheet monsterSheet(final int level, final MonsterRarity rarity, final List<String> mods,
                                    final double lifeMultiplier, final boolean boss, final String type) {
-        return MonsterSheets.build(monsters, new MonsterData(level, rarity, mods, "參考怪物", lifeMultiplier, 1.0, boss), type);
+        // 2026-11-13：跟本服平衡倍率（damage.balance）一樣，全部怪物生命倍率（monsters.yml life_multiplier）不算進參考模型——兩個是一起調的
+        return MonsterSheets.build(monsters, new MonsterData(level, rarity, mods, "參考怪物", lifeMultiplier / monsters.lifeMultiplier(), 1.0, boss), type);
     }
 
     /**
@@ -340,7 +341,8 @@ public final class BalanceModel {
         final StatSheet noRequirement = sheet.overlay(List.of(tw.exilecore.stats.Modifier.increased(
                 tw.exilecore.stats.TreeEffectKeys.ITEM_ATTR_REQUIREMENT, -1, "平衡模型")));
         final SkillBuild skillBuild = SkillBuild.of(skills, skill, gemLevel, level, false, supports, weapon.tags(), noRequirement);
-        final SkillProfile profile = skillBuild.profile();
+        // 2026-11-13 照站長（技能拉到中位數 16 倍，Boss 血量後面再說）：平衡模型先照原本的技能傷害算，不算本服平衡倍率
+        final SkillProfile profile = skillBuild.profile().withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE);
         final StatSheet effective = profile.effective(sheet);
 
         final DamagePacket outgoing = DamageCalculator.expectedOutgoing(sheet, profile);

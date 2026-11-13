@@ -354,11 +354,15 @@ public final class CharacterService {
         final PlayerInventory inventory = player.getInventory();
         retireUniques(player, state, items);
         for (int i = 0; i < inventory.getSize(); i++) {
-            final ItemStack stack = inventory.getItem(i);
+            ItemStack stack = inventory.getItem(i);
             if (stack == null) {
                 continue;
             }
-            boolean changed = items.refresh(stack);
+            // 2026-11-12 照站長「斬獲腰環顯示成拴繩」：基底換過原版物品的舊裝備換成對的原版物品（ItemService.fixMaterial）
+            final ItemStack fixedType = items.fixMaterial(stack);
+            final boolean typeFixed = fixedType != stack;
+            stack = fixedType;
+            boolean changed = items.refresh(stack) | typeFixed;
             if (!changed && currencies != null) {
                 changed = currencies.refresh(stack); // 通貨：舊版做的補上貼圖標記（資源包靠它挑圖）、名稱改過的重做
             }
@@ -367,6 +371,9 @@ public final class CharacterService {
                 inventory.setItem(i, stack);
             }
         }
+        if (items.fixMaterials(state.jewellery()) > 0) { // 2026-11-12：飾品欄（腰帶在這裡）也換對原版物品
+            state.markDirty();
+        }
         for (final ItemStack stack : state.jewellery()) {
             items.refresh(stack);
         }
@@ -374,6 +381,9 @@ public final class CharacterService {
             items.refresh(stack);
         }
         for (int set = 0; set < PlayerState.GEAR_SETS; set++) {
+            if (items.fixMaterials(state.gearSet(set)) > 0) { // 2026-11-12：其他裝備組也換對原版物品
+                state.markDirty();
+            }
             for (final ItemStack stack : state.gearSet(set)) {
                 if (stack != null) {
                     items.refresh(stack);
@@ -396,6 +406,9 @@ public final class CharacterService {
         }
         if (state.bag() != null && state.bag().usable()) {
             for (int page = 0; page < state.bag().storedPages(); page++) {
+                if (items.fixMaterials(state.bag().page(page)) > 0) { // 2026-11-12：隨身背包也換對原版物品
+                    state.markDirty();
+                }
                 for (final ItemStack stack : state.bag().page(page)) {
                     items.refresh(stack);
                     if (currencies != null) {
@@ -1165,6 +1178,22 @@ public final class CharacterService {
     }
 
     /**
+     * 2026-11-12 照站長「自動量技能（/ec balance bench）」：存檔時暫時換回真正的東西。函式回傳「換回來」要做的事（null = 這個人沒有要換），
+     * 拍完存檔快照馬上再換回去（都在主執行緒，中間不會有別的 tick）。量測中換的是測試武器、測試技能面板，
+     * 這樣量到一半存檔、下線、當機，資料庫裡都還是原本的武器和技能。
+     */
+    public interface SaveSwap {
+        /** 換成要存的樣子，回傳換回目前樣子的動作；不用換回傳 null。 */
+        Runnable swapIn(Player player);
+    }
+
+    private final List<SaveSwap> saveSwaps = new ArrayList<>();
+
+    public void addSaveSwap(final SaveSwap swap) {
+        saveSwaps.add(swap);
+    }
+
+    /**
      * 主執行緒：把目前的角色拍成存檔快照（角色列、背包、飾品、隨身背包、配點、技能、帳號金幣、倉庫）。
      * 沒角色或還沒載入完回傳 null。
      */
@@ -1193,6 +1222,27 @@ public final class CharacterService {
                 plugin.getSLF4JLogger().error("存檔前的同步失敗（{}）", player.getName(), e);
             }
         }
+        final List<Runnable> swapBack = new ArrayList<>(); // 2026-11-12：自動量技能中存的是原本的武器、技能
+        for (final SaveSwap swap : saveSwaps) {
+            try {
+                final Runnable back = swap.swapIn(player);
+                if (back != null) {
+                    swapBack.add(back);
+                }
+            } catch (final RuntimeException e) {
+                plugin.getSLF4JLogger().error("存檔前換回原本的裝備失敗（{}）", player.getName(), e);
+            }
+        }
+        try {
+            return snapshotSwapped(player, state, character);
+        } finally {
+            for (int i = swapBack.size() - 1; i >= 0; i--) {
+                swapBack.get(i).run();
+            }
+        }
+    }
+
+    private CharacterRepository.SaveJob snapshotSwapped(final Player player, final PlayerState state, final CharacterRecord character) {
         character.setResources(state.life(), state.mana(), state.energyShield());
         character.setPlaytimeSeconds(character.playtimeSeconds() + state.sessionSeconds());
         state.resetSession();

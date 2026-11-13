@@ -294,7 +294,8 @@ public final class KillEffects implements Listener {
             if (modifiers.isEmpty()) {
                 continue;
             }
-            plugin.skills().buff(killer, "steal." + mod.id(), mod.name() + "（斬獲腰環）", ticks, modifiers);
+            // 2026-11-12 照站長「同一條只算一次」：跟儀典獻祭、皮囊偶符、掠獸共用一個增益（剩比較久的那份留著）；這次之前代號 steal.詞綴，各算各的
+            plugin.skills().stolenBuff(killer, mod.id(), mod.name() + "（斬獲腰環）", "headhunter", null, ticks, modifiers);
             stolen++;
         }
         if (stolen > 0) {
