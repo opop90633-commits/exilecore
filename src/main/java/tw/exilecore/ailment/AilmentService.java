@@ -564,7 +564,9 @@ public final class AilmentService {
                 if (attacker instanceof Player triggerer && plugin.skills() != null) {
                     // 主要寶石：元素異常時施放（2026-10）；2026-10-26 照 PoE2：點燃的能量照這個點燃總傷害占異常門檻的 %
                     if (!skill.tags().contains(tw.exilecore.stats.Tags.TOTEM_HIT)) plugin.skills().triggers().ailment(triggerer, defender, AilmentType.IGNITE, skill.id(),
-                            threshold > 0 ? dps * seconds / threshold * 100 : tw.exilecore.skill.MetaGems.CRIT_PERCENT_FALLBACK);
+                            // 2026-11-14 照站長「用 1 處理」：點燃占門檻的 % 也除掉本服平衡倍率（跟暴擊引星一樣）；這次之前直接用
+                            threshold > 0 ? dps * seconds / tw.exilecore.stats.DamageCalculator.balance(attack, skill.tags()) / threshold * 100
+                                    : tw.exilecore.skill.MetaGems.CRIT_PERCENT_FALLBACK);
                 }
                 chargeEvent(attacker, "ignite", attack, context, defender); // 戰星（2026-10）
                 changed = true;

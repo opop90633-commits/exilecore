@@ -362,6 +362,21 @@ public final class OriginalSkills implements Listener {
                 plugin.players().sheet(player));
     }
 
+    /**
+     * 2026-11-14 照站長「疾爪的輔助套到冰裂，改成跟原作一樣」：冰裂算疾爪技能的一部分，吃疾爪寶石上掛的輔助（能輔助它的那些）、
+     * 疾爪的寶石等級；本服平衡倍率照冰裂自己的（沒寫 = ×1）。這次之前冰裂沒有輔助。
+     */
+    private SkillBuild hostedProc(final Player player, final String procId, final String hostId) {
+        final SkillDefinition definition = service.config().skill(procId);
+        final SkillBuild host = service.equippedBuild(player, hostId);
+        if (definition == null || host == null) {
+            return proc(player, procId, gemLevel(player, hostId));
+        }
+        final PlayerState state = plugin.players().get(player);
+        return SkillBuild.of(service.config(), definition, Math.max(1, gemLevel(player, hostId)), state.level(), false, host.supports(),
+                state.weaponTags(), plugin.players().sheet(player));
+    }
+
     /** 2026-10-29 照 PoE2：電震波吃雷縛長棍寶石上掛的輔助（能輔助攻擊的那些）；這次之前沒有輔助。 */
     private SkillBuild staffWave(final Player player) {
         final SkillDefinition definition = service.config().skill(STAFF_WAVE);
@@ -2027,7 +2042,7 @@ public final class OriginalSkills implements Listener {
         }
         if (SHRED.equals(id) && mine.shredUse >= 0 && plugin.ailments() != null && plugin.ailments().isFrozen(defender)) {
             mine.shredUse = -1; // 照 PoE2：每次使用一次
-            spawnFragments(player, defender.getLocation(), SHRED_FRAGMENTS, proc(player, FRAGMENT_SHRED, gemLevel(player, SHRED)), FRAGMENT_RADIUS, now);
+            spawnFragments(player, defender.getLocation(), SHRED_FRAGMENTS, hostedProc(player, FRAGMENT_SHRED, SHRED), FRAGMENT_RADIUS, now);
         }
         // 2026-11-01 照站長：躍退射（Escape Shot）刪掉，命中時落下冰裂的那段拿掉
         if (hasMark(skill, ICE_TIPPED_MARK) && now >= mine.fragmentReady) {

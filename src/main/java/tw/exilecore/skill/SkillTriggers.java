@@ -42,8 +42,12 @@ public final class SkillTriggers implements Listener {
         if (!totem && event.attacker() instanceof Player player && event.result().crit() && event.skill() != null
                 && !event.skill().id().contains(MetaGems.TRIGGERED_SUFFIX)) {
             // 2026-10-26 照 PoE2 Cast on Critical：每點怪物強度 1 能量 × 這一下打掉牠異常門檻的百分比（最多 100）；這次之前固定 10 × 強度
+            // 2026-11-14 照站長「用 1 處理」：打掉幾 % 用除掉本服平衡倍率的傷害（倍率把傷害放大 2.5～15 倍，門檻沒有，
+            //   每一下都快打滿、暴擊引星一秒觸發幾十次）；這次之前直接用這一下的傷害
+            final double balance = tw.exilecore.stats.DamageCalculator.balance(
+                    event.skill().effective(plugin.players().sheet(player)), event.skill().tags());
             service.metas().gain(player, MetaSpec.Kind.CRIT, service.metas().power(event.defender())
-                    * service.metas().critPercent(event.defender(), event.result().total()) / 100.0 // 2026-11-04 照站長「照原作修」：比例（打掉 100% 才拿滿 1 點）；這次之前直接乘 0～100 的百分比數字，多給 100 倍
+                    * service.metas().critPercent(event.defender(), event.result().total() / balance) / 100.0 // 2026-11-04 照站長「照原作修」：比例（打掉 100% 才拿滿 1 點）；這次之前直接乘 0～100 的百分比數字，多給 100 倍
                     * ShapeshiftParity.energyScale(service.config().skill(event.skill().id())), event.defender()); // 2026-11-01 照 PoE2：熾息的能量更少 98%
         }
         // 2026-10-26（久印，PoE2 Eternal Mark）：第一次觸發不用掉印記（怒星照給）
