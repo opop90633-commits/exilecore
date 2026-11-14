@@ -206,7 +206,9 @@ public final class LootService {
             final boolean foresee = currency != null && currency.operation() == tw.exilecore.currency.CurrencyOperation.FORESEE;
             final String lineage = lineageName(drop);
             if (!mirror && !resonance && !foresee && lineage == null && (charm ? filter.hidesCharms() : filter.hides(candidate(drop, stack, rarity, currency, upgrade), viewer))) {
-                final long converted = config.goldValue(drop.kind(), rarity, weight, averageGold);
+                // 2026-11-14 照站長「綁定的拆解、賣給商人的價格除 5」：過濾器換成金幣也一樣 ÷5（這次之前照全額，等於繞過）
+                final long full = config.goldValue(drop.kind(), rarity, weight, averageGold);
+                final long converted = drop.bound() ? full / LootMode.SALVAGE_DIVISOR : full;
                 goldTotal += converted;
                 filterGold += converted;
                 filtered++;

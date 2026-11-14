@@ -1253,7 +1253,7 @@ public final class SkillConfig {
                 detached.add(GemData.support(into, resonantMark));
                 result = result.withSupport(i, null);
             } else {
-                result = result.withSupport(i, into, resonantMark);
+                result = result.withSupport(i, into, resonantMark).withSupportBound(i, result.supportBound(i)); // 2026-11-14：綁定跟著
             }
         }
         final SkillLoadout.Entry inner = result.inner() == null ? null : mergeSupports(result.inner(), detached);
@@ -1292,7 +1292,7 @@ public final class SkillConfig {
         }
         final SkillLoadout.Entry renamed = into == null ? entry
                 : new SkillLoadout.Entry(into, entry.level(), entry.sockets(), entry.supports(), entry.resonant(),
-                        entry.inner(), entry.corrupted(), entry.quality(), entry.granted());
+                        entry.inner(), entry.corrupted(), entry.quality(), entry.granted(), false, entry.boundMask()); // 2026-11-14：綁定跟著
         return inner == null ? renamed : renamed.withInner(inner);
     }
 

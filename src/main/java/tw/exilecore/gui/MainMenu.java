@@ -181,7 +181,8 @@ public final class MainMenu extends Menu {
         put(SLOT_TOWN, button(Material.CAMPFIRE, "回營地", "/town", "免費、隨時都可以（被打也可以），/wp 可以傳回來"));
         put(SLOT_QUESTS, button(Material.WRITABLE_BOOK, "任務", "/quests", "主線、支線、任務給的永久加成"));
         // 2026-10-22：「委託」換成「分流」（委託板還是 /bounty、營地的軍需官、任務日誌裡的委託板）
-        put(SLOT_BOUNTY, button(Material.LODESTONE, "分流", "/channel", channelSummary()));
+        // 2026-11-14 照站長「介面上的分流換成模式切換」：這格改成掉落模式（左鍵切換）；分流照樣用 /channel；這次之前是分流
+        put(SLOT_BOUNTY, lootModeButton(ready && tw.exilecore.loot.LootMode.bound(plugin, player), ready));
         put(SLOT_EVENT, button(Material.CLOCK, "每月固定活動", "/event", eventSummary()));
         put(SLOT_PVP, button(Material.DIAMOND_SWORD, "競技場", "/pvp", pvpSummary()));
         put(SLOT_WORLD_EVENT, worldEventButton());
@@ -276,6 +277,22 @@ public final class MainMenu extends Menu {
                 "<gray>活動到 " + config.format(config.end()) + "：沙灘挖寶、西瓜大亂鬥、深潮海妖、漂流瓶", kraken, round,
                 "<gray>貝殼、珍珠兌換限定時裝與稱號", "", "<yellow>左鍵：打開<dark_gray>（/summer）");
         return summer.krakenRunning() || summer.roundRunning() ? glowing(stack) : stack;
+    }
+
+    /** 2026-11-14：掉落模式的按鈕（現在是哪一種、點了換成另一種）。 */
+    private static org.bukkit.inventory.ItemStack lootModeButton(final boolean bound, final boolean ready) {
+        if (!ready) {
+            return icon(Material.LODESTONE, "<#f5b942>掉落模式", "<gray>先建立角色", "", "<dark_gray>（/char loot）");
+        }
+        return icon(bound ? Material.IRON_CHAIN : Material.LODESTONE, "<#f5b942>掉落模式：" + (bound ? "<#ff9a6b>綁定掉落" : "<white>一般掉落"),
+                "<gray>一般掉落：照原本的掉落率，掉的東西都能交易",
+                "<gray>綁定掉落：Boss 的傳奇、專屬技能／輔助寶石 ×" + tw.exilecore.loot.LootMode.BOSS_MORE
+                        + "，血脈輔助寶石 ×" + tw.exilecore.loot.LootMode.LINEAGE_MORE,
+                "<dark_gray>　這些綁定帳號：不能交易、上架、放公會倉庫、丟地上",
+                "<dark_gray>　拆解、賣商人只拿 1/" + tw.exilecore.loot.LootMode.SALVAGE_DIVISOR,
+                "<dark_gray>　隨時可以換；組隊各自照自己的；已經掉的不會變",
+                "", "<yellow>左鍵：換成" + (bound ? "一般掉落" : "綁定掉落") + "<dark_gray>（/char loot）",
+                "<dark_gray>分流：/channel");
     }
 
     /** 2026-10-22：分流按鈕的說明：現在第幾線、幾個人。 */
@@ -415,7 +432,17 @@ public final class MainMenu extends Menu {
                     new tw.exilecore.event.EventMenu(plugin, player, plugin.events()).open();
                 }
             }
-            case SLOT_BOUNTY -> new ChannelMenu(plugin, player).open(); // 2026-10-22：分流
+            case SLOT_BOUNTY -> { // 2026-11-14：掉落模式切換（這次之前打開分流選單）
+                if (!ready) {
+                    needCharacter();
+                } else {
+                    final boolean bound = !tw.exilecore.loot.LootMode.bound(plugin, player);
+                    tw.exilecore.loot.LootMode.set(plugin, player, bound);
+                    player.sendMessage(plugin.text().prefixed("<green>掉落模式換成 <white>" + tw.exilecore.loot.LootMode.describe(bound)));
+                    player.playSound(player.getLocation(), org.bukkit.Sound.UI_BUTTON_CLICK, 0.6f, bound ? 1.4f : 1.0f);
+                    redraw();
+                }
+            }
             case SLOT_TITLES -> {
                 if (plugin.bounties() == null) {
                     unavailable("委託");

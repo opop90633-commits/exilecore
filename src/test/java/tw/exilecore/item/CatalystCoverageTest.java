@@ -43,4 +43,12 @@ class CatalystCoverageTest {
         assertFalse(Catalyst.RESIST.matches(mod("avoid.ignite")), "避免點燃不是抗性");
         assertFalse(Catalyst.ELEMENTAL.matches(mod("avoid.ignite")));
     }
+
+    @Test
+    void attackCatalystBoostsMeleeSkillLevels() {
+        // 2026-11-14 照站長：攻擊催化劑也加「+x 全部近戰攻擊技能等級」（攻擊標籤），乘完捨去；投射物技能等級沒有攻擊標籤不加
+        assertTrue(Catalyst.ATTACK.matches(mod(StatKeys.SKILL_LEVEL, "attack", "melee")));
+        assertFalse(Catalyst.ATTACK.matches(mod(StatKeys.SKILL_LEVEL, "projectile")));
+        org.junit.jupiter.api.Assertions.assertEquals(4, ItemStats.catalysed(new Modifier(StatKeys.SKILL_LEVEL, ModType.FLAT, 3, Set.of("attack", "melee"), "t"), 40).value(), 1e-9);
+    }
 }

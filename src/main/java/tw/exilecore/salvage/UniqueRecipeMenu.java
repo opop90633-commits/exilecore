@@ -581,6 +581,10 @@ public final class UniqueRecipeMenu extends Menu {
             }
             final ItemData result = plugin.items().generator().generateUnique(pick, itemLevel(group), plugin.items().random());
             result.setIdentified(true);
+            // 2026-11-14 照站長「綁定掉落」：放進來的有一件綁定帳號，換出來的也綁定（這次之前沒有綁定的傳奇）
+            if (group.stream().anyMatch(input -> input.data().accountBound())) {
+                result.setAccountBound(true);
+            }
             final ItemStack item = plugin.items().toStack(result);
             for (final Input input : group) {
                 // 2026-11-02 照站長：換掉的追逐級傳奇記成消耗（市場報告的追逐級那一段：產出扣掉換掉的）

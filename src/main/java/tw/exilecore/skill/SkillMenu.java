@@ -676,8 +676,10 @@ public final class SkillMenu extends Menu {
             }
             case CRYSTAL_ORB -> {
                 // 2026-11-07：晶蝕石
+                // 2026-11-14 照站長「照原作改」：二次腐化的不能再用、碎掉機率 1/2（這次之前可以一直用、1/4）
                 return entry.granted() ? Hint.no("武器賦予的技能不是寶石") : !entry.corrupted() ? Hint.no("晶蝕石只能用在已腐化的技能寶石")
-                        : Hint.best("放這裡：再腐化一次（等級 ±1／輔助孔 ±1／品質變動），1/4 機率碎掉");
+                        : entry.twiceCorrupted() ? Hint.no("已經二次腐化了（晶蝕石一顆寶石只能用一次）")
+                        : Hint.best("放這裡：照現在的狀態再腐化一次（等級 ±1／輔助孔 ±1／品質變動），1/2 機率碎掉；之後不能再腐化");
             }
             case CORRUPT_OMEN -> {
                 // 2026-11-04：必變籤掛在面板上（不是掛在某一顆），所以點哪一格都可以
@@ -1395,7 +1397,8 @@ public final class SkillMenu extends Menu {
                     : position >= 0 ? gems.placeSpell(player, position, slot - SUPPORT_START, gem) // 2026-10-22；2026-10-26：主要寶石每一孔都能放
                     : GemService.Change.fail("技能寶石要點技能格，或英靈圖騰、星咒圖騰、引星這類主要寶石的孔");
             case SUPPORT -> position < 0 ? GemService.Change.fail("先點一個技能")
-                    : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
+                    : gems.socket(player, position, socketSlot ? slot - SUPPORT_START : -1, gem.id(), gem.resonant(),
+                            tw.exilecore.item.AccountBound.isBound(cursor)); // 2026-10-18：帶共鳴；2026-11-14：帶綁定
             case UNCUT_SKILL -> position < 0 || !skillSlot ? GemService.Change.fail("拿未切割技能寶石點技能來升級")
                     : levelUp(position, gem);
             case UNCUT_SUPPORT -> GemService.Change.fail("未切割輔助寶石要先右鍵切成輔助寶石");
@@ -1450,7 +1453,8 @@ public final class SkillMenu extends Menu {
             change = gems.place(player, -1, gem);
         } else if (gem != null && gem.kind() == GemData.Kind.SUPPORT) {
             change = selected < 0 ? GemService.Change.fail("先點一個技能，再 Shift＋點輔助寶石")
-                    : gems.socket(player, selected, -1, gem.id(), gem.resonant()); // 2026-10-18：帶共鳴
+                    : gems.socket(player, selected, -1, gem.id(), gem.resonant(),
+                    tw.exilecore.item.AccountBound.isBound(item)); // 2026-10-18：帶共鳴；2026-11-14：帶綁定
         } else {
             fail("Shift＋點背包裡的技能寶石或輔助寶石可以直接放進面板");
             return;

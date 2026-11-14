@@ -130,7 +130,23 @@ public final class SkillLoadout {
      *                  SkillService.migrateRemoved 退還鑿星石後改成照等級的孔數；只有 granted 才可能是 true
      */
     public record Entry(String skillId, int level, int sockets, List<String> supports, List<Boolean> resonant, Entry inner,
-                        boolean corrupted, int quality, boolean granted, boolean legacySockets) {
+                        boolean corrupted, int quality, boolean granted, boolean legacySockets, int boundMask) {
+
+        /**
+         * 2026-11-14 照站長「綁定掉落」：boundMask 第 i 位 = 第 i 孔的輔助寶石綁定帳號，第 {@value #MAX_SOCKETS} 位 = 這顆技能寶石本身綁定。
+         * 存檔文字最前面寫 {@value #BOUND_PREFIX}（技能寶石本身）、輔助代號後面接 {@value #BOUND_SUFFIX}（在 ~ 前面）、
+         * 孔裡的技能寶石寫 /b。拆下來、換下來照這個綁回去（這次之前同一天的版本是另外記帳，同一種寶石有綁、沒綁時會綁錯）。
+         */
+        public static final String BOUND_PREFIX = "&";
+        public static final String BOUND_SUFFIX = "$";
+        static final int SELF_BOUND = 1 << MAX_SOCKETS;
+        /**
+         * 2026-11-14 照站長「照原作改」：boundMask 第 {@value #MAX_SOCKETS}＋1 位 = 用過晶蝕石（二次腐化，照 PoE2 之後不能再腐化）。
+         * 存檔文字最前面寫 {@value #TWICE_PREFIX}，孔裡的技能寶石寫 /c2；不算綁定。
+         */
+        static final int TWICE_CORRUPTED = 1 << (MAX_SOCKETS + 1);
+        public static final String TWICE_PREFIX = "%";
+        static final String INNER_TWICE = "c2";
 
         /**
          * 2026-10-26：存檔文字裡「武器賦予的技能」的字首（PoE2 的法杖、長杖、權杖：Grants Skill）。
@@ -152,6 +168,8 @@ public final class SkillLoadout {
 
         /** 2026-10-18：存檔文字裡標「這顆輔助已共鳴」的字尾。 */
         public static final String RESONANT_SUFFIX = "~";
+        /** 2026-11-14：孔裡的技能寶石（@代號/等級/孔數/…）綁定時多寫一段 /b。 */
+        static final String INNER_BOUND = "b";
         /** 2026-10-22：存檔文字裡第 1 孔「放著技能寶石」的字首。 */
         public static final String INNER_PREFIX = "@";
         /** 放技能寶石的那一孔（宿主寶石的第 1 孔）。 */
@@ -195,6 +213,10 @@ public final class SkillLoadout {
                         id = id.substring(0, id.length() - RESONANT_SUFFIX.length()).trim();
                         marks[i] = Boolean.TRUE;
                     }
+                    if (id.endsWith(BOUND_SUFFIX)) { // 2026-11-14：存檔裡的 $ 剝掉，記成綁定
+                        id = id.substring(0, id.length() - BOUND_SUFFIX.length()).trim();
+                        boundMask |= 1 << i;
+                    }
                     filled[i] = tw.exilecore.skill.SkillIds.current(id); // 2026-10-31：改過代號的輔助換成新代號
                     if (resonant != null && i < resonant.size() && Boolean.TRUE.equals(resonant.get(i))) {
                         marks[i] = Boolean.TRUE;
@@ -208,11 +230,72 @@ public final class SkillLoadout {
                 filled[INNER_SOCKET] = ""; // 放著技能寶石的那一孔不會同時有輔助
                 marks[INNER_SOCKET] = Boolean.FALSE;
                 if (!inner.supports().stream().allMatch(String::isEmpty) || inner.inner() != null) {
-                    inner = new Entry(inner.skillId(), inner.level(), inner.sockets(), List.of(), null, null, inner.corrupted(), inner.quality()); // 裡面的技能自己沒有輔助
+                    inner = new Entry(inner.skillId(), inner.level(), inner.sockets(), List.of(), null, null, inner.corrupted(), inner.quality())
+                            .withBound(inner.bound()).withTwiceCorrupted(inner.twiceCorrupted()); // 裡面的技能自己沒有輔助（2026-11-14：綁定、二次腐化留著）
                 }
             }
             supports = List.of(filled);
             resonant = List.of(marks);
+            // 2026-11-14：綁定只留在有輔助寶石的孔（空孔、放技能寶石的孔不算）＋技能寶石本身
+            int kept = boundMask & (SELF_BOUND | TWICE_CORRUPTED);
+            for (int i = 0; i < MAX_SOCKETS; i++) {
+                if ((boundMask & (1 << i)) != 0 && !filled[i].isEmpty() && !filled[i].startsWith(INNER_PREFIX)) {
+                    kept |= 1 << i;
+                }
+            }
+            boundMask = granted ? 0 : corrupted ? kept : kept & ~TWICE_CORRUPTED;
+        }
+
+        /** 2026-11-14：沒有綁定資訊的建構式（代號後面帶 $ 的照樣認得）。 */
+        public Entry(final String skillId, final int level, final int sockets, final List<String> supports, final List<Boolean> resonant,
+                     final Entry inner, final boolean corrupted, final int quality, final boolean granted, final boolean legacySockets) {
+            this(skillId, level, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets, 0);
+        }
+
+        /** 2026-11-14：這顆技能寶石本身綁定帳號。 */
+        public boolean bound() {
+            return (boundMask & SELF_BOUND) != 0;
+        }
+
+        /** 2026-11-14：第 index 孔的輔助寶石綁定帳號。 */
+        public boolean supportBound(final int index) {
+            return index >= 0 && index < MAX_SOCKETS && (boundMask & (1 << index)) != 0;
+        }
+
+        /** 2026-11-14：整顆寶石（含孔裡的輔助、技能寶石）有沒有任何一部分綁定：取出來的寶石要綁定。 */
+        public boolean anyBound() {
+            if ((boundMask & ~TWICE_CORRUPTED) != 0) {
+                return true;
+            }
+            for (final Entry spell : spells()) {
+                if (spell.bound()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /** 2026-11-14：用過晶蝕石（二次腐化）。 */
+        public boolean twiceCorrupted() {
+            return (boundMask & TWICE_CORRUPTED) != 0;
+        }
+
+        public Entry withTwiceCorrupted(final boolean value) {
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted || value, quality, granted, legacySockets,
+                    value ? boundMask | TWICE_CORRUPTED : boundMask & ~TWICE_CORRUPTED);
+        }
+
+        public Entry withBound(final boolean value) {
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets,
+                    value ? boundMask | SELF_BOUND : boundMask & ~SELF_BOUND);
+        }
+
+        public Entry withSupportBound(final int index, final boolean value) {
+            if (index < 0 || index >= MAX_SOCKETS) {
+                return this;
+            }
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets,
+                    value ? boundMask | (1 << index) : boundMask & ~(1 << index));
         }
 
         /** 2026-10-26：不是武器賦予的技能（一般的技能寶石）。 */
@@ -254,12 +337,12 @@ public final class SkillLoadout {
 
         /** 2026-10-23：同一顆寶石標成已腐化（或拿掉）。 */
         public Entry withCorrupted(final boolean value) {
-            return new Entry(skillId, level, sockets, supports, resonant, inner, value, quality, granted, legacySockets);
+            return new Entry(skillId, level, sockets, supports, resonant, inner, value, quality, granted, legacySockets, boundMask); // 2026-11-14：綁定跟著
         }
 
         /** 2026-10-23：換掉品質（0～23）。 */
         public Entry withQuality(final int value) {
-            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, value, granted, legacySockets);
+            return new Entry(skillId, level, sockets, supports, resonant, inner, corrupted, value, granted, legacySockets, boundMask); // 2026-11-14：綁定跟著
         }
 
         /** 2026-10-22：舊的五個欄位的建構式（第 1 孔沒有技能寶石；supports 裡寫 @ 開頭的照樣認得）。 */
@@ -282,16 +365,23 @@ public final class SkillLoadout {
                 final int level = parts.length > 1 ? Integer.parseInt(parts[1].trim()) : 1;
                 final int sockets = parts.length > 2 ? Integer.parseInt(parts[2].trim()) : BASE_SOCKETS;
                 boolean corrupted = false;
+                boolean bound = false;
+                boolean twice = false;
                 int quality = 0;
                 for (int i = 3; i < parts.length; i++) { // 2026-10-23：/! 已腐化、/q15 品質
                     final String part = parts[i].trim();
                     if (CORRUPTED_PREFIX.equals(part)) {
                         corrupted = true;
+                    } else if (INNER_BOUND.equals(part)) { // 2026-11-14：綁定
+                        bound = true;
+                    } else if (INNER_TWICE.equals(part)) { // 2026-11-14：二次腐化
+                        twice = true;
                     } else if (part.startsWith(QUALITY_PREFIX)) {
                         quality = Integer.parseInt(part.substring(QUALITY_PREFIX.length()));
                     }
                 }
-                return new Entry(parts[0].trim(), level, sockets, List.of(), null, null, corrupted, quality);
+                return new Entry(parts[0].trim(), level, sockets, List.of(), null, null, corrupted, quality).withBound(bound)
+                        .withTwiceCorrupted(twice);
             } catch (final NumberFormatException e) {
                 return null;
             }
@@ -306,6 +396,12 @@ public final class SkillLoadout {
             }
             if (spell.quality() > 0) {
                 text.append('/').append(QUALITY_PREFIX).append(spell.quality()); // 2026-10-23：品質也跟著
+            }
+            if (spell.bound()) {
+                text.append('/').append(INNER_BOUND); // 2026-11-14：綁定也跟著
+            }
+            if (spell.twiceCorrupted()) {
+                text.append('/').append(INNER_TWICE); // 2026-11-14：二次腐化也跟著
             }
             return text.toString();
         }
@@ -344,13 +440,14 @@ public final class SkillLoadout {
                 return withInner(spell);
             }
             final Entry clean = spell == null ? null
-                    : new Entry(spell.skillId(), spell.level(), spell.sockets(), List.of(), null, null, spell.corrupted(), spell.quality());
+                    : new Entry(spell.skillId(), spell.level(), spell.sockets(), List.of(), null, null, spell.corrupted(), spell.quality())
+                            .withBound(spell.bound()).withTwiceCorrupted(spell.twiceCorrupted()); // 2026-11-14
             return withSupport(index, clean == null ? "" : INNER_PREFIX + innerText(clean), false);
         }
 
         /** 2026-10-22：換掉第 1 孔的技能寶石（null = 拿掉）。 */
         public Entry withInner(final Entry newInner) {
-            return new Entry(skillId, level, sockets, supports, resonant, newInner, corrupted, quality, granted, legacySockets);
+            return new Entry(skillId, level, sockets, supports, resonant, newInner, corrupted, quality, granted, legacySockets, boundMask); // 2026-11-14：綁定跟著
         }
 
         /** 2026-10-22：第 1 孔放著技能寶石時，第 1 孔不算輔助孔：第一個能放輔助的孔。 */
@@ -374,11 +471,11 @@ public final class SkillLoadout {
         }
 
         public Entry withLevel(final int newLevel) {
-            return new Entry(skillId, newLevel, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets);
+            return new Entry(skillId, newLevel, sockets, supports, resonant, inner, corrupted, quality, granted, legacySockets, boundMask); // 2026-11-14：綁定跟著
         }
 
         public Entry withSockets(final int newSockets) {
-            return new Entry(skillId, level, newSockets, supports, resonant, inner, corrupted, quality, granted, legacySockets);
+            return new Entry(skillId, level, newSockets, supports, resonant, inner, corrupted, quality, granted, legacySockets, boundMask); // 2026-11-14：綁定跟著
         }
 
         /** 換掉一個輔助孔的內容（null 或空字串 = 拿掉）；沒有共鳴。 */
@@ -395,7 +492,10 @@ public final class SkillLoadout {
             final List<Boolean> marks = new ArrayList<>(resonant);
             list.set(index, supportId == null ? "" : supportId);
             marks.set(index, isResonant);
-            return new Entry(skillId, level, sockets, list, marks, inner, corrupted, quality, granted, legacySockets);
+            // 2026-11-14：換了那一孔的內容，那一孔的綁定先拿掉（要綁定的另外 withSupportBound）；同一顆（只改共鳴）留著
+            final boolean same = supports.get(index).equals(list.get(index));
+            return new Entry(skillId, level, sockets, list, marks, inner, corrupted, quality, granted, legacySockets,
+                    same ? boundMask : boundMask & ~(1 << index));
         }
 
         /** 2026-10-18：只改一孔的共鳴旗標（孔裡要有輔助）。 */
@@ -431,6 +531,12 @@ public final class SkillLoadout {
         /** 存檔用的文字：「孔數:輔助1,輔助2,…」，空孔留空，共鳴的代號後面接 ~，例如 3:faster_attacks,,pierce~。 */
         public String encodeSupports() {
             final StringBuilder text = new StringBuilder();
+            if (bound()) {
+                text.append(BOUND_PREFIX); // 2026-11-14：技能寶石本身綁定
+            }
+            if (twiceCorrupted()) {
+                text.append(TWICE_PREFIX); // 2026-11-14：二次腐化
+            }
             if (granted) {
                 text.append(GRANTED_PREFIX); // 2026-10-26
                 if (!legacySockets) {
@@ -453,6 +559,9 @@ public final class SkillLoadout {
                     continue;
                 }
                 text.append(supports.get(i));
+                if (supportBound(i)) {
+                    text.append(BOUND_SUFFIX); // 2026-11-14：綁定（在 ~ 前面，讀的時候先剝 ~ 再剝 $）
+                }
                 if (resonant.get(i) && !supports.get(i).isEmpty()) {
                     text.append(RESONANT_SUFFIX); // 2026-10-18：共鳴旗標
                 }
@@ -464,6 +573,12 @@ public final class SkillLoadout {
         public static Entry decode(final String skillId, final int level, final String text) {
             if (text == null || text.isBlank()) {
                 return new Entry(skillId, level);
+            }
+            if (text.startsWith(BOUND_PREFIX)) { // 2026-11-14：技能寶石本身綁定
+                return decode(skillId, level, text.substring(BOUND_PREFIX.length())).withBound(true);
+            }
+            if (text.startsWith(TWICE_PREFIX)) { // 2026-11-14：二次腐化
+                return decode(skillId, level, text.substring(TWICE_PREFIX.length())).withTwiceCorrupted(true);
             }
             if (text.startsWith(GRANTED_PREFIX)) { // 2026-10-26：武器賦予的技能
                 final String rest = text.substring(GRANTED_PREFIX.length());

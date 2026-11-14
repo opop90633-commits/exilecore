@@ -1256,6 +1256,9 @@ final class SkillExecutor {
                 // 2026-11-08 照站長「驚雷劈跟原作一致嗎」：PoB2 FallingThunderPlayer 的 Projectile 那一段有 is_area_damage（吃範圍傷害），
                 //   只拿掉近戰、猛擊；這次之前連範圍也拿掉
                 .derive(THUNDER_BOLT, Set.of(Tags.PROJECTILE, Tags.AREA), Set.of(Tags.MELEE, Tags.SLAM))
+                // 2026-11-14 照站長「驚雷劈的額外投射物是不是應該 ×1 就好」：投射物不吃驚雷劈的本服平衡倍率（劈的那一下的倍率是照沒有銳星量的）；
+                //   這次之前跟著劈的那一下 ×7.5
+                .withoutLocal(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE)
                 .scaled(thunderMore(benefit, perChargeMore), "用掉銳星")
                 .withLocal(List.of(tw.exilecore.stats.Modifier.flat(ProjectileEngine.SPEED_VARIATION, THUNDER_SPEED_VARIATION, sub.name())));
         return base.withProfile(profile).withAreaAndProjectiles(base.areaScale(), count);
@@ -2123,6 +2126,45 @@ final class SkillExecutor {
      * 每用掉一個在那隻身上炸開那種元素（技能的半徑；火的照技能的表、冰 2.8 倍、雷 1.12 倍，全部轉成那種元素、不會造成異常）。
      * 沒有異常就沒有傷害。回傳炸了幾個。（這次之前是準心處隨機一種元素的爆炸）
      */
+    /**
+     * 2026-11-14 照站長「稜光裂同技能上的異常更少 20% 傷害」：稜光裂自己的爆炸上的點燃、冰凍、感電，下一次被稜光裂用掉時那一爆更少 20%
+     * （別的技能上的照舊）。這次之前一樣痛，單一目標上三種異常會被自己的爆炸一直補回去。
+     */
+    static final double SUNDER_OWN_LESS = 0.20;
+    /** 自己上的異常記多久（超過就當作不是自己上的；異常本來也撐不了這麼久）。 */
+    static final long SUNDER_OWN_TICKS = 20L * 20;
+    /** 敵人 → 異常種類 → {放的玩家, 記下的 tick}：稜光裂自己的爆炸新上的異常。 */
+    private final java.util.Map<UUID, java.util.EnumMap<tw.exilecore.ailment.AilmentType, Object[]>> sunderOwn = new java.util.HashMap<>();
+    private static final tw.exilecore.ailment.AilmentType[] SUNDER_TYPES = {
+            tw.exilecore.ailment.AilmentType.IGNITE, tw.exilecore.ailment.AilmentType.FREEZE, tw.exilecore.ailment.AilmentType.SHOCK};
+
+    /** 稜光裂的一爆：打之前沒有、打完有的異常，記成稜光裂自己上的。 */
+    private void sunderHit(final Player player, final LivingEntity victim, final SkillProfile blast) {
+        final boolean[] before = new boolean[SUNDER_TYPES.length];
+        for (int i = 0; i < SUNDER_TYPES.length; i++) {
+            before[i] = plugin.ailments().has(victim, SUNDER_TYPES[i]);
+        }
+        damage.hit(player, victim, blast, null);
+        final long now = plugin.getServer().getCurrentTick();
+        for (int i = 0; i < SUNDER_TYPES.length; i++) {
+            if (!before[i] && victim.isValid() && plugin.ailments().has(victim, SUNDER_TYPES[i])) {
+                sunderOwn.computeIfAbsent(victim.getUniqueId(), k -> new java.util.EnumMap<>(tw.exilecore.ailment.AilmentType.class))
+                        .put(SUNDER_TYPES[i], new Object[] {player.getUniqueId(), now});
+            }
+        }
+        if (sunderOwn.size() > 2048) {
+            sunderOwn.values().removeIf(map -> map.values().stream().allMatch(mark -> now - (long) mark[1] > SUNDER_OWN_TICKS));
+        }
+    }
+
+    /** 這個異常是不是這個玩家的稜光裂上的（查完就清掉）。 */
+    private boolean takeSunderOwn(final LivingEntity enemy, final tw.exilecore.ailment.AilmentType type, final Player player) {
+        final java.util.EnumMap<tw.exilecore.ailment.AilmentType, Object[]> marks = sunderOwn.get(enemy.getUniqueId());
+        final Object[] mark = marks == null ? null : marks.remove(type);
+        return mark != null && player.getUniqueId().equals(mark[0])
+                && plugin.getServer().getCurrentTick() - (long) mark[1] <= SUNDER_OWN_TICKS;
+    }
+
     int sunder(final Player player, final SkillBuild build) {
         if (plugin.ailments() == null) {
             return 0;
@@ -2142,6 +2184,7 @@ final class SkillExecutor {
                 if (!plugin.ailments().has(enemy, type)) {
                     continue;
                 }
+                final boolean ownAilment = takeSunderOwn(enemy, type, player); // 2026-11-14：是不是稜光裂自己的爆炸上的
                 plugin.ailments().consume(enemy, type, player); // 2026-10-27 無限循環：感電可能重新施加
                 any = true;
                 blasts++;
@@ -2160,11 +2203,11 @@ final class SkillExecutor {
                 final SkillProfile base = build.profile();
                 final SkillProfile blast = new SkillProfile(base.id() + "." + element.name().toLowerCase(java.util.Locale.ROOT), base.tags(),
                         base.effectiveness(), base.spellDamage(), base.spellDamageMax(), java.util.Map.of(element, 1.0), base.local())
-                        .scaled(scale * Primed.MORE, build.definition().name()); // 2026-10-31：用掉異常更多 50%
+                        .scaled(scale * Primed.MORE * (ownAilment ? 1 - SUNDER_OWN_LESS : 1), build.definition().name()); // 2026-10-31：用掉異常更多 50%
                 // 2026-11-01 照站長：稜光裂的爆炸也能點燃、凍結、感電（拿掉原作 active_skill_never_freeze_shock_ignite）；這次之前三種都擋
                 final Location at = enemy.getLocation();
                 for (final LivingEntity victim : targets.around(at, radius, player)) {
-                    damage.hit(player, victim, blast, null);
+                    sunderHit(player, victim, blast);
                 }
                 visuals.nova(build.definition().visual(), at, radius);
             }
@@ -2185,7 +2228,7 @@ final class SkillExecutor {
                 }
                 final Location at = enemy.getLocation();
                 for (final LivingEntity victim : targets.around(at, radius, player)) {
-                    damage.hit(player, victim, blast, null);
+                    sunderHit(player, victim, blast);
                 }
                 visuals.nova(build.definition().visual(), at, radius);
                 blasts++;

@@ -990,6 +990,29 @@ final class MapBosses {
     }
 
     /**
+     * 2026-11-14 照站長「新增兩種模式」：照拿這份的人的掉落模式擲 Boss 掉落。一般掉落 = {@link #loot}；
+     * 綁定掉落 = 再多擲 {@link tw.exilecore.loot.LootMode#BOSS_MORE} − 1 份、只留傳奇與指定的寶石（期望值 ×5），這些全部綁定帳號；
+     * 這次之前只有 {@link #loot} 一種。
+     */
+    void lootWithMode(final MapInstance instance, final Player player, final List<DropTable.Drop> drops) {
+        final int from = drops.size();
+        loot(instance, player, drops);
+        if (!tw.exilecore.loot.LootMode.bound(plugin, player)) {
+            return;
+        }
+        for (int i = 1; i < tw.exilecore.loot.LootMode.BOSS_MORE; i++) {
+            final List<DropTable.Drop> extra = new java.util.ArrayList<>();
+            loot(instance, player, extra);
+            for (final DropTable.Drop drop : extra) {
+                if (tw.exilecore.loot.LootMode.boosted(drop)) {
+                    drops.add(drop);
+                }
+            }
+        }
+        tw.exilecore.loot.LootMode.bindFrom(drops, from);
+    }
+
+    /**
      * 一個人的 Boss 掉落（傷害有到 5% 的每個人各擲一份）：地圖（照他的星圖）、傳奇、天穹碎片。
      *
      * @param player 拿這份的人；null = 沒有人有份（照任何地圖都可能掉）

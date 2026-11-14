@@ -38,10 +38,23 @@ public final class DropTable {
      * @param item     裝備（EQUIPMENT）
      * @param level    怪物等級（寶石與藥劑用）
      * @param gem      指定的輔助寶石代號（SUPPORT_GEM：終局、極境的專屬輔助；null = 未切割輔助寶石）
+     * @param bound    2026-11-14 照站長「綁定掉落」模式（{@link tw.exilecore.loot.LootMode}）：做成物品時綁定帳號（不能交易、上架、放公會倉庫）
      */
-    public record Drop(Kind kind, CurrencyType currency, ItemData item, int level, String gem) {
+    public record Drop(Kind kind, CurrencyType currency, ItemData item, int level, String gem, boolean bound) {
+        public Drop(final Kind kind, final CurrencyType currency, final ItemData item, final int level, final String gem) {
+            this(kind, currency, item, level, gem, false);
+        }
+
         public Drop(final Kind kind, final CurrencyType currency, final ItemData item, final int level) {
             this(kind, currency, item, level, null);
+        }
+
+        /** 2026-11-14：同一份掉落，綁定帳號（裝備的資料也標上，做成物品、之後改造都帶著）。 */
+        public Drop asBound() {
+            if (item != null) {
+                item.setAccountBound(true);
+            }
+            return new Drop(kind, currency, item, level, gem, true);
         }
 
         public static Drop currency(final CurrencyType currency) {

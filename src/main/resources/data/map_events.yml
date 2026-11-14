@@ -356,7 +356,7 @@ ultimatum:
   chance: 0.2
   rounds: 5
   prepare_seconds: 1       # 2026-11-04 照站長；這次之前 5
-  leave_seconds: 4
+  leave_seconds: 10   # 2026-11-14 照站長「把 4 秒改長」（原作「離開場地太久」才失敗，沒公布秒數）；這次之前 4
   kill: { base: 12, per_round: 6, seconds: 60 }
   survive: { base: 15, per_round: 5 }   # 2026-11-04 照站長「生存減半」；這次之前 30＋10
   circle: { base: 7.5, per_round: 2.5, radius: 5, move_seconds: 8 }   # 2026-11-04 照站長「守圈減半」；這次之前 15＋5。照站長「光圈大一點」半徑 3.5 → 5 格

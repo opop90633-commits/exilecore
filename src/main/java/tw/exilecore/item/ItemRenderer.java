@@ -626,6 +626,9 @@ public final class ItemRenderer {
         if (data.foresight() != null) {
             lore.add(line("<#e0c070>預見鎖 <dark_gray>（拿通貨點它先看結果，再點一次才用）")); // 2026-10-26 照 PoE2 的 Hinekora's Lock
         }
+        if (data.accountBound()) { // 2026-11-14 照站長「綁定掉落」模式
+            lore.add(line("<#ff9a6b>綁定帳號 <dark_gray>（綁定掉落模式掉的：不能交易、上架、放公會倉庫、丟在地上）"));
+        }
         if (data.locked()) {
             lore.add(line("<#ffd27f>🔒 已鎖定 <dark_gray>（不會被拆解、上架、交易；/lock 解除）"));
         }

@@ -23,6 +23,7 @@ import java.util.regex.Pattern;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -69,6 +70,14 @@ class GemQualityRefTest {
             }
         }
         assertTrue(bad.isEmpty(), "品質說明寫不出來：" + bad);
+    }
+
+    @Test
+    void emptyQualityHasNoTemplateLine() {
+        // 2026-11-14 照站長「狂暴額外0%」：一般品質是空的（[]）就不寫「…更多 0% 傷害」
+        assertNull(GemQualityText.body("beast_blood_boil", List.of(), 20));
+        assertTrue(SkillService.qualityText(config.skill("beast_blood_boil"), 20).contains("沒有效果"),
+                SkillService.qualityText(config.skill("beast_blood_boil"), 20));
     }
 
     @Test
@@ -181,7 +190,9 @@ class GemQualityRefTest {
         for (final String id : WIRED) {
             assertTrue(GemQuality.has(id), id + "：要寫在 gem_quality.yml");
             final String text = SkillService.qualityText(config.skill(id), 20);
-            assertNotNull(GemQualityText.body(id, GemQuality.modifiers(id, 20, "q"), 20), id + "：要有說明樣板");
+            if (!GemQuality.modifiers(id, 20, "q").isEmpty()) { // 2026-11-14：一般品質是空的（獸血沸）寫「沒有效果」，不套樣板
+                assertNotNull(GemQualityText.body(id, GemQuality.modifiers(id, 20, "q"), 20), id + "：要有說明樣板");
+            }
             assertFalse(text.contains("增加 20% 傷害"), id + "：不再是通用規則：" + text);
         }
         // 說明照原作的數值（20% 品質）

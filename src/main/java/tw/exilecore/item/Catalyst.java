@@ -105,8 +105,11 @@ public enum Catalyst {
                     || stat.equals(StatKeys.LIFE_PER_KILL) || stat.equals(StatKeys.LEECH_LIFE)); // 2026-10-19：偷取為生命（PoE2 的標籤有生命）
             // 攻擊：攻擊專用的（tags 有 attack）與陷阱、手雷的傷害類；通用的元素、混沌傷害不算；攻速歸速度、暴擊歸暴擊（2026-10）
             // 2026-10-19：攻擊造成的物理傷害偷取為生命／魔力也算（PoE2 的標籤有攻擊）；2026-10-20：命中（PoE2 的標籤是攻擊）
+            // 2026-11-14 照站長（熔岩之吻「攻擊詞綴 +40%」配「+3 全部近戰攻擊技能等級」沒變）：帶攻擊標籤的技能等級（近戰攻擊）也算，
+            //   跟法術催化劑加「全部法術技能等級」同一個規則（乘完捨去，+3 × 1.4 → +4）；「全部投射物技能等級」沒有攻擊標籤不算。這次之前不算
             case ATTACK -> damage(mod) && (tags.contains("attack") || tags.contains("trap") || tags.contains("grenade"))
-                    || leech(mod) && tags.contains("attack") || stat.equals(StatKeys.ACCURACY);
+                    || leech(mod) && tags.contains("attack") || stat.equals(StatKeys.ACCURACY)
+                    || stat.equals(StatKeys.SKILL_LEVEL) && tags.contains("attack") && !minion;
             // 法術：法術專用的（tags 有 spell）傷害類；施法速度歸速度、法術暴擊歸暴擊
             // 2026-11-08 照站長（照 PoE2：「+x 全部法術技能等級」帶 caster 標籤，法術催化劑也加；乘完捨去，見 ItemStats.catalysed）；這次之前只算法術傷害
             case CASTER -> damage(mod) && spell && !minion || stat.equals(StatKeys.SKILL_LEVEL) && spell && !minion;

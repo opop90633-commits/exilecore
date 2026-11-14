@@ -110,6 +110,11 @@ public final class ItemCodec {
         container.set(dataKey, PersistentDataType.STRING, GSON.toJson(data));
         container.set(baseKey, PersistentDataType.STRING, data.base());
         container.set(rarityKey, PersistentDataType.STRING, data.rarity().name());
+        // 2026-11-14 照站長「綁定掉落」模式：資料上綁定帳號的，物品掛上 AccountBound 的記號（交易、上架、公會倉庫、丟地上都擋；
+        //   寫在資料上，改造、重做物品都帶著）。資料沒綁的不動記號（職業轉職卷那種本來就綁的物品不是裝備，不會走到這裡）
+        if (data.accountBound()) {
+            container.set(AccountBound.KEY, PersistentDataType.BYTE, (byte) 1);
+        }
     }
 
     public String toJson(final ItemData data) {

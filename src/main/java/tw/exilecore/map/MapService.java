@@ -1953,7 +1953,7 @@ public final class MapService {
             if (config.eventBoss(instance.map().id()) != null && entity.getPersistentDataContainer().has(bossKey)
                     && !instance.isDifficultyTrial() // 2026-11-12：難度的進階關卡不掉東西（塑星者也是 event_bosses 的 Boss）
                     && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
-                bosses.loot(instance, player, drops);
+                bosses.lootWithMode(instance, player, drops); // 2026-11-14：照掉落模式（綁定掉落 ×5、綁帳號）
                 if (player != null) {
                     try {
                         BossDropRecords.get(plugin).record(instance, config, player.getUniqueId(), player.getName(), drops);
@@ -1986,11 +1986,19 @@ public final class MapService {
         //   supports_lineage.yml 的 drops，見 LineageDrops）
         final boolean currentBoss = boss && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId());
         if (!boss || currentBoss) {
-            LineageDrops.roll(plugin, instance, data, currentBoss, drops, random());
+            // 2026-11-14 照站長「血脈寶石路上的也要 x4 也是不能交易」：綁定掉落的人多擲 3 次、掉出來的綁定帳號；這次之前大家都擲 1 次
+            final int lineageFrom = drops.size();
+            final boolean boundMode = tw.exilecore.loot.LootMode.bound(plugin, player);
+            for (int i = 0; i < (boundMode ? tw.exilecore.loot.LootMode.LINEAGE_MORE : 1); i++) {
+                LineageDrops.roll(plugin, instance, data, currentBoss, drops, random());
+            }
+            if (boundMode) {
+                tw.exilecore.loot.LootMode.bindFrom(drops, lineageFrom);
+            }
         }
         // 2026-10-17：只有這張圖現在的 Boss 給 Boss 掉落（區塊重新載入帶回來的舊 Boss 不算，以前打死會再擲一整份）
         if (boss && instance.boss() != null && instance.boss().getUniqueId().equals(entity.getUniqueId())) {
-            bosses.loot(instance, player, drops);
+            bosses.lootWithMode(instance, player, drops); // 2026-11-14：照掉落模式（綁定掉落 ×5、綁帳號）
             // 2026-11-11 照站長「有地方能檢查災厄級有沒有人有掉東西嗎」：災厄級、終局、極境、巔峰的掉落記一筆（管理網頁「Boss 掉落」）
             if (player != null) {
                 try {

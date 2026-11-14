@@ -1336,10 +1336,10 @@ uniques:
       value: [17, 23]
       stats:
         - { stat: damage.extra.chaos, type: FLAT, value: "{value}", tags: [attack] }
-    - from: 5   # 原作 Grants Skill: Level 1 Crushing Fear（值 0.5 = 固定 1 級，UniqueDerived.fixedGrantLevel）
-      text: "賦予技能：等級 1 死懼碎擊"
+    - from: 5   # 2026-11-14 照站長（原作截圖「賦予技能：等級 20 死懼碎擊」）：固定 20 級（UniqueDerived.fixedGrantLevel）；這次之前寫成 1 級（值 0.5）
+      text: "賦予技能：等級 20 死懼碎擊"
       stats:
-        - { stat: grant_skill.crushing_fear, type: FLAT, value: 0.5 }
+        - { stat: grant_skill.crushing_fear, type: FLAT, value: 20 }
     - from: 6   # 原作 Gain 1 Fear Overwhelming when you Cull a target（每層攻擊範圍增加 5%，10 秒，最多 20 層）
       text: "撲殺一個目標時獲得 1 層壓倒性恐懼"
       stats:

@@ -50,6 +50,11 @@ public final class CharacterCommand {
                         .executes(context -> run(plugin, context, player -> profile(plugin, player, null)))
                         .then(Commands.literal("on").executes(context -> run(plugin, context, player -> profile(plugin, player, true))))
                         .then(Commands.literal("off").executes(context -> run(plugin, context, player -> profile(plugin, player, false)))))
+                // 2026-11-14 照站長「新增兩種模式」「玩家可自由切換模式」：/char loot 看、/char loot trade|bound 切換掉落模式
+                .then(Commands.literal("loot")
+                        .executes(context -> run(plugin, context, player -> lootMode(plugin, player, null)))
+                        .then(Commands.literal("trade").executes(context -> run(plugin, context, player -> lootMode(plugin, player, false))))
+                        .then(Commands.literal("bound").executes(context -> run(plugin, context, player -> lootMode(plugin, player, true)))))
                 .then(Commands.literal("witch")
                         .executes(context -> run(plugin, context, player -> plugin.characters().offerWitchSplit(player))))
                 .then(Commands.literal("rename")
@@ -154,6 +159,27 @@ public final class CharacterCommand {
             return;
         }
         action.accept(tree);
+    }
+
+    /** 2026-11-14：看或切換這個角色的掉落模式（bound = null 只看）。 */
+    private static void lootMode(final ExileCore plugin, final Player player, final Boolean bound) {
+        if (!plugin.players().get(player).hasCharacter()) {
+            player.sendMessage(plugin.text().prefixed("<red>先建立角色：/char"));
+            return;
+        }
+        final boolean now = tw.exilecore.loot.LootMode.bound(plugin, player);
+        if (bound == null) {
+            player.sendMessage(plugin.text().prefixed("<gray>現在：<white>" + tw.exilecore.loot.LootMode.describe(now)));
+            player.sendMessage(plugin.text().prefixed("<gray>切換：<white>/char loot trade</white>（一般掉落）、<white>/char loot bound</white>（綁定掉落）；隨時可以換，組隊各自照自己的"));
+            return;
+        }
+        if (bound == now) {
+            player.sendMessage(plugin.text().prefixed("<gray>已經是" + (now ? "綁定掉落" : "一般掉落") + "了"));
+            return;
+        }
+        tw.exilecore.loot.LootMode.set(plugin, player, bound);
+        player.sendMessage(plugin.text().prefixed("<green>掉落模式換成 <white>" + tw.exilecore.loot.LootMode.describe(bound)));
+        player.sendMessage(plugin.text().prefixed("<gray>已經掉出來的東西不會變；之後打死的怪照新的模式掉"));
     }
 
     private static void select(final ExileCore plugin, final Player player, final int slot) {

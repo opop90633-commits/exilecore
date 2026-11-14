@@ -154,4 +154,16 @@ class FallingThunderTest {
         assertEquals(1.0, ProjectileEngine.speedFactor(50, 0.5), 1e-9);
         assertEquals(1.5, ProjectileEngine.speedFactor(50, 1), 1e-9);
     }
+
+    /** 2026-11-14 照站長「驚雷劈的額外投射物是不是應該 ×1 就好」：銳星投射物不吃驚雷劈的本服平衡倍率（劈的那一下照舊）。 */
+    @Test
+    void boltsSkipTheChopBalance() {
+        final SkillBuild chop = build(20, List.of());
+        final SkillBuild bolt = SkillExecutor.thunderBuild(config, chop, 3, 90, STAFF, new StatSheet());
+        assertNotNull(bolt);
+        final double chopBalance = chop.profile().effective(new StatSheet()).more(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE, chop.profile().tags());
+        final double boltBalance = bolt.profile().effective(new StatSheet()).more(tw.exilecore.stats.StatKeys.DAMAGE_BALANCE, bolt.profile().tags());
+        assertEquals(7.5, chopBalance, 1e-6, "驚雷劈 ×7.5");
+        assertEquals(1.0, boltBalance, 1e-6, "投射物 ×1");
+    }
 }

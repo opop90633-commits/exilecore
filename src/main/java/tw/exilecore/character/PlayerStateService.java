@@ -979,6 +979,7 @@ public final class PlayerStateService {
     /**
      * 2026-10-27 照 PoE2 0.5（poe2wiki Quality）：法杖、長杖、權杖的品質不加武器自己的數值，加在賦予的技能上
      * （技能代號 → 武器的品質；同一個技能有好幾把取最高）。這次之前賦予的技能沒有品質。
+     * 2026-11-14 照站長：防具（含盾）賦予的技能也照那件防具的品質（防具自己的防禦照加）；首飾的觸媒品質不算。
      */
     private Map<String, Integer> grantedQuality(final List<EquippedItem> active) {
         if (plugin.items() == null) {
@@ -986,10 +987,16 @@ public final class PlayerStateService {
         }
         final Map<String, Integer> quality = new java.util.HashMap<>();
         for (final EquippedItem item : active) {
-            if (item.data().quality() <= 0 || !item.base().isWeapon() && !item.base().tags().contains("sceptre")) {
+            if (item.data().quality() <= 0) {
                 continue;
             }
-            final String skill = plugin.items().repository().grantedSkill(item.data().base());
+            // 2026-11-14 照站長「護腿加品質，賦予技能不會跟著加品質」「防具也加給技能」：防具（含盾）賦予的技能也照那件的品質
+            //   （防具的品質照樣加護甲、閃避、能量護盾）；首飾的品質是觸媒（只加某一類詞綴）不算。這次之前只有武器、權杖
+            final boolean armour = item.base().isArmour();
+            if (!item.base().isWeapon() && !item.base().tags().contains("sceptre") && !armour) {
+                continue;
+            }
+            final String skill = armour ? null : plugin.items().repository().grantedSkill(item.data().base());
             if (skill != null) {
                 quality.merge(skill, item.data().quality(), Math::max);
             }

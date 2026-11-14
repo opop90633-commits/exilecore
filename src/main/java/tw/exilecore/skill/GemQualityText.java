@@ -103,7 +103,8 @@ final class GemQualityText {
             Map.entry("field_quake_hammers", "使用這個技能的動作期間暈眩門檻增加 {action.stun_threshold}%"),
             Map.entry("collapse_heart_chant", "需要的連擊少 {-i:mantra.combo}"),
             Map.entry("servant_corpse_swap", "召喚物復活另外快 {servant_corpse_swap.slower}%"), // 2026-10-31：最大生命那條 10-30 移到額外的品質效果（高階奇術那行會寫），這裡拿掉，不然一直顯示 0%
-            Map.entry("beast_blood_boil", "狂暴另外更多 {effect.damage}% 傷害"),
+            // 2026-11-14 照站長「狂暴額外0%」：獸血沸的一般品質照 PoB2 是空的（11-11 把狂暴更多傷害移到高階奇術的額外品質），
+            //   樣板還留著，寶石顯示「品質 +20%：狂暴另外更多 0% 傷害」；拿掉之後顯示「這顆寶石的品質沒有效果」。這次之前在這裡
             Map.entry("gathered_scales", "甲片持續時間 +{plating.duration} 秒"), // 2026-11-01 照 PoE2；這次之前「增益另外增加護甲、破甲」
             Map.entry("snake_squall_thrust", "擊退距離更多 {skill.knockback}%"),
             Map.entry("earth_spike_eruption", "每根還在的地刺更多 {spike.more_per_spike}% 擊中傷害"),
@@ -193,7 +194,9 @@ final class GemQualityText {
             return ((String) none[0]).replace("{v}", number(value));
         }
         final String template = TEMPLATES.get(skillId);
-        if (template == null || mods == null) {
+        // 2026-11-14 照站長「狂暴額外0%」：品質寫 []（一般品質沒有效果）的不套樣板，交給呼叫端寫「這顆寶石的品質沒有效果」；
+        //   這次之前照樣套，數字全是 0
+        if (template == null || mods == null || mods.isEmpty()) {
             return null;
         }
         final StringBuilder text = new StringBuilder();

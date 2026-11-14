@@ -5021,7 +5021,9 @@ public final class SkillService {
         }
         final double perCharge = SkillExecutor.THUNDER_MORE_PER_CHARGE
                 + build.profile().effective(hitSheet).flat(SkillExecutor.THUNDER_QUALITY, build.profile().tags());
-        return thunderExtraDps(perHit, hitsPerSecond, charges, perCharge);
+        // 2026-11-14 照站長：投射物不吃驚雷劈的本服平衡倍率（SkillExecutor.thunderBuild），估計也把劈的那一下的倍率除掉
+        final double balance = build.profile().effective(hitSheet).more(StatKeys.DAMAGE_BALANCE, build.profile().tags());
+        return thunderExtraDps(balance > 0 ? perHit / balance : perHit, hitsPerSecond, charges, perCharge);
     }
 
     /** 2026-11-14：{@link #thunderExtra} 的算式（純函式）。 */

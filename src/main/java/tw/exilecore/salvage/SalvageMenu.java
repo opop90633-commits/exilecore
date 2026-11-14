@@ -461,8 +461,19 @@ public final class SalvageMenu extends Menu {
     /** 通貨那一格的身分開頭（快速選擇、反選不會選到通貨，要一疊一疊點）。 */
     private static final String CURRENCY_ID = "cur:";
 
-    /** 寶石（整疊）或藥劑拆解可得的金幣；不是這兩種回傳 0。 */
+    /** 寶石（整疊）或藥劑拆解可得的金幣；不是這兩種回傳 0。2026-11-14：綁定帳號的 ÷{@value tw.exilecore.loot.LootMode#SALVAGE_DIVISOR}。 */
     private long otherGold(final ItemStack stack) {
+        final long gold = rawOtherGold(stack);
+        return tw.exilecore.item.AccountBound.isBound(stack) ? gold / tw.exilecore.loot.LootMode.SALVAGE_DIVISOR : gold;
+    }
+
+    /** 2026-11-14：裝備拆解的金幣（綁定帳號的 ÷5）。 */
+    private long itemGold(final ItemBase base, final ItemData data) {
+        final long gold = config.gold(base, data);
+        return data.accountBound() ? gold / tw.exilecore.loot.LootMode.SALVAGE_DIVISOR : gold;
+    }
+
+    private long rawOtherGold(final ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return 0;
         }
@@ -510,6 +521,9 @@ public final class SalvageMenu extends Menu {
         lines.add("");
         lines.add(String.format(Locale.ROOT, "<gray>拆解可得：<#f5b942>%,d 金幣", gold)
                 + (stack.getAmount() > 1 ? " <dark_gray>（整疊 " + stack.getAmount() + " 個）" : ""));
+        if (tw.exilecore.item.AccountBound.isBound(stack)) {
+            lines.add("<#ff9a6b>綁定帳號：只拿 1/" + tw.exilecore.loot.LootMode.SALVAGE_DIVISOR); // 2026-11-14
+        }
         lines.add(chosen ? "<green>✔ 已選擇（再點一次取消）" : "<yellow>左鍵：選擇拆解");
         return decorate(copy, lines, chosen);
     }
@@ -519,7 +533,7 @@ public final class SalvageMenu extends Menu {
         final ItemBase base = plugin.items().repository().base(data.base());
         final List<String> lines = new ArrayList<>();
         lines.add("");
-        lines.add(String.format(Locale.ROOT, "<gray>拆解可得：<#f5b942>%,d 金幣", config.gold(base, data)));
+        lines.add(String.format(Locale.ROOT, "<gray>拆解可得：<#f5b942>%,d 金幣", itemGold(base, data)));
         final String currencyId = data.starter() ? null : config.currencyFor(base);
         final CurrencyType currency = currencyId == null ? null : plugin.currencies().repository().get(currencyId);
         if (data.starter()) {
@@ -530,6 +544,9 @@ public final class SalvageMenu extends Menu {
             final int chance = (int) Math.round(config.currencyChance(data.rarity()) * 100);
             lines.add("<gray>　　　　" + ItemRenderer.escape(currency.name())
                     + (guaranteed > 0 ? " ×" + guaranteed + "，" : " ") + chance + "% 機率再 1 個");
+        }
+        if (data.accountBound()) {
+            lines.add("<#ff9a6b>綁定帳號：金幣、通貨只拿 1/" + tw.exilecore.loot.LootMode.SALVAGE_DIVISOR + "<dark_gray>（上面的通貨數量還沒除）"); // 2026-11-14
         }
         final String care = careNote(data);
         if (care != null) {
@@ -610,7 +627,7 @@ public final class SalvageMenu extends Menu {
                 }
                 final ItemData data = read.get();
                 final ItemBase base = plugin.items().repository().base(data.base());
-                gold += config.gold(base, data);
+                gold += itemGold(base, data); // 2026-11-14：綁定的 ÷5
                 byRarity.merge(data.rarity(), 1, Integer::sum);
                 if (needsCare(data)) {
                     care++;
@@ -880,9 +897,12 @@ public final class SalvageMenu extends Menu {
             }
             inventory.setItem(entry.getKey(), null);
             count++;
-            gold += reward.gold();
-            if (reward.currencyId() != null) {
-                currencies.merge(reward.currencyId(), reward.currencyAmount(), Integer::sum);
+            // 2026-11-14 照站長「綁定的裝備和寶石拆解、賣給商人的價格除 5」：金幣 ÷5，通貨 ÷5（不整除的照餘數的機率多 1 個）
+            final boolean bound = data.get().accountBound();
+            gold += bound ? reward.gold() / tw.exilecore.loot.LootMode.SALVAGE_DIVISOR : reward.gold();
+            final int amount = bound ? tw.exilecore.loot.LootMode.divide(reward.currencyAmount(), plugin.items().random()) : reward.currencyAmount();
+            if (reward.currencyId() != null && amount > 0) {
+                currencies.merge(reward.currencyId(), amount, Integer::sum);
             }
         }
         selected.clear();

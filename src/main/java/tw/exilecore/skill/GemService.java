@@ -77,7 +77,14 @@ public final class GemService {
         if (stack == null || stack.isEmpty()) {
             return Optional.empty();
         }
-        return GemData.decode(stack.getPersistentDataContainer().get(key, PersistentDataType.STRING));
+        final Optional<GemData> data = GemData.decode(stack.getPersistentDataContainer().get(key, PersistentDataType.STRING));
+        // 2026-11-14 照站長「綁定掉落」：綁定的技能寶石（掉出來的時候只有物品上的記號）讀出來就是「這顆本身綁定」；
+        //   裡面已經記了哪幾孔綁定的（從面板取出來的）照裡面的
+        if (data.isPresent() && data.get().kind() == GemData.Kind.SKILL && data.get().entry() != null
+                && !data.get().entry().anyBound() && tw.exilecore.item.AccountBound.isBound(stack)) {
+            return Optional.of(GemData.skill(data.get().entry().withBound(true)));
+        }
+        return data;
     }
 
     public boolean isGem(final ItemStack stack) {
@@ -100,7 +107,7 @@ public final class GemService {
         if (data.isEmpty() || !lockable(stack)) {
             return false;
         }
-        final ItemStack fresh = create(data.get(), stack.getAmount(), locked);
+        final ItemStack fresh = create(data.get(), stack.getAmount(), locked, tw.exilecore.item.AccountBound.isBound(stack)); // 2026-11-14：綁定留著（這次之前整份換掉）
         stack.setItemMeta(fresh.getItemMeta());
         final io.papermc.paper.datacomponent.item.CustomModelData model = fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA);
         if (model != null) {
@@ -131,7 +138,7 @@ public final class GemService {
         if (data.isEmpty() || !stack.hasItemMeta()) {
             return false;
         }
-        final ItemStack fresh = create(data.get(), stack.getAmount(), locked(stack)); // 2026-10-31：鎖定的重畫後還是鎖著
+        final ItemStack fresh = create(data.get(), stack.getAmount(), locked(stack), tw.exilecore.item.AccountBound.isBound(stack)); // 2026-10-31：鎖定的重畫後還是鎖著；2026-11-14：綁定也是
         // 名稱或描述的文字改過才重畫（技能寶石的描述裡有掛著的輔助名稱，輔助改名時技能寶石的名字沒變）
         // 2026-10：未切割寶石有了專屬貼圖（每一級一張）：舊的沒有貼圖標記的也要重畫
         final boolean sameModel = java.util.Objects.equals(fresh.getData(io.papermc.paper.datacomponent.DataComponentTypes.CUSTOM_MODEL_DATA),
@@ -450,6 +457,13 @@ public final class GemService {
 
     /** 做出寶石物品；locked = 2026-10-31 鎖定的（只有技能、輔助寶石）。 */
     public ItemStack create(final GemData data, final int amount, final boolean lockedGem) {
+        return create(data, amount, lockedGem, false);
+    }
+
+    /** 2026-11-14：bound = 綁定帳號（技能寶石裡記著綁定的也算）。 */
+    public ItemStack create(final GemData data, final int amount, final boolean lockedGem, final boolean boundGem) {
+        final boolean bound = (boundGem || data.entry() != null && data.entry().anyBound())
+                && (data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT);
         final boolean locked = lockedGem && (data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT);
         final ItemStack stack = ItemStack.of(material(data.kind()), Math.max(1, Math.min(data.maxStack(), amount)));
         stack.editMeta(meta -> {
@@ -458,6 +472,9 @@ public final class GemService {
             if (locked) {
                 lines.add("");
                 lines.add("<#ffd27f>🔒 已鎖定：拆解台、市集、交易、垃圾桶都不收（/lock 解除）");
+            }
+            if (bound) {
+                lines.add(BOUND_LORE); // 2026-11-14
             }
             meta.lore(tw.exilecore.core.text.TextWrap.lines(lines)); // 2026-10-26：長的說明自動換行（這次之前一行到底）
             meta.setMaxStackSize(data.maxStack());
@@ -478,6 +495,9 @@ public final class GemService {
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, data.encode());
             if (locked) {
                 meta.getPersistentDataContainer().set(lockKey, PersistentDataType.BYTE, (byte) 1);
+            }
+            if (bound) {
+                tw.exilecore.item.AccountBound.mark(meta); // 2026-11-14
             }
             final CurrencyType currency = currencyOf(data);
             if (currency != null) {
@@ -574,7 +594,8 @@ public final class GemService {
             qualityPreview(config().skill(data.entry().skillId()), lines, "<dark_gray>");
         }
         if (data.entry() != null && data.entry().corrupted()) {
-            lines.add("<#d20000>已腐化 <dark_gray>（不能再升級、開孔、加品質；輔助照樣能換）"); // 2026-10-23
+            lines.add(data.entry().twiceCorrupted() ? "<#d20000>二次腐化 <dark_gray>（不能再升級、開孔、加品質、腐化；輔助照樣能換）" // 2026-11-14
+                    : "<#d20000>已腐化 <dark_gray>（不能再升級、開孔、加品質；輔助照樣能換）"); // 2026-10-23
         }
         lines.add("");
         if (currencyOf(data) != null) {
@@ -1218,7 +1239,7 @@ public final class GemService {
             final List<ItemStack> supports = new java.util.ArrayList<>();
             for (int i = 0; i < entry.sockets(); i++) {
                 if (!entry.support(i).isEmpty() && !entry.spellSocket(i)) {
-                    supports.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                    supports.add(supportStack(entry, i));
                 }
             }
             for (final SkillLoadout.Entry spell : entry.spells()) {
@@ -1354,16 +1375,17 @@ public final class GemService {
         final List<String> names = new ArrayList<>();
         for (int i = 0; i < entry.sockets(); i++) {
             if (!entry.support(i).isEmpty()) { // 寶石自己的輔助拆下來
-                extra.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                extra.add(supportStack(entry, i));
                 names.add(supportName(entry.support(i)));
             }
         }
         SkillLoadout.Entry updated = host.withSpell(index, new SkillLoadout.Entry(entry.skillId(), entry.level(), entry.sockets(), List.of())
-                .withCorrupted(entry.corrupted()).withQuality(entry.quality())); // 2026-10-23：腐化、品質放進去也留著
+                .withCorrupted(entry.corrupted()).withQuality(entry.quality()).withBound(entry.bound())
+                .withTwiceCorrupted(entry.twiceCorrupted())); // 2026-10-23：腐化、品質放進去也留著；2026-11-14：綁定、二次腐化也留著
         for (int i = SkillLoadout.Entry.INNER_SOCKET + 1; !warcryHost && index == SkillLoadout.Entry.INNER_SOCKET && i < updated.sockets(); i++) {
             final SupportDefinition support = config().support(updated.support(i));
             if (support != null && support.hostRefusal(hostDefinition, definition) != null) { // 跟新技能不合的輔助拆下來
-                extra.add(create(GemData.support(updated.support(i), updated.resonant(i)), 1));
+                extra.add(supportStack(updated, i));
                 names.add(support.name() + "（不能輔助" + definition.name() + "）");
                 updated = updated.withSupport(i, "", false);
             }
@@ -1436,6 +1458,12 @@ public final class GemService {
 
     /** 2026-10-18：帶著寶石物品的共鳴旗標掛上去（共鳴的專屬輔助不佔專屬名額；拔下來時旗標會還給寶石）。 */
     Change socket(final Player player, final int position, final int index, final String supportId, final boolean resonant) {
+        return socket(player, position, index, supportId, resonant, false);
+    }
+
+    /** 2026-11-14：bound = 放進去的輔助寶石綁定帳號（記在那一孔上，拆下來照樣綁定）。 */
+    Change socket(final Player player, final int position, final int index, final String supportId, final boolean resonant,
+                  final boolean bound) {
         final SkillLoadout loadout = plugin.players().get(player).skills();
         final SkillLoadout.Entry entry = loadout.skill(position);
         if (entry == null) {
@@ -1484,7 +1512,9 @@ public final class GemService {
         }
         final String old = entry.support(socket);
         final boolean oldResonant = entry.resonant(socket);
-        loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable() && !support.lineage())); // 2026-10-27：血脈輔助不留共鳴
+        final boolean oldBound = entry.supportBound(socket); // 2026-11-14
+        loadout.set(position, entry.withSupport(socket, supportId, resonant && !support.cuttable() && !support.lineage()) // 2026-10-27：血脈輔助不留共鳴
+                .withSupportBound(socket, bound)); // 2026-11-14：綁定記在那一孔
         // 2026-11-08 照站長「同系列只算第一顆，插的時候也提醒」：插得進去，但同系列（I／II／III）只有孔的順序第一顆生效；這次之前沒有提示
         if (!host) {
             final List<SupportDefinition> now = new java.util.ArrayList<>();
@@ -1498,7 +1528,8 @@ public final class GemService {
                         + " 沒有生效：跟 " + tw.exilecore.item.ItemRenderer.escape(dup.getValue().name()) + " 同系列，一個技能只算第一顆（照孔的順序）"));
             }
         }
-        return Change.ok(old.isEmpty() ? null : create(GemData.support(old, oldResonant), 1)); // 2026-10-18：換下來的保留共鳴
+        final ItemStack oldStack = old.isEmpty() ? null : create(GemData.support(old, oldResonant), 1); // 2026-10-18：換下來的保留共鳴
+        return Change.ok(oldBound && oldStack != null ? bindStack(oldStack) : oldStack); // 2026-11-14：換下來的照那一孔綁定
     }
 
     /**
@@ -1542,7 +1573,8 @@ public final class GemService {
         final String old = entry.support(index);
         final boolean oldResonant = entry.resonant(index);
         loadout.set(position, entry.withSupport(index, "", false));
-        return Change.ok(create(GemData.support(old, oldResonant), 1)); // 2026-10-18：共鳴旗標還給寶石
+        final ItemStack back = create(GemData.support(old, oldResonant), 1); // 2026-10-18：共鳴旗標還給寶石
+        return Change.ok(entry.supportBound(index) ? bindStack(back) : back); // 2026-11-14：那一孔綁定就綁定
     }
 
     /** 用鑿星石幫技能開一個輔助孔（小的開第 3 孔、普通的開第 4 孔、大的開第 5 孔）。 */
@@ -1607,20 +1639,21 @@ public final class GemService {
         if (omen != null) {
             plugin.economy().ledger().of(player).consumed(omen.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
         }
-        final ItemStack returned = roll.returnedGem() == null ? null : create(roll.returnedGem(), 1);
+        final ItemStack returned = roll.returnedGem() == null ? null
+                : roll.returnedBound() ? bindStack(create(roll.returnedGem(), 1)) : create(roll.returnedGem(), 1); // 2026-11-14：綁定的照樣綁定
         player.sendMessage(plugin.text().prefixed("<#d20000>腐化 " + ItemRenderer.escape(skillName(entry)) + "：<white>" + roll.result()
                 + (omen != null ? "<gray>（用了" + ItemRenderer.escape(omen.name()) + "）" : "")
                 + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
         return Change.ok(returned);
     }
 
-    /** 2026-11-07：晶蝕石碎掉技能寶石的機率（poe2db 沒寫，估的）。 */
-    static final double CRYSTAL_DESTROY = 0.25;
+    /** 2026-11-07：晶蝕石碎掉技能寶石的機率（poe2db 沒寫）。2026-11-14 照站長「照原作改」：照社群估的 50%（這次之前 25%）。 */
+    static final double CRYSTAL_DESTROY = 0.5;
 
     /**
      * 2026-11-07 照 PoE2 的結晶腐化（Crystallised Corruption：Unpredictably reforges a Corrupted Skill Gem, or Destroys it）：
-     * 已腐化的技能寶石再腐化一次（照蝕變石那一套：等級 ±1、輔助孔 ±1、品質變動，一定有變化），或 1/4 機率碎掉
-     * （碎掉時掛著的輔助、孔裡的技能寶石還給你）。
+     * 已腐化的技能寶石再腐化一次（照蝕變石那一套：等級 ±1、輔助孔 ±1、品質變動，一定有變化），或 {@link #CRYSTAL_DESTROY} 機率碎掉
+     * （碎掉時掛著的輔助、孔裡的技能寶石還給你）。2026-11-14 照 PoE2：用過的是二次腐化，不能再用。
      */
     Change crystallise(final Player player, final int position, final CurrencyType orb) {
         final SkillLoadout loadout = plugin.players().get(player).skills();
@@ -1634,6 +1667,10 @@ public final class GemService {
         if (!entry.corrupted()) {
             return Change.fail(orb.name() + "只能用在已腐化的技能寶石（先用蝕變石腐化）");
         }
+        // 2026-11-14 照站長「照原作改」：照 PoE2，用過晶蝕石的是二次腐化，不能再用；這次之前可以一直用
+        if (entry.twiceCorrupted()) {
+            return Change.fail("這顆技能寶石已經二次腐化了（晶蝕石一顆寶石只能用一次）");
+        }
         final java.util.random.RandomGenerator random = plugin.items().random();
         plugin.economy().ledger().of(player).consumed(orb.id(), tw.exilecore.economy.EconomyLedger.SKILL, 1);
         if (random.nextDouble() < CRYSTAL_DESTROY) {
@@ -1641,7 +1678,7 @@ public final class GemService {
             final List<ItemStack> back = new java.util.ArrayList<>();
             for (int i = 0; i < entry.sockets(); i++) {
                 if (!entry.support(i).isEmpty() && !entry.spellSocket(i)) {
-                    back.add(create(GemData.support(entry.support(i), entry.resonant(i)), 1));
+                    back.add(supportStack(entry, i));
                 }
             }
             for (final SkillLoadout.Entry spell : entry.spells()) {
@@ -1656,8 +1693,9 @@ public final class GemService {
         for (int attempt = 1; !roll.changed() && attempt < 50; attempt++) {
             roll = rollCorrupt(entry, random);
         }
-        loadout.set(position, roll.updated());
-        final ItemStack returned = roll.returnedGem() == null ? null : create(roll.returnedGem(), 1);
+        loadout.set(position, roll.updated().withTwiceCorrupted(true)); // 2026-11-14：二次腐化
+        final ItemStack returned = roll.returnedGem() == null ? null
+                : roll.returnedBound() ? bindStack(create(roll.returnedGem(), 1)) : create(roll.returnedGem(), 1); // 2026-11-14：綁定的照樣綁定
         player.sendMessage(plugin.text().prefixed("<#d20000>" + ItemRenderer.escape(orb.name()) + " " + ItemRenderer.escape(skillName(entry))
                 + "：<white>" + roll.result() + (returned != null ? "<gray>（那一孔的寶石還給你）" : "")));
         return Change.ok(returned);
@@ -1678,7 +1716,10 @@ public final class GemService {
     }
 
     /** 2026-11-04：擲一次腐化的結果（還沒寫回去；returnedGem 是少一孔時要還的寶石）。 */
-    record CorruptRoll(SkillLoadout.Entry updated, GemData returnedGem, String result, boolean changed) {
+    record CorruptRoll(SkillLoadout.Entry updated, GemData returnedGem, String result, boolean changed, boolean returnedBound) {
+        CorruptRoll(final SkillLoadout.Entry updated, final GemData returnedGem, final String result, final boolean changed) {
+            this(updated, returnedGem, result, changed, false);
+        }
     }
 
     /** 2026-11-04 從 corrupt 拆出來（必變籤要能重擲）；規則照舊。 */
@@ -1694,6 +1735,7 @@ public final class GemService {
                         : new CorruptRoll(updated, null, next > entry.level() ? "等級 +1（Lv." + next + "）" : "等級 −1（Lv." + next + "）", true);
             }
             case 2 -> {
+                boolean returnedBound = false;
                 final boolean add = random.nextBoolean();
                 final int next = Math.max(SkillLoadout.BASE_SOCKETS, Math.min(SkillLoadout.MAX_SOCKETS, entry.sockets() + (add ? 1 : -1)));
                 if (next < entry.sockets()) {
@@ -1703,12 +1745,14 @@ public final class GemService {
                         updated = updated.withSpell(last, null);
                     } else if (!entry.support(last).isEmpty()) {
                         returned = GemData.support(entry.support(last), entry.resonant(last));
+                        returnedBound = entry.supportBound(last); // 2026-11-14：少一孔還的輔助照那一孔綁定
                         updated = updated.withSupport(last, "", false);
                     }
                 }
                 updated = updated.withSockets(next);
                 return next == entry.sockets() ? new CorruptRoll(updated, null, "沒有變化", false)
-                        : new CorruptRoll(updated, returned, next > entry.sockets() ? "輔助孔 +1（" + next + " 孔）" : "輔助孔 −1（" + next + " 孔）", true);
+                        : new CorruptRoll(updated, returned, next > entry.sockets() ? "輔助孔 +1（" + next + " 孔）" : "輔助孔 −1（" + next + " 孔）", true,
+                        returnedBound);
             }
             case 3 -> {
                 // 2026-10-23（PoE2）：品質變動 −7%～+3%（最多 23%）
@@ -1845,6 +1889,33 @@ public final class GemService {
             return;
         }
         player.getInventory().setItem(slot, stack.getAmount() <= 1 ? null : stack.asQuantity(stack.getAmount() - 1));
+    }
+
+    // ---- 2026-11-14 照站長「綁定掉落」模式：綁定帳號的寶石 ----
+    //   綁定記在技能面板的那一格上（SkillLoadout.Entry 的 boundMask：技能寶石本身、每一孔的輔助各自一位），拆下來、換下來照那一位綁回去；
+    //   技能寶石的物品裡也帶著（存檔文字的 & 與 $），整顆取出時哪幾孔綁定照樣記得。
+    //   這次之前（同一天）另外記帳，同一種寶石有綁、沒綁的時候會綁錯
+
+    private static final String BOUND_LORE = "<#ff9a6b>綁定帳號 <dark_gray>（綁定掉落模式掉的：不能交易、上架、放公會倉庫、丟在地上）";
+
+    /** 把一疊寶石標成綁定帳號（照 create 重畫：記號＋說明一行）；已經是的、不是技能或輔助寶石的不動。 */
+    public ItemStack bindStack(final ItemStack stack) {
+        if (stack == null || stack.isEmpty() || tw.exilecore.item.AccountBound.isBound(stack)) {
+            return stack;
+        }
+        final GemData data = read(stack).orElse(null);
+        if (data == null || !(data.kind() == GemData.Kind.SKILL || data.kind() == GemData.Kind.SUPPORT)) {
+            return stack;
+        }
+        final ItemStack fresh = create(data, stack.getAmount(), locked(stack), true);
+        stack.setItemMeta(fresh.getItemMeta());
+        return stack;
+    }
+
+    /** 技能上第 index 孔的輔助做成寶石（那一孔綁定就綁定）。 */
+    private ItemStack supportStack(final SkillLoadout.Entry entry, final int index) {
+        final ItemStack stack = create(GemData.support(entry.support(index), entry.resonant(index)), 1);
+        return entry.supportBound(index) ? bindStack(stack) : stack;
     }
 
     /** 放進背包；放不下的掉在腳邊（只有自己看得到、撿得起來）。 */

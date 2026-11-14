@@ -413,7 +413,12 @@ public final class MonsterListener implements Listener {
         final PersonalDrops personal = plugin.personalDrops();
         final Item dropped = location.getWorld().dropItemNaturally(location, stack, item -> {
             item.setPickupDelay(10);
-            if (owner != null) {
+            if (owner != null && tw.exilecore.item.AccountBound.isBound(stack)) {
+                // 2026-11-14 照站長「綁定的部分再幫我檢查有沒有 bug」：綁定帳號的永遠只屬於主人、不會自己消失
+                //   （這次之前跟一般掉落一樣 60 秒後放開，隊友、路人撿得走）
+                personal.prepareForever(item, owner.getUniqueId());
+                item.setUnlimitedLifetime(true);
+            } else if (owner != null) {
                 personal.prepare(item, owner); // 別人看不到你的那份
             }
         });
@@ -434,6 +439,15 @@ public final class MonsterListener implements Listener {
 
     /** 同上（地圖事件的寶箱、流寇也用）。 */
     public static ItemStack toStack(final ExileCore plugin, final DropTable.Drop drop) {
+        final ItemStack stack = unboundStack(plugin, drop);
+        // 2026-11-14 照站長「綁定掉落」模式：綁定的寶石掛上綁定帳號（裝備在 ItemCodec 照 ItemData 標）；這次之前沒有綁定的掉落
+        if (stack != null && drop.bound() && (drop.kind() == DropTable.Kind.SKILL_GEM || drop.kind() == DropTable.Kind.SUPPORT_GEM)) {
+            plugin.skills().gems().bindStack(stack);
+        }
+        return stack;
+    }
+
+    private static ItemStack unboundStack(final ExileCore plugin, final DropTable.Drop drop) {
         return switch (drop.kind()) {
             case CURRENCY -> plugin.currencies().create(drop.currency(), 1);
             case EQUIPMENT -> {

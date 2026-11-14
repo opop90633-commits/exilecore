@@ -4618,7 +4618,7 @@ crystal_corruption:
   applies_to: { rarity: [] }
   drop_weight: 0
   drop_level: 1
-  description: "在技能面板上點一顆已腐化的技能寶石：重新腐化一次（等級、輔助孔、品質變動），或碎掉"
+  description: "在技能面板上點一顆已腐化的技能寶石：照現在的狀態再腐化一次（等級、輔助孔、品質變動），或碎掉（1/2）；用過的是二次腐化，不能再用"  # 2026-11-14 照站長「照原作改」
   flavor: "結晶化的腐化，比蝕變石更不講道理。"
 
 vaal_cultivation_orb:

@@ -41,6 +41,8 @@ public final class ItemData {
     private Boolean corrupted;
     /** 飾品上打的催化劑種類（{@link Catalyst}）：品質變成那一類詞綴的加成；null = 沒有（不寫進 JSON）。 */
     private String catalyst;
+    /** 2026-11-14 照站長「綁定掉落」模式：綁定帳號（null／false = 沒有；JSON 沒寫就是沒有）。 */
+    private Boolean accountBound;
     /** 掛在這件上的星籤（通貨代號）：下一顆對應的通貨照星籤的規則用；null = 沒有（不寫進 JSON）。 */
     private String omen;
     /** 注入在這條項鍊上的天賦核心（tree.json 的節點代號，PoE2 的注入）：那個核心的效果加在身上；null = 沒有（不寫進 JSON）。 */
@@ -358,6 +360,15 @@ public final class ItemData {
     }
 
     /** 飾品的催化劑種類；沒有是 null。 */
+    /** 2026-11-14：綁定帳號（綁定掉落模式掉的 Boss 傳奇；ItemCodec 寫回時在物品上掛 AccountBound 的記號）。 */
+    public boolean accountBound() {
+        return accountBound != null && accountBound;
+    }
+
+    public void setAccountBound(final boolean bound) {
+        this.accountBound = bound ? Boolean.TRUE : null;
+    }
+
     public String catalyst() {
         return catalyst;
     }
@@ -481,6 +492,7 @@ public final class ItemData {
         copy.locked = locked;
         copy.corrupted = corrupted;
         copy.catalyst = catalyst;
+        copy.accountBound = accountBound; // 2026-11-14
         copy.omen = omen;
         copy.instilled = instilled;
         copy.instilledExtra = instilledExtra == null ? null : new ArrayList<>(instilledExtra);
@@ -522,6 +534,9 @@ public final class ItemData {
         locked = from.locked;
         corrupted = from.corrupted;
         catalyst = from.catalyst;
+        // 2026-11-14 照站長「綁定會因為任意的通貨而影響到嗎」：綁定只會多不會少（瓦爾寶珠把傳奇變成別的傳奇也走這裡，
+        //   這次之前照抄另一份，綁定的會被洗掉）
+        accountBound = accountBound() || from.accountBound() ? Boolean.TRUE : null;
         omen = from.omen;
         instilled = from.instilled;
         instilledExtra = from.instilledExtra;

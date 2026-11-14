@@ -41,6 +41,24 @@ public final class AccountBoundGuard implements Listener {
      * 丟東西：放得回背包才擋（背包滿了取消的話伺服器塞不回去，東西會不見；那種情況 CharacterListener 會讓它掉在腳下、
      * 永遠只有丟的人看得到撿得到，一樣不會換手）。
      */
+    /**
+     * 2026-11-14 照站長「綁定的部分再幫我檢查有沒有 bug」：地上綁定帳號的東西，只有主人撿得起來（掉落都會設主人；
+     * 以防萬一有哪條路徑忘了設「永遠只屬於主人」，60 秒後放開也撿不走）。這次之前只擋丟出去，沒擋撿起來。
+     */
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
+    public void onPickup(final org.bukkit.event.entity.EntityPickupItemEvent event) {
+        if (!(event.getEntity() instanceof Player player)) {
+            if (AccountBound.isBound(event.getItem().getItemStack())) {
+                event.setCancelled(true); // 怪物、生物也不能撿走
+            }
+            return;
+        }
+        final java.util.UUID owner = event.getItem().getOwner();
+        if (owner != null && !owner.equals(player.getUniqueId()) && AccountBound.isBound(event.getItem().getItemStack())) {
+            event.setCancelled(true);
+        }
+    }
+
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onDrop(final PlayerDropItemEvent event) {
         final ItemStack stack = event.getItemDrop().getItemStack();
