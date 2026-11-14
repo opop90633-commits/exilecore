@@ -474,8 +474,26 @@ public final class Migrations {
                         PRIMARY KEY (account_uuid, active_day)
                     )""",
                     "CREATE INDEX IF NOT EXISTS idx_account_days_day ON account_days (active_day)"
+            )),
+            // 2026-11-14 照站長（正式服「Data too long for column 'currency_id'」，交易系統卡住）：通貨代號欄位 32 → 64 字；
+            // 魂核符文 rune_core_estazunti_convalescence 有 33 個字，撿到就存不進去。這次之前都是 VARCHAR(32)。
+            new Migration(27, "通貨代號欄位放寬到 64 字", List.of(
+                    "ALTER TABLE currency_log MODIFY COLUMN currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE stash_currency MODIFY COLUMN currency_id VARCHAR(64) NOT NULL",
+                    "ALTER TABLE market_listings MODIFY COLUMN price_currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE market_proceeds MODIFY COLUMN currency_id VARCHAR(64) NOT NULL",
+                    "ALTER TABLE exchange_orders MODIFY COLUMN give_currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE exchange_orders MODIFY COLUMN want_currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE exchange_trades MODIFY COLUMN give_currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE exchange_trades MODIFY COLUMN want_currency VARCHAR(64) NOT NULL",
+                    "ALTER TABLE currency_values MODIFY COLUMN currency_id VARCHAR(64) NOT NULL",
+                    "ALTER TABLE economy_flow MODIFY COLUMN kind VARCHAR(64) NOT NULL",
+                    "ALTER TABLE economy_stock MODIFY COLUMN kind VARCHAR(64) NOT NULL"
             ))
     );
+
+    /** 2026-11-14：資料庫裡通貨代號欄位的長度（Migration 27 起；之前 32）。通貨代號不能超過這個（DatabaseTest 擋）。 */
+    public static final int CURRENCY_ID_LENGTH = 64;
 
     /** 所有資料表（備份與還原的順序：被參照的在前面）。新增資料表時也要加進來。 */
     public static final List<String> TABLES = List.of(

@@ -4843,6 +4843,10 @@ public final class SkillService {
         // 2026-11-10 照站長「估算補上霆落矛的引爆」：插地矛的放電與 16 道引爆（lanceExtra）；這次之前只算擲出那一下
         final double lanceDps = lanceExtra(build, expectedScaled.total() * critFactor * hitOnly, hitRate);
         dps += lanceDps;
+        // 2026-11-14 照站長「先修會讓數字失真的東西」：驚雷劈用掉銳星射出的投射物（thunderExtra）；這次之前只算劈的那一下
+        final int thunderCharges = thunderCharges(state, build);
+        final double thunderDps = thunderExtra(build, hitSheet, expectedScaled.total() * critFactor * hitOnly, hitRate, thunderCharges);
+        dps += thunderDps;
         double fullDps = dps;
         {
             // 全開：用疊上戰吼增益的屬性表重算一次（攻速、傷害都會變），再算敵人的抗性降低、受到的傷害增加、強化攻擊
@@ -4885,12 +4889,16 @@ public final class SkillService {
             }
             // 2026-11-10：全開也補霆落矛的放電、引爆（照全開那一下）
             fullDps += lanceExtra(fullBuild, fullScaled.total() * fullCritFactor * SupportMechanics.hitOnlyFactor(fullHitSheet, fullBuild.profile()), casts);
+            fullDps += thunderExtra(fullBuild, fullHitSheet, fullScaled.total() * fullCritFactor * SupportMechanics.hitOnlyFactor(fullHitSheet, fullBuild.profile()),
+                    casts, thunderCharges); // 2026-11-14：全開也補驚雷劈的銳星投射物
             fullDps *= 1 + full.taken();
         }
         // 2026-10-27：掠獸（只能傷害低血的敵人）：數字照能打的時候算，名字標清楚
         final String name = StatKeys.flag(build.profile().effective(hitSheet), tw.exilecore.stats.LineageKeys.LOW_LIFE_ONLY)
                 ? definition.name() + "（掠獸：只傷害生命 35% 以下的敵人）"
-                : lanceDps > 0 ? definition.name() + "（含插地矛放電、引爆）" : definition.name(); // 2026-11-10
+                : lanceDps > 0 ? definition.name() + "（含插地矛放電、引爆）"
+                : thunderDps > 0 ? definition.name() + "（含銳星投射物，照身上 " + thunderCharges + " 顆）" // 2026-11-14
+                : definition.name(); // 2026-11-10
         return new DpsRow(slot, position, definition.id(), name, dps, Math.max(dps, fullDps), 0,
                 expectedScaled.total() * critFactor * hitOnly, rateScaled, crit, multi);
     }
@@ -4992,6 +5000,38 @@ public final class SkillService {
      * </ul>
      * 不是霆落矛回傳 0。純計算（測試用 {@link #lanceExtraDps}）。
      */
+    /** 2026-11-14：估計驚雷劈的投射物用的銳星顆數＝身上現在有的（最多 20，同 SkillExecutor.thunderBolts）；不是驚雷劈、不在線回傳 0。 */
+    private int thunderCharges(final PlayerState state, final SkillBuild build) {
+        if (SkillStages.get(build.definition().id(), SkillExecutor.THUNDER) == null || plugin.combat() == null) {
+            return 0;
+        }
+        final Player player = plugin.getServer().getPlayer(state.uuid());
+        return player == null ? 0 : Math.min(20, plugin.combat().charges().count(player, "power"));
+    }
+
+    /**
+     * 2026-11-14 照站長「先修會讓數字失真的東西」：驚雷劈用掉銳星射出的投射物（SkillExecutor.thunderBolts）每秒多打多少。
+     * 同一次射出的投射物共用打中名單，對一隻只中一下，所以每劈一下多一下「劈的那一下 × 投射物的更多」
+     * （(1 + 每顆 50%＋品質 × 顆數) × 2，SkillExecutor.thunderMore）。顆數照身上現在有的，當成每一下都補得回來
+     * （恆星、高階奇術的「機率不用掉」與暴擊回銳星會補；補不回來的話估計偏高）。不是驚雷劈或沒有銳星回傳 0。純計算看 {@link #thunderExtraDps}。
+     */
+    private double thunderExtra(final SkillBuild build, final StatSheet hitSheet, final double perHit, final double hitsPerSecond, final int charges) {
+        if (SkillStages.get(build.definition().id(), SkillExecutor.THUNDER) == null) {
+            return 0;
+        }
+        final double perCharge = SkillExecutor.THUNDER_MORE_PER_CHARGE
+                + build.profile().effective(hitSheet).flat(SkillExecutor.THUNDER_QUALITY, build.profile().tags());
+        return thunderExtraDps(perHit, hitsPerSecond, charges, perCharge);
+    }
+
+    /** 2026-11-14：{@link #thunderExtra} 的算式（純函式）。 */
+    static double thunderExtraDps(final double perHit, final double hitsPerSecond, final int charges, final double perChargeMore) {
+        if (perHit <= 0 || hitsPerSecond <= 0 || charges <= 0) {
+            return 0;
+        }
+        return hitsPerSecond * perHit * SkillExecutor.thunderMore(charges, perChargeMore);
+    }
+
     private double lanceExtra(final SkillBuild build, final double perThrow, final double throwsPerSecond) {
         if (!"lance".equals(config.signature(build.definition().id())) || perThrow <= 0 || throwsPerSecond <= 0) {
             return 0;

@@ -855,6 +855,47 @@ public final class TrainingService {
         }
     }
 
+    /**
+     * 2026-11-14 照站長「先修會讓數字失真的東西」（統計頁 On1 驚雷劈實測 11.8 億、是全開估計的 248 倍，奶龍游雷 367 倍，查不出是哪一段）：
+     * 一段夠長的打靶每秒超過 {@link #SUSPECT_DPS}，就把每個來源打了多少、幾下、平均一下、最高一下、身上的增益、銳星顆數
+     * 寫進伺服器紀錄（logs/latest.log，搜「【假人可疑】」）。只記紀錄，不改傷害、不擋紀錄。這次之前沒有。
+     */
+    static final double SUSPECT_DPS = 20_000_000;
+
+    private void logSuspect(final Player player, final tw.exilecore.character.PlayerState state, final Session session) {
+        final DpsMeter meter = session.meter;
+        if (meter.dps() < SUSPECT_DPS) {
+            return;
+        }
+        try {
+            final StringBuilder line = new StringBuilder(String.format(Locale.ROOT,
+                    "【假人可疑】%s（%s）Lv.%d 打 %s：%.1f 秒，每秒 %s，命中 %d、暴擊 %s、最高一擊 %s",
+                    state.character() == null ? "?" : state.character().name(), player.getName(), state.level(), session.name,
+                    meter.seconds(), number(meter.dps()), meter.hits(), percent(meter.critRate()), number(meter.highest())));
+            for (final java.util.Map.Entry<String, Double> entry : meter.topSources(8)) {
+                final int count = meter.hitsOf(entry.getKey());
+                line.append(String.format(Locale.ROOT, "\n　來源 %s：%s（%s），%d 下，平均一下 %s，最高一下 %s",
+                        entry.getKey(), number(entry.getValue()), percent(entry.getValue() / Math.max(1, meter.total())), count,
+                        number(count > 0 ? entry.getValue() / count : 0), number(meter.highestOf(entry.getKey()))));
+            }
+            if (plugin.combat() != null) {
+                line.append("\n　銳星 ").append(plugin.combat().charges().count(player, "power"))
+                        .append("、怒星 ").append(plugin.combat().charges().count(player, "frenzy"))
+                        .append("、磐星 ").append(plugin.combat().charges().count(player, "endurance"));
+            }
+            if (plugin.skills() != null) {
+                final StringBuilder buffs = new StringBuilder();
+                for (final tw.exilecore.skill.SkillService.BuffTimer buff : plugin.skills().activeBuffTimers(player)) {
+                    buffs.append(buffs.isEmpty() ? "" : "、").append(buff.name());
+                }
+                line.append("\n　增益：").append(buffs.isEmpty() ? "（沒有）" : buffs);
+            }
+            plugin.getSLF4JLogger().warn(line.toString());
+        } catch (final RuntimeException e) {
+            plugin.getSLF4JLogger().warn("寫假人可疑紀錄時出錯", e);
+        }
+    }
+
     /** 夠長的一段記成這個角色的實測（/stats 與網頁的統計頁拿來跟估計值並排）。 */
     private void remember(final Player player, final Session session) {
         final DpsMeter meter = session.meter;
@@ -865,6 +906,7 @@ public final class TrainingService {
         }
         final DummyRecord fresh = new DummyRecord(Math.round(meter.dps()), meter.seconds(), session.name,
                 (int) Math.round(meter.dotTotal() * 100 / Math.max(1, meter.total())), System.currentTimeMillis());
+        logSuspect(player, state, session);
         if (fresh.dps() > 0 && fresh.replaces(record(state))) { // 2026-10-24：換過裝備的舊紀錄不算，直接換新的
             plugin.characters().setProgress(player, DummyRecord.KEY, fresh.encode());
             plugin.characters().setProgress(player, DummyRecord.GEAR_KEY, gearHash(state));

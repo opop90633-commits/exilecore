@@ -91,6 +91,14 @@ class FallingThunderTest {
     }
 
     @Test
+    void estimateCountsTheBolts() {
+        // 2026-11-14：估計補上銳星投射物——每劈一下多一下「劈的那一下 × (1 + 每顆 x% × 顆數) × 2」（同一次的投射物對一隻只中一下）
+        assertEquals(0, SkillService.thunderExtraDps(1000, 2, 0, 50), 1e-9, "沒有銳星不射");
+        assertEquals(2 * 1000 * 8.0, SkillService.thunderExtraDps(1000, 2, 6, 50), 1e-9, "6 顆：(1 + 300%) × 2");
+        assertEquals(0, SkillService.thunderExtraDps(0, 2, 6, 50), 1e-9);
+    }
+
+    @Test
     void boltBuildUsesTheSlamDamageAndSupports() {
         final StatSheet sheet = new StatSheet();
         final SkillBuild slam = build(20, List.of());

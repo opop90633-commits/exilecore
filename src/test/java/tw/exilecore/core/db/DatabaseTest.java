@@ -43,7 +43,52 @@ class DatabaseTest {
     void migrationsAreIdempotent() throws SQLException {
         assertTrue(database.isConnected());
         assertEquals(0, Migrations.apply(database, LoggerFactory.getLogger("test")), "第二次不該再套用");
-        assertEquals(26, Migrations.currentVersion());
+        assertEquals(27, Migrations.currentVersion()); // 2026-11-14：27 通貨代號欄位放寬
+    }
+
+    @Test
+    void longCurrencyIdsFit() throws Exception {
+        // 2026-11-14：正式服 rune_core_estazunti_convalescence（33 字）存不進 VARCHAR(32)，交易系統卡住
+        final String id = "rune_core_estazunti_convalescence";
+        final String account = UUID.randomUUID().toString();
+        database.sync(c -> {
+            try (var insert = c.prepareStatement("INSERT INTO stash_currency (account_uuid, currency_id, amount) VALUES (?, ?, 1)")) {
+                insert.setString(1, account);
+                insert.setString(2, id);
+                insert.executeUpdate();
+            }
+            try (var query = c.prepareStatement("SELECT currency_id FROM stash_currency WHERE account_uuid = ?")) {
+                query.setString(1, account);
+                try (var rows = query.executeQuery()) {
+                    assertTrue(rows.next());
+                    assertEquals(id, rows.getString(1));
+                }
+            }
+            return null;
+        });
+    }
+
+    @Test
+    void everyCurrencyIdFitsTheColumn() throws Exception {
+        // 2026-11-14：通貨代號不能比資料庫欄位長，不然撿到就存檔失敗
+        final java.util.regex.Pattern key = java.util.regex.Pattern.compile("^([a-z0-9_]+):");
+        int checked = 0;
+        for (final String file : List.of("/data/currencies.yml", "/data/runes.yml")) {
+            try (var in = DatabaseTest.class.getResourceAsStream(file)) {
+                if (in == null) {
+                    continue;
+                }
+                for (final String line : new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8).split("\\R")) {
+                    final var match = key.matcher(line);
+                    if (match.find()) {
+                        checked++;
+                        assertTrue(match.group(1).length() <= Migrations.CURRENCY_ID_LENGTH,
+                                file + " 的 " + match.group(1) + " 有 " + match.group(1).length() + " 個字，資料庫欄位只有 " + Migrations.CURRENCY_ID_LENGTH);
+                    }
+                }
+            }
+        }
+        assertTrue(checked > 100, "有讀到通貨");
     }
 
     @Test

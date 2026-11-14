@@ -30,7 +30,19 @@ public final class DpsMeter {
     public void hit(final long nowMillis, final double damage, final boolean crit, final String source) {
         bySource.merge(source == null ? "普攻／其他" : source, Math.max(0, damage), Double::sum);
         hitsBySource.merge(source == null ? "普攻／其他" : source, 1, Integer::sum); // 2026-11-05：每個來源打中幾下
+        highestBySource.merge(source == null ? "普攻／其他" : source, Math.max(0, damage), Math::max); // 2026-11-14
         hit(nowMillis, damage, crit);
+    }
+
+    /**
+     * 2026-11-14 照站長「先修會讓數字失真的東西」：每個來源最高的一下（假人實測比估計高太多時寫進伺服器紀錄，看是哪一段灌出來的）；
+     * 這次之前只有全部來源合起來的最高一擊。
+     */
+    private final java.util.Map<String, Double> highestBySource = new java.util.HashMap<>();
+
+    /** 這個來源最高的一下（沒有回傳 0）。 */
+    public double highestOf(final String source) {
+        return highestBySource.getOrDefault(source, 0.0);
     }
 
     /**
