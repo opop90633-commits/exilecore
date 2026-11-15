@@ -958,7 +958,20 @@
     }
     if (g.rarity === "unique") {
       const u = items.uniqueById.get(g.unique);
-      if (u) u.mods.forEach((m, k) => {
+      // 2026-11-15 照站長「計算器沒辦法讀取詞綴換掉的珠寶」：遊戲裡蝕培石換過的傳奇（沒在規劃器改過）照物品上的詞綴順序寫，
+      //   換掉的原本詞綴不寫、瓦爾詞綴照物品上的數值；這次之前一律照原本的詞綴寫（換掉的那條沒有數值就照最大值）
+      const vaal = u && u.vaal && g.raw && g.rawKey === itemKey(g) && Array.isArray(g.raw.affixes)
+        ? g.raw.affixes.filter(a => u.vaal.some(m => m.id === a.id)) : [];
+      if (u && vaal.length) {
+        for (const a of g.raw.affixes) {
+          const k = u.mods.findIndex(m => m.id === a.id);
+          const m = k >= 0 ? u.mods[k] : u.vaal.find(v => v.id === a.id);
+          if (!m) continue;
+          const names = varNames(m.vars);
+          const vals = names.map(n => a.vars && a.vars[n] !== undefined && a.vars[n] !== null ? a.vars[n] : m.vars[n][1]);
+          lines.push({ text: fill(m.text, m.div, names, vals), vaal: k < 0 });
+        }
+      } else if (u) u.mods.forEach((m, k) => {
         const names = varNames(m.vars);
         const vals = names.map((n, j) => (g.uvals[k] && g.uvals[k][j] !== undefined && g.uvals[k][j] !== null) ? g.uvals[k][j] : m.vars[n][1]);
         lines.push({ text: fill(m.text, m.div, names, vals) });

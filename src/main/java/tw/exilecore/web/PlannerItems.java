@@ -113,6 +113,23 @@ public final class PlannerItems {
                 mods.add(m);
             }
             u.add("mods", mods);
+            // 2026-11-15 照站長「計算器沒辦法讀取詞綴換掉的珠寶」：瓦爾詞綴（蝕培石換上去的）也給規劃器，遊戲物品上有的照樣顯示
+            final JsonArray vaal = new JsonArray();
+            for (final String id : repository.vaalMods(unique.id())) {
+                final Affix affix = repository.affix(id);
+                if (affix == null) {
+                    continue;
+                }
+                final JsonObject m = new JsonObject();
+                m.addProperty("id", id);
+                m.addProperty("text", plain(affix.text()));
+                m.add("div", divisors(affix.text()));
+                m.add("vars", ranges(affix.tiers().getFirst().vars()));
+                vaal.add(m);
+            }
+            if (!vaal.isEmpty()) {
+                u.add("vaal", vaal);
+            }
             final JsonArray flavour = new JsonArray();
             unique.flavour().forEach(flavour::add);
             u.add("flavour", flavour);

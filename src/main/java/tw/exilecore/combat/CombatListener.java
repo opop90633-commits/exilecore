@@ -1115,7 +1115,7 @@ public final class CombatListener implements Listener {
             }
             // 怪物的原版血量上限 1024，生命更高的怪物按比例縮放
             event.setDamage(blocked ? 0 : plugin.monsters().toVanillaDamage(defender, defenderMonster, total));
-            // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死
+            // 撲殺（2026-10，輔助寶石）：這一下之後生命低於門檻就直接打死（2026-11-15：擊中前就在門檻以下也算，見 shouldCull）
             // 撲殺：換階段鎖血中的 Boss 不能撲殺（2026-10：不然收命、收魂照給，Boss 卻沒死）
             // 2026-10-26：撲殺 I／II（PoE2）只對稀有、傳奇；撲殺 II 打死之後門檻增加
             // 2026-10-26 照 PoE2 天賦樹：撲殺與撲殺門檻帶這一下的情境（弓的攻擊、對被標記的、對野獸、對稀有傳奇、對被禁錮的）
@@ -1287,12 +1287,25 @@ public final class CombatListener implements Listener {
         if (threshold <= 0 || max == null || max.getValue() <= 0) {
             return false;
         }
-        final double left = defender.getHealth() - event.getDamage();
-        if (left > 0 && left <= max.getValue() * threshold) {
+        if (shouldCull(defender.getHealth(), event.getDamage(), max.getValue(), threshold)) {
             event.setDamage(defender.getHealth() + 1); // 撲殺：直接打死
             return true;
         }
         return false;
+    }
+
+    /**
+     * 2026-11-15 照站長「照這樣改」（照 PoE2：撲殺門檻在這一下的傷害算進去之前檢查）：擊中前的生命已經在門檻以下就算撲殺，
+     * 不管這一下會不會打死（門檻 100% 以上時被擊中的普通怪一定被撲殺、0 傷害也算，撲殺時的效果全部觸發）；
+     * 打完剩下的生命在門檻以下也照舊撲殺。這次之前只看打完剩下的，這一下直接打死的算一般擊殺、不算撲殺。純函式（測試用）。
+     */
+    public static boolean shouldCull(final double health, final double damage, final double maxHealth, final double threshold) {
+        if (threshold <= 0 || maxHealth <= 0 || health <= 0) {
+            return false;
+        }
+        final double line = maxHealth * threshold;
+        final double left = health - damage;
+        return health <= line || left > 0 && left <= line;
     }
 
     /** 異常狀態在屬性代號裡的寫法（damage.vs_chilled…）。 */

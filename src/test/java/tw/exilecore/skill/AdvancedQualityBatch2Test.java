@@ -22,7 +22,7 @@ class AdvancedQualityBatch2Test {
             "hurricane_spear", "prey_kill_mark", "blazing_star_shell", "ember_envoy", "thunder_envoy", "frost_envoy", "bloodthirst_rite", "soulfire_rite",
             "field_quake_hammers", "mist_staff_sweep", "leaping_staff_crash", "fortress_crumble_shell", "freezing_rain_shell", "winter_shell",
             "frost_billow", "electrocute_shaft", "cold_congeal_shell", "kerosene_grenade", "blood_hunt", "dig_remains", "collapse_heart_chant",
-            "grinding_will", "magic_surge", "lashing_thorns", "root_bind", "beast_blood_boil", "shield_drum", "ice_shuttle", "blood_proclaim",
+            "grinding_will", "magic_surge", "lashing_thorns", "root_bind", "shield_drum", "ice_shuttle", "blood_proclaim",
             "crimson_wrath", "wilting_breath", "frost_arrowhead", "miasma_zone", "blink", "guard_moment", "spectral_step", "magic_spring_well",
             "insect_devour_horde", "pestilence_sac_burst", "earth_wall_strike", "breeze_dance_step", "magma_barrier", "battle_spirit_rise",
             "arcane_heart", "element_tide", "tripod_element_art", "blood_tear_sweep", "critical_guide_star", "roll_guide_star",
@@ -66,7 +66,8 @@ class AdvancedQualityBatch2Test {
     void normalQualityMovedToAdvancedMatchesPoB2() {
         // PoB2 qualityStats：掠閃、獸血沸是空的；縛根只有裂隙；魔泉湧只有每個痕跡的魔力
         assertTrue(GemQuality.modifiers("blink", 20, "品質 20%").isEmpty());
-        assertTrue(GemQuality.modifiers("beast_blood_boil", 20, "品質 20%").isEmpty());
+        // 2026-11-15 照站長貼的原作遊戲內說明：獸血沸的兩條是一般品質（「來自品質的額外效果」），不是高階奇術
+        assertEquals("品質 +20%：狂暴另外更多 5% 傷害、攻擊擊中多獲得 1 點獸性", SkillService.qualityText(config.skill("beast_blood_boil"), 20));
         assertTrue(GemQuality.modifiers("root_bind", 20, "品質 20%").stream().noneMatch(m -> m.stat().equals("skill.limit")));
         assertTrue(GemQuality.modifiers("magic_spring_well", 20, "品質 20%").stream().noneMatch(m -> m.stat().equals("effect.mana.regen")));
         assertTrue(GemQuality.advancedModifiers("root_bind", 20, "品質 20%").stream().anyMatch(m -> m.stat().equals("skill.limit") && Math.abs(m.value() - 4) < 1e-9));

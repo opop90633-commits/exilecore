@@ -269,4 +269,20 @@ class StonefistTest {
         assertEquals(12, Stonefist.at(new int[] {12, 15}, 0));
         assertEquals(20, Stonefist.at(new int[] {25, 20}, 1), "寫成 (25—20) 的越後面越好");
     }
+
+    /** 2026-11-15 照站長「這個石拳的版本技能好像沒 20 等」：驚怖掠影的磐石之拳版本賦予 20 級死懼碎擊。 */
+    @Test
+    void terrorGlideStonefistGrantsLevelTwenty() {
+        final ItemGenerator generator = new ItemGenerator(repository);
+        final ItemData glide = generator.generateUnique(repository.unique("terror_glide"), 84, new Random(11));
+        final List<Modifier> mods = Stonefist.modifiers(repository, repository.base(glide.base()), glide, 98);
+        assertEquals(Map.of("crushing_fear", 20), tw.exilecore.item.unique.UniqueDerived.grantedSkillLevels(mods));
+    }
+
+    /** 2026-11-15 照站長「一般版本理論上也有 20 等」：一般的驚怖掠影也賦予 20 級死懼碎擊。 */
+    @Test
+    void terrorGlideGrantsLevelTwenty() {
+        final ItemData glide = new ItemGenerator(repository).generateUnique(repository.unique("terror_glide"), 84, new Random(12));
+        assertEquals(Map.of("crushing_fear", 20), tw.exilecore.item.unique.UniqueDerived.grantedSkillLevels(ItemStats.modifiers(repository, glide)));
+    }
 }

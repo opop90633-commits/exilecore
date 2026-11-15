@@ -421,7 +421,9 @@ collapse_heart_chant:   # Mantra of Destruction（2026-10-28 照 PoE2：需要�
   - { stat: mantra.combo, type: FLAT, per: -0.05 }   # OriginalSkills.mantraCombo
 servant_corpse_swap:   # Sacrifice（2026-10-28 照 PoE2：召喚物復活更快 (0—5)%（加在「更慢 x%」上）；這次之前照通用規則）
   - { stat: servant_corpse_swap.slower, type: FLAT, per: 0.25 }   # OriginalSkills.sacrifice
-beast_blood_boil: []   # Savage Fury（2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 qualityStats 是空的，狂暴更多傷害是 poe2db 的額外品質效果，移到 advanced；這次之前 2026-10-28 寫在一般品質：狂暴另外更多 (0—5)% 傷害）
+beast_blood_boil:   # Savage Fury（2026-11-15 照站長貼的原作遊戲內說明「來自品質的額外效果」：狂暴另外更多 (0—5)% 傷害、攻擊擊中多獲得 (0—1) 點獸性，兩條都是一般品質；這次之前（2026-11-11）照 PoB2 qualityStats 空的、兩條放在高階奇術）
+  - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
+  - { stat: fury.per_hit, type: FLAT, per: 0.05 }   # AuraService.gainFury（無條件捨去）
 gathered_scales:   # Scavenged Plating（2026-11-01 照 PoE2：甲片持續時間 +(0—2) 秒（base_skill_effect_duration 每 1% +100 毫秒，PersistentBuffs）；這次之前拾鱗沒有甲片層數，換成護甲、破甲各另外增加 (0—4)%）
   - { stat: plating.duration, type: FLAT, per: 0.1 }   # 甲片持續時間 +x 秒
 ground_shake_shout:   # Seismic Cry（2026-10-27 照 PoE2：強化攻擊的餘震 (0—10)% 更多傷害、獲得 (0—20)% 物理傷害為火焰）
@@ -795,9 +797,6 @@ advanced:
     - { stat: stab_nail.spell_chance, type: FLAT, per: 1.5 }   # KeystoneEffects（法術的穿刺機率）
   root_bind:   # Entangle：根鬚上限 +(0—4)（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats base_number_of_entangle_roots_allowed 0.2（從一般品質移過來）；這次之前一般的品質效果再算一次）
     - { stat: skill.limit, type: FLAT, per: 0.2 }   # EntangleRoots.limit＋SkillLimits（每 5% 品質 +1，捨去）
-  beast_blood_boil:   # Savage Fury：狂暴另外更多 (0—5)% 傷害、攻擊擊中多獲得 (0—1) 點獸性（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：poe2db 寶石頁第二條（PoB2 altQualityStats wild_beast_energy_per_hit 0.05；更多傷害那條從一般品質移過來）；這次之前一般的品質效果再算一次）
-    - { stat: effect.damage, type: MORE, per: 0.25 }   # 狂暴（AuraService.startFrenzy）
-    - { stat: fury.per_hit, type: FLAT, per: 0.05 }   # AuraService.gainFury（無條件捨去）
   shield_drum:   # Resonating Shield：引導時暈眩門檻增加 (0—100)%（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats stun_threshold_+%_while_channelling 5；這次之前一般的品質效果再算一次）
     - { stat: action.stun_threshold, type: FLAT, per: 5.0 }   # 每敲一下的動作期間（SkillService.performInner；引導中每下接著敲＝一直有）
   ice_shuttle:   # Frost Darts：分裂 +(0—2) 次（# 2026-11-11 照站長「一般品質再算一次的照原作改（第二批）」：PoB2 altQualityStats number_of_additional_forks_base 0.1；這次之前一般的品質效果再算一次）

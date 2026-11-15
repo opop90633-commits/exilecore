@@ -1951,6 +1951,35 @@ final class SkillDeployables implements Listener {
         exploded.forEach(bell -> remove(bell, true));
     }
 
+    /** 2026-11-15 照站長「斷魂掌撲殺鐘」：owner 在 from 周圍 range 格內最近的鐘（盔甲座；沒有回傳 null）。 */
+    ArmorStand nearestBell(final UUID owner, final Location from, final double range) {
+        ArmorStand best = null;
+        double bestSq = range * range;
+        for (final Deployed bell : deployed) {
+            if (bell.spec.kind() != DeploySpec.Kind.BELL || !bell.owner.equals(owner) || !bell.stand.isValid()
+                    || !bell.feet.getWorld().equals(from.getWorld())) {
+                continue;
+            }
+            final double sq = bell.feet.distanceSquared(from);
+            if (sq <= bestSq) {
+                bestSq = sq;
+                best = bell.stand;
+            }
+        }
+        return best;
+    }
+
+    /** 2026-11-15：撲殺這口鐘（鐘直接碎掉，不響、不炸）；不是 owner 的鐘或已經沒了回傳 false。 */
+    boolean cullBell(final UUID owner, final Entity stand) {
+        for (final Deployed bell : deployed) {
+            if (bell.stand.equals(stand) && bell.spec.kind() == DeploySpec.Kind.BELL && bell.owner.equals(owner)) {
+                remove(bell, true);
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void queueRing(final Deployed bell, final long now) {
         for (final Ring ring : rings) {
             if (ring.bell() == bell) {

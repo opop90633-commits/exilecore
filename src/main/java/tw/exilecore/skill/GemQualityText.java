@@ -128,6 +128,7 @@ final class GemQualityText {
             Map.entry("blazing_sun_spear", "{glory.retain_chance}% 機率用的時候保留 40% 榮耀"),
             Map.entry("thousand_weight_smash", "最大階段 +{i:charge.stages_flat}"),
             Map.entry("startling_thunder_bell", "鐘每被打一下震波更多 {bell.more_per_hit}% 傷害"),
+            Map.entry("beast_blood_boil", "狂暴另外更多 {effect.damage}% 傷害、攻擊擊中多獲得 {i:fury.per_hit} 點獸性"), // 2026-11-15 照站長貼的原作說明：兩條都是一般品質
             Map.entry("thunder_bound", "引爆矛的時候 {detonate.shocked_ground_chance}% 機率留下感電地面"),
             Map.entry("gathered_thundercloud", "濕透的敵人另外受到更多 {drenched.freeze_more}% 凍結累積、被感電的機率另外更多 {drenched.shock_more}%"),
             Map.entry("guard_moment", "祝福另外回復 {effect.blessing.life} 生命"),

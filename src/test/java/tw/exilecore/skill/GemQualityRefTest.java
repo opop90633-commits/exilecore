@@ -75,9 +75,10 @@ class GemQualityRefTest {
     @Test
     void emptyQualityHasNoTemplateLine() {
         // 2026-11-14 照站長「狂暴額外0%」：一般品質是空的（[]）就不寫「…更多 0% 傷害」
-        assertNull(GemQualityText.body("beast_blood_boil", List.of(), 20));
-        assertTrue(SkillService.qualityText(config.skill("beast_blood_boil"), 20).contains("沒有效果"),
-                SkillService.qualityText(config.skill("beast_blood_boil"), 20));
+        //   2026-11-15：獸血沸改回有一般品質，這裡換成掠閃（原作一般品質也是空的）
+        assertNull(GemQualityText.body("blink", List.of(), 20));
+        assertTrue(SkillService.qualityText(config.skill("blink"), 20).contains("沒有效果"),
+                SkillService.qualityText(config.skill("blink"), 20));
     }
 
     @Test

@@ -655,6 +655,13 @@ public final class ModifierText {
                 if (mechanic != null) {
                     yield mechanic;
                 }
+                // 2026-11-15 照站長「計算器沒辦法讀取詞綴換掉的珠寶」：蝕光之心的兩條寫成一句話；這次之前寫成「特殊效果（0.6）」
+                if (stat.equals(tw.exilecore.item.unique.UniqueStats.JEWEL_CORRUPTED_MAGIC_EFFECT)) {
+                    yield "嵌著已腐化魔法珠寶的珠寶孔效果增加 " + number(value * 100) + "%";
+                }
+                if (stat.equals(tw.exilecore.item.unique.VaalKeys.JEWEL_CORRUPTED_RARE_EFFECT)) {
+                    yield "嵌著已腐化稀有珠寶的珠寶孔，那顆珠寶的效果增加 " + number(value * 100) + "%";
+                }
                 yield "特殊效果（" + number(value) + "）";
             }
         };

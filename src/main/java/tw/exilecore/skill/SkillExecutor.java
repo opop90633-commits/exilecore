@@ -2713,6 +2713,29 @@ final class SkillExecutor {
                 break;
             }
         }
+        // 2026-11-15 照站長「鐘可以直接撲殺」「他還是沒辦法用斷魂掌撲殺」：6.5 格內自己的驚雷之鐘也能當目標（比敵人近、或附近沒有敵人時打鐘）：
+        //   衝過去一掌直接撲殺（鐘碎掉、不響）、給 1 顆銳星，接著照樣連衝附近可以撲殺的敵人。這次之前鐘不能當斷魂掌的目標
+        final org.bukkit.entity.ArmorStand bell = plugin.skills() == null ? null
+                : plugin.skills().deployables().nearestBell(player.getUniqueId(), player.getLocation(), KillingPalm.DASH_RANGE);
+        if (bell != null && (target == null
+                || bell.getLocation().distanceSquared(player.getLocation()) < target.getLocation().distanceSquared(player.getLocation()))) {
+            final boolean bellInReach = bell.getLocation().distanceSquared(player.getLocation()) <= reach * reach;
+            final Location bellSpot = bellInReach ? null : flickerSpot(player, bell);
+            if (bellInReach || bellSpot != null) {
+                if (!palmDash(player, build, bellSpot)) {
+                    return;
+                }
+                ServerSwing.mainHand(player);
+                if (plugin.skills().deployables().cullBell(player.getUniqueId(), bell)) {
+                    if (plugin.combat() != null && plugin.combat().charges() != null) {
+                        plugin.combat().charges().grant(player, "power", 1);
+                    }
+                    player.getWorld().playSound(player.getLocation(), org.bukkit.Sound.BLOCK_BELL_USE, 1.0f, 0.6f);
+                    palmChain(player, runtime, build, new java.util.HashSet<>());
+                }
+                return;
+            }
+        }
         if (target == null) {
             strike(Origin.of(player), build, preferred); // 附近沒有敵人：原地打（跟原作一樣可以空揮）
             return;

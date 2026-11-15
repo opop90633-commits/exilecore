@@ -9600,9 +9600,9 @@ terror_glide:        # 2026-10-28 照 PoE2 0.5 的「Horror's Flight」（原作
       stats:
         - { stat: damage.added.min, type: FLAT, value: "{min}", tags: [attack, chaos] }
         - { stat: damage.added.max, type: FLAT, value: "{max}", tags: [attack, chaos] }
-    - text: "賦予技能：等級 15 死懼碎擊"   # 2026-11-11 照 PoE2（Grants Skill: Level 15 Crushing Fear）
+    - text: "賦予技能：等級 20 死懼碎擊"   # 2026-11-15 照站長「一般版本理論上也有 20 等」（原作紋刻護腕截圖「賦予技能：等級 20 死懼碎擊」）；這次之前 15 級（2026-11-11）
       stats:
-        - { stat: grant_skill.crushing_fear, type: FLAT, value: 15 }
+        - { stat: grant_skill.crushing_fear, type: FLAT, value: 20 }
     - text: "撲殺一個目標時獲得 1 層恐懼化型"   # 2026-11-11 照 PoE2（Gain 1 Fear Incarnate when you Cull a target）
       stats:
         - { stat: culling.fear_incarnate, type: FLAT, value: 1 }

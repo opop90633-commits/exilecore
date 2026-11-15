@@ -3043,6 +3043,8 @@ public final class SkillService {
         }
         if (originals().handles(config.signature(definition.id()))) {
             originals().cast(player, build, preferred, now); // 2026-10-26 照 PoE2：整個交給 OriginalSkills（雷縛長棍、崩滅心咒、雷流場、燼種、墜星熊吼）
+            // 2026-11-15 照站長「有榮耀時放了不會變熊」：這條路徑也要變身（墜星熊吼帶熊形態標籤）；這次之前在變身之前就 return 了
+            shapeshift(player, definition, !build.isDefault());
             plugin.players().display(player, state);
             return;
         }
@@ -8002,6 +8004,7 @@ public final class SkillService {
                 case "ignite" -> "點燃敵人時照牠的強度";
                 case "elemental_hit" -> "用元素傷害擊中敵人時照牠的強度";
                 case "chaos_hit" -> "用混沌傷害擊中敵人時照牠的強度";
+                case "rage_at_max" -> "怒氣滿了之後再拿到的怒氣"; // 2026-11-15 照站長「好像放了不會變熊」：這次之前寫成「攻擊打中敵人時照牠的強度」，看不出要先堆滿怒氣
                 default -> "攻擊打中敵人時照牠的強度";
             };
             lines.add(String.format(Locale.ROOT, "<gray>要 <white>%d</white> 點榮耀才能用（%s獲得），用了就用掉；沒有冷卻%s", gloryNeed, from,
