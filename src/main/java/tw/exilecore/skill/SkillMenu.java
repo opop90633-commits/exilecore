@@ -1003,7 +1003,7 @@ public final class SkillMenu extends Menu {
                 lore.add("<red>不能輔助這個技能（" + ItemRenderer.escape(support.refusal(definition, entry.supports())) + "，不會生效）");
             }
         }
-        if (definition != null && support.needsChargeSpend() && !host && support.supports(definition) && !SupportDefinition.consumesAny(definition)) {
+        if (definition != null && support.needsChargeSpend() && !host && support.supports(definition) && !service.config().consumesCharges(definition)) { // 2026-11-16：照 consumesCharges（這次之前只看寫死的名單）
             // 2026-10-24：恆星、倍星要技能真的會消耗戰星：本身不消耗、也沒掛狂速／綿咒／碎地／蔓寒的話沒效果
             boolean spender = false;
             for (final String other : entry.supports()) {

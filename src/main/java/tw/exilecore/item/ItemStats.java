@@ -625,6 +625,8 @@ public final class ItemStats {
         public static final String ENCHANT = "enchant";
         /** 2026-11-08 照站長：蝕培石換上去的瓦爾詞綴（傳奇說明用醒目的紅色）。 */
         public static final String VAAL = "vaal";
+        /** 2026-11-18 照站長「好像洗不出照料的詞綴」：嵌了增幅才擲得到的專屬詞綴（說明標「✦增幅」；這次之前跟一般詞綴看起來一樣）。 */
+        public static final String AUGMENT = "augment";
 
         /** 2026-11-03：corrupt = 蝕變石（傳奇）／聖化抽到的倍率（百分比，例如 112）；0 = 沒有。 */
         public AffixLine(final String text, final int tier, final AffixType type, final String ranged, final boolean catalysed,
@@ -723,7 +725,8 @@ public final class ItemStats {
                     repository.chipsOf(affix), // 2026-10：詞綴標籤（資料檔寫了 chips 的照寫的）
                     affix.spawnTags().contains(ItemRepository.CORRUPTION_TAG) ? AffixLine.ENCHANT
                             : data.isFractured(rolled) ? AffixLine.FRACTURED
-                            : UniqueItem.isVaalAffix(rolled.id()) ? AffixLine.VAAL : null, // 2026-10-21；2026-11-08：瓦爾詞綴
+                            : UniqueItem.isVaalAffix(rolled.id()) ? AffixLine.VAAL // 2026-10-21；2026-11-08：瓦爾詞綴
+                            : affix.spawnTags().stream().anyMatch(tag -> tag.startsWith("augment_")) ? AffixLine.AUGMENT : null, // 2026-11-18：增幅專屬詞綴
                     rolled.corrupt() == null || affix.mods().stream().noneMatch(AffixMod::corruptScales) ? 0 : rolled.corrupt()); // 2026-11-03 照站長：蝕變石的倍數；2026-11-04：數值不會變的（你沒有元素抗性）不標
             if (affix.type() == AffixType.PREFIX) {
                 prefixes.add(line);

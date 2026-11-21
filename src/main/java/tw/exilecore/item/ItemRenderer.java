@@ -469,6 +469,7 @@ public final class ItemRenderer {
                             + (affixLine.unveiled() ? " <#d69bff>✦揭露 +" + affixLine.unveiledBoost() + "%" : "")
                             + (fractured ? " <#c9a66b>✦破裂" : "")
                             + (vaal ? " <#ff4040>✦瓦爾" : "")
+                            + (ItemStats.AffixLine.AUGMENT.equals(affixLine.mark()) ? " <#7fe0c8>✦增幅" : "") // 2026-11-18：增幅專屬詞綴
                             // 2026-11-03 照站長：蝕變石（傳奇重骰再乘倍率）／聖化變動了數值的詞綴，標這條的倍數；這次之前看不出來
                             + (affixLine.corrupt() > 0 ? " " + corruptColor(affixLine.corrupt()) + "✦" + affixLine.corruptMark() : "");
                     final String boostColor = vaal ? "#ff4040" : affixLine.unveiled() ? "#d69bff" : affixLine.catalysed() ? "#7fd4ff" : fractured ? "#c9a66b" : null;

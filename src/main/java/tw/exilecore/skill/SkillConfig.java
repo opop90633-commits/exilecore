@@ -1004,6 +1004,27 @@ public final class SkillConfig {
         return id == null ? null : barrages.get(id);
     }
 
+    /** 2026-11-16：會在施放時消耗戰星的專屬機制（擲矛、炎爆矛、刺擊、雷矛、雷縛長棍）。 */
+    static final Set<String> CHARGE_SPENDING_SIGNATURES = Set.of("spear_throw", "explosive_spear", "lance", "bolt_spear", "charged_staff");
+
+    /**
+     * 2026-11-16 照站長「炎爆矛有消耗怒星，恆星卻寫不會生效」：技能本身會不會消耗戰星——寫死的名單（SupportDefinition.consumesAny）、
+     * 施放要付戰星的（charge_cost）、連射吃戰星的、蓄力用戰星強化的、上面這些專屬機制、碎骨飛矢都算；這次之前只看寫死的名單，
+     * 擲矛、炎爆矛、雷縛長棍這些會消耗卻被說成「不會生效」（實際上恆星、倍星照樣有效，只是說明寫錯）。
+     */
+    public boolean consumesCharges(final SkillDefinition definition) {
+        if (definition == null) {
+            return false;
+        }
+        final String id = definition.id();
+        final BarrageSpec barrage = barrage(id);
+        final ChargeSpec charge = charge(id);
+        return SupportDefinition.consumesAny(definition) || chargeCost(id) != null
+                || barrage != null && barrage.charge() != null
+                || charge != null && charge.channel() != null && charge.channel().empowerCharge() != null
+                || signature(id) != null && CHARGE_SPENDING_SIGNATURES.contains(signature(id)) || Bonestorm.ID.equals(id);
+    }
+
     /** 隱藏技能照觸發它的技能出傷害的倍數（0 = 不是，照自己的傷害效益）。 */
     public double parentDamage(final String id) {
         return id == null ? 0 : parentDamage.getOrDefault(id, 0.0);
